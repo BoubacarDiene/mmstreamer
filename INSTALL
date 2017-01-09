@@ -1,0 +1,19 @@
+
+----------------------------------\               /----------------------------------
+----------------------------------||== INSTALL ==||---------------------------------- 
+----------------------------------/               \----------------------------------
+
+Install the following packages:
+
+  - libv4l-dev
+  - libx11-dev
+  - libxext-dev
+  - libjpeg-dev
+
+Example on ubuntu 16.04:
+
+  $ sudo apt update
+  $ sudo apt install libv4l-dev
+  $ sudo apt install libx11-dev
+  $ sudo apt install libxext-dev
+  $ sudo apt install libjpeg-dev

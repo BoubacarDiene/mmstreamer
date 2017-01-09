@@ -1,0 +1,67 @@
+
+----------------------------------\              /----------------------------------
+----------------------------------||== README ==||----------------------------------
+----------------------------------/              \----------------------------------
+
+1- Description
+
+mmstreamer is a media streamer entirely written in C and made for the linux operating
+system.
+
+It currently comes with 4 independant modules :
+
+- Video    : Capture frames from video devices
+- Servers  : Stream frames using unix or inet socket
+- Clients  : Get video stream from local or remote streamer
+- Graphics : Locally display video
+
+A simple usage of mmstreamer is to make it behave like a HTTP streamer by streaming
+video frames from your personal computer's webcam toward browsers.
+
+To reach this goal, "Video" module continuously captures frames from camera which it
+can locally display using "Graphics" module  before they are sent to connected clients
+through "Servers" module.
+
+All kind of clients are supported : Browsers, Applications (VLC, ...)
+Connections can also be performed from any type of devices (computers, mobiles).
+
+mmstreamer provides a dynamic library called "libnet-client-<version>.so" that can be
+used to connect and get stream from its servers. However, feel free to implement your
+own client.
+
+Finally, note that mmstreamer can have different other usages. Your mind is its only
+limit. For example, by enabling "Clients" and "Graphics" / "Servers" modules ("Video"
+disabled), it is possible to get video from a remote streamer (E.g. vlc - See below)
+and display it locally and/or stream it over a another network interface.
+
+ cvlc v4l2:///dev/video0:chroma=mjpg:width=640:height=480 --sout '#std{access=http{mime
+ =multipart/x-mixed-replace;boundary=--7b3cc56e5f51db803f790dad720ed50a},mux=mpjpeg,dst
+ =127.0.0.1:8090}'
+
+2- Goal
+
+The initial purpose of mmstreamer project was to help me have a better understanding
+of v4l2 API. It was only composed of one .c file which captured video signal from my
+personal webcam and made it available to HTTP clients.
+
+Because I think it can be useful to many people, I will make mmstreamer evolve by 
+gradually adding new features taking advantage of possibilities offered by v4l2 API:
+
+- Add support of TV tuners
+- Allow to simultaneously capture from several video devices
+- Add encryption to secure the data before transmission
+- ...
+
+3- License
+
+mmstreamer is distributed under the GNU GENERAL PUBLIC LICENSE (GPL) version 3 or later.
+Please, see <http://www.gnu.org/licenses/> for more details.
+
+4- Maintenance and support
+
+I do all this on my free time without being paid or asking for any donations. Thus, bug
+fixing and updates mainly depend on my availibility.
+
+However, I will soon try to write and provide all necessary documentation so as to make
+mmstreamer easier to understand.
+

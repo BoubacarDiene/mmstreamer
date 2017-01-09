@@ -1,0 +1,42 @@
+
+----------------------------------\             /----------------------------------
+----------------------------------||== HOWTO ==||---------------------------------- 
+----------------------------------/             \----------------------------------
+
+1- How to build mmstreamer
+
+  1.1- Install dependencies (See INSTALL)
+
+  1.2- Build and install
+
+    $ cd <path_to_root_directory>
+    $ make all install
+
+2- How to start mmstreamer
+
+  $ cd <path_to_root_directory>
+  $ ./out/mmstreamer/bin/mmstreamer-0.1
+
+  or in debug mode :
+
+  $ ./out/mmstreamer/bin/mmstreamer-0.1.dbg
+
+3- How to configure mmstreamer
+
+  - See res/Main.xml     : Choose which modules to launch and how to keep mmstreamer alive
+  - See res/Video.xml    : Configure video device and output
+  - See res/Servers.xml  : Configure servers
+  - See res/Clients.xml  : Configure clients
+  - See res/Graphics.xml : Configure UI to locally display captured video
+
+4- How to enable debug mode
+
+  4.1- Open Makefile.in
+
+    $ cd <path_to_root_directory>
+    $ vi build/Makefile.in
+
+  4.2- Update macros
+
+    DEBUG := yes
+    LOG_LEVEL := <1 - 4>
