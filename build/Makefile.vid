@@ -1,0 +1,143 @@
+##
+#
+# \file Makefile.vid
+#
+# \author Boubacar DIENE <boubacar.diene@gmail.com>
+# \date   September 04, 2016
+#
+# \brief  Build the following library:
+#         - libvideo-x.y.so
+#
+##
+
+#################################################################
+#               Implicit rules / Particular targets             #
+#################################################################
+
+# Disable implicit rules
+.SUFFIXES:
+
+# Define particular targets
+.PHONY: prepare-video-sources, clean-video
+
+#################################################################
+#                             Include                           #
+#################################################################
+
+include build/Makefile.inc
+
+#################################################################
+#                            Variables                          #
+#################################################################
+
+# Library
+VIDEO_LIB_NAME := libvideo-${VIDEO_LIB_VERSION}
+
+# Path
+OUT_BUILD_DIR  := ${OUT_BUILD}/video
+OUT_BUILD_INC  := ${OUT_BUILD_DIR}/include
+OUT_BUILD_LIB  := ${OUT_BUILD_DIR}/lib
+OUT_BUILD_SRC  := ${OUT_BUILD_DIR}/src
+OUT_BUILD_OBJS := ${OUT_BUILD_DIR}/objs
+
+OUT_BUILD_UTILS_H := ${OUT_BUILD_INC}/utils
+OUT_BUILD_UTILS_C := ${OUT_BUILD_SRC}/utils
+
+OUT_BUILD_VIDEO_H := ${OUT_BUILD_INC}/video
+OUT_BUILD_VIDEO_C := ${OUT_BUILD_SRC}/video
+
+# Build options
+HEADERS := -I${OUT_BUILD_INC}
+CFLAGS  += ${HEADERS}
+
+# Files
+V4L2  := video/V4l2
+VIDEO := video/Video
+
+# Objects
+OBJS := ${OUT_BUILD_SRC}/${LIST}.o  \
+		${OUT_BUILD_SRC}/${TASK}.o  \
+		${OUT_BUILD_SRC}/${V4L2}.o  \
+		${OUT_BUILD_SRC}/${VIDEO}.o
+	
+#################################################################
+#                               Build                           #
+#################################################################
+
+# all
+all: prepare-video-sources ${VIDEO_LIB_NAME}.so
+
+# libvideo
+${VIDEO_LIB_NAME}.so: ${OBJS}
+	${CC} ${CFLAGS} ${LDFLAGS} -shared -Wl,-soname,$@ ${OUT_BUILD_OBJS}/*.o -o ${OUT_BUILD_LIB}/$@
+
+# objects
+%.o: %.c
+	${CC} ${CFLAGS} -c $< -o ${OUT_BUILD_OBJS}/$(notdir $@) -fPIC
+	
+#################################################################
+#                              Install                          #
+#################################################################
+
+install: prepare-release
+	${CP} ${OUT_BUILD_INC}/${VIDEO}.h           ${OUT_RELEASE_INC}/.
+	${CP} ${OUT_BUILD_LIB}/${VIDEO_LIB_NAME}.so ${OUT_RELEASE_LIB}/.
+
+#################################################################
+#                             Prepare                           #
+#################################################################
+
+prepare-video-sources:
+	${PRINT} ***** Preparing video build directories *****
+	if [ ! -d ${OUT_BUILD_INC} ]; then   \
+	    ${MKDIR} ${OUT_BUILD_INC};       \
+	fi
+	if [ ! -d ${OUT_BUILD_LIB} ]; then   \
+	    ${MKDIR} ${OUT_BUILD_LIB};       \
+	fi
+	if [ ! -d ${OUT_BUILD_SRC} ]; then   \
+	    ${MKDIR} ${OUT_BUILD_SRC};       \
+	fi
+	if [ ! -d ${OUT_BUILD_OBJS} ]; then    \
+	    ${MKDIR} ${OUT_BUILD_OBJS};        \
+	fi
+	if [ ! -d ${OUT_BUILD_UTILS_H} ]; then \
+	    ${MKDIR} ${OUT_BUILD_UTILS_H};     \
+	fi
+	if [ ! -d ${OUT_BUILD_UTILS_C} ]; then \
+	    ${MKDIR} ${OUT_BUILD_UTILS_C};     \
+	fi
+	if [ ! -d ${OUT_BUILD_VIDEO_H} ]; then \
+	    ${MKDIR} ${OUT_BUILD_VIDEO_H};     \
+	fi
+	if [ ! -d ${OUT_BUILD_VIDEO_C} ]; then \
+	    ${MKDIR} ${OUT_BUILD_VIDEO_C};     \
+	fi
+
+	${PRINT} ***** Copying video sources *****
+	${CP} ${INC}/${COMMON}.h ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${LIST}.h   ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${LOG}.h    ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${TASK}.h   ${OUT_BUILD_UTILS_H}/.
+	
+	${CP} ${INC}/${V4L2}.h   ${OUT_BUILD_VIDEO_H}/.
+	${CP} ${INC}/${VIDEO}.h  ${OUT_BUILD_VIDEO_H}/.
+	
+	${CP} ${SRC}/${LIST}.c   ${OUT_BUILD_UTILS_C}/.
+	${CP} ${SRC}/${TASK}.c   ${OUT_BUILD_UTILS_C}/.
+	
+	${CP} ${SRC}/${V4L2}.c   ${OUT_BUILD_VIDEO_C}/.
+	${CP} ${SRC}/${VIDEO}.c  ${OUT_BUILD_VIDEO_C}/.
+
+#################################################################
+#                              Clean                            #
+#################################################################
+
+clean-video:
+	${PRINT} ***** Removing generated video files *****
+	${RM} ${OUT_BUILD_OBJS}                     ||:
+	${RM} ${OUT_BUILD_LIB}/${VIDEO_LIB_NAME}.so ||:
+
+mrproper-video: clean-video
+	${PRINT} ***** Cleaning video output *****
+	${RM} ${OUT_BUILD} ||:
