@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - \file   Strings.xml
+  - \author Boubacar DIENE <boubacar.diene@gmail.com>
+  - \date   September 04, 2016
+    
+  - \brief  Here are listed strings used by this application.
+-->
+
+<Strings>
+
+  <!--
+    MANDATORY : Increment id by '1' starting from 0
+  -->
+  <StrGroup language="en">
+    <String id="0"  str="Close" />
+    <String id="1"  str="Translate" />
+    <String id="2"  str="Text3En" />
+    <String id="3"  str="Text4En" />
+    <String id="4"  str="This is a title" />
+  </StrGroup>
+
+  <StrGroup language="fr">
+    <String id="0"  str="Fermer" />
+    <String id="1"  str="Traduire" />
+    <String id="2"  str="Text3Fr" />
+    <String id="3"  str="Text4Fr" />
+    <String id="4"  str="Ceci est un titre" />
+  </StrGroup>
+  
+</Strings>
+

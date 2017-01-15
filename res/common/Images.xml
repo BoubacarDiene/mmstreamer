@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - \file   Images.xml
+  - \author Boubacar DIENE <boubacar.diene@gmail.com>
+  - \date   September 04, 2016
+    
+  - \brief  Here are listed images files used by this application.
+-->
+
+<Images>
+
+  <!--
+    MANDATORY : Increment id by '1' starting from 0
+    
+    format : 0 <=> BMP
+             1 <=> PNG
+             2 <=> JPEG
+  -->
+  <Image id="0"  file="images/icon.bmp" format="0" />
+  
+</Images>
+

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - \file   Main.xml
+  - \author Boubacar DIENE <boubacar.diene@gmail.com>
+  - \date   September 04, 2016
+    
+  - \brief  This is the main configuration file i.e the entry point
+            of the application. It contains informations such as path
+            to other configuration files, modules to enable/disable, ...
+-->
+
+<Main>
+  
+  <!--
+    General
+    
+    - appDataDir      : Files created at runtime are stored here (screenshots, ...)
+    
+    - xmlRootDir      : Concatenated to xmlFile to get the real path to configuration files
+    
+    - keepAliveMethod : Method to use to keep the application running
+                        0 => Events_based    : It can be used when keyEvents are handled by graphics module
+                        1 => Semaphore_based : It can be used when you want to handle keyEvents differently.
+                                               To avoid infinite loop, you have to call "sem_post()" when app
+                                               needs to be stopped
+                        2 => Timer_based     : It can be used when you want to run the application in a limited
+                                               time
+                        
+                                               Note: Attribute timeout_s="<value in seconds>" is ignored if
+                                               method is not Timer_based.
+  -->
+  <General appDataDir="/tmp/" xmlRootDir="./out/mmstreamer/res/" keepAliveMethod="0" timeout_s="10" />
+  
+  <!--
+    Modules
+    
+    - enable  : Choose whether or not to initialize module
+                0 => NO
+                1 => YES
+             
+    - xmlFile : Path to configuration file
+             
+    - autoStart : Choose between automatically or manually start module
+                  0 => Manual start i.e it is just initialized in Main.c.
+                       You can start it whenever and where you want
+                  1 => Automatic start i.e iniatialized and started in Main.c
+  -->
+  <Graphics enable="1" autoStart="1" xmlFile="configs/Graphics.xml"/>
+  <Video    enable="1" autoStart="1" xmlFile="configs/Video.xml"   />
+  <Servers  enable="1" autoStart="1" xmlFile="configs/Servers.xml" />
+  <Clients  enable="0" autoStart="1" xmlFile="configs/Clients.xml" />
+  
+</Main>
+
