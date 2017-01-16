@@ -67,7 +67,7 @@ static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 /*                                           MAIN                                               */
 /* -------------------------------------------------------------------------------------------- */
 
-/**
+/*!
  * main() function
  */
 int main(void)
@@ -183,10 +183,7 @@ int main(void)
             (void)modules->videoObj->getMaxBufferSize(modules->videoObj, &maxBufferSize);
             (void)modules->videoObj->getFinalResolution(modules->videoObj, &resolution);
             
-            Logd("maxBufferSize = %lu bytes \
-                    / width = %u - height = %u",
-                    maxBufferSize,
-                    resolution.width, resolution.height);
+            Logd("maxBufferSize = %lu bytes / width = %u - height = %u", maxBufferSize, resolution.width, resolution.height);
         }
     }
     
@@ -377,7 +374,7 @@ parserInit:
 /*                                           CALLBACKS                                          */
 /* -------------------------------------------------------------------------------------------- */
 
-/**
+/*!
  * Called when <General> tag is found
  */
 static void onGeneralCb(void *userData, const char **attrs)
@@ -426,7 +423,7 @@ static void onGeneralCb(void *userData, const char **attrs)
     }
 }
 
-/**
+/*!
  * Called when <Graphics> tag is found
  */
 static void onGraphicsCb(void *userData, const char **attrs)
@@ -469,7 +466,7 @@ static void onGraphicsCb(void *userData, const char **attrs)
     }
 }
 
-/**
+/*!
  * Called when <Video> tag is found
  */
 static void onVideoCb(void *userData, const char **attrs)
@@ -512,7 +509,7 @@ static void onVideoCb(void *userData, const char **attrs)
     }
 }
 
-/**
+/*!
  * Called when <Servers> tag is found
  */
 static void onServersCb(void *userData, const char **attrs)
@@ -555,7 +552,7 @@ static void onServersCb(void *userData, const char **attrs)
     }
 }
 
-/**
+/*!
  * Called when <Clients> tag is found
  */
 static void onClientsCb(void *userData, const char **attrs)
