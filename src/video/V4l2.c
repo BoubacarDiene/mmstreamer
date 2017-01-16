@@ -80,11 +80,11 @@ static V4L2_ERROR_E v4l2Ioctl_f(int32_t fd, uint64_t req, void *args);
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
- * \fn              V4L2_ERROR_E V4l2_Init(V4L2_S **obj)
- * \brief           Create an instance of V4l2 module
- * \param[in, out]  obj
- * \return          V4L2_ERROR_NONE on success
- *                  V4L2_ERROR_INIT on error
+ * \fn             V4L2_ERROR_E V4l2_Init(V4L2_S **obj)
+ * \brief          Create an instance of V4l2 module
+ * \param[in, out] obj
+ * \return         V4L2_ERROR_NONE on success
+ *                 V4L2_ERROR_INIT on error
  */
 V4L2_ERROR_E V4l2_Init(V4L2_S **obj)
 {
@@ -115,11 +115,11 @@ V4L2_ERROR_E V4l2_Init(V4L2_S **obj)
 }
 
 /*!
- * \fn              V4L2_ERROR_E V4l2_UnInit(V4L2_S **obj)
- * \brief           Destroy object created using V4l2_Init()
- * \param[in, out]  obj
- * \return          V4L2_ERROR_NONE on success
- *                  V4L2_ERROR_INIT on error
+ * \fn             V4L2_ERROR_E V4l2_UnInit(V4L2_S **obj)
+ * \brief          Destroy object created using V4l2_Init()
+ * \param[in, out] obj
+ * \return         V4L2_ERROR_NONE on success
+ *                 V4L2_ERROR_INIT on error
  */
 V4L2_ERROR_E V4l2_UnInit(V4L2_S **obj)
 {
@@ -136,12 +136,12 @@ V4L2_ERROR_E V4l2_UnInit(V4L2_S **obj)
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
- * \fn         static V4L2_ERROR_E openDevice_f(V4L2_S *obj, V4L2_OPEN_DEVICE_PARAMS_S *params)
- * \brief      Open video device
- * \param[in]  obj
- * \param[in]  params
- * \return     V4L2_ERROR_NONE on success
- *             V4L2_ERROR_INIT on error
+ * \fn        static V4L2_ERROR_E openDevice_f(V4L2_S *obj, V4L2_OPEN_DEVICE_PARAMS_S *params)
+ * \brief     Open video device
+ * \param[in] obj
+ * \param[in] params
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_INIT on error
  */
 static V4L2_ERROR_E openDevice_f(V4L2_S *obj, V4L2_OPEN_DEVICE_PARAMS_S *params)
 {
@@ -150,20 +150,24 @@ static V4L2_ERROR_E openDevice_f(V4L2_S *obj, V4L2_OPEN_DEVICE_PARAMS_S *params)
     V4L2_ERROR_E ret = V4L2_ERROR_NONE;
     
     if (access(params->path, R_OK|W_OK) != 0) {
+        Loge("\"%s\" does not exist", params->path);
         ret = V4L2_ERROR_UNKNOWN_DEVICE;
         goto exit;
     }
     
     if ((obj->fd = open(params->path, O_RDWR)) < 0) {
+        Loge("Failed to open \"%s\"", params->path);
         ret = V4L2_ERROR_IO;
         goto open_exit;
     }
     
     if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_QUERYCAP, &obj->caps)) != V4L2_ERROR_NONE) {
+        Loge("Failed to query capabilities");
         goto caps_exit;
     }
     
     if (!(obj->caps.capabilities & params->caps)) {
+        Loge("Requested capapbilities not supported");
         ret = V4L2_ERROR_BAD_CAPS;
         goto caps_exit;
     }
@@ -182,11 +186,11 @@ exit:
 }
 
 /*!
- * \fn         static V4L2_ERROR_E closeDevice_f(V4L2_S *obj)
- * \brief      Close video device
- * \param[in]  obj
- * \return     V4L2_ERROR_NONE on success
- *             V4L2_ERROR_INIT on error
+ * \fn        static V4L2_ERROR_E closeDevice_f(V4L2_S *obj)
+ * \brief     Close video device
+ * \param[in] obj
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_INIT on error
  */
 static V4L2_ERROR_E closeDevice_f(V4L2_S *obj)
 {
@@ -201,12 +205,12 @@ static V4L2_ERROR_E closeDevice_f(V4L2_S *obj)
 }
 
 /*!
- * \fn         static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_S *params)
- * \brief      Configure video device
- * \param[in]  obj
- * \param[in]  params
- * \return     V4L2_ERROR_NONE on success
- *             V4L2_ERROR_INIT on error
+ * \fn        static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_S *params)
+ * \brief     Configure video device
+ * \param[in] obj
+ * \param[in] params
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_INIT on error
  */
 static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_S *params)
 {
@@ -217,6 +221,7 @@ static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_
     /* Set format */
     obj->format.type = params->type;
     if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_G_FMT, &obj->format)) != V4L2_ERROR_NONE) {
+        Loge("Failed to get video format");
         goto exit;
     }
 
@@ -226,6 +231,7 @@ static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_
     obj->format.fmt.pix.colorspace  = params->colorspace;
 
     if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_S_FMT, &obj->format)) != V4L2_ERROR_NONE) {
+        Loge("Failed to set video format");
         goto exit;
     }
     
@@ -234,26 +240,32 @@ static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_
     memset(&streamparm, '\0', sizeof(struct v4l2_streamparm));
     streamparm.type = params->type;
     if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_G_PARM, &streamparm)) != V4L2_ERROR_NONE) {
+        Loge("Failed to get current framerate");
         goto exit;
     }
 
-    // Current fps = streamparm.parm.output.timeperframe.denominator
+    Logd("Current framerate : %d fps", streamparm.parm.output.timeperframe.denominator);
+
     if (streamparm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME) {
         streamparm.parm.capture.timeperframe.numerator = 1;
         streamparm.parm.capture.timeperframe.denominator = params->desiredFps;
-        // Set fps
+
+        /* Set fps */
         if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_S_PARM, &streamparm)) != V4L2_ERROR_NONE) {
-            // Failed to set new fps
+            Loge("Failed to change framerate");
             goto exit;
         }
-        // Check new fps
+
+        /* Check new fps */
         if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_G_PARM, &streamparm)) != V4L2_ERROR_NONE) {
-             // New fps = streamparm.parm.output.timeperframe.denominator
              goto exit;
         }
+
+        Logd("New framerate : %d fps / Requested : %d fps",
+                streamparm.parm.output.timeperframe.denominator, params->desiredFps);
     }
     else {
-        // Device does not support "set framerate"
+        Loge("Your driver does not allow to update framerate");
     }
     
 exit:
@@ -261,12 +273,12 @@ exit:
 }
 
 /*!
- * \fn         static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *cropRectInOut)
- * \brief      Set cropping area
- * \param[in]  obj
- * \param[in]  cropRectInOut
- * \return     V4L2_ERROR_NONE on success
- *             V4L2_ERROR_INIT on error
+ * \fn        static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *cropRectInOut)
+ * \brief     Set cropping area
+ * \param[in] obj
+ * \param[in] cropRectInOut
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_INIT on error
  */
 static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *cropRectInOut)
 {
@@ -274,22 +286,21 @@ static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *crop
     
     V4L2_ERROR_E ret = V4L2_ERROR_NONE;
 
-	Logd("Requested : left = %d /  top = %d / width = %u / height = %u",
-	        cropRectInOut->left, cropRectInOut->top, cropRectInOut->width, cropRectInOut->height);
+    Logd("Requested : left = %d /  top = %d / width = %u / height = %u", cropRectInOut->left, cropRectInOut->top, cropRectInOut->width, cropRectInOut->height);
 
-	struct v4l2_selection sel = {
-		.type   = obj->format.type,
-		.target = V4L2_SEL_TGT_CROP_DEFAULT,
-	};
+    struct v4l2_selection sel = {
+        .type   = obj->format.type,
+        .target = V4L2_SEL_TGT_CROP_DEFAULT,
+    };
 
     if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_G_SELECTION, &sel)) != V4L2_ERROR_NONE) {
-		Loge("Failed to get V4L2_SEL_TGT_CROP_DEFAUL");
-		return ret;
-	}
+        Loge("Failed to get V4L2_SEL_TGT_CROP_DEFAUL");
+        return ret;
+    }
 
-	Logd("Default : left = %d / top = %d / width = %u / height = %u", sel.r.left, sel.r.top, sel.r.width, sel.r.height);
+    Logd("Default : left = %d / top = %d / width = %u / height = %u", sel.r.left, sel.r.top, sel.r.width, sel.r.height);
 
-	struct v4l2_rect r;
+    struct v4l2_rect r;
 
     if ((cropRectInOut->left >= sel.r.left) && (cropRectInOut->left <= sel.r.left + (int32_t)sel.r.width)) {
         r.left = cropRectInOut->left;
@@ -319,33 +330,33 @@ static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *crop
         r.height = (int32_t)sel.r.height + sel.r.top - r.top;
     }
 
-	Logd("Setting active cropping area to : left = %d /  top = %d / width = %u / height = %u", r.left, r.top, r.width, r.height);
+    Logd("Setting active cropping area to : left = %d /  top = %d / width = %u / height = %u", r.left, r.top, r.width, r.height);
 
-	sel.r      = r;
-	sel.target = V4L2_SEL_TGT_CROP_ACTIVE;
+    sel.r      = r;
+    sel.target = V4L2_SEL_TGT_CROP_ACTIVE;
 
     if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_S_SELECTION, &sel)) != V4L2_ERROR_NONE) {
-		Loge("Failed to set V4L2_SEL_TGT_CROP_ACTIVE");
-		return ret;
-	}
+        Loge("Failed to set V4L2_SEL_TGT_CROP_ACTIVE");
+        return ret;
+    }
 	
-	cropRectInOut->left   = r.left;
-	cropRectInOut->top    = r.top;
-	cropRectInOut->width  = r.width;
-	cropRectInOut->height = r.height;
+    cropRectInOut->left   = r.left;
+    cropRectInOut->top    = r.top;
+    cropRectInOut->width  = r.width;
+    cropRectInOut->height = r.height;
 
-	Logd("Active cropping area updated : left = %d /  top = %d / width = %u / height = %u", sel.r.left, sel.r.top, sel.r.width, sel.r.height);
+    Logd("Active cropping area updated : left = %d /  top = %d / width = %u / height = %u", sel.r.left, sel.r.top, sel.r.width, sel.r.height);
 	
-	return ret;
+    return ret;
 }
 
 /*!
- * \fn         static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *composeRectInOut)
- * \brief      Set composing area
- * \param[in]  obj
- * \param[in]  composeRectInOut
- * \return     V4L2_ERROR_NONE on success
- *             V4L2_ERROR_INIT on error
+ * \fn        static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *composeRectInOut)
+ * \brief     Set composing area
+ * \param[in] obj
+ * \param[in] composeRectInOut
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_INIT on error
  */
 static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *composeRectInOut)
 {
@@ -353,22 +364,21 @@ static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *com
     
     V4L2_ERROR_E ret = V4L2_ERROR_NONE;
 
-	Logd("Requested : left = %d /  top = %d / width = %u / height = %u",
-	        composeRectInOut->left, composeRectInOut->top, composeRectInOut->width, composeRectInOut->height);
+    Logd("Requested : left = %d /  top = %d / width = %u / height = %u", composeRectInOut->left, composeRectInOut->top, composeRectInOut->width, composeRectInOut->height);
 
-	struct v4l2_selection sel = {
-		.type   = obj->format.type,
-		.target = V4L2_SEL_TGT_COMPOSE_DEFAULT,
-	};
+    struct v4l2_selection sel = {
+        .type   = obj->format.type,
+        .target = V4L2_SEL_TGT_COMPOSE_DEFAULT,
+    };
 
     if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_G_SELECTION, &sel)) != V4L2_ERROR_NONE) {
-		Loge("Failed to get V4L2_SEL_TGT_COMPOSE_DEFAULT)");
-		return ret;
-	}
+        Loge("Failed to get V4L2_SEL_TGT_COMPOSE_DEFAULT)");
+        return ret;
+    }
 
-	Logd("Default : left = %d / top = %d / width = %u / height = %u", sel.r.left, sel.r.top, sel.r.width, sel.r.height);
+    Logd("Default : left = %d / top = %d / width = %u / height = %u", sel.r.left, sel.r.top, sel.r.width, sel.r.height);
 
-	struct v4l2_rect r;
+    struct v4l2_rect r;
 
     if ((composeRectInOut->left >= sel.r.left) && (composeRectInOut->left <= sel.r.left + (int32_t)sel.r.width)) {
         r.left = composeRectInOut->left;
@@ -398,34 +408,34 @@ static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *com
         r.height = (int32_t)sel.r.height + sel.r.top - r.top;
     }
 
-	Logd("Setting active composing area to : left = %d /  top = %d / width = %u / height = %u", r.left, r.top, r.width, r.height);
+    Logd("Setting active composing area to : left = %d /  top = %d / width = %u / height = %u", r.left, r.top, r.width, r.height);
 
-	sel.r      = r;
-	sel.target = V4L2_SEL_TGT_COMPOSE_ACTIVE;
-	sel.flags  = V4L2_SEL_FLAG_LE;
+    sel.r      = r;
+    sel.target = V4L2_SEL_TGT_COMPOSE_ACTIVE;
+    sel.flags  = V4L2_SEL_FLAG_LE;
 
     if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_S_SELECTION, &sel)) != V4L2_ERROR_NONE) {
-		Loge("Failed to set V4L2_SEL_TGT_COMPOSE_ACTIVE");
-		return ret;
-	}
+        Loge("Failed to set V4L2_SEL_TGT_COMPOSE_ACTIVE");
+        return ret;
+    }
 	
-	composeRectInOut->left   = r.left;
-	composeRectInOut->top    = r.top;
-	composeRectInOut->width  = r.width;
-	composeRectInOut->height = r.height;
+    composeRectInOut->left   = r.left;
+    composeRectInOut->top    = r.top;
+    composeRectInOut->width  = r.width;
+    composeRectInOut->height = r.height;
 
-	Logd("Active composing area updated : left = %d /  top = %d / width = %u / height = %u", sel.r.left, sel.r.top, sel.r.width, sel.r.height);
+    Logd("Active composing area updated : left = %d /  top = %d / width = %u / height = %u", sel.r.left, sel.r.top, sel.r.width, sel.r.height);
 	
-	return ret;
+    return ret;
 }
 
 /*!
- * \fn         static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S *params)
- * \brief      Request video buffers
- * \param[in]  obj
- * \param[in]  params
- * \return     V4L2_ERROR_NONE on success
- *             V4L2_ERROR_INIT on error
+ * \fn        static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S *params)
+ * \brief     Request video buffers
+ * \param[in] obj
+ * \param[in] params
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_INIT on error
  */
 static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S *params)
 {
@@ -446,20 +456,18 @@ static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S 
     req.memory = obj->memory;
 
     if (v4l2Ioctl_f(obj->fd, VIDIOC_REQBUFS, &req) != V4L2_ERROR_NONE) {
+        Loge("Failed to request buffers");
         return V4L2_ERROR_IO;
     }
 
     if (req.count < params->count) {
+        Loge("Allocated number of buffers not enough");
         ret = V4L2_ERROR_MEMORY;
         goto exit;
     }
     
     obj->nbBuffers = req.count;
-
-    if (!(obj->map = calloc(obj->nbBuffers, sizeof(V4L2_MAPPING_BUFFER_S)))) {
-        ret = V4L2_ERROR_MEMORY;
-        goto exit;
-    }
+    assert((obj->map = calloc(obj->nbBuffers, sizeof(V4L2_MAPPING_BUFFER_S))));
 
     obj->maxBufferSize = 0;
     for (i = 0; i < obj->nbBuffers; i++) {
@@ -470,6 +478,7 @@ static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S 
         buf.index  = i;
 
         if (v4l2Ioctl_f(obj->fd, VIDIOC_QUERYBUF, &buf) != V4L2_ERROR_NONE) {
+            Loge("Failed to query buffer");
             ret = V4L2_ERROR_IO;
             goto exit;
         }
@@ -480,25 +489,21 @@ static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S 
         
         switch (params->memory) {
             case V4L2_MEMORY_MMAP:
-                obj->map[i].start  = mmap(NULL /* start anywhere */,
+                obj->map[i].start = mmap(NULL /* start anywhere */,
                                           buf.length,
                                           PROT_READ | PROT_WRITE,
                                           MAP_SHARED,
                                           obj->fd, buf.m.offset);
 
                 if (obj->map[i].start == MAP_FAILED) {
+                    Loge("mmap() failed");
                     ret = V4L2_ERROR_MEMORY;
                     goto exit;
                 }
                 break;
                 
             case V4L2_MEMORY_USERPTR:
-                obj->map[i].start  = calloc(1, buf.length);
-        
-                if (!obj->map[i].start) {
-                    ret = V4L2_ERROR_MEMORY;
-                    goto exit;
-                }
+                assert((obj->map[i].start = calloc(1, buf.length)));
                 break;
                 
             default:
@@ -519,11 +524,11 @@ exit:
 }
 
 /*!
- * \fn         static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj)
- * \brief      Release allocated video buffers
- * \param[in]  obj
- * \return     V4L2_ERROR_NONE on success
- *             V4L2_ERROR_INIT on error
+ * \fn        static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj)
+ * \brief     Release allocated video buffers
+ * \param[in] obj
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_INIT on error
  */
 static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj)
 {
@@ -537,7 +542,7 @@ static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj)
             case V4L2_MEMORY_MMAP:
                 for (i = 0; i < obj->nbBuffers; i++) {
                     if (obj->map[i].start && munmap(obj->map[i].start, obj->map[i].length) < 0) {
-                        /* Log to be added */
+                        Loge("munmap() failed");
                     }
                 }
                 break;
@@ -564,24 +569,25 @@ static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj)
     req.memory = obj->memory;
     
     if (v4l2Ioctl_f(obj->fd, VIDIOC_REQBUFS, &req) != V4L2_ERROR_NONE) {
-        /* Log to be added */
+        Loge("Failed to release buffers");
     }
     
     return V4L2_ERROR_NONE;
 }
 
 /*!
- * \fn         static V4L2_ERROR_E startCapture_f(V4L2_S *obj)
- * \brief      Start video capture
- * \param[in]  obj
- * \return     V4L2_ERROR_NONE on success
- *             V4L2_ERROR_INIT on error
+ * \fn        static V4L2_ERROR_E startCapture_f(V4L2_S *obj)
+ * \brief     Start video capture
+ * \param[in] obj
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_INIT on error
  */
 static V4L2_ERROR_E startCapture_f(V4L2_S *obj)
 {
     assert(obj && (obj->fd != -1));
     
     if (v4l2Ioctl_f(obj->fd, VIDIOC_STREAMON, &obj->format.type) != V4L2_ERROR_NONE) {
+        Loge("Failed to start stream");
         return V4L2_ERROR_CAPTURE;
     }
     
@@ -589,17 +595,18 @@ static V4L2_ERROR_E startCapture_f(V4L2_S *obj)
 }
 
 /*!
- * \fn         static V4L2_ERROR_E stopCapture_f(V4L2_S *obj)
- * \brief      Stop video capture
- * \param[in]  obj
- * \return     V4L2_ERROR_NONE on success
- *             V4L2_ERROR_INIT on error
+ * \fn        static V4L2_ERROR_E stopCapture_f(V4L2_S *obj)
+ * \brief     Stop video capture
+ * \param[in] obj
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_INIT on error
  */
 static V4L2_ERROR_E stopCapture_f(V4L2_S *obj)
 {
     assert(obj && (obj->fd != -1));
     
     if (v4l2Ioctl_f(obj->fd, VIDIOC_STREAMOFF, &obj->format.type) != V4L2_ERROR_NONE) {
+        Loge("Failed to stop stream");
         return V4L2_ERROR_CAPTURE;
     }
     
@@ -607,12 +614,12 @@ static V4L2_ERROR_E stopCapture_f(V4L2_S *obj)
 }
 
 /*!
- * \fn         static V4L2_ERROR_E awaitData_f(V4L2_S *obj, int32_t timeout_ms)
- * \brief      Wait a given duration
- * \param[in]  obj
- * \param[in]  timeout_ms : Time in ms to wait before returning / -1 => not used
- * \return     V4L2_ERROR_NONE on success
- *             V4L2_ERROR_INIT on error
+ * \fn        static V4L2_ERROR_E awaitData_f(V4L2_S *obj, int32_t timeout_ms)
+ * \brief     Wait a given duration
+ * \param[in] obj
+ * \param[in] timeout_ms : Time in ms to wait before returning / -1 => not used
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_INIT on error
  */
 static V4L2_ERROR_E awaitData_f(V4L2_S *obj, int32_t timeout_ms)
 {
@@ -627,10 +634,7 @@ static V4L2_ERROR_E awaitData_f(V4L2_S *obj, int32_t timeout_ms)
     FD_SET(obj->fd, &fds);
 
     if (timeout_ms > 0) {
-        if (!(tv = calloc(1, sizeof(struct timeval)))) {
-            ret = V4L2_ERROR_MEMORY;
-            goto exit;
-        }
+        assert((tv = calloc(1, sizeof(struct timeval))));
         tv->tv_sec  = 0;
         tv->tv_usec = timeout_ms * 1000;
     }
@@ -658,12 +662,12 @@ exit:
 }
 
 /*!
- * \fn         static V4L2_ERROR_E queueBuffer_f(V4L2_S *obj, uint32_t index)
- * \brief      Queue video buffer
- * \param[in]  obj
- * \param[in]  index
- * \return     V4L2_ERROR_NONE on success
- *             V4L2_ERROR_INIT on error
+ * \fn        static V4L2_ERROR_E queueBuffer_f(V4L2_S *obj, uint32_t index)
+ * \brief     Queue video buffer
+ * \param[in] obj
+ * \param[in] index
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_INIT on error
  */
 static V4L2_ERROR_E queueBuffer_f(V4L2_S *obj, uint32_t index)
 {
@@ -686,11 +690,11 @@ static V4L2_ERROR_E queueBuffer_f(V4L2_S *obj, uint32_t index)
 }
 
 /*!
- * \fn         static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj)
- * \brief      Dequeue video buffer
- * \param[in]  obj
- * \return     V4L2_ERROR_NONE on success
- *             V4L2_ERROR_INIT on error
+ * \fn        static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj)
+ * \brief     Dequeue video buffer
+ * \param[in] obj
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_INIT on error
  */
 static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj)
 {
@@ -705,6 +709,7 @@ static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj)
     buffer.memory = obj->memory;
 
     if (v4l2Ioctl_f(obj->fd, VIDIOC_DQBUF, &buffer) != V4L2_ERROR_NONE) {
+        Loge("Failed to dequeue buffer");
         return V4L2_ERROR_IO;
     }
 

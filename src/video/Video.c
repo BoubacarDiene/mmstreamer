@@ -109,20 +109,18 @@ static void    releaseCb(LIST_S *obj, void *element);
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
- * \fn              VIDEO_ERROR_E Video_Init(VIDEO_S **obj)
- * \brief           Create an instance of Video module
- * \param[in, out]  obj
- * \return          VIDEO_ERROR_NONE on success
- *                  VIDEO_ERROR_INIT on error
+ * \fn             VIDEO_ERROR_E Video_Init(VIDEO_S **obj)
+ * \brief          Create an instance of Video module
+ * \param[in, out] obj
+ * \return         VIDEO_ERROR_NONE on success
+ *                 VIDEO_ERROR_INIT on error
  */
 VIDEO_ERROR_E Video_Init(VIDEO_S **obj)
 {
     assert(obj && (*obj = calloc(1, sizeof(VIDEO_S))));
 
     VIDEO_PRIVATE_DATA_S *pData;
-    if (!(pData = calloc(1, sizeof(VIDEO_PRIVATE_DATA_S)))) {
-        goto exit;
-    }
+    assert((pData = calloc(1, sizeof(VIDEO_PRIVATE_DATA_S))));
     
     LIST_PARAMS_S listParams;
     memset(&listParams, '\0', sizeof(LIST_PARAMS_S));
@@ -131,26 +129,32 @@ VIDEO_ERROR_E Video_Init(VIDEO_S **obj)
     listParams.browseCb  = NULL;
     
     if (List_Init(&pData->listenersList, &listParams) != LIST_ERROR_NONE) {
+        Loge("List_Init() failed");
         goto list_exit;
     }
     
     if (Task_Init(&pData->videoTask) != TASK_ERROR_NONE) {
+        Loge("Task_Init() failed");
         goto task_exit;
     }
     
     if (pthread_mutex_init(&pData->framesHandlerLock, NULL) != 0) {
+        Loge("pthread_mutex_init() failed");
         goto framesHandlerLock_exit;
     }
     
     if (sem_init(&pData->notificationSem, 0, 0) != 0) {
+        Loge("sem_init() failed");
         goto notificationSem_exit;
     }
     
     if (pthread_mutex_init(&pData->notificationLock, NULL) != 0) {
+        Loge("pthread_mutex_init() failed");
         goto notificationLock_exit;
     }
     
     if (pthread_mutex_init(&pData->bufferLock, NULL) != 0) {
+        Loge("pthread_mutex_init() failed");
         goto bufferLock_exit;
     }
     
@@ -197,11 +201,11 @@ exit:
 }
 
 /*!
- * \fn              VIDEO_ERROR_E Video_UnInit(VIDEO_S **obj)
- * \brief           Destroy object created using Video_Init()
- * \param[in, out]  obj
- * \return          VIDEO_ERROR_NONE   on success
- *                  VIDEO_ERROR_UNINIT on error
+ * \fn             VIDEO_ERROR_E Video_UnInit(VIDEO_S **obj)
+ * \brief          Destroy object created using Video_Init()
+ * \param[in, out] obj
+ * \return         VIDEO_ERROR_NONE   on success
+ *                 VIDEO_ERROR_UNINIT on error
  */
 VIDEO_ERROR_E Video_UnInit(VIDEO_S **obj)
 {
@@ -211,26 +215,32 @@ VIDEO_ERROR_E Video_UnInit(VIDEO_S **obj)
     VIDEO_ERROR_E ret           = VIDEO_ERROR_NONE;
     
     if (pthread_mutex_destroy(&pData->bufferLock) != 0) {
+        Loge("pthread_mutex_destroy() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
     
     if (pthread_mutex_destroy(&pData->notificationLock) != 0) {
+        Loge("pthread_mutex_destroy() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
     
     if (sem_destroy(&pData->notificationSem) != 0) {
+        Loge("sem_destroy() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
     
     if (pthread_mutex_destroy(&pData->framesHandlerLock) != 0) {
+        Loge("pthread_mutex_destroy() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
     
     if (Task_UnInit(&pData->videoTask) != TASK_ERROR_NONE) {
+        Loge("Task_UnInit() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
     
     if (List_UnInit(&pData->listenersList) != LIST_ERROR_NONE) {
+        Loge("List_UnInit() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
     
@@ -248,18 +258,19 @@ VIDEO_ERROR_E Video_UnInit(VIDEO_S **obj)
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
- * \fn         static VIDEO_ERROR_E registerListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listener)
- * \brief      Register a video listener to get captured video frames
- * \param[in]  obj
- * \param[in]  listener
- * \return     VIDEO_ERROR_NONE  on success
- *             VIDEO_ERROR_<XXX> on error
+ * \fn        static VIDEO_ERROR_E registerListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listener)
+ * \brief     Register a video listener to get captured video frames
+ * \param[in] obj
+ * \param[in] listener
+ * \return    VIDEO_ERROR_NONE  on success
+ *            VIDEO_ERROR_<XXX> on error
  */
 static VIDEO_ERROR_E registerListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listener)
 {
     assert(obj && obj->pData);
     
     if (!listener || !listener->name || !listener->onVideoBufferAvailableCb) {
+        Loge("Bad params");
         return VIDEO_ERROR_PARAMS;
     }
     
@@ -267,6 +278,7 @@ static VIDEO_ERROR_E registerListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listener
     LIST_S               *list  = pData->listenersList;
     
     if (!list) {
+        Loge("listeners' list not initialized yet");
         return VIDEO_ERROR_INIT;
     }
     
@@ -287,18 +299,19 @@ static VIDEO_ERROR_E registerListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listener
 }
 
 /*!
- * \fn         static VIDEO_ERROR_E unregisterListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listener)
- * \brief      Unregister a registered video listener to stop receiving captured video frames
- * \param[in]  obj
- * \param[in]  listener
- * \return     VIDEO_ERROR_NONE  on success
- *             VIDEO_ERROR_<XXX> on error
+ * \fn        static VIDEO_ERROR_E unregisterListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listener)
+ * \brief     Unregister a registered video listener to stop receiving captured video frames
+ * \param[in] obj
+ * \param[in] listener
+ * \return    VIDEO_ERROR_NONE  on success
+ *            VIDEO_ERROR_<XXX> on error
  */
 static VIDEO_ERROR_E unregisterListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listener)
 {
     assert(obj && obj->pData);
     
     if (!listener || !listener->name) {
+        Loge("Bad params");
         return VIDEO_ERROR_PARAMS;
     }
     
@@ -306,6 +319,7 @@ static VIDEO_ERROR_E unregisterListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listen
     LIST_S               *list  = pData->listenersList;
     
     if (!list) {
+        Loge("listeners' list not initialized yet");
         return VIDEO_ERROR_INIT;
     }
     
@@ -319,12 +333,12 @@ static VIDEO_ERROR_E unregisterListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listen
 }
 
 /*!
- * \fn              static VIDEO_ERROR_E getFinalResolution_f(VIDEO_S *obj, VIDEO_RESOLUTION_S *resolution)
- * \brief           Get resolution (Requested resolution might be reviewed depending on hardware constraints
- * \param[in]       obj
- * \param[in, out]  resolution
- * \return          VIDEO_ERROR_NONE  on success
- *                  VIDEO_ERROR_<XXX> on error
+ * \fn         static VIDEO_ERROR_E getFinalResolution_f(VIDEO_S *obj, VIDEO_RESOLUTION_S *resolution)
+ * \brief      Get resolution (Requested resolution might be reviewed depending on hardware constraints
+ * \param[in]  obj
+ * \param[out] resolution
+ * \return     VIDEO_ERROR_NONE  on success
+ *             VIDEO_ERROR_<XXX> on error
  */
 static VIDEO_ERROR_E getFinalResolution_f(VIDEO_S *obj, VIDEO_RESOLUTION_S *resolution)
 {
@@ -338,12 +352,12 @@ static VIDEO_ERROR_E getFinalResolution_f(VIDEO_S *obj, VIDEO_RESOLUTION_S *reso
 }
 
 /*!
- * \fn              static VIDEO_ERROR_E getMaxBufferSize_f(VIDEO_S *obj, size_t *size)
- * \brief           Get the maximum size of video buffer
- * \param[in]       obj
- * \param[in, out]  size
- * \return          VIDEO_ERROR_NONE  on success
- *                  VIDEO_ERROR_<XXX> on error
+ * \fn         static VIDEO_ERROR_E getMaxBufferSize_f(VIDEO_S *obj, size_t *size)
+ * \brief      Get the maximum size of video buffer
+ * \param[in]  obj
+ * \param[out] size
+ * \return     VIDEO_ERROR_NONE  on success
+ *             VIDEO_ERROR_<XXX> on error
  */
 static VIDEO_ERROR_E getMaxBufferSize_f(VIDEO_S *obj, size_t *size)
 {
@@ -352,6 +366,7 @@ static VIDEO_ERROR_E getMaxBufferSize_f(VIDEO_S *obj, size_t *size)
     VIDEO_PRIVATE_DATA_S *pData = (VIDEO_PRIVATE_DATA_S*)(obj->pData);
     
     if (!pData->v4l2) {
+        Loge("v4l2 object not initialized");
         return VIDEO_ERROR_START;
     }
     
@@ -361,12 +376,12 @@ static VIDEO_ERROR_E getMaxBufferSize_f(VIDEO_S *obj, size_t *size)
 }
 
 /*!
- * \fn         static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
- * \brief      Start capturing video frames from camera
- * \param[in]  obj
- * \param[in]  params
- * \return     VIDEO_ERROR_NONE  on success
- *             VIDEO_ERROR_<XXX> on error
+ * \fn        static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
+ * \brief     Start capturing video frames from camera
+ * \param[in] obj
+ * \param[in] params
+ * \return    VIDEO_ERROR_NONE  on success
+ *            VIDEO_ERROR_<XXX> on error
  */
 static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
 {
@@ -379,6 +394,7 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     
     /* Init v4l2 */
     if (V4l2_Init(&pData->v4l2) != V4L2_ERROR_NONE) {
+        Loge("V4l2_Init() failed");
         goto init_exit;
     }
 
@@ -389,6 +405,7 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     openDeviceParams.caps = params->caps;
     
     if (pData->v4l2->openDevice(pData->v4l2, &openDeviceParams) != V4L2_ERROR_NONE) {
+        Loge("openDevice() failed");
         goto open_exit;
     }
 
@@ -403,6 +420,7 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     configureDeviceParams.desiredFps  = params->desiredFps;
     
     if (pData->v4l2->configureDevice(pData->v4l2, &configureDeviceParams) != V4L2_ERROR_NONE) {
+        Loge("configureDevice() failed");
         goto configure_exit;
     }
     
@@ -411,64 +429,78 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
         
     if ((params->captureResolution.width != params->outputResolution.width)
         || (params->captureResolution.height != params->outputResolution.height)) {
-        configureDeviceParams.width  = params->outputResolution.width;
-        configureDeviceParams.height = params->outputResolution.height;
-        
-        if (pData->v4l2->configureDevice(pData->v4l2, &configureDeviceParams) == V4L2_ERROR_NONE) {
+
+        uint8_t selectionApiSupported = 0;
+
+        V4L2_SELECTION_PARAMS_S cropRect;
+        cropRect.left   = 0;
+        cropRect.top    = 0;
+        cropRect.width  = params->captureResolution.width;
+        cropRect.height = params->captureResolution.height;
+
+        if (pData->v4l2->setCroppingArea(pData->v4l2, &cropRect) == V4L2_ERROR_NONE) {
             V4L2_SELECTION_PARAMS_S composeRect;
             composeRect.left   = 0;
             composeRect.top    = 0;
             composeRect.width  = params->outputResolution.width;
             composeRect.height = params->outputResolution.height;
-            
-            if (pData->v4l2->setComposingArea(pData->v4l2, &composeRect) == V4L2_ERROR_NONE) {
-                V4L2_SELECTION_PARAMS_S cropRect;
-                cropRect.left   = 0;
-                cropRect.top    = 0;
-                cropRect.width  = params->captureResolution.width;
-                cropRect.height = params->captureResolution.height;
-                
-                if (pData->v4l2->setCroppingArea(pData->v4l2, &cropRect) != V4L2_ERROR_NONE) {
-                    Loge("Failed to set cropping area");
-                }
-                
-                pData->finalResolution.width  = composeRect.width;
-                pData->finalResolution.height = composeRect.height;
+
+            if (pData->v4l2->setComposingArea(pData->v4l2, &composeRect) != V4L2_ERROR_NONE) {
+                Loge("Failed to set composing area");
             }
             else {
-                Loge("Failed to set composing area");
+                pData->finalResolution.width  = composeRect.width;
+                pData->finalResolution.height = composeRect.height;
+
+                selectionApiSupported = 1;
+            }
+        }
+        else {
+            Loge("Failed to set cropping area");
+        }
+
+        if (!selectionApiSupported) {
+            Logw("V4L2 selection API is not supported by your driver");
+
+            configureDeviceParams.width  = params->outputResolution.width;
+            configureDeviceParams.height = params->outputResolution.height;
+
+            if (pData->v4l2->configureDevice(pData->v4l2, &configureDeviceParams) == V4L2_ERROR_NONE) {
                 pData->finalResolution.width  = pData->v4l2->format.fmt.pix.width;
                 pData->finalResolution.height = pData->v4l2->format.fmt.pix.height;
             }
         }
     }
-    
+
     /* Request buffers */
     V4L2_REQUEST_BUFFERS_PARAMS_S requestBuffersParams;
     memset(&requestBuffersParams, '\0', sizeof(V4L2_REQUEST_BUFFERS_PARAMS_S));
     requestBuffersParams.count  = params->count;
     requestBuffersParams.memory = params->memory;
-    
+
     if (pData->v4l2->requestBuffers(pData->v4l2, &requestBuffersParams) != V4L2_ERROR_NONE) {
+        Loge("requestBuffers() failed");
         goto reqBuf_exit;
     }
-        
+
     /* Start capture */
     if (pData->v4l2->startCapture(pData->v4l2) != V4L2_ERROR_NONE) {
+        Loge("startCapture() failed");
         goto start_exit;
     }
-    
+
     /* Start tasks */
     strcpy(pData->framesHandlerParams.name, FRAMES_HANLDER_TASK_NAME);
     pData->framesHandlerParams.priority = params->priority;
     pData->framesHandlerParams.fct      = framesHandlerFct_f;
     pData->framesHandlerParams.fctData  = obj;
     pData->framesHandlerParams.atExit   = framesHandlerAtExit_f;
-    
+
     if (pData->videoTask->create(pData->videoTask, &pData->framesHandlerParams) != TASK_ERROR_NONE) {
+        Loge("Failed to create framesHandler task");
         goto frames_create_exit;
     }
-    
+
     strcpy(pData->notificationParams.name, NOTIFICATION_TASK_NAME);
     pData->notificationParams.priority = params->priority;
     pData->notificationParams.fct      = notificationFct_f;
@@ -476,6 +508,7 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     pData->notificationParams.atExit   = NULL;
     
     if (pData->videoTask->create(pData->videoTask, &pData->notificationParams) != TASK_ERROR_NONE) {
+        Loge("Failed to create notification task");
         goto notification_create_exit;
     }
     
@@ -505,11 +538,11 @@ init_exit:
 }
 
 /*!
- * \fn         static VIDEO_ERROR_E stopDeviceCapture_f(VIDEO_S *obj)
- * \brief      Stop capturing video frames from camera
- * \param[in]  obj
- * \return     VIDEO_ERROR_NONE  on success
- *             VIDEO_ERROR_<XXX> on error
+ * \fn        static VIDEO_ERROR_E stopDeviceCapture_f(VIDEO_S *obj)
+ * \brief     Stop capturing video frames from camera
+ * \param[in] obj
+ * \return    VIDEO_ERROR_NONE  on success
+ *            VIDEO_ERROR_<XXX> on error
  */
 static VIDEO_ERROR_E stopDeviceCapture_f(VIDEO_S *obj)
 {
@@ -530,33 +563,33 @@ static VIDEO_ERROR_E stopDeviceCapture_f(VIDEO_S *obj)
     
     /* Stop capture */
     if (pData->v4l2->stopCapture(pData->v4l2) != V4L2_ERROR_NONE) {
-        /* Log to be added here */
+        Loge("stopCapture() failed");
     }
     
     /* Release buffers */
     if (pData->v4l2->releaseBuffers(pData->v4l2) != V4L2_ERROR_NONE) {
-        /* Log to be added here */
+        Loge("releaseBuffers() failed");
     }
     
     /* Close device */
     if (pData->v4l2->closeDevice(pData->v4l2) != V4L2_ERROR_NONE) {
-        /* Log to be added here */
+        Loge("closeDevice() failed");
     }
     
     /* UnInit v4l2 */
     if (V4l2_UnInit(&pData->v4l2) != V4L2_ERROR_NONE) {
-        /* Log to be added here */
+        Loge("V4l2_UnInit() failed");
     }
     
     return VIDEO_ERROR_NONE;
 }
 
 /*!
- * \fn         static VIDEO_ERROR_E lockBuffer_f(VIDEO_S *obj)
- * \brief      Require lock to have exclusive access to buffer
- * \param[in]  obj
- * \return     VIDEO_ERROR_NONE  on success
- *             VIDEO_ERROR_<XXX> on error
+ * \fn        static VIDEO_ERROR_E lockBuffer_f(VIDEO_S *obj)
+ * \brief     Require lock to have exclusive access to buffer
+ * \param[in] obj
+ * \return    VIDEO_ERROR_NONE  on success
+ *            VIDEO_ERROR_<XXX> on error
  */
 static VIDEO_ERROR_E lockBuffer_f(VIDEO_S *obj)
 {
@@ -565,6 +598,7 @@ static VIDEO_ERROR_E lockBuffer_f(VIDEO_S *obj)
     VIDEO_PRIVATE_DATA_S *pData = (VIDEO_PRIVATE_DATA_S*)(obj->pData);
     
     if (pthread_mutex_lock(&(pData->bufferLock)) != 0) {
+        Loge("pthread_mutex_lock() failed");
         return VIDEO_ERROR_LOCK;
     }
     
@@ -572,11 +606,11 @@ static VIDEO_ERROR_E lockBuffer_f(VIDEO_S *obj)
 }
 
 /*!
- * \fn         static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj)
- * \brief      Release lock
- * \param[in]  obj
- * \return     VIDEO_ERROR_NONE  on success
- *             VIDEO_ERROR_<XXX> on error
+ * \fn        static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj)
+ * \brief     Release lock
+ * \param[in] obj
+ * \return    VIDEO_ERROR_NONE  on success
+ *            VIDEO_ERROR_<XXX> on error
  */
 static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj)
 {
@@ -585,6 +619,7 @@ static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj)
     VIDEO_PRIVATE_DATA_S *pData = (VIDEO_PRIVATE_DATA_S*)(obj->pData);
     
     if (pthread_mutex_unlock(&(pData->bufferLock)) != 0) {
+        Loge("pthread_mutex_unlock() failed");
         return VIDEO_ERROR_LOCK;
     }
     
@@ -673,8 +708,7 @@ static void notificationFct_f(TASK_PARAMS_S *params)
     }
     
     LIST_S *list = pData->listenersList;
-    
-    /* IMPORTANT: User has to handle buffer very quickly so no heavy operations please!! */
+
     (void)lockBuffer_f(video);
     
     list->lock(list);
@@ -689,6 +723,7 @@ static void notificationFct_f(TASK_PARAMS_S *params)
                 break;
             }
             
+            /* IMPORTANT: Listener has to handle buffer very quickly so no heavy operations please!! */
             listener->onVideoBufferAvailableCb(&video->buffer, listener->userData);
         }
     }
