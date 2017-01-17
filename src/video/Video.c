@@ -282,7 +282,10 @@ static VIDEO_ERROR_E registerListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listener
         return VIDEO_ERROR_INIT;
     }
     
-    list->lock(list);
+    if (list->lock(list) != LIST_ERROR_NONE) {
+        Loge("Failed to lock list");
+        return VIDEO_ERROR_LOCK;
+    }
     
     VIDEO_LISTENER_S *newListener;
     assert((newListener = calloc(1, sizeof(VIDEO_LISTENER_S))));
@@ -293,7 +296,7 @@ static VIDEO_ERROR_E registerListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listener
     
     list->add(list, (void*)newListener);
     
-    list->unlock(list);
+    (void)list->unlock(list);
     
     return VIDEO_ERROR_NONE;
 }
@@ -323,11 +326,14 @@ static VIDEO_ERROR_E unregisterListener_f(VIDEO_S *obj, VIDEO_LISTENER_S *listen
         return VIDEO_ERROR_INIT;
     }
     
-    list->lock(list);
+    if (list->lock(list) != LIST_ERROR_NONE) {
+        Loge("Failed to lock list");
+        return VIDEO_ERROR_LOCK;
+    }
     
     list->remove(list, (void*)listener->name);
     
-    list->unlock(list);
+    (void)list->unlock(list);
     
     return VIDEO_ERROR_NONE;
 }
@@ -711,7 +717,10 @@ static void notificationFct_f(TASK_PARAMS_S *params)
 
     (void)lockBuffer_f(video);
     
-    list->lock(list);
+    if (list->lock(list) != LIST_ERROR_NONE) {
+        Loge("Failed to lock list");
+        goto exit;
+    }
     
     uint32_t nbClients;
     if (list->getNbElements(list, &nbClients) == LIST_ERROR_NONE) {
@@ -728,10 +737,11 @@ static void notificationFct_f(TASK_PARAMS_S *params)
         }
     }
     
-    list->unlock(list);
+    (void)list->unlock(list);
     
     pData->nbFramesLost--;
-    
+
+exit:
     (void)unlockBuffer_f(video);
 }
 
