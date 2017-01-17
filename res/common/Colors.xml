@@ -3,7 +3,7 @@
   - \file   Colors.xml
   - \author Boubacar DIENE <boubacar.diene@gmail.com>
   - \date   September 04, 2016
-    
+
   - \brief  Here are listed colors used by this application.
 -->
 
@@ -19,6 +19,6 @@
   <Color id="4"  red="68"  green="68"  blue="68"  />
   <Color id="5"  red="0"   green="0"   blue="255" />
   <Color id="6"  red="75"  green="75"  blue="75"  />
-  
+
 </Colors>
 

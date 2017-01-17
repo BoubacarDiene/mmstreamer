@@ -3,7 +3,7 @@
   - \file   Strings.xml
   - \author Boubacar DIENE <boubacar.diene@gmail.com>
   - \date   September 04, 2016
-    
+
   - \brief  Here are listed strings used by this application.
 -->
 
@@ -27,6 +27,6 @@
     <String id="3"  str="Text4Fr" />
     <String id="4"  str="Ceci est un titre" />
   </StrGroup>
-  
+
 </Strings>
 

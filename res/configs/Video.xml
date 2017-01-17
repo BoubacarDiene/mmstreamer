@@ -3,66 +3,68 @@
   - \file   Video.xml
   - \author Boubacar DIENE <boubacar.diene@gmail.com>
   - \date   September 04, 2016
-    
-  - \brief  Here are listed some informations needed to initialize video.
-  
+
+  - \brief  Here are listed some informations needed by the video module
+
             Note that this latter can, for example, be built as a dynamic library
-            and used independently of other modules.
+            to make it usable alone in order to control video devices.
 -->
 
 <Video>
 
   <!--
-    General attributes
-    
+    General
+
     - priority     : Internal threads' priority
                      0 <=> Lowest
                      1 <=> Default
                      2 <=> Highest
-                      
+
     - configChoice : Config from which retrieve v4l2 parameters
-                     (See specific/Specific.c to add more configs)
+                     (Cf. VideoConfig.c to add more configs)
                      0 <=> MJPEG (MMAP)
                      1 <=> MJPEG (USERPTR)
                      2 <=> YVYU  (MMAP)
                      3 <=> YVYU  (USERPTR)
-                      
-    - gfxDest      : Name of graphics element where captured video frames are drawn.
-                     Attention ! Make sure to define that element in Graphics.xml
-                      
-    - serverDest   : Name of server used to stream captured video frames.
-                     Attention ! Make sure to define that server in Servers.xml
 
-    Note : gfxDest, gfxFct and serverDest are only used if the related modules are enabled (see Main.xml)
+    - gfxDest      : Name of graphics element where captured video frames are drawn.
+                     Attention ! Make sure that element is defined in Graphics.xml
+
+    - serverDest   : Name of server used to stream captured video frames.
+                     Attention ! Make sure that server is defined in Servers.xml
+
+    Note : Obviously, gfxDest and serverDest are only used if the related modules are enabled
+           (see Main.xml)
   -->
   <General priority="1" configChoice="0" gfxDest="videoZone" serverDest="inet-videoServer" />
-  
+
   <!--
-    Device's attributes
-    
+    Device
+
     - src : Path to video device to use
 
-    - width / height : Device's resolution. If not supported, the closest one is used instead.
+    - width / height : Device's resolution. If not supported, the closest one should be used instead
+                       by the driver
   -->
   <Device src="/dev/video0" width="640" height="480" />
-  
+
   <!--
-    Output's attributes
-    
-      - width / height : Chosen scaler will be configured with these resolutions.
+    Output
+
+      - width / height : Captured video signal is rendered in a surface having these dimensions
   -->
   <Output width="640" height="480" />
-  
+
   <!--
-    Buffer's attributes
+    Buffer
 
     - nbBuffers  : Provided to v4l2 when requesting buffers
-    
+
     - desiredFps : Used to set the number of frames to get per seconds
-                   The provided value needs to be supported by device, otherwise it
-                   won't be taken into account.
+                   The provided value needs to be supported by the driver otherwise it won't be
+                   taken into account.
   -->
   <Buffer nbBuffers="4" desiredFps="25" />
-  
+
 </Video>
 

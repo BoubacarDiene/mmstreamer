@@ -3,57 +3,51 @@
   - \file   Servers.xml
   - \author Boubacar DIENE <boubacar.diene@gmail.com>
   - \date   September 04, 2016
-    
-  - \brief  Here are listed some informations needed to initialize server(s).
-            More than one server can be started to dispatch received data to
-            connected clients. Data can be of any kind : video, audio, text.
-            
-            One possible usage of the server is to ask it to stream locally
-            captured video frames using the configured network protocol (INET-TCP,
-            INET-UDP, UNIX-STREAM, UNIX-DGRAM).
-            
-            Another usage is to connect to an external server like vlc-streamer using
-            "Clients" module (see Clients.xml) and ask "Servers" to stream data over a
-            different network.
-            
+
+  - \brief  Here are listed some informations needed by the "Servers" module
+
+            More than one server can be simultaneously started to dispatch received
+            data to connected clients.
+
             Note that "Servers" module can, for example, be built as a dynamic library
-            and used independently of other modules.
+            to make it usable alone without taking other modules into account.
 -->
 
 <Servers>
 
   <Server>
     <!--
-      General attributes
-    
+      General
+
       - name       : Server's name
-    
+
       - type       : Stream type
                      0 <=> Video
-                     
+
       - link       : 0 <=> Inet stream (TCP)
                      1 <=> Inet datagram (UDP)
                      2 <=> Unix stream
                      3 <=> Unix datagram
-    
+
       - mode       : 0 <=> Standard - No additional data added. It works the same way as classical socket.
-                     1 <=> Http     - to be used to interact with HTTP clients
-                     2 <=> Custom   - to be used to interact with server module
-    
-      - acceptMode : 0 <=> Automatic - Dispatch data to all clients once connected
-                     1 <=> Manual    - Wait until client is added to receivers' list
-                     
+                     1 <=> Http     - To be used to interact with HTTP clients
+                     2 <=> Custom   - To be used to interact with "Clients" module
+
+      - acceptMode : 0 <=> Automatic - Dispatch data to all clients once connected - No need to use addReceiver()
+                                       fuction in the source code
+                     1 <=> Manual    - Wait until client is added to receivers' list before streaming toward it
+
       - priority   : Internal threads' priority
                      0 <=> Lowest
                      1 <=> Default
                      2 <=> Highest
-                   
+
       - maxClients : Max number of clients that server can accept
-    
-      - mime       : Mime type (Useful for HTTP clients - depends on video format (mjpeg, ...)
-    
+
+      - mime       : Mime type (Useful for HTTP clients - depends on video format (mjpeg, ...))
+
       - maxBufferSize : Maximum size of buffer used to send data to clients (in bytes)
-                        -1 <=> Let app choose the most suitable value
+                        -1 => Let app choose the most suitable value
     -->
     <General name="inet-videoServer"
             type="0"
@@ -64,20 +58,20 @@
             maxClients="5"
             mime="image/jpeg"
             maxBufferSize="-1" />
-  
+
     <!--
-      Inet attributes
-      
-        - host    : IP address / hostname that server is listening to (E.g: localhost or 127.0.0.1)
+      Inet
+
+        - host    : IP address / hostname server is listening to (E.g: localhost or 127.0.0.1)
         - service : Protocol that server is using (E.g: http or 80)
-        - path    : Path to file to stream data to (E.g: /stream.jpeg)
+        - path    : URL on the server clients should use to get stream
     -->
     <Inet host="localhost" service="8090" path="/webcam" />
   </Server>
 
   <Server>
     <!--
-      General attributes
+      General
 
       - name       : Server's name
 
@@ -90,11 +84,12 @@
                      3 <=> Unix datagram
 
       - mode       : 0 <=> Standard - No additional data added. It works the same way as classical socket.
-                     1 <=> Http     - to be used to interact with HTTP clients
-                     2 <=> Custom   - to be used to interact with server module
+                     1 <=> Http     - To be used to interact with HTTP clients
+                     2 <=> Custom   - To be used to interact with "Clients" module
 
-      - acceptMode : 0 <=> Automatic - Dispatch data to all clients once connected
-                     1 <=> Manual    - Wait until client is added to receivers' list
+      - acceptMode : 0 <=> Automatic - Dispatch data to all clients once connected - No need to use addReceiver()
+                                       fuction in the source code
+                     1 <=> Manual    - Wait until client is added to receivers' list before streaming toward it
 
       - priority   : Internal threads' priority
                      0 <=> Lowest
@@ -103,10 +98,10 @@
 
       - maxClients : Max number of clients that server can accept
 
-      - mime       : Mime type (Useful for HTTP clients - depends on video format (mjpeg, ...)
+      - mime       : Mime type (Useful for HTTP clients - depends on video format (mjpeg, ...))
 
       - maxBufferSize : Maximum size of buffer used to send data to clients (in bytes)
-                        -1 <=> Let app choose the most suitable value
+                        -1 => Let app choose the most suitable value
     -->
     <General name="unix-videoServer"
             type="0"
@@ -117,14 +112,14 @@
             maxClients="5"
             mime="image/jpeg"
             maxBufferSize="-1" />
-  
+
     <!--
-      Unix attributes
-      
+      Unix
+
       - socketName : Server socket
     -->
     <Unix socketName="unix-videoserver.sock" />
   </Server>
-    
+
 </Servers>
 

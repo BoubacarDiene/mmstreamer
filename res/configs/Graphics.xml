@@ -3,7 +3,7 @@
   - \file   Graphics.xml
   - \author Boubacar DIENE <boubacar.diene@gmail.com>
   - \date   September 04, 2016
-    
+
   - \brief  Here are defined all elements to draw on screen
 -->
 
@@ -11,11 +11,9 @@
 
   <!--
     Common resources
-    To use them in other xml files, just indicate ids of required resources.
-    (See Graphics.xml for some examples)
-    
+
     - defaulLanguage : Default UI language
-    
+
     - Colors  : All used colors are listed inside
     - Images  : All used images are listed inside
     - Fonts   : All used fonts are listed inside
@@ -29,20 +27,20 @@
   </Common>
 
   <!--
-    Screen's attributes
-    
+    Screen configuration
+
       - width / height : Screen size
-                         All elements are drawn inside
-    
+
       - bitsPerPixel   : Bits per pixel
-    
+
       - fullScreen     : 1 <=> Application is launched in fullscreen mode
                          0 <=> width and height are used
-    
+
       - caption        : Window title
                          If empty, winddow's title bar will be hidden.
-                      
+
       - videoFormat    : Video format. Used drawer function depends on this.
+                         (See "configChoice" in Video.xml to determine which value to use)
                          0 <=> MJPEG (MMAP / USERPTR)
                          1 <=> YVYU (MMAP / USERPTR)
   -->
@@ -54,11 +52,11 @@
           videoFormat="0">
     <!--
       Background
-      
-      useColor      : Choose between using color (colorId) or image (imageId and hiddenColorId)
+
+      useColor      : Choose between using color (colorId) and image (imageId and hiddenColorId)
                       1 <=> Color
                       0 <=> Image
-      
+
       colorId       : Background color (See Colors.xml)
       imageId       : Background image (See Images.xml)
       hiddenColorId : Color to hide in background image (See Colors.xml)
@@ -68,101 +66,101 @@
 
     <!--
       Icon
-      
+
       imageId       : Image to use as icon (See Images.xml)
       hiddenColorId : Color to hide in image (See Colors.xml)
                       -1 if not used
     -->
     <Icon imageId="0" hiddenColorId="1" />
-    
+
     <!--
-      List of gfx elements
-      
-      group     : Group name to which belongs element.
-                  When for example elementA is smaller than elementB and both share the same
+      List of graphics elements
+
+      group     : Group name to which belongs the element.
+                  When, for example, elementA is smaller than elementB and both share the same
                   surface, drawing B after A will make A hidden.
                   To avoid that, A and B may be put in the same group so when updating B, user
                   just has to choose to update other elements belonging to that group by the same
-                  time => A redrawn each time B is updated.
-      
+                  time => A is redrawn each time B is updated.
+
       redrawGroup : Tell whether or not elements sharing the same group as the one being drawn have
-                    to be redrawn when data of this latter has changed
-      
+                    to be redrawn when data of this latter have changed
+
       type      : Type of element
                   0 <=> Video
                   1 <=> Image
                   2 <=> Text
-             
+
       x, y, width, height : Coordinates of the rectangle where element is drawn
-      
+
       visible   : 0 <=> Element is hidden
                   1 <=> Element is displayed
-      
+
       clickable : 0 <=> Element is not clickable i.e click on it will have no effect
                   1 <=> Element is clickable, "click event" is sent to listeners
-      
+
       focusable : 0 <=> Element is not focusable i.e it does not support navigation
                   1 <=> Element is focusable
-      
+
       hasFocus  : 0 <=> Element has focus
                   1 <=> Element does not have focus
-                 
-                  Note: Only one element must have default focus
-      
+
+                  Note: Only one element must have default focus. It's your responsibility to
+                        guarantee that.
+
       stringId, fontId, colorId and imageId : Respectively defined in Strings.xml, Fonts.xml,
                                               Colors.xml and Images.xml
-                                              
+
       Nav : left  <=> Element at left of current element which gains focus when user moves to left
             up    <=> Element at top of current element which gains focus when user moves up
             right <=> Element at right of current element which gains focus when user moves to right
             down  <=> Element at bottom of current element which gains focus when user moves down
-      
     -->
     <Elements>
       <Element name="videoZone" group="videoView" redrawGroup="1" type="0" x="160" y="160" width="640" height="480">
         <Config visible="1" clickable="0" focusable="0" hasFocus="0" onClick="" />
       </Element>
-    
+
       <Element name="imageBtn" group="videoView" redrawGroup="1" type="1" x="200" y="200" width="100" height="100">
         <Config visible="1" clickable="0" focusable="0" hasFocus="0" onClick="" />
         <Image imageId="0" hiddenColorId="1" />
       </Element>
-    
+
       <Element name="textBtn1" group="menu" redrawGroup="0" type="2" x="20" y="20" width="100" height="100">
         <Config visible="1" clickable="1" focusable="1" hasFocus="1" onClick="clickHandler0" />
         <Text stringId="0" fontId="2" colorId="6" size="15" />
         <Nav left="" up="textBtn3" right="" down="imageBtn1" />
       </Element>
-    
+
       <Element name="imageBtn1" group="menu" redrawGroup="0" type="1" x="20" y="200" width="100" height="100">
         <Config visible="1" clickable="1" focusable="1" hasFocus="0" onClick="clickHandler2" />
         <Image imageId="0" hiddenColorId="1" />
         <Nav left="" up="textBtn1" right="" down="textBtn2" />
       </Element>
-    
+
       <Element name="textBtn2" group="menu" redrawGroup="0" type="2" x="20" y="380" width="100" height="100">
         <Config visible="1" clickable="1" focusable="1" hasFocus="0" onClick="clickHandler1" />
         <Text stringId="1" fontId="1" colorId="0" size="15" />
         <Nav left="" up="imageBtn1" right="" down="textBtn3" />
       </Element>
-    
+
       <Element name="textBtn3" group="menu" redrawGroup="0" type="2" x="20" y="560" width="100" height="100">
         <Config visible="1" clickable="1" focusable="1" hasFocus="0" onClick="clickHandler3" />
         <Text stringId="2" fontId="2" colorId="1" size="20" />
         <Nav left="" up="textBtn2" right="" down="textBtn1" />
       </Element>
-    
+
       <Element name="textTitle1" group="title" redrawGroup="0" type="2" x="260" y="50" width="100" height="50">
         <Config visible="1" clickable="0" focusable="0" hasFocus="0" onClick="clickHandler4" />
         <Text stringId="4" fontId="2" colorId="2" size="20" />
       </Element>
     </Elements>
-    
+
   </Screen>
-    
+
   <!--
       Colors to apply when element's state changed
-      
+
       Focus : Element gains focus
       Blur  : Element looses focus
       Reset : Element becomes invisible
@@ -170,6 +168,6 @@
   <Focus colorId="3" />
   <Blur  colorId="4" />
   <Reset colorId="5" />
-  
+
 </Graphics>
 
