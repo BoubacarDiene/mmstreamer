@@ -9,8 +9,8 @@
             More than one server can be simultaneously started to dispatch received
             data to connected clients.
 
-            Note that "Servers" module can, for example, be built as a dynamic library
-            to make it usable alone without taking other modules into account.
+            Note that "Servers" module is also built as a dynamic library to make it
+            usable alone without taking other modules into account.
 -->
 
 <Servers>
@@ -64,7 +64,7 @@
 
         - host    : IP address / hostname server is listening to (E.g: localhost or 127.0.0.1)
         - service : Protocol that server is using (E.g: http or 80)
-        - path    : URL on the server clients should use to get stream
+        - path    : Resource on the server that clients should use to get stream
     -->
     <Inet host="localhost" service="8090" path="/webcam" />
   </Server>

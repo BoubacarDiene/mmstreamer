@@ -13,8 +13,8 @@
 
             However, it can also be used to connect to any other kind of servers.
 
-            Note that client module can, for example, be built as a dynamic library
-            to make it usable alone without taking other modules into account.
+            Note that "Clients" module is also built as a dynamic library to make it
+            usable alone without taking other modules into account.
 -->
 
 <Clients>
@@ -66,7 +66,7 @@
       Inet
       - host    : IP address / hostname of server to connect to (E.g: localhost or 127.0.0.1)
       - service : Protocol that server is using (E.g: http or 80)
-      - path    : URL on the server where to get stream from
+      - path    : Resource on the server where to get stream from
     -->
     <Inet host="localhost" service="8090" path="/webcam" />
   </Client>

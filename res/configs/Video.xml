@@ -6,8 +6,8 @@
 
   - \brief  Here are listed some informations needed by the video module
 
-            Note that this latter can, for example, be built as a dynamic library
-            to make it usable alone in order to control video devices.
+            Note that this latter is also built as a dynamic library to make it
+            usable alone in order to control video devices.
 -->
 
 <Video>
