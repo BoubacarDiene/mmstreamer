@@ -107,14 +107,21 @@ LIST_ERROR_E List_Init(LIST_S **obj, LIST_PARAMS_S *params)
     assert((pData = calloc(1, sizeof(LIST_PRIVATE_DATA_S))));
     
     if (pthread_mutex_init(&pData->lock, NULL) != 0) {
-        free(pData);
-        pData = NULL;
-        return LIST_ERROR_INIT;
+        goto exit;
     }
     
     (*obj)->pData = (void*)pData;
     
     return LIST_ERROR_NONE;
+
+exit:
+    free(pData);
+    pData = NULL;
+
+    free(*obj);
+    *obj = NULL;
+
+    return LIST_ERROR_INIT;
 }
 
 /*!
