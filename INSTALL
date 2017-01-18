@@ -3,17 +3,36 @@
 ----------------------------------||== INSTALL ==||---------------------------------- 
 ----------------------------------/               \----------------------------------
 
-Install the following packages:
+1.1- Install dependencies
 
   - libv4l-dev
   - libx11-dev
   - libxext-dev
   - libjpeg-dev
 
-Example on ubuntu 16.04:
+  Example on ubuntu 16.04:
 
   $ sudo apt update
   $ sudo apt install libv4l-dev
   $ sudo apt install libx11-dev
   $ sudo apt install libxext-dev
   $ sudo apt install libjpeg-dev
+
+1.2- Build and install mmstreamer
+
+  $ cd <path_to_root_directory>
+  $ make all install
+
+  Note: <path_to_root_directory>/out/ is created. It contains:
+    - build/      : build informations
+    - mmstreamer/ :
+        |
+        --> Application's binary in bin/
+        |
+        --> .h files in inc/ (to use dynamic libraries)
+        |
+        --> Dynamic libraries in lib/ (Can be used alone; no need of other modules)
+        |
+        --> Xml config files in res/
+
+     - mmstreamer.tar.gz : mmstreamer/ packaged
