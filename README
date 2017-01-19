@@ -32,7 +32,7 @@ own client.
 Finally, note that mmstreamer can have different other usages. Your mind is its only
 limit. For example, by enabling "Clients" and "Graphics" / "Servers" modules ("Video"
 disabled), it is possible to get video from a remote streamer (E.g. vlc - See below)
-and display it locally and/or stream it over a another network interface.
+and display it locally and/or stream it over another network interface.
 
  cvlc v4l2:///dev/video0:chroma=mjpg:width=640:height=480 --sout '#std{access=http{mime
  =multipart/x-mixed-replace;boundary=--7b3cc56e5f51db803f790dad720ed50a},mux=mpjpeg,dst
