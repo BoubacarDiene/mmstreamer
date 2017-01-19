@@ -54,6 +54,8 @@ typedef struct CLIENT_LINK_PDATA_S {
 typedef struct SERVER_CONTEXT_S {
     volatile uint8_t       quit;
     
+    volatile uint8_t       senderSuspended;
+
     SERVER_PARAMS_S        params;
     
     LINK_S                 *server;
@@ -113,6 +115,9 @@ static SERVER_ERROR_E stop_f (SERVER_S *obj, SERVER_PARAMS_S *params);
 static SERVER_ERROR_E addReceiver_f   (SERVER_S *obj, SERVER_PARAMS_S *params, LINK_S *client);
 static SERVER_ERROR_E removeReceiver_f(SERVER_S *obj, SERVER_PARAMS_S *params, LINK_S *client);
 
+static SERVER_ERROR_E suspendSender_f(SERVER_S *obj, SERVER_PARAMS_S *params);
+static SERVER_ERROR_E resumeSender_f (SERVER_S *obj, SERVER_PARAMS_S *params);
+
 static SERVER_ERROR_E disconnectClient_f(SERVER_S *obj, SERVER_PARAMS_S *params, LINK_S *client);
 
 static SERVER_ERROR_E sendData_f(SERVER_S *obj, SERVER_PARAMS_S *params, BUFFER_S *buffer);
@@ -164,6 +169,9 @@ SERVER_ERROR_E Server_Init(SERVER_S **obj)
     (*obj)->addReceiver      = addReceiver_f;
     (*obj)->removeReceiver   = removeReceiver_f;
     
+    (*obj)->suspendSender    = suspendSender_f;
+    (*obj)->resumeSender     = resumeSender_f;
+
     (*obj)->disconnectClient = disconnectClient_f;
     
     (*obj)->sendData         = sendData_f;
@@ -410,6 +418,48 @@ static SERVER_ERROR_E removeReceiver_f(SERVER_S *obj, SERVER_PARAMS_S *params, L
     ((CLIENT_LINK_PDATA_S*)client->pData)->isAuthorizedReceiver = 0;
     
     (void)ctx->clientsList->unlock(ctx->clientsList);
+
+exit:
+    return ret;
+}
+
+/*!
+ *
+ */
+static SERVER_ERROR_E suspendSender_f(SERVER_S *obj, SERVER_PARAMS_S *params)
+{
+    assert(obj && obj->pData && params);
+
+    SERVER_CONTEXT_S *ctx = NULL;
+    SERVER_ERROR_E ret    = SERVER_ERROR_NONE;
+
+    if ((ret = getServerContext_f(obj, params->name, &ctx)) != SERVER_ERROR_NONE) {
+        Loge("Failed to retrieve %s's context", params->name);
+        goto exit;
+    }
+
+    ctx->senderSuspended = 1;
+
+exit:
+    return ret;
+}
+
+/*!
+ *
+ */
+static SERVER_ERROR_E resumeSender_f(SERVER_S *obj, SERVER_PARAMS_S *params)
+{
+    assert(obj && obj->pData && params);
+
+    SERVER_CONTEXT_S *ctx = NULL;
+    SERVER_ERROR_E ret    = SERVER_ERROR_NONE;
+
+    if ((ret = getServerContext_f(obj, params->name, &ctx)) != SERVER_ERROR_NONE) {
+        Loge("Failed to retrieve %s's context", params->name);
+        goto exit;
+    }
+
+    ctx->senderSuspended = 0;
 
 exit:
     return ret;
@@ -933,7 +983,11 @@ static void senderTaskFct_f(TASK_PARAMS_S *params)
     if (ctx->quit) {
         return;
     }
-    
+
+    if (ctx->senderSuspended) {
+        return;
+    }
+
     if (ctx->clientsList->lock(ctx->clientsList) != LIST_ERROR_NONE) {
         Logd("Failed to lock clientsList");
         return;

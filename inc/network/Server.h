@@ -59,13 +59,16 @@ typedef SERVER_ERROR_E (*SERVER_STOP_F )(SERVER_S *obj, SERVER_PARAMS_S *params)
 typedef SERVER_ERROR_E (*SERVER_ADD_RECEIVER_F)(SERVER_S *obj, SERVER_PARAMS_S *params, LINK_S *client);
 typedef SERVER_ERROR_E (*SERVER_REMOVE_RECEIVER_F)(SERVER_S *obj, SERVER_PARAMS_S *params, LINK_S *client);
 
+typedef SERVER_ERROR_E (*SERVER_SUSPEND_SENDER_F)(SERVER_S *obj, SERVER_PARAMS_S *params);
+typedef SERVER_ERROR_E (*SERVER_RESUME_SSENDER_F)(SERVER_S *obj, SERVER_PARAMS_S *params);
+
 typedef SERVER_ERROR_E (*SERVER_DISCONNECT_CLIENT_F)(SERVER_S *obj, SERVER_PARAMS_S *params, LINK_S *client);
 
 typedef SERVER_ERROR_E (*SERVER_SEND_DATA_F)(SERVER_S *obj, SERVER_PARAMS_S *params, BUFFER_S *buffer);
 
 enum SERVER_ACCEPT_MODE_E {
-    SERVER_ACCEPT_MODE_AUTOMATIC, // Dispatch data to all clients once connected
-    SERVER_ACCEPT_MODE_MANUAL,    // Wait until client is added to receivers' list
+    SERVER_ACCEPT_MODE_AUTOMATIC, /* Dispatch data to all connected clients i.e no need to call addReceiver() */
+    SERVER_ACCEPT_MODE_MANUAL,    /* Wait until client is added to receivers' list */
 };
 
 enum SERVER_ERROR_E {
@@ -90,8 +93,8 @@ struct SERVER_PARAMS_S {
     char                       mime[MAX_MIME_SIZE];
     
     union {
-        RECIPIENT_S            server;                          // Used in connection-oriented mode
-        char                   serverSocketName[MAX_NAME_SIZE]; // Used in connectionless mode
+        RECIPIENT_S            server;                          /* Used in connection-oriented mode */
+        char                   serverSocketName[MAX_NAME_SIZE]; /* Used in connectionless mode */
     } recipient;
     
     PRIORITY_E                 priority;
@@ -107,10 +110,12 @@ struct SERVER_S {
     SERVER_START_F             start;
     SERVER_STOP_F              stop;
     
-    SERVER_ADD_RECEIVER_F      addReceiver;    // Client added to receivers' list => it starts receiving data from server
-                                               // IMPORTANT: To add client later after connection, client's type must be APPLICATION
+    SERVER_ADD_RECEIVER_F      addReceiver;    /* Client added to receivers' list => it starts receiving data from server */
     SERVER_REMOVE_RECEIVER_F   removeReceiver; // Remove client from receivers' list but still connected
     
+    SERVER_SUSPEND_SENDER_F    suspendSender;
+    SERVER_SUSPEND_SENDER_F    resumeSender;
+
     SERVER_DISCONNECT_CLIENT_F disconnectClient; // Close link with client and release its resources
     
     SERVER_SEND_DATA_F         sendData;
