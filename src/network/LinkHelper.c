@@ -190,7 +190,7 @@ static void parseHttp404NotFound_f  (LINK_HELPER_S *obj, HTTP_404_NOT_FOUND_S *i
 static void prepareHttpContent_f(LINK_HELPER_S *obj, HTTP_CONTENT_S *inOut);
 static void parseHttpContent_f  (LINK_HELPER_S *obj, HTTP_CONTENT_S *inOut);
 
-static int8_t getPeerName_f(LINK_HELPER_S *obj, LINK_S *link);
+static int8_t getPeerName_f(LINK_HELPER_S *obj, LINK_S *link, RECIPIENT_S *result);
 
 static int8_t  setBlocking_f      (LINK_HELPER_S *obj, LINK_S *link, uint8_t blocking);
 static uint8_t isReadyForWriting_f(LINK_HELPER_S *obj, LINK_S *link, uint64_t timeout_ms);
@@ -535,36 +535,37 @@ static void parseHttpContent_f(LINK_HELPER_S *obj, HTTP_CONTENT_S *inOut)
 /*!
  *
  */
-static int8_t getPeerName_f(LINK_HELPER_S *obj, LINK_S *link)//TODO
+static int8_t getPeerName_f(LINK_HELPER_S *obj, LINK_S *link, RECIPIENT_S *result)
 {
-    assert(obj && link);
+    assert(obj && link && result);
     
     SOCKLEN_T len;
     SOCKADDR_STORAGE addr;
-    char ipstr[MAX_ADDRESS_SIZE];
-    int16_t port;
 
     len = sizeof(SOCKADDR_STORAGE);
-    getpeername(link->sock, (SOCKADDR*)&addr, &len);
 
-    // Deal with both IPv4 and IPv6:
+    if (getpeername(link->sock, (SOCKADDR*)&addr, &len) < 0) {
+        Loge("getpeername() failed - %s", strerror(errno));
+        return ERROR;
+    }
+
     if (addr.ss_family == AF_INET) {
         SOCKADDR_IN *s = (SOCKADDR_IN *)&addr;
-        port           = ntohs(s->sin_port);
 
-        inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof(ipstr));
+        inet_ntop(AF_INET, &s->sin_addr, result->host, sizeof(result->host));
+        sprintf(result->service, "%d", ntohs(s->sin_port));
     }
-    else { // AF_INET6
+    else {
         SOCKADDR_IN6 *s = (SOCKADDR_IN6*)&addr;
-        port            = ntohs(s->sin6_port);
 
-        inet_ntop(AF_INET6, &s->sin6_addr, ipstr, sizeof(ipstr));
+        inet_ntop(AF_INET6, &s->sin6_addr, result->host, sizeof(result->host));
+        sprintf(result->service, "%d", ntohs(s->sin6_port));
     }
 
-    Logd("Peer IP address: %s", ipstr);
-    Logd("Peer port      : %d", port);
+    Logd("Peer IP address: %s", result->host);
+    Logd("Peer port      : %s", result->service);
 
-    return 0;
+    return DONE;
 }
 
 /*!

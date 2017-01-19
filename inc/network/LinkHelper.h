@@ -123,7 +123,7 @@ typedef void (*LINK_HELPER_PARSE_HTTP_404_NOT_FOUND_F  )(LINK_HELPER_S *obj, HTT
 typedef void (*LINK_HELPER_PREPARE_HTTP_CONTENT_F)(LINK_HELPER_S *obj, HTTP_CONTENT_S *inOut);
 typedef void (*LINK_HELPER_PARSE_HTTP_CONTENT_F  )(LINK_HELPER_S *obj, HTTP_CONTENT_S *inOut);
 
-typedef int8_t (*LINK_HELPER_GET_PEER_NAME_F)(LINK_HELPER_S *obj, LINK_S *link);//TODO - Add *result
+typedef int8_t (*LINK_HELPER_GET_PEER_NAME_F)(LINK_HELPER_S *obj, LINK_S *link, RECIPIENT_S *result);
 
 typedef int8_t  (*LINK_HELPER_SET_BLOCKING_F        )(LINK_HELPER_S *obj, LINK_S *link, uint8_t blocking);
 typedef uint8_t (*LINK_HELPER_IS_READY_FOR_WRITING_F)(LINK_HELPER_S *obj, LINK_S *link, uint64_t timeout_ms);
