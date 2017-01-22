@@ -35,76 +35,101 @@ extern "C" {
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-#include "specific/Common.h"
+#include "core/Common.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/*                                           DEFINE                                             */
 /* -------------------------------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/*                                           TYPEDEFS                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum SPECIFIC_ERROR_E             SPECIFIC_ERROR_E;
-typedef enum SPECIFIC_KEEP_ALIVE_METHOD_E SPECIFIC_KEEP_ALIVE_METHOD_E;
+typedef enum SPECIFIC_ERROR_E          SPECIFIC_ERROR_E;
 
-typedef struct SPECIFIC_S                 SPECIFIC_S;
+typedef struct SPECIFIC_GETTERS_S      SPECIFIC_GETTERS_S;
+typedef struct SPECIFIC_TEXT_IDS_S     SPECIFIC_TEXT_IDS_S;
+typedef struct SPECIFIC_IMAGE_IDS_S    SPECIFIC_IMAGE_IDS_S;
+typedef struct SPECIFIC_S              SPECIFIC_S;
 
-typedef SPECIFIC_ERROR_E (*SPECIFIC_LOAD_ALL_PARAMS_F  )(SPECIFIC_S *obj);
-typedef SPECIFIC_ERROR_E (*SPECIFIC_UNLOAD_ALL_PARAMS_F)(SPECIFIC_S *obj);
+typedef void (*SPECIFIC_GET_STRING_F  )(void *userData, uint32_t stringId, char *language, char *strOut);
+typedef void (*SPECIFIC_GET_COLOR_F   )(void *userData, int32_t colorId, GFX_COLOR_S *colorOut);
+typedef void (*SPECIFIC_GET_FONT_F    )(void *userData, uint32_t fontId, char *ttfFontOut);
+typedef void (*SPECIFIC_GET_IMAGE_F   )(void *userData, uint32_t imageId, GFX_IMAGE_S *imageOut);
+typedef void (*SPECIFIC_GET_LANGUAGE_F)(void *userData, char *currentIn, char *nextOut);
 
-typedef SPECIFIC_ERROR_E (*SPECIFIC_LOAD_GRAPHICS_PARAMS_F  )(SPECIFIC_S *obj);
-typedef SPECIFIC_ERROR_E (*SPECIFIC_UNLOAD_GRAPHICS_PARAMS_F)(SPECIFIC_S *obj);
+typedef SPECIFIC_ERROR_E (*SPECIFIC_GET_VIDEO_CONFIG_F)(SPECIFIC_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice);
 
-typedef SPECIFIC_ERROR_E (*SPECIFIC_LOAD_VIDEO_PARAMS_F  )(SPECIFIC_S *obj);
-typedef SPECIFIC_ERROR_E (*SPECIFIC_UNLOAD_VIDEO_PARAMS_F)(SPECIFIC_S *obj);
+typedef SPECIFIC_ERROR_E (*SPECIFIC_INIT_ELEMENT_DATA_F  )(SPECIFIC_S *obj, void **data);
+typedef SPECIFIC_ERROR_E (*SPECIFIC_UNINIT_ELEMENT_DATA_F)(SPECIFIC_S *obj, void **data);
 
-typedef SPECIFIC_ERROR_E (*SPECIFIC_LOAD_SERVERS_PARAMS_F  )(SPECIFIC_S *obj);
-typedef SPECIFIC_ERROR_E (*SPECIFIC_UNLOAD_SERVERS_PARAMS_F)(SPECIFIC_S *obj);
+typedef SPECIFIC_ERROR_E (*SPECIFIC_SET_ELEMENT_GETTERS_F  )(SPECIFIC_S *obj, void *data, SPECIFIC_GETTERS_S *getters);
+typedef SPECIFIC_ERROR_E (*SPECIFIC_UNSET_ELEMENT_GETTERS_F)(SPECIFIC_S *obj, void *data);
 
-typedef SPECIFIC_ERROR_E (*SPECIFIC_LOAD_CLIENTS_PARAMS_F  )(SPECIFIC_S *obj);
-typedef SPECIFIC_ERROR_E (*SPECIFIC_UNLOAD_CLIENTS_PARAMS_F)(SPECIFIC_S *obj);
+typedef SPECIFIC_ERROR_E (*SPECIFIC_SET_ELEMENT_TEXT_IDS_F  )(SPECIFIC_S *obj, void *data, SPECIFIC_TEXT_IDS_S *textIds);
+typedef SPECIFIC_ERROR_E (*SPECIFIC_UNSET_ELEMENT_TEXT_IDS_F)(SPECIFIC_S *obj, void *data);
 
-typedef SPECIFIC_ERROR_E (*SPECIFIC_KEEP_APP_RUNNING_F)(SPECIFIC_S *obj, SPECIFIC_KEEP_ALIVE_METHOD_E method, uint32_t timeout_s);
+typedef SPECIFIC_ERROR_E (*SPECIFIC_SET_ELEMENT_IMAGE_IDS_F  )(SPECIFIC_S *obj, void *data, SPECIFIC_IMAGE_IDS_S *imageIds);
+typedef SPECIFIC_ERROR_E (*SPECIFIC_UNSET_ELEMENT_IMAGE_IDS_F)(SPECIFIC_S *obj, void *data);
+
+typedef SPECIFIC_ERROR_E (*SPECIFIC_SET_CLICK_HANDLER_F  )(SPECIFIC_S *obj, void *data, char *clickHandlerName, uint32_t index);
+typedef SPECIFIC_ERROR_E (*SPECIFIC_UNSET_CLICK_HANDLER_F)(SPECIFIC_S *obj, void *data);
+
+typedef SPECIFIC_ERROR_E (*SPECIFIC_HANDLE_CLICK_F)(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent);
 
 enum SPECIFIC_ERROR_E {
     SPECIFIC_ERROR_NONE,
     SPECIFIC_ERROR_INIT,
     SPECIFIC_ERROR_UNINIT,
-    SPECIFIC_ERROR_PARAMS,
-    SPECIFIC_ERROR_XML,
-    SPECIFIC_ERROR_KEEP_ALIVE
+    SPECIFIC_ERROR_PARAMS
 };
 
-enum SPECIFIC_KEEP_ALIVE_METHOD_E {
-    SPECIFIC_KEEP_ALIVE_EVENTS_BASED,
-    SPECIFIC_KEEP_ALIVE_SEMAPHORE_BASED,
-    SPECIFIC_KEEP_ALIVE_TIMER_BASED
+struct SPECIFIC_GETTERS_S {
+    SPECIFIC_GET_STRING_F   getString;
+    SPECIFIC_GET_COLOR_F    getColor;
+    SPECIFIC_GET_FONT_F     getFont;
+    SPECIFIC_GET_IMAGE_F    getImage;
+    SPECIFIC_GET_LANGUAGE_F getLanguage;
+    
+    void                    *userData;
+};
+
+struct SPECIFIC_TEXT_IDS_S {
+    uint32_t stringId;
+    uint32_t fontId;
+    uint32_t colorId;
+};
+
+struct SPECIFIC_IMAGE_IDS_S {
+    uint32_t imageId;
+    int32_t  hiddenColorId;
 };
 
 struct SPECIFIC_S {
-    SPECIFIC_LOAD_ALL_PARAMS_F        loadAllParams;
-    SPECIFIC_UNLOAD_ALL_PARAMS_F      unloadAllParams;
-    
-    SPECIFIC_LOAD_GRAPHICS_PARAMS_F   loadGraphicsParams;
-    SPECIFIC_UNLOAD_GRAPHICS_PARAMS_F unloadGraphicsParams;
-    
-    SPECIFIC_LOAD_VIDEO_PARAMS_F      loadVideoParams;
-    SPECIFIC_UNLOAD_VIDEO_PARAMS_F    unloadVideoParams;
-    
-    SPECIFIC_LOAD_SERVERS_PARAMS_F    loadServersParams;
-    SPECIFIC_UNLOAD_SERVERS_PARAMS_F  unloadServersParams;
-    
-    SPECIFIC_LOAD_CLIENTS_PARAMS_F    loadClientsParams;
-    SPECIFIC_UNLOAD_CLIENTS_PARAMS_F  unloadClientsParams;
-    
-    SPECIFIC_KEEP_APP_RUNNING_F       keepAppRunning;
-    
-    void                              *pData;
+    SPECIFIC_GET_VIDEO_CONFIG_F        getVideoConfig;
+
+    SPECIFIC_INIT_ELEMENT_DATA_F       initElementData;
+    SPECIFIC_UNINIT_ELEMENT_DATA_F     uninitElementData;
+
+    SPECIFIC_SET_ELEMENT_GETTERS_F     setElementGetters;
+    SPECIFIC_UNSET_ELEMENT_GETTERS_F   unsetElementGetters;
+
+    SPECIFIC_SET_ELEMENT_TEXT_IDS_F    setElementTextIds;
+    SPECIFIC_UNSET_ELEMENT_TEXT_IDS_F  unsetElementTextIds;
+
+    SPECIFIC_SET_ELEMENT_IMAGE_IDS_F   setElementImageIds;
+    SPECIFIC_UNSET_ELEMENT_IMAGE_IDS_F unsetElementImageIds;
+
+    SPECIFIC_SET_CLICK_HANDLER_F       setClickHandler;
+    SPECIFIC_UNSET_CLICK_HANDLER_F     unsetClickHandler;
+
+    SPECIFIC_HANDLE_CLICK_F            handleClick;
+
+    void                               *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/*                                           VARIABLES                                          */
 /* -------------------------------------------------------------------------------------------- */
 
 SPECIFIC_ERROR_E Specific_Init  (SPECIFIC_S **obj, CONTEXT_S *ctx);

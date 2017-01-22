@@ -29,7 +29,7 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-#include "specific/Listeners.h"
+#include "core/Listeners.h"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           DEFINE                                            */
@@ -69,7 +69,7 @@ extern LISTENERS_ERROR_E unsetClientsListeners_f(LISTENERS_S *obj);
 /*!
  *
  */
-LISTENERS_ERROR_E Listeners_Init(LISTENERS_S **obj, CONTEXT_S *ctx)
+LISTENERS_ERROR_E Listeners_Init(LISTENERS_S **obj, CONTEXT_S *ctx, SPECIFIC_S *specificObj)
 {
     assert(obj && ctx && (*obj = calloc(1, sizeof(LISTENERS_S))));
     
@@ -88,9 +88,10 @@ LISTENERS_ERROR_E Listeners_Init(LISTENERS_S **obj, CONTEXT_S *ctx)
     (*obj)->setClientsListeners    = setClientsListeners_f;
     (*obj)->unsetClientsListeners  = unsetClientsListeners_f;
     
-    pData->ctx                     = ctx;
+    pData->ctx         = ctx;
+    pData->specificObj = specificObj;
     
-    (*obj)->pData                  = pData;
+    (*obj)->pData = pData;
     
     return LISTENERS_ERROR_NONE;
 }
@@ -104,7 +105,8 @@ LISTENERS_ERROR_E Listeners_UnInit(LISTENERS_S **obj)
     
     LISTENERS_PDATA_S *pData = (LISTENERS_PDATA_S*)((*obj)->pData);
     
-    pData->ctx = NULL;
+    pData->ctx         = NULL;
+    pData->specificObj = NULL;
     
     free(pData);
     pData = NULL;

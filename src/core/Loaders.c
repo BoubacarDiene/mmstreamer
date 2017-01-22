@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   VideoConfig.c
+* \file   Loaders.c
 * \brief  TODO
 * \author Boubacar DIENE
 */
@@ -29,14 +29,14 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-#include "specific/Config.h"
+#include "core/Loaders.h"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           DEFINE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "SPECIFIC-CONFIG"
+#define TAG "LOADERS"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -46,51 +46,57 @@
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-VIDEO_CONFIG_S gVideoConfig[] = {
-	{
-	    .caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING,
-	    .type        = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-	    .pixelformat = V4L2_PIX_FMT_MJPEG,
-	    .colorspace  = V4L2_COLORSPACE_JPEG,
-	    .memory      = V4L2_MEMORY_MMAP,
-	    .awaitMode   = VIDEO_AWAIT_MODE_BLOCKING
-	},
-	{
-	    .caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING,
-	    .type        = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-	    .pixelformat = V4L2_PIX_FMT_MJPEG,
-	    .colorspace  = V4L2_COLORSPACE_JPEG,
-	    .memory      = V4L2_MEMORY_USERPTR,
-	    .awaitMode   = VIDEO_AWAIT_MODE_BLOCKING
-	},
-	{
-	    .caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING,
-	    .type        = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-	    .pixelformat = V4L2_PIX_FMT_YVYU,
-	    .colorspace  = V4L2_COLORSPACE_SMPTE170M,
-	    .memory      = V4L2_MEMORY_MMAP,
-	    .awaitMode   = VIDEO_AWAIT_MODE_BLOCKING
-	},
-	{
-	    .caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING,
-	    .type        = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-	    .pixelformat = V4L2_PIX_FMT_YVYU,
-	    .colorspace  = V4L2_COLORSPACE_SMPTE170M,
-	    .memory      = V4L2_MEMORY_USERPTR,
-	    .awaitMode   = VIDEO_AWAIT_MODE_BLOCKING
-	}
-};
-
-uint32_t nbVideoConfigs = (uint32_t)(sizeof(gVideoConfig) / sizeof(gVideoConfig[0]));
-
 /* -------------------------------------------------------------------------------------------- */
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
+
+extern LOADERS_ERROR_E loadGraphicsXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S *xmlGraphics);
+extern LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics);
+
+extern LOADERS_ERROR_E loadVideoXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEO_S *xmlVideo);
+extern LOADERS_ERROR_E unloadVideoXml_f(LOADERS_S *obj, XML_VIDEO_S *xmlVideo);
+
+extern LOADERS_ERROR_E loadServersXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *xmlServers);
+extern LOADERS_ERROR_E unloadServersXml_f(LOADERS_S *obj, XML_SERVERS_S *xmlServers);
+
+extern LOADERS_ERROR_E loadClientsXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_CLIENTS_S *xmlClients);
+extern LOADERS_ERROR_E unloadClientsXml_f(LOADERS_S *obj, XML_CLIENTS_S *xmlClients);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                      PUBLIC FUNCTIONS                                        */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
-/* -------------------------------------------------------------------------------------------- */
+/*!
+ *
+ */
+LOADERS_ERROR_E Loaders_Init(LOADERS_S **obj)
+{
+    assert(obj && (*obj = calloc(1, sizeof(LOADERS_S))));
+    
+    (*obj)->loadGraphicsXml   = loadGraphicsXml_f;
+    (*obj)->unloadGraphicsXml = unloadGraphicsXml_f;
+    
+    (*obj)->loadVideoXml      = loadVideoXml_f;
+    (*obj)->unloadVideoXml    = unloadVideoXml_f;
+    
+    (*obj)->loadServersXml    = loadServersXml_f;
+    (*obj)->unloadServersXml  = unloadServersXml_f;
+    
+    (*obj)->loadClientsXml    = loadClientsXml_f;
+    (*obj)->unloadClientsXml  = unloadClientsXml_f;
+    
+    return LOADERS_ERROR_NONE;
+}
+
+/*!
+ *
+ */
+LOADERS_ERROR_E Loaders_UnInit(LOADERS_S **obj)
+{
+    assert(obj && *obj);
+    
+    free(*obj);
+    *obj = NULL;
+    
+    return LOADERS_ERROR_NONE;
+}

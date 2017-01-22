@@ -42,7 +42,7 @@ include build/Makefile.inc
 #                            Variables                          #
 #################################################################
 
-# Libraries
+# Binary name
 ifeq (${DEBUG},no)
     BIN_NAME       := ${PROJECT_NAME}-${PROJECT_VERSION}
 else
@@ -71,6 +71,10 @@ OUT_BUILD_SPECIFIC      := ${OUT_BUILD}/specific
 OUT_BUILD_INC_SPECIFIC  := ${OUT_BUILD_SPECIFIC}/include
 OUT_BUILD_OBJS_SPECIFIC := ${OUT_BUILD_SPECIFIC}/objs
 
+OUT_BUILD_CORE          := ${OUT_BUILD}/core
+OUT_BUILD_INC_CORE      := ${OUT_BUILD_CORE}/include
+OUT_BUILD_OBJS_CORE     := ${OUT_BUILD_CORE}/objs
+
 OUT_BUILD_VIDEO         := ${OUT_BUILD}/video
 OUT_BUILD_INC_VIDEO     := ${OUT_BUILD_VIDEO}/include
 OUT_BUILD_OBJS_VIDEO    := ${OUT_BUILD_VIDEO}/objs
@@ -84,6 +88,7 @@ HEADERS            := -I${OUT_BUILD_INC}           \
                        -I${OUT_BUILD_INC_GRAPHICS} \
                        -I${OUT_BUILD_INC_NETWORK}  \
                        -I${OUT_BUILD_INC_SPECIFIC} \
+                       -I${OUT_BUILD_INC_CORE}     \
                        -I${OUT_BUILD_INC_VIDEO}    \
                        -I${OUT_BUILD_INC_DEPS}
 CFLAGS             += ${HEADERS} -DMAIN_CONFIG_FILE=\"${OUT_RELEASE}/res/Main.xml\"
@@ -111,9 +116,10 @@ all: prepare-sources build-submodules ${BIN_NAME}
 # Binary
 ${BIN_NAME}: ${OBJS}
 	${CC} ${CFLAGS} -o ${OUT_BUILD_BIN}/$@ ${OUT_BUILD_OBJS}/*.o ${OUT_BUILD_OBJS_GRAPHICS}/*.o ${OUT_BUILD_OBJS_SPECIFIC}/*.o \
-	                                        ${shell find ${OUT_BUILD_OBJS_VIDEO}/*.o ! -name $(notdir ${LIST}.o) ! -name $(notdir ${TASK}.o)} \
-	                                        ${shell find ${OUT_BUILD_OBJS_NETWORK}/*.o ! -name $(notdir ${LIST}.o) ! -name $(notdir ${TASK}.o)} \
-	                                        ${LDFLAGS}
+            ${OUT_BUILD_OBJS_CORE}/*.o \
+            ${shell find ${OUT_BUILD_OBJS_VIDEO}/*.o ! -name $(notdir ${LIST}.o) ! -name $(notdir ${TASK}.o)} \
+            ${shell find ${OUT_BUILD_OBJS_NETWORK}/*.o ! -name $(notdir ${LIST}.o) ! -name $(notdir ${TASK}.o)} \
+            ${LDFLAGS}
 
 # objects
 %.o: %.c
@@ -183,6 +189,7 @@ build-submodules:
 	make -f build/Makefile.deps all
 	make -f build/Makefile.gfx  all
 	make -f build/Makefile.spec all
+	make -f build/Makefile.core all
 
 #################################################################
 #                              Clean                            #
@@ -194,7 +201,8 @@ clean-all:
 	make -f build/Makefile.net  clean-network
 	make -f build/Makefile.deps clean-dependencies
 	make -f build/Makefile.gfx  clean-graphics
-	make -f build/Makefile.spec clean-specific
+	make -f build/Makefile.spec clean-spec
+	make -f build/Makefile.core clean-core
 	${RM} ${OUT}/${PROJECT_NAME}-${PROJECT_VERSION}* ||:
 
 mrproper-all: clean-all
@@ -203,5 +211,6 @@ mrproper-all: clean-all
 	make -f build/Makefile.net  mrproper-network
 	make -f build/Makefile.deps mrproper-dependencies
 	make -f build/Makefile.gfx  mrproper-graphics
-	make -f build/Makefile.spec mrproper-specific
+	make -f build/Makefile.spec mrproper-spec
+	make -f build/Makefile.core mrproper-core
 	${RM} ${OUT} ||:

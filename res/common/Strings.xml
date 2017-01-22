@@ -15,17 +15,17 @@
   <StrGroup language="en">
     <String id="0"  str="Close" />
     <String id="1"  str="Translate" />
-    <String id="2"  str="Text3En" />
+    <String id="2"  str="Show" />
     <String id="3"  str="Text4En" />
-    <String id="4"  str="This is a title" />
+    <String id="4"  str="mmstreamer project" />
   </StrGroup>
 
   <StrGroup language="fr">
     <String id="0"  str="Fermer" />
     <String id="1"  str="Traduire" />
-    <String id="2"  str="Text3Fr" />
+    <String id="2"  str="Montrer" />
     <String id="3"  str="Text4Fr" />
-    <String id="4"  str="Ceci est un titre" />
+    <String id="4"  str="Projet mmstreamer" />
   </StrGroup>
 
 </Strings>

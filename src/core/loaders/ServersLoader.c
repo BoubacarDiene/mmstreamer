@@ -29,8 +29,8 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-#include "specific/Loaders.h"
-#include "specific/XmlDefines.h"
+#include "core/Loaders.h"
+#include "core/XmlDefines.h"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           DEFINE                                            */

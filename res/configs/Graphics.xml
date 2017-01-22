@@ -122,36 +122,36 @@
       </Element>
 
       <Element name="imageBtn" group="videoView" redrawGroup="1" type="1" x="200" y="200" width="100" height="100">
-        <Config visible="1" clickable="0" focusable="0" hasFocus="0" onClick="" />
+        <Config visible="0" clickable="0" focusable="0" hasFocus="0" onClick="" />
         <Image imageId="0" hiddenColorId="1" />
       </Element>
 
       <Element name="textBtn1" group="menu" redrawGroup="0" type="2" x="20" y="20" width="100" height="100">
-        <Config visible="1" clickable="1" focusable="1" hasFocus="1" onClick="clickHandler0" />
+        <Config visible="1" clickable="1" focusable="1" hasFocus="1" onClick="closeApplication" />
         <Text stringId="0" fontId="2" colorId="6" size="15" />
         <Nav left="" up="textBtn3" right="" down="imageBtn1" />
       </Element>
 
       <Element name="imageBtn1" group="menu" redrawGroup="0" type="1" x="20" y="200" width="100" height="100">
-        <Config visible="1" clickable="1" focusable="1" hasFocus="0" onClick="clickHandler2" />
+        <Config visible="1" clickable="1" focusable="1" hasFocus="0" onClick="hideIcon" />
         <Image imageId="0" hiddenColorId="1" />
         <Nav left="" up="textBtn1" right="" down="textBtn2" />
       </Element>
 
       <Element name="textBtn2" group="menu" redrawGroup="0" type="2" x="20" y="380" width="100" height="100">
-        <Config visible="1" clickable="1" focusable="1" hasFocus="0" onClick="clickHandler1" />
+        <Config visible="1" clickable="1" focusable="1" hasFocus="0" onClick="changeLanguage" />
         <Text stringId="1" fontId="1" colorId="0" size="15" />
         <Nav left="" up="imageBtn1" right="" down="textBtn3" />
       </Element>
 
       <Element name="textBtn3" group="menu" redrawGroup="0" type="2" x="20" y="560" width="100" height="100">
-        <Config visible="1" clickable="1" focusable="1" hasFocus="0" onClick="clickHandler3" />
+        <Config visible="1" clickable="1" focusable="1" hasFocus="0" onClick="showIcon" />
         <Text stringId="2" fontId="2" colorId="1" size="20" />
         <Nav left="" up="textBtn2" right="" down="textBtn1" />
       </Element>
 
       <Element name="textTitle1" group="title" redrawGroup="0" type="2" x="260" y="50" width="100" height="50">
-        <Config visible="1" clickable="0" focusable="0" hasFocus="0" onClick="clickHandler4" />
+        <Config visible="1" clickable="0" focusable="0" hasFocus="0" onClick="stopVideo" />
         <Text stringId="4" fontId="2" colorId="2" size="20" />
       </Element>
     </Elements>

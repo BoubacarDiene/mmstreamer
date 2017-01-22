@@ -77,8 +77,8 @@ struct CLIENT_PARAMS_S {
     LINK_MODE_E         mode;
     
     union {
-        RECIPIENT_S     server;                          // Used in connection-oriented mode
-        char            serverSocketName[MAX_NAME_SIZE]; // Used in connectionless mode
+        RECIPIENT_S     server;                          /* Used in connection-oriented mode */
+        char            serverSocketName[MAX_NAME_SIZE]; /* Used in connectionless mode */
     } recipient;
     
     PRIORITY_E          priority;

@@ -24,8 +24,8 @@
 * \author Boubacar DIENE
 */
 
-#ifndef __SPECIFIC_COMMON_H__
-#define __SPECIFIC_COMMON_H__
+#ifndef __CORE_COMMON_H__
+#define __CORE_COMMON_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,6 +52,8 @@ extern "C" {
 /*                                           TYPEDEFS                                           */
 /* -------------------------------------------------------------------------------------------- */
 
+typedef struct VIDEO_CONFIG_S   VIDEO_CONFIG_S;
+
 typedef struct GRAPHICS_INFOS_S GRAPHICS_INFOS_S;
 typedef struct VIDEO_INFOS_S    VIDEO_INFOS_S;
 typedef struct SERVERS_INFOS_S  SERVERS_INFOS_S;
@@ -61,6 +63,15 @@ typedef struct PARAMS_S         PARAMS_S;
 typedef struct MODULES_S        MODULES_S;
 typedef struct INPUT_S          INPUT_S;
 typedef struct CONTEXT_S        CONTEXT_S;
+
+struct VIDEO_CONFIG_S {
+    uint32_t             caps;
+    enum v4l2_buf_type   type;
+    uint32_t             pixelformat;
+    enum v4l2_colorspace colorspace;
+    enum v4l2_memory     memory;
+    VIDEO_AWAIT_MODE_E   awaitMode;
+};
 
 struct GRAPHICS_INFOS_S {
     char              *currentLanguage;
@@ -152,4 +163,4 @@ struct CONTEXT_S {
 }
 #endif
 
-#endif //__SPECIFIC_COMMON_H__
+#endif //__CORE_COMMON_H__

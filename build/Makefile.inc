@@ -13,7 +13,7 @@
 #                            Variables                          #
 #################################################################
 
-#Project
+# Project
 PROJECT_NAME    := mmstreamer
 PROJECT_VERSION := 0.1
 
@@ -33,7 +33,7 @@ OUT_RELEASE_INC := ${OUT_RELEASE}/inc
 OUT_RELEASE_LIB := ${OUT_RELEASE}/lib
 OUT_RELEASE_RES := ${OUT_RELEASE}/res
 
-# Utils files
+# Utils
 COMMON          := utils/Common
 LIST            := utils/List
 LOG             := utils/Log
@@ -61,6 +61,7 @@ RM              := rm -rf
 MKDIR           := mkdir -p
 PRINT           := @echo
 
+# Versions
 VIDEO_LIB_VERSION    := 1.0
 CLIENT_LIB_VERSION   := 1.0
 SERVER_LIB_VERSION   := 1.0

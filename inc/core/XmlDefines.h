@@ -24,8 +24,8 @@
 * \author Boubacar DIENE
 */
 
-#ifndef __SPECIFIC_XML_DEFINES_H__
-#define __SPECIFIC_XML_DEFINES_H__
+#ifndef __CORE_XML_DEFINES_H__
+#define __CORE_XML_DEFINES_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -142,4 +142,4 @@ extern "C" {
 }
 #endif
 
-#endif //__SPECIFIC_XML_DEFINES_H__
+#endif //__CORE_XML_DEFINES_H__

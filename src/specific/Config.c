@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Loaders.c
+* \file   Config.c
 * \brief  TODO
 * \author Boubacar DIENE
 */
@@ -29,14 +29,14 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-#include "specific/Loaders.h"
+#include "specific/Specific.h"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           DEFINE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "LOADERS"
+#define TAG "SPECIFIC-CONFIG"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -46,57 +46,75 @@
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
+VIDEO_CONFIG_S gVideoConfig[] = {
+    // Choice 0
+	{
+	    .caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING,
+	    .type        = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+	    .pixelformat = V4L2_PIX_FMT_MJPEG,
+	    .colorspace  = V4L2_COLORSPACE_JPEG,
+	    .memory      = V4L2_MEMORY_MMAP,
+	    .awaitMode   = VIDEO_AWAIT_MODE_BLOCKING
+	},
+
+    // Choice 1
+	{
+	    .caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING,
+	    .type        = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+	    .pixelformat = V4L2_PIX_FMT_MJPEG,
+	    .colorspace  = V4L2_COLORSPACE_JPEG,
+	    .memory      = V4L2_MEMORY_USERPTR,
+	    .awaitMode   = VIDEO_AWAIT_MODE_BLOCKING
+	},
+
+    // Choice 2
+	{
+	    .caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING,
+	    .type        = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+	    .pixelformat = V4L2_PIX_FMT_YVYU,
+	    .colorspace  = V4L2_COLORSPACE_SMPTE170M,
+	    .memory      = V4L2_MEMORY_MMAP,
+	    .awaitMode   = VIDEO_AWAIT_MODE_BLOCKING
+	},
+
+    // Choice 3
+	{
+	    .caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING,
+	    .type        = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+	    .pixelformat = V4L2_PIX_FMT_YVYU,
+	    .colorspace  = V4L2_COLORSPACE_SMPTE170M,
+	    .memory      = V4L2_MEMORY_USERPTR,
+	    .awaitMode   = VIDEO_AWAIT_MODE_BLOCKING
+	}
+};
+
+uint32_t gNbVideoConfigs = (uint32_t)(sizeof(gVideoConfig) / sizeof(gVideoConfig[0]));
+
 /* -------------------------------------------------------------------------------------------- */
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-extern LOADERS_ERROR_E loadGraphicsXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S *xmlGraphics);
-extern LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics);
-
-extern LOADERS_ERROR_E loadVideoXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEO_S *xmlVideo);
-extern LOADERS_ERROR_E unloadVideoXml_f(LOADERS_S *obj, XML_VIDEO_S *xmlVideo);
-
-extern LOADERS_ERROR_E loadServersXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *xmlServers);
-extern LOADERS_ERROR_E unloadServersXml_f(LOADERS_S *obj, XML_SERVERS_S *xmlServers);
-
-extern LOADERS_ERROR_E loadClientsXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_CLIENTS_S *xmlClients);
-extern LOADERS_ERROR_E unloadClientsXml_f(LOADERS_S *obj, XML_CLIENTS_S *xmlClients);
+SPECIFIC_ERROR_E getVideoConfig_f(SPECIFIC_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/*                                          FUNCTIONS                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-/*!
- *
- */
-LOADERS_ERROR_E Loaders_Init(LOADERS_S **obj)
+SPECIFIC_ERROR_E getVideoConfig_f(SPECIFIC_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice)
 {
-    assert(obj && (*obj = calloc(1, sizeof(LOADERS_S))));
-    
-    (*obj)->loadGraphicsXml   = loadGraphicsXml_f;
-    (*obj)->unloadGraphicsXml = unloadGraphicsXml_f;
-    
-    (*obj)->loadVideoXml      = loadVideoXml_f;
-    (*obj)->unloadVideoXml    = unloadVideoXml_f;
-    
-    (*obj)->loadServersXml    = loadServersXml_f;
-    (*obj)->unloadServersXml  = unloadServersXml_f;
-    
-    (*obj)->loadClientsXml    = loadClientsXml_f;
-    (*obj)->unloadClientsXml  = unloadClientsXml_f;
-    
-    return LOADERS_ERROR_NONE;
-}
+    assert(obj && config);
 
-/*!
- *
- */
-LOADERS_ERROR_E Loaders_UnInit(LOADERS_S **obj)
-{
-    assert(obj && *obj);
-    
-    free(*obj);
-    *obj = NULL;
-    
-    return LOADERS_ERROR_NONE;
+    if (configChoice >= gNbVideoConfigs) {
+        Loge("Bad choice %u / Nb video configs : %u", configChoice, gNbVideoConfigs);
+        return SPECIFIC_ERROR_PARAMS;
+    }
+
+    config->caps        = gVideoConfig[configChoice].caps;
+    config->type        = gVideoConfig[configChoice].type;
+    config->pixelformat = gVideoConfig[configChoice].pixelformat;
+    config->colorspace  = gVideoConfig[configChoice].colorspace;
+    config->memory      = gVideoConfig[configChoice].memory;
+    config->awaitMode   = gVideoConfig[configChoice].awaitMode;
+
+    return SPECIFIC_ERROR_NONE;
 }
