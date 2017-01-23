@@ -329,64 +329,64 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
             (void)pData->specificObj->initElementData(pData->specificObj, &(*gfxElements)[index]->pData);
             
             strncpy((*gfxElements)[index]->name, xmlGraphics->elements[index].name, sizeof((*gfxElements)[index]->name));
-	        strncpy((*gfxElements)[index]->groupName, xmlGraphics->elements[index].groupName, sizeof((*gfxElements)[index]->groupName));
+            strncpy((*gfxElements)[index]->groupName, xmlGraphics->elements[index].groupName, sizeof((*gfxElements)[index]->groupName));
 
-	        (*gfxElements)[index]->redrawGroup = xmlGraphics->elements[index].redrawGroup;
-	        (*gfxElements)[index]->type        = xmlGraphics->elements[index].type;
+            (*gfxElements)[index]->redrawGroup = xmlGraphics->elements[index].redrawGroup;
+            (*gfxElements)[index]->type        = xmlGraphics->elements[index].type;
 	        
-	        switch ((*gfxElements)[index]->type) {
-	            case GFX_ELEMENT_TYPE_VIDEO:
-	                memset(&(*gfxElements)[index]->data.buffer, '\0', sizeof(BUFFER_S));
-	                break;
+            switch ((*gfxElements)[index]->type) {
+                case GFX_ELEMENT_TYPE_VIDEO:
+                    memset(&(*gfxElements)[index]->data.buffer, '\0', sizeof(BUFFER_S));
+                    break;
 	                
-	            case GFX_ELEMENT_TYPE_IMAGE:
-	                if (!xmlGraphics->elements[index].image) {
-	                    Loge("Bad config - image is expected");
-	                    goto badConfig_exit;
-	                }
+                case GFX_ELEMENT_TYPE_IMAGE:
+                    if (!xmlGraphics->elements[index].image) {
+                        Loge("Bad config - image is expected");
+                        goto badConfig_exit;
+                    }
 
-	                SPECIFIC_IMAGE_IDS_S imageIds;
-	                imageIds.imageId       = xmlGraphics->elements[index].image->imageId;
-	                imageIds.hiddenColorId = xmlGraphics->elements[index].image->hiddenColorId;
+                    SPECIFIC_IMAGE_IDS_S imageIds;
+                    imageIds.imageId       = xmlGraphics->elements[index].image->imageId;
+                    imageIds.hiddenColorId = xmlGraphics->elements[index].image->hiddenColorId;
 	                
-	                (void)pData->specificObj->setElementImageIds(pData->specificObj, (*gfxElements)[index]->pData, &imageIds);
+                    (void)pData->specificObj->setElementImageIds(pData->specificObj, (*gfxElements)[index]->pData, &imageIds);
 	                
-	                getImage_f((void*)&xmlGraphics->common, imageIds.imageId, &(*gfxElements)[index]->data.image);
+                    getImage_f((void*)&xmlGraphics->common, imageIds.imageId, &(*gfxElements)[index]->data.image);
 	                
-	                if (imageIds.hiddenColorId >= 0) {
-	                    assert(((*gfxElements)[index]->data.image.hiddenColor = calloc(1, sizeof(GFX_COLOR_S))));
-	                    getColor_f((void*)&xmlGraphics->common, imageIds.hiddenColorId, (*gfxElements)[index]->data.image.hiddenColor);
-	                }
-	                break;
+                    if (imageIds.hiddenColorId >= 0) {
+                        assert(((*gfxElements)[index]->data.image.hiddenColor = calloc(1, sizeof(GFX_COLOR_S))));
+                        getColor_f((void*)&xmlGraphics->common, imageIds.hiddenColorId, (*gfxElements)[index]->data.image.hiddenColor);
+                    }
+                    break;
 	                
-	            case GFX_ELEMENT_TYPE_TEXT:
-	                if (!xmlGraphics->elements[index].text) {
-	                    Loge("Bad config - text is expected");
-	                    goto badConfig_exit;
-	                }
+                case GFX_ELEMENT_TYPE_TEXT:
+                    if (!xmlGraphics->elements[index].text) {
+                        Loge("Bad config - text is expected");
+                        goto badConfig_exit;
+                    }
                     
                     SPECIFIC_TEXT_IDS_S textIds;
-	                textIds.stringId = xmlGraphics->elements[index].text->stringId;
+                    textIds.stringId = xmlGraphics->elements[index].text->stringId;
                     textIds.fontId   = xmlGraphics->elements[index].text->fontId;
                     textIds.colorId  = xmlGraphics->elements[index].text->colorId;
 	                
-	                (void)pData->specificObj->setElementTextIds(pData->specificObj, (*gfxElements)[index]->pData, &textIds);
+                    (void)pData->specificObj->setElementTextIds(pData->specificObj, (*gfxElements)[index]->pData, &textIds);
                     
                     getString_f((void*)&xmlGraphics->common, textIds.stringId, graphicsInfos->currentLanguage, (*gfxElements)[index]->data.text.str);
-	                getFont_f((void*)&xmlGraphics->common, textIds.fontId, (*gfxElements)[index]->data.text.ttfFont);
+                    getFont_f((void*)&xmlGraphics->common, textIds.fontId, (*gfxElements)[index]->data.text.ttfFont);
 	                
-	                (*gfxElements)[index]->data.text.ttfFontSize = xmlGraphics->elements[index].text->size;
-	                getColor_f((void*)&xmlGraphics->common, (int32_t)textIds.colorId, &(*gfxElements)[index]->data.text.color);
-	                break;
+                    (*gfxElements)[index]->data.text.ttfFontSize = xmlGraphics->elements[index].text->size;
+                    getColor_f((void*)&xmlGraphics->common, (int32_t)textIds.colorId, &(*gfxElements)[index]->data.text.color);
+                    break;
 	                
-	            default:
-	                ;
-	        }
+                default:
+                    ;
+            }
 	        
-	        (*gfxElements)[index]->rect.x = xmlGraphics->elements[index].x;
-	        (*gfxElements)[index]->rect.y = xmlGraphics->elements[index].y;
-	        (*gfxElements)[index]->rect.w = xmlGraphics->elements[index].width;
-	        (*gfxElements)[index]->rect.h = xmlGraphics->elements[index].height;
+            (*gfxElements)[index]->rect.x = xmlGraphics->elements[index].x;
+            (*gfxElements)[index]->rect.y = xmlGraphics->elements[index].y;
+            (*gfxElements)[index]->rect.w = xmlGraphics->elements[index].width;
+            (*gfxElements)[index]->rect.h = xmlGraphics->elements[index].height;
 
             (*gfxElements)[index]->isVisible   = xmlGraphics->elements[index].visible;
             (*gfxElements)[index]->isClickable = xmlGraphics->elements[index].clickable;

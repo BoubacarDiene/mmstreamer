@@ -201,7 +201,7 @@ clean-all:
 	make -f build/Makefile.net  clean-network
 	make -f build/Makefile.deps clean-dependencies
 	make -f build/Makefile.gfx  clean-graphics
-	make -f build/Makefile.spec clean-spec
+	make -f build/Makefile.spec clean-specific
 	make -f build/Makefile.core clean-core
 	${RM} ${OUT}/${PROJECT_NAME}-${PROJECT_VERSION}* ||:
 
@@ -211,6 +211,6 @@ mrproper-all: clean-all
 	make -f build/Makefile.net  mrproper-network
 	make -f build/Makefile.deps mrproper-dependencies
 	make -f build/Makefile.gfx  mrproper-graphics
-	make -f build/Makefile.spec mrproper-spec
+	make -f build/Makefile.spec mrproper-specific
 	make -f build/Makefile.core mrproper-core
 	${RM} ${OUT} ||:
