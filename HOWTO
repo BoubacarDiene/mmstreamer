@@ -8,11 +8,13 @@
   1.1- Launch binary
 
     $ cd <path_to_root_directory>
-    $ ./out/mmstreamer/bin/mmstreamer-0.1
+    $ ./out/mmstreamer/bin/mmstreamer-<x.y>
 
     or in debug mode :
 
-    $ ./out/mmstreamer/bin/mmstreamer-0.1.dbg
+    $ ./out/mmstreamer/bin/mmstreamer-<x.y>.dbg
+
+    Note: <x.y> has to be replaced with the current version of the binary.
 
     If you are using default xml config files provided in github, you should see
     video signal appeared in surface drawn by graphics module.
