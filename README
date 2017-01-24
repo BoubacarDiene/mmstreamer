@@ -9,7 +9,7 @@ mmstreamer is a v4l2-based media streamer entirely written in C and made for the
 operating system. It aims to be an easy-to-use application that can be customized to
 suit your needs.
 
-mmstreamer currently includes 4 independant modules :
+mmstreamer currently includes 4 independent modules :
 
   - Video    : To capture frames from video devices
   - Servers  : To stream frames using unix or inet socket
@@ -18,7 +18,7 @@ mmstreamer currently includes 4 independant modules :
 
 The application has been designed to make configuring these features as simple as
 possible. Unless you have very specific needs, th following xml resources should
-be sufficient to use it:
+be sufficient to use it :
 
   - res/Main.xml             : Choose which modules to launch and how to keep app alive
   - res/configs/Video.xml    : Configure video device and output
