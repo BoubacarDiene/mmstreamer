@@ -5,18 +5,35 @@
 
 1- Description
 
-mmstreamer is a media streamer entirely written in C and made for the linux operating
-system.
+mmstreamer is a v4l2-based media streamer entirely written in C and made for the linux
+operating system. It aims to be an easy-to-use application that can be customized to
+suit your needs.
 
-It currently comes with 4 independant modules :
+mmstreamer currently includes 4 independant modules :
 
-- Video    : Capture frames from video devices
-- Servers  : Stream frames using unix or inet socket
-- Clients  : Get video stream from local or remote streamer
-- Graphics : Locally display video
+  - Video    : To capture frames from video devices
+  - Servers  : To stream frames using unix or inet socket
+  - Clients  : To get video stream from local or remote streamer
+  - Graphics : To locally display video
+
+The application has been designed to make configuring these features as simple as
+possible. Unless you have very specific needs, th following xml resources should
+be sufficient to use it:
+
+  - res/Main.xml             : Choose which modules to launch and how to keep app alive
+  - res/configs/Video.xml    : Configure video device and output
+  - res/configs/Servers.xml  : Configure servers
+  - res/configs/Clients.xml  : Configure clients
+  - res/configs/Graphics.xml : Customize UI and locally display captured video
+                               Note : Graphic elements can be added using <Element> tag
+
+  - res/common/Colors.xml    : Define colors
+  - res/common/Fonts.xml     : List fonts files
+  - res/common/Images.xml    : List images files
+  - res/common/Strings.xml   : Define strings
 
 A simple usage of mmstreamer is to make it behave like a HTTP streamer by streaming
-video frames from your personal computer's webcam toward browsers.
+video signal from your personal computer's webcam toward browsers.
 
 To reach this goal, "Video" module continuously captures frames from camera which it
 can locally display using "Graphics" module  before they are sent to connected clients

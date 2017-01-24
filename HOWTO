@@ -31,7 +31,7 @@
   - See res/configs/Video.xml    : Configure video device and output
   - See res/configs/Servers.xml  : Configure servers
   - See res/configs/Clients.xml  : Configure clients
-  - See res/configs/Graphics.xml : Configure UI to locally display captured video
+  - See res/configs/Graphics.xml : Customize UI and locally display captured video
 
   - See res/common/Colors.xml    : Define colors
   - See res/common/Fonts.xml     : List fonts files
