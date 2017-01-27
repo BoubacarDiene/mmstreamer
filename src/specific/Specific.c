@@ -68,8 +68,8 @@ extern SPECIFIC_ERROR_E unsetElementTextIds_f(SPECIFIC_S *obj, void *data);
 extern SPECIFIC_ERROR_E setElementImageIds_f  (SPECIFIC_S *obj, void *data, SPECIFIC_IMAGE_IDS_S *imageIds);
 extern SPECIFIC_ERROR_E unsetElementImageIds_f(SPECIFIC_S *obj, void *data);
 
-extern SPECIFIC_ERROR_E setClickHandler_f  (SPECIFIC_S *obj, void *data, char *clickHandlerName, uint32_t index);
-extern SPECIFIC_ERROR_E unsetClickHandler_f(SPECIFIC_S *obj, void *data);
+extern SPECIFIC_ERROR_E setClickHandlers_f  (SPECIFIC_S *obj, void *data, SPECIFIC_HANDLERS_S **handlers, uint32_t nbHandlers, uint32_t index);
+extern SPECIFIC_ERROR_E unsetClickHandlers_f(SPECIFIC_S *obj, void *data);
 
 extern SPECIFIC_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent);
 
@@ -101,8 +101,8 @@ SPECIFIC_ERROR_E Specific_Init(SPECIFIC_S **obj, CONTEXT_S *ctx)
     (*obj)->setElementImageIds   = setElementImageIds_f;
     (*obj)->unsetElementImageIds = unsetElementImageIds_f;
 
-    (*obj)->setClickHandler      = setClickHandler_f;
-    (*obj)->unsetClickHandler    = unsetClickHandler_f;
+    (*obj)->setClickHandlers     = setClickHandlers_f;
+    (*obj)->unsetClickHandlers   = unsetClickHandlers_f;
 
     (*obj)->handleClick          = handleClick_f;
 

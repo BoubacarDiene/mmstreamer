@@ -42,26 +42,27 @@
 /*                                           TYPEDEF                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef void (*SPECIFIC_CLICK_HANDLER_F)(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
+typedef void (*SPECIFIC_CLICK_HANDLER_F)(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+
+typedef struct SPECIFIC_CLICK_HANDLERS_S {
+    char                     *name;
+    char                     *data;
+    SPECIFIC_CLICK_HANDLER_F fct;
+} SPECIFIC_CLICK_HANDLERS_S;
 
 typedef struct SPECIFIC_ELEMENT_DATA_S {
-    uint32_t                 index;
+    uint32_t                  index;
     
     union {
-        SPECIFIC_TEXT_IDS_S  text;
-        SPECIFIC_IMAGE_IDS_S image;
+        SPECIFIC_TEXT_IDS_S   text;
+        SPECIFIC_IMAGE_IDS_S  image;
     } ids;
     
-    char                     clickHandlerName[MAX_NAME_SIZE];
-    SPECIFIC_CLICK_HANDLER_F clickHandler;
+    uint32_t                  nbClickHandlers;
+    SPECIFIC_CLICK_HANDLERS_S *clickHandlers;
     
-    SPECIFIC_GETTERS_S       getters;
+    SPECIFIC_GETTERS_S        getters;
 } SPECIFIC_ELEMENT_DATA_S;
-
-typedef struct SPECIFIC_CLICK_HANDLER_MAP_S {
-    char                     *clickHandlerName;
-    SPECIFIC_CLICK_HANDLER_F clickHandler;
-} SPECIFIC_CLICK_HANDLER_MAP_S;
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                         PROTOTYPES                                           */
@@ -80,56 +81,66 @@ SPECIFIC_ERROR_E unsetElementTextIds_f(SPECIFIC_S *obj, void *data);
 SPECIFIC_ERROR_E setElementImageIds_f  (SPECIFIC_S *obj, void *data, SPECIFIC_IMAGE_IDS_S *imageIds);
 SPECIFIC_ERROR_E unsetElementImageIds_f(SPECIFIC_S *obj, void *data);
 
-SPECIFIC_ERROR_E setClickHandler_f  (SPECIFIC_S *obj, void *data, char *clickHandlerName, uint32_t index);
-SPECIFIC_ERROR_E unsetClickHandler_f(SPECIFIC_S *obj, void *data);
+SPECIFIC_ERROR_E setClickHandlers_f  (SPECIFIC_S *obj, void *data, SPECIFIC_HANDLERS_S *handlers, uint32_t nbHandlers, uint32_t index);
+SPECIFIC_ERROR_E unsetClickHandlers_f(SPECIFIC_S *obj, void *data);
 
 SPECIFIC_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent);
 
 /* Click handlers */
-static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
-static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
+static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void hideIcon(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
-static void showIcon(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
+static void hideElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void showElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void stopGraphics (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
-static void startGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
+static void hideGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void showGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void stopVideo (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
-static void startVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
+static void setFocus      (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void stopServers (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
-static void startServers(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
+static void stopGraphics (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void startGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void suspendServers(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
-static void resumeServers (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
+static void stopVideo (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void startVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void stopCients  (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
-static void startClients(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData);
+static void stopServer (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void startServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+
+static void suspendServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void resumeServer (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+
+static void stopCient  (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-static SPECIFIC_CLICK_HANDLER_MAP_S gClickHandlerMap[] = {
-	{ "closeApplication",                      closeApplication },
-	{ "changeLanguage",                        changeLanguage   },
-	{ "hideIcon",                              hideIcon         },
-	{ "showIcon",                              showIcon         },
-	{ "stopGraphics",                          stopGraphics     },
-	{ "startGraphics",                         startGraphics    },
-	{ "stopVideo",                             stopVideo        },
-	{ "startVideo",                            startVideo       },
-	{ "stopServers",                           stopServers      },
-	{ "startServers",                          startServers     },
-	{ "suspendServers",                        suspendServers   },
-	{ "resumeServers",                         resumeServers    },
-	{ "stopCients",                            stopCients       },
-	{ "startClients",                          startClients     },
-	{ NULL,                                    NULL             }
+static SPECIFIC_CLICK_HANDLERS_S gClickHandlers[] = {
+	{ "closeApplication",           NULL,             closeApplication },
+	{ "changeLanguage",             NULL,             changeLanguage   },
+	{ "hideElement",                NULL,             hideElement      },
+	{ "showElement",                NULL,             showElement      },
+	{ "hideGroup",                  NULL,             hideGroup        },
+	{ "showGroup",                  NULL,             showGroup        },
+	{ "setFocus",                   NULL,             setFocus         },
+	{ "takeScreenshot",             NULL,             takeScreenshot   },
+	{ "stopGraphics",               NULL,             stopGraphics     },
+	{ "startGraphics",              NULL,             startGraphics    },
+	{ "stopVideo",                  NULL,             stopVideo        },
+	{ "startVideo",                 NULL,             startVideo       },
+	{ "stopServer",                 NULL,             stopServer       },
+	{ "startServer",                NULL,             startServer      },
+	{ "suspendServer",              NULL,             suspendServer    },
+	{ "resumeServer",               NULL,             resumeServer     },
+	{ "stopCient",                  NULL,             stopCient        },
+	{ "startClient",                NULL,             startClient      },
+	{ NULL,                         NULL,             NULL             }
 };
 
-uint32_t gNbClickHandlers = (uint32_t)(sizeof(gClickHandlerMap) / sizeof(gClickHandlerMap[0]));
+uint32_t gNbClickHandlers = (uint32_t)(sizeof(gClickHandlers) / sizeof(gClickHandlers[0]));
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          FUNCTIONS                                           */
@@ -253,24 +264,36 @@ SPECIFIC_ERROR_E unsetElementImageIds_f(SPECIFIC_S *obj, void *data)
 /*!
  *
  */
-SPECIFIC_ERROR_E setClickHandler_f(SPECIFIC_S *obj, void *data, char *clickHandlerName, uint32_t index)
+SPECIFIC_ERROR_E setClickHandlers_f(SPECIFIC_S *obj, void *data, SPECIFIC_HANDLERS_S *handlers, uint32_t nbHandlers, uint32_t index)
 {
-    assert(obj && data && clickHandlerName);
+    assert(obj && data);
+
+    if (!handlers || (nbHandlers == 0)) {
+        return SPECIFIC_ERROR_PARAMS;
+    }
 
     SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
 
-    elementData->index = index;
-    strncpy(elementData->clickHandlerName, clickHandlerName, sizeof(elementData->clickHandlerName));
+    elementData->index           = index;
+    elementData->nbClickHandlers = nbHandlers;
 
-    uint32_t i = 0;
-    while ((i < gNbClickHandlers)
-            && gClickHandlerMap[i].clickHandlerName
-            && (strcmp(gClickHandlerMap[i].clickHandlerName, clickHandlerName) != 0)) {
-        i++;
-    }
+    assert((elementData->clickHandlers = calloc(1, nbHandlers * sizeof(SPECIFIC_CLICK_HANDLERS_S))));
 
-    if (gClickHandlerMap[i].clickHandlerName) {
-        elementData->clickHandler = gClickHandlerMap[i].clickHandler;
+    uint32_t i, j;
+    for (i = 0; i < nbHandlers; i++) {
+        (elementData->clickHandlers[i]).name = strdup((handlers[i]).name);
+        (elementData->clickHandlers[i]).data = strdup((handlers[i]).data);
+
+        j = 0;
+        while ((j < gNbClickHandlers)
+                && gClickHandlers[j].name
+                && (strcmp(gClickHandlers[j].name, (handlers[i]).name) != 0)) {
+            j++;
+        }
+
+        if (gClickHandlers[j].name) {
+            (elementData->clickHandlers[i]).fct = gClickHandlers[j].fct;
+        }
     }
 
     return SPECIFIC_ERROR_NONE;
@@ -279,13 +302,26 @@ SPECIFIC_ERROR_E setClickHandler_f(SPECIFIC_S *obj, void *data, char *clickHandl
 /*!
  *
  */
-SPECIFIC_ERROR_E unsetClickHandler_f(SPECIFIC_S *obj, void *data)
+SPECIFIC_ERROR_E unsetClickHandlers_f(SPECIFIC_S *obj, void *data)
 {
     assert(obj && data);
 
     SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
 
-    elementData->clickHandler = NULL;
+    uint32_t i;
+    for (i = 0; i < elementData->nbClickHandlers; i++) {
+        if ((elementData->clickHandlers[i]).name) {
+            free((elementData->clickHandlers[i]).name);
+            (elementData->clickHandlers[i]).name = NULL;
+        }
+        if ((elementData->clickHandlers[i]).data) {
+            free((elementData->clickHandlers[i]).data);
+            (elementData->clickHandlers[i]).data = NULL;
+        }
+        (elementData->clickHandlers[i]).fct = NULL;
+    }
+
+    elementData->clickHandlers = NULL;
 
     return SPECIFIC_ERROR_NONE;
 }
@@ -299,8 +335,16 @@ SPECIFIC_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent)
 
     SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxEvent->gfxElementPData;
 
-    if (elementData && elementData->clickHandler) {
-        elementData->clickHandler(ctx, gfxEvent->gfxElementName, elementData);
+    if (!elementData) {
+        return SPECIFIC_ERROR_PARAMS;
+    }
+
+    uint32_t i;
+    for (i = 0; i < elementData->nbClickHandlers; i++) {
+        if ((elementData->clickHandlers[i]).fct) {
+            Logd("Calling click handler : %s", (elementData->clickHandlers[i]).name);
+            (elementData->clickHandlers[i]).fct(ctx, gfxEvent->gfxElementName, elementData, (elementData->clickHandlers[i]).data);
+        }
     }
 
     return SPECIFIC_ERROR_NONE;
@@ -313,10 +357,12 @@ SPECIFIC_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent)
 /*!
  *
  */
-static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
-    
+
+    (void)handlerData;
+
     Logd("Handling click on element \"%s\"", gfxElementName);
 
     ctx->modules.graphicsObj->quit(ctx->modules.graphicsObj);
@@ -325,9 +371,11 @@ static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElem
 /*!
  *
  */
-static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
+
+    (void)handlerData;
     
     SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
     
@@ -370,35 +418,139 @@ static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
 /*!
  *
  */
-static void hideIcon(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void hideElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
     
     SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
     
     Logd("Handling click on element \"%s\"", gfxElementName);
 
-    ctx->modules.graphicsObj->setVisible(ctx->modules.graphicsObj, "imageBtn", 0);
+    ctx->modules.graphicsObj->setVisible(ctx->modules.graphicsObj, handlerData, 0);
 }
 
 /*!
  *
  */
-static void showIcon(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void showElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
     
     SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
     
     Logd("Handling click on element \"%s\"", gfxElementName);
 
-    ctx->modules.graphicsObj->setVisible(ctx->modules.graphicsObj, "imageBtn", 1);
+    ctx->modules.graphicsObj->setVisible(ctx->modules.graphicsObj, handlerData, 1);
 }
 
 /*!
  *
  */
-static void stopGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void hideGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+{
+    assert(ctx && gfxElementName && gfxElementData);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+    
+    Logd("Handling click on element \"%s\"", gfxElementName);
+}
+
+/*!
+ *
+ */
+static void showGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+{
+    assert(ctx && gfxElementName && gfxElementData);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+
+    Logd("Handling click on element \"%s\"", gfxElementName);
+}
+
+/*!
+ *
+ */
+static void setFocus(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+{
+    assert(ctx && gfxElementName && gfxElementData);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+    
+    Logd("Handling click on element \"%s\"", gfxElementName);
+}
+
+/*!
+ *
+ */
+static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+{
+    assert(ctx && gfxElementName && gfxElementData);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+    
+    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
+    GRAPHICS_S *graphicsObj              = ctx->modules.graphicsObj;
+    INPUT_S *input                       = &ctx->input;
+
+    int32_t imageFormat = atoi(handlerData);
+    GFX_IMAGE_S image;
+    struct stat st;
+
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
+    if (stat(input->appDataDir, &st) < 0) {
+        Logd("Creating direcory : \"%s\"", input->appDataDir);
+        if (mkdir(input->appDataDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
+            Loge("%s", strerror(errno));
+            return;
+        }
+    }
+
+    switch (imageFormat) {
+        case GFX_IMAGE_FORMAT_JPG:
+            sprintf(image.path, "%s/screenshot_%ld.jpeg", input->appDataDir, time(NULL));
+            image.format = GFX_IMAGE_FORMAT_JPG;
+            break;
+
+        case GFX_IMAGE_FORMAT_PNG:
+            sprintf(image.path, "%s/screenshot_%ld.png", input->appDataDir, time(NULL));
+            image.format = GFX_IMAGE_FORMAT_PNG;
+            break;
+
+        default:
+            sprintf(image.path, "%s/screenshot_%ld.bmp", input->appDataDir, time(NULL));
+            image.format = GFX_IMAGE_FORMAT_BMP;
+    }
+
+    graphicsObj->createImage(graphicsObj, NULL, &image);
+}
+
+/*!
+ *
+ */
+static void stopGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
     
@@ -408,7 +560,7 @@ static void stopGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementD
 /*!
  *
  */
-static void startGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void startGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
     
@@ -418,7 +570,7 @@ static void startGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
 /*!
  *
  */
-static void stopVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void stopVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
     
@@ -428,7 +580,7 @@ static void stopVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
 /*!
  *
  */
-static void startVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void startVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
     
@@ -438,29 +590,70 @@ static void startVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDat
 /*!
  *
  */
-static void stopServers(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void stopServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
-    
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+
     Logd("Handling click on element \"%s\"", gfxElementName);
 }
 
 /*!
  *
  */
-static void startServers(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void startServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
-    
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+
     Logd("Handling click on element \"%s\"", gfxElementName);
 }
 
 /*!
  *
  */
-static void suspendServers(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void suspendServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+
+    SERVER_S *serverObj           = ctx->modules.serverObj;
+    SERVERS_INFOS_S *serversInfos = &ctx->params.serversInfos;
+
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
+    uint32_t index;
+    for (index = 0; index < serversInfos->nbServers; index++) {
+        if (strcmp((serversInfos->serverParams[index])->name, handlerData) == 0) {
+            serverObj->suspendSender(serverObj, serversInfos->serverParams[index]);
+            break;
+        }
+    }
+}
+
+/*!
+ *
+ */
+static void resumeServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+{
+    assert(ctx && gfxElementName && gfxElementData);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
     
     SERVER_S *serverObj           = ctx->modules.serverObj;
     SERVERS_INFOS_S *serversInfos = &ctx->params.serversInfos;
@@ -469,34 +662,24 @@ static void suspendServers(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
-        serverObj->suspendSender(serverObj, serversInfos->serverParams[index]);
+        if (strcmp((serversInfos->serverParams[index])->name, handlerData) == 0) {
+            serverObj->resumeSender(serverObj, serversInfos->serverParams[index]);
+            break;
+        }
     }
 }
 
 /*!
  *
  */
-static void resumeServers(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void stopCient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
-    
-    SERVER_S *serverObj           = ctx->modules.serverObj;
-    SERVERS_INFOS_S *serversInfos = &ctx->params.serversInfos;
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
-
-    uint32_t index;
-    for (index = 0; index < serversInfos->nbServers; index++) {
-        serverObj->resumeSender(serverObj, serversInfos->serverParams[index]);
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
     }
-}
-
-/*!
- *
- */
-static void stopCients(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
-{
-    assert(ctx && gfxElementName && gfxElementData);
     
     Logd("Handling click on element \"%s\"", gfxElementName);
 }
@@ -504,9 +687,14 @@ static void stopCients(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDat
 /*!
  *
  */
-static void startClients(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData)
+static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
     
     Logd("Handling click on element \"%s\"", gfxElementName);
 }

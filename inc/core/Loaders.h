@@ -66,6 +66,7 @@ typedef struct XML_SCREEN_S        XML_SCREEN_S;
 typedef struct XML_ELEMENT_TEXT_S  XML_ELEMENT_TEXT_S;
 typedef struct XML_ELEMENT_IMAGE_S XML_ELEMENT_IMAGE_S;
 typedef struct XML_ELEMENT_NAV_S   XML_ELEMENT_NAV_S;
+typedef struct XML_ELEMENT_CLICK_S XML_ELEMENT_CLICK_S;
 typedef struct XML_ELEMENT_S       XML_ELEMENT_S;
 typedef struct XML_GRAPHICS_S      XML_GRAPHICS_S;
 
@@ -214,6 +215,11 @@ struct XML_ELEMENT_NAV_S {
     char *down;
 };
 
+struct XML_ELEMENT_CLICK_S {
+    char *name;
+    char *data;
+};
+
 struct XML_ELEMENT_S {
     char                *name;
     char                *groupName;
@@ -235,8 +241,9 @@ struct XML_ELEMENT_S {
     XML_ELEMENT_TEXT_S  *text;
     XML_ELEMENT_IMAGE_S *image;
     XML_ELEMENT_NAV_S   *nav;
-    
-    char                *clickHandlerName;
+
+    uint32_t            nbClickHandlers;
+    XML_ELEMENT_CLICK_S *clickHandlers;
 };
 
 struct XML_GRAPHICS_S {

@@ -47,6 +47,7 @@ extern "C" {
 
 typedef enum SPECIFIC_ERROR_E          SPECIFIC_ERROR_E;
 
+typedef struct SPECIFIC_HANDLERS_S     SPECIFIC_HANDLERS_S;
 typedef struct SPECIFIC_GETTERS_S      SPECIFIC_GETTERS_S;
 typedef struct SPECIFIC_TEXT_IDS_S     SPECIFIC_TEXT_IDS_S;
 typedef struct SPECIFIC_IMAGE_IDS_S    SPECIFIC_IMAGE_IDS_S;
@@ -72,8 +73,8 @@ typedef SPECIFIC_ERROR_E (*SPECIFIC_UNSET_ELEMENT_TEXT_IDS_F)(SPECIFIC_S *obj, v
 typedef SPECIFIC_ERROR_E (*SPECIFIC_SET_ELEMENT_IMAGE_IDS_F  )(SPECIFIC_S *obj, void *data, SPECIFIC_IMAGE_IDS_S *imageIds);
 typedef SPECIFIC_ERROR_E (*SPECIFIC_UNSET_ELEMENT_IMAGE_IDS_F)(SPECIFIC_S *obj, void *data);
 
-typedef SPECIFIC_ERROR_E (*SPECIFIC_SET_CLICK_HANDLER_F  )(SPECIFIC_S *obj, void *data, char *clickHandlerName, uint32_t index);
-typedef SPECIFIC_ERROR_E (*SPECIFIC_UNSET_CLICK_HANDLER_F)(SPECIFIC_S *obj, void *data);
+typedef SPECIFIC_ERROR_E (*SPECIFIC_SET_CLICK_HANDLERS_F  )(SPECIFIC_S *obj, void *data, SPECIFIC_HANDLERS_S *handlers, uint32_t nbHandlers, uint32_t index);
+typedef SPECIFIC_ERROR_E (*SPECIFIC_UNSET_CLICK_HANDLERS_F)(SPECIFIC_S *obj, void *data);
 
 typedef SPECIFIC_ERROR_E (*SPECIFIC_HANDLE_CLICK_F)(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent);
 
@@ -82,6 +83,11 @@ enum SPECIFIC_ERROR_E {
     SPECIFIC_ERROR_INIT,
     SPECIFIC_ERROR_UNINIT,
     SPECIFIC_ERROR_PARAMS
+};
+
+struct SPECIFIC_HANDLERS_S {
+    char *name;
+    char *data;
 };
 
 struct SPECIFIC_GETTERS_S {
@@ -120,8 +126,8 @@ struct SPECIFIC_S {
     SPECIFIC_SET_ELEMENT_IMAGE_IDS_F   setElementImageIds;
     SPECIFIC_UNSET_ELEMENT_IMAGE_IDS_F unsetElementImageIds;
 
-    SPECIFIC_SET_CLICK_HANDLER_F       setClickHandler;
-    SPECIFIC_UNSET_CLICK_HANDLER_F     unsetClickHandler;
+    SPECIFIC_SET_CLICK_HANDLERS_F      setClickHandlers;
+    SPECIFIC_UNSET_CLICK_HANDLERS_F    unsetClickHandlers;
 
     SPECIFIC_HANDLE_CLICK_F            handleClick;
 

@@ -33,12 +33,12 @@
                                                Note: Attribute timeout_s="<value in seconds>" is ignored if
                                                method is not Timer_based.
   -->
-  <General appDataDir="/tmp/" xmlRootDir="./out/mmstreamer/res/" keepAliveMethod="0" timeout_s="10" />
+  <General appDataDir="/tmp/mmstreamer" xmlRootDir="./out/mmstreamer/res/" keepAliveMethod="0" timeout_s="10" />
 
   <!--
     Modules
 
-    4 independant modules are currently defined:
+    4 independent modules are currently defined:
 
         + Video    : Capture video signal from video devices
         + Servers  : Stream video frames using unix or inet socket
@@ -54,7 +54,7 @@
                        You can start it whenever and where you want
                   1 => Automatic start i.e iniatialized and started in Main.c
 
-                  Note: autoStart="1" does not need change an update of the source
+                  Note: autoStart="1" => No need to update the source
                         code as it is already handled (Cf. Main.c)
 
     - xmlFile : Path to the config file of the module

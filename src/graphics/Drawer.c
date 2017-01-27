@@ -309,7 +309,7 @@ static DRAWER_ERROR_E drawVideo_f(DRAWER_S *obj, GFX_RECT_S *rect, BUFFER_S *buf
     assert(obj && obj->pData);
     
     if (!rect || !buffer || !buffer->data) {
-        Loge("Bad arguments --> Probably initializing screen");
+        //Loge("Bad arguments --> Probably initializing screen");
         return DRAWER_ERROR_PARAMS;
     }
     
@@ -547,7 +547,12 @@ static DRAWER_ERROR_E setBgColor_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S 
 static DRAWER_ERROR_E saveBuffer_f(DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut)
 {
     assert(obj && obj->pData && buffer && inOut);
-    
+
+    if (!buffer->data) {
+        Loge("No data provided");
+        return DRAWER_ERROR_PARAMS;
+    }
+
     DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)(obj->pData);
     DRAWER_ERROR_E ret           = DRAWER_ERROR_SAVE;
     int32_t jpeg                 = -1;
@@ -567,7 +572,9 @@ static DRAWER_ERROR_E saveBuffer_f(DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S 
             goto exit;
         }
     }
-    
+
+    Logd("Saving buffer to \"%s\"", inOut->path);
+
     switch (inOut->format) {
         case GFX_IMAGE_FORMAT_PNG:
             break;

@@ -60,12 +60,16 @@ static void onScreenCb    (void *userData, const char **attrs);
 static void onBackgroundCb(void *userData, const char **attrs);
 static void onIconCb      (void *userData, const char **attrs);
 
-static void onElementStartCb(void *userData, const char **attrs);
-static void onElementEndCb  (void *userData);
-static void onElementConfigCb      (void *userData, const char **attrs);
-static void onElementTextCb        (void *userData, const char **attrs);
-static void onElementNavCb         (void *userData, const char **attrs);
-static void onElementImageCb       (void *userData, const char **attrs);
+static void onElementStartCb (void *userData, const char **attrs);
+static void onElementEndCb   (void *userData);
+static void onElementConfigCb(void *userData, const char **attrs);
+static void onElementTextCb  (void *userData, const char **attrs);
+static void onElementNavCb   (void *userData, const char **attrs);
+static void onElementImageCb (void *userData, const char **attrs);
+
+static void onElementClickStartCb(void *userData, const char **attrs);
+static void onElementClickEndCb  (void *userData);
+static void onElementHandlerCb   (void *userData, const char **attrs);
 
 static void onFocusCb(void *userData, const char **attrs);
 static void onBlurCb (void *userData, const char **attrs);
@@ -104,23 +108,25 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
     Logd("Parsing file : \"%s/%s\"", input->xmlRootDir, input->graphicsXml);
     
     PARSER_TAGS_HANDLER_S gfxTagsHandlers[] = {
-    	{ XML_TAG_COMMON,      onCommonCb,        NULL,           NULL },
-    	{ XML_TAG_COLORS,      onColorsCb,        NULL,           NULL },
-    	{ XML_TAG_IMAGES,      onImagesCb,        NULL,           NULL },
-    	{ XML_TAG_FONTS,       onFontsCb,         NULL,           NULL },
-    	{ XML_TAG_STRINGS,     onStringsCb,       NULL,           NULL },
-    	{ XML_TAG_SCREEN,      onScreenCb,        NULL,           NULL },
-    	{ XML_TAG_BACKGROUND,  onBackgroundCb,    NULL,           NULL },
-    	{ XML_TAG_ICON,        onIconCb,          NULL,           NULL },
-    	{ XML_TAG_ELEMENT,     onElementStartCb,  onElementEndCb, NULL },
-    	{ XML_TAG_CONFIG,      onElementConfigCb, NULL,           NULL },
-    	{ XML_TAG_TEXT,        onElementTextCb,   NULL,           NULL },
-    	{ XML_TAG_NAV,         onElementNavCb,    NULL,           NULL },
-    	{ XML_TAG_IMAGE,       onElementImageCb,  NULL,           NULL },
-    	{ XML_TAG_FOCUS,       onFocusCb,         NULL,           NULL },
-    	{ XML_TAG_BLUR,        onBlurCb,          NULL,           NULL },
-    	{ XML_TAG_RESET,       onResetCb,         NULL,           NULL },
-    	{ NULL,                NULL,              NULL,           NULL }
+        { XML_TAG_COMMON,      onCommonCb,             NULL,                NULL },
+        { XML_TAG_COLORS,      onColorsCb,             NULL,                NULL },
+        { XML_TAG_IMAGES,      onImagesCb,             NULL,                NULL },
+        { XML_TAG_FONTS,       onFontsCb,              NULL,                NULL },
+        { XML_TAG_STRINGS,     onStringsCb,            NULL,                NULL },
+        { XML_TAG_SCREEN,      onScreenCb,             NULL,                NULL },
+        { XML_TAG_BACKGROUND,  onBackgroundCb,         NULL,                NULL },
+        { XML_TAG_ICON,        onIconCb,               NULL,                NULL },
+        { XML_TAG_ELEMENT,     onElementStartCb,       onElementEndCb,      NULL },
+        { XML_TAG_CONFIG,      onElementConfigCb,      NULL,                NULL },
+        { XML_TAG_TEXT,        onElementTextCb,        NULL,                NULL },
+        { XML_TAG_NAV,         onElementNavCb,         NULL,                NULL },
+        { XML_TAG_IMAGE,       onElementImageCb,       NULL,                NULL },
+        { XML_TAG_ON_CLICK,    onElementClickStartCb,  onElementClickEndCb, NULL },
+        { XML_TAG_HANDLER,     onElementHandlerCb,     NULL,                NULL },
+        { XML_TAG_FOCUS,       onFocusCb,              NULL,                NULL },
+        { XML_TAG_BLUR,        onBlurCb,               NULL,                NULL },
+        { XML_TAG_RESET,       onResetCb,              NULL,                NULL },
+        { NULL,                NULL,                   NULL,                NULL }
     };
     
     PARSER_PARAMS_S gfxParserParams;
@@ -265,7 +271,7 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
         xmlGraphics->screen.caption = NULL;
     }
     
-    uint32_t index;
+    uint32_t index, handlerIndex;
     
     XML_ELEMENT_S *element;
     for (index = 0; index < xmlGraphics->nbElements; index++) {
@@ -277,10 +283,6 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
         if (element->groupName) {
             free(element->groupName);
             element->groupName = NULL;
-        }
-        if (element->clickHandlerName) {
-            free(element->clickHandlerName);
-            element->clickHandlerName = NULL;
         }
         if (element->text) {
             free(element->text);
@@ -309,6 +311,22 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
         if (element->image) {
             free(element->image);
             element->image = NULL;
+        }
+        if (element->clickHandlers) {
+            XML_ELEMENT_CLICK_S *handler;
+            for (handlerIndex = 0; handlerIndex < element->nbClickHandlers; handlerIndex++) {
+                handler = &element->clickHandlers[handlerIndex];
+                if (handler->name) {
+                    free(handler->name);
+                    handler->name = NULL;
+                }
+                if (handler->data) {
+                    free(handler->data);
+                    handler->data = NULL;
+                }
+            }
+            free(element->clickHandlers);
+            element->clickHandlers = NULL;
         }
     }
     
@@ -820,12 +838,6 @@ static void onElementConfigCb(void *userData, const char **attrs)
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
-    	    .attrName          = XML_ATTR_ON_CLICK,
-    	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&element->clickHandlerName,
-    	    .attrGetter.vector = parserObj->getString
-        },
-    	{
     	    NULL,
     	    PARSER_ATTR_TYPE_NONE,
     	    NULL,
@@ -980,6 +992,76 @@ static void onElementImageCb(void *userData, const char **attrs)
     if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
     	Loge("Failed to retrieve attributes in \"Element image\" tag");
     }
+}
+
+/*!
+ *
+ */
+static void onElementClickStartCb(void *userData, const char **attrs)
+{
+    assert(userData);
+
+    (void)attrs;
+}
+
+/*!
+ *
+ */
+static void onElementClickEndCb(void *userData)
+{
+    assert(userData);
+
+    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
+    XML_ELEMENT_S *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
+
+    Logd("%u click handlers added", element->nbClickHandlers);
+}
+
+/*!
+ *
+ */
+static void onElementHandlerCb(void *userData, const char **attrs)
+{
+    assert(userData);
+
+    XML_GRAPHICS_S *xmlGraphics  = (XML_GRAPHICS_S*)userData;
+    CONTEXT_S *ctx               = (CONTEXT_S*)xmlGraphics->reserved;
+    PARSER_S *parserObj          = ctx->modules.parserObj;
+    XML_ELEMENT_S *element       = &xmlGraphics->elements[xmlGraphics->nbElements];
+
+    element->clickHandlers = realloc(element->clickHandlers, (element->nbClickHandlers + 1) * sizeof(XML_ELEMENT_CLICK_S));
+    assert(element->clickHandlers);
+
+    memset(&element->clickHandlers[element->nbClickHandlers], '\0', sizeof(XML_ELEMENT_CLICK_S));
+
+    XML_ELEMENT_CLICK_S *handler = &element->clickHandlers[element->nbClickHandlers];
+
+    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+        {
+            .attrName          = XML_ATTR_NAME,
+            .attrType          = PARSER_ATTR_TYPE_VECTOR,
+            .attrValue.vector  = (void**)&handler->name,
+            .attrGetter.vector = parserObj->getString
+        },
+        {
+            .attrName          = XML_ATTR_DATA,
+            .attrType          = PARSER_ATTR_TYPE_VECTOR,
+            .attrValue.vector  = (void**)&handler->data,
+            .attrGetter.vector = parserObj->getString
+        },
+        {
+            NULL,
+            PARSER_ATTR_TYPE_NONE,
+            NULL,
+            NULL
+        }
+    };
+
+    if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
+        Loge("Failed to retrieve attributes in \"Element click handler\" tag");
+    }
+
+    element->nbClickHandlers++;
 }
 
 /*!

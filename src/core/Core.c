@@ -411,8 +411,9 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
 	                
             (void)pData->specificObj->setElementGetters(pData->specificObj, (*gfxElements)[index]->pData, &getters);
             
-            (void)pData->specificObj->setClickHandler(pData->specificObj, (*gfxElements)[index]->pData,
-	                                            xmlGraphics->elements[index].clickHandlerName, index);
+            (void)pData->specificObj->setClickHandlers(pData->specificObj, (*gfxElements)[index]->pData,
+	                                            (SPECIFIC_HANDLERS_S*)xmlGraphics->elements[index].clickHandlers,
+	                                            xmlGraphics->elements[index].nbClickHandlers, index);
             
             if (graphicsObj->pushElement(graphicsObj, (*gfxElements)[index]) != GRAPHICS_ERROR_NONE) {
                 Loge("Failed to push element \"%s\"", (*gfxElements)[index]->name);
@@ -435,7 +436,7 @@ badConfig_exit:
         for (index = 0; index < *nbGfxElements; index++) {
             if ((*gfxElements)[index]) {
                 if ((*gfxElements)[index]->pData) {
-                    (void)pData->specificObj->unsetClickHandler(pData->specificObj, (*gfxElements)[index]->pData);
+                    (void)pData->specificObj->unsetClickHandlers(pData->specificObj, (*gfxElements)[index]->pData);
                     (void)pData->specificObj->unsetElementGetters(pData->specificObj, (*gfxElements)[index]->pData);
                     (void)pData->specificObj->unsetElementTextIds(pData->specificObj, (*gfxElements)[index]->pData);
                     (void)pData->specificObj->unsetElementImageIds(pData->specificObj, (*gfxElements)[index]->pData);
@@ -489,7 +490,7 @@ static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj)
         for (index = 0; index < nbGfxElements; index++) {
             if ((*gfxElements)[index]) {
                 if ((*gfxElements)[index]->pData) {
-                    (void)pData->specificObj->unsetClickHandler(pData->specificObj, (*gfxElements)[index]->pData);
+                    (void)pData->specificObj->unsetClickHandlers(pData->specificObj, (*gfxElements)[index]->pData);
                     (void)pData->specificObj->unsetElementGetters(pData->specificObj, (*gfxElements)[index]->pData);
                     (void)pData->specificObj->unsetElementTextIds(pData->specificObj, (*gfxElements)[index]->pData);
                     (void)pData->specificObj->unsetElementImageIds(pData->specificObj, (*gfxElements)[index]->pData);

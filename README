@@ -17,7 +17,7 @@ mmstreamer currently includes 4 independent modules :
   - Graphics : To locally display video
 
 The application has been designed to make configuring these features as simple as
-possible. Unless you have very specific needs, th following xml resources should
+possible. Unless you have very specific needs, the following xml resources should
 be sufficient to use it :
 
   - res/Main.xml             : Choose which modules to launch and how to keep app alive
@@ -40,7 +40,7 @@ can locally display using "Graphics" module  before they are sent to connected c
 through "Servers" module.
 
 All kind of clients are supported : Browsers, Applications (VLC, ...)
-Connections can also be performed from any type of devices (computers, mobiles).
+Connections can also be initiated from any type of devices (computers, mobiles).
 
 mmstreamer provides a dynamic library called "libnet-client-<version>.so" that can be
 used to connect and get stream from its servers. However, feel free to implement your

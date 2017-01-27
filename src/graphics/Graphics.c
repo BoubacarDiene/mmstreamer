@@ -55,7 +55,7 @@ typedef struct GRAPHICS_PRIVATE_DATA_S {
     
     GFX_ELEMENT_S      *focusedElement;
     GFX_ELEMENT_S      *lastDrawnElement;
-    GFX_ELEMENT_S      *mostRefreshedElement;
+    GFX_ELEMENT_S      *videoElement;
     
     DRAWER_S           *drawer;
 } GRAPHICS_PRIVATE_DATA_S;
@@ -149,7 +149,7 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     
     pData->focusedElement       = NULL;
     pData->lastDrawnElement     = NULL;
-    pData->mostRefreshedElement = NULL;
+    pData->videoElement = NULL;
     
     (*obj)->pData = (void*)pData;
     
@@ -262,10 +262,6 @@ static GRAPHICS_ERROR_E pushElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement
         return GRAPHICS_ERROR_LOCK;
     }
     
-    if (!pData->mostRefreshedElement && (gfxElement->type == GFX_ELEMENT_TYPE_VIDEO)) {
-        pData->mostRefreshedElement = gfxElement;
-    }
-    
     pData->gfxElementsList->add(pData->gfxElementsList, (void*)gfxElement);
     
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
@@ -332,8 +328,8 @@ static GRAPHICS_ERROR_E setVisible_f(GRAPHICS_S *obj, char *gfxElementName, uint
     if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->focusedElement;
     }
-    else if (pData->mostRefreshedElement && !strncmp(pData->mostRefreshedElement->name, gfxElementName, MAX_NAME_SIZE)) {
-        gfxElement = pData->mostRefreshedElement;
+    else if (pData->videoElement && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
+        gfxElement = pData->videoElement;
     }
     else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
@@ -386,8 +382,8 @@ static GRAPHICS_ERROR_E setFocus_f(GRAPHICS_S *obj, char *gfxElementName)
         Logd("\"%s\" already has focus", gfxElementName);
         goto exit;
     }
-    else if (pData->mostRefreshedElement && !strncmp(pData->mostRefreshedElement->name, gfxElementName, MAX_NAME_SIZE)) {
-        gfxElement = pData->mostRefreshedElement;
+    else if (pData->videoElement && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
+        gfxElement = pData->videoElement;
     }
     else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
@@ -438,8 +434,8 @@ static GRAPHICS_ERROR_E setClickable_f(GRAPHICS_S *obj, char *gfxElementName, ui
     if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->focusedElement;
     }
-    else if (pData->mostRefreshedElement && !strncmp(pData->mostRefreshedElement->name, gfxElementName, MAX_NAME_SIZE)) {
-        gfxElement = pData->mostRefreshedElement;
+    else if (pData->videoElement && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
+        gfxElement = pData->videoElement;
     }
     else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
@@ -485,8 +481,8 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
     if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->focusedElement;
     }
-    else if (pData->mostRefreshedElement && !strncmp(pData->mostRefreshedElement->name, gfxElementName, MAX_NAME_SIZE)) {
-        gfxElement = pData->mostRefreshedElement;
+    else if (pData->videoElement && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
+        gfxElement = pData->videoElement;
     }
     else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
@@ -538,11 +534,26 @@ exit:
  */
 static GRAPHICS_ERROR_E createImage_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut)
 {
-    assert(obj && obj->pData && buffer && inOut);
+    assert(obj && obj->pData && inOut);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    BUFFER_S videoBuffer;
+
+    if (!buffer) {
+        if (!pData->videoElement) {
+            Loge("No video frame to save");
+            return GRAPHICS_ERROR_PARAMS;
+        }
+        Logd("Creating screenshot from the last drawn video frame");
+        videoBuffer.data   = pData->videoElement->data.buffer.data;
+        videoBuffer.length = pData->videoElement->data.buffer.length;
+    }
+    else {
+        videoBuffer.data   = buffer->data;
+        videoBuffer.length = buffer->length;
+    }
     
-    if (pData->drawer->saveBuffer(pData->drawer, buffer, inOut) != DRAWER_ERROR_NONE) {
+    if (pData->drawer->saveBuffer(pData->drawer, &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
         return GRAPHICS_ERROR_DRAWER;
     }
     
@@ -852,6 +863,7 @@ static GRAPHICS_ERROR_E drawElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
             }
+            pData->videoElement = gfxElement;
             break;
                 
         case GFX_ELEMENT_TYPE_IMAGE:
@@ -1015,6 +1027,6 @@ static void browseCb(LIST_S *obj, void *element, void *dataProvidedToBrowseFunct
     GRAPHICS_S    *gfxObj     = (GRAPHICS_S*)dataProvidedToBrowseFunction;
     
     if (updateElement_f(gfxObj, gfxElement) != GRAPHICS_ERROR_NONE) {
-        Loge("Failed to update element : \"%s\"", gfxElement->name);
+        //Loge("Failed to update element : \"%s\"", gfxElement->name);
     }
 }
