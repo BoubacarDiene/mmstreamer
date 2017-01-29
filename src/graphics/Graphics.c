@@ -507,6 +507,11 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
             break;
                 
         case GFX_ELEMENT_TYPE_TEXT:
+            if (pData->drawer->setBgColor(pData->drawer, &gfxElement->rect, &pData->params.colorOnReset) != DRAWER_ERROR_NONE) {
+                Loge("Failed to set background color of element \"%s\"", gfxElement->name);
+                ret = GRAPHICS_ERROR_DRAWER;
+                goto exit;
+            }
             memcpy(&gfxElement->data.text, (GFX_TEXT_S*)data, sizeof(GFX_TEXT_S));
             break;
                 

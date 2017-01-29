@@ -402,7 +402,12 @@ static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
     else {
         strncpy(nextLanguage, handlerData, sizeof(nextLanguage));
     }
-    
+
+    if (strcmp(graphicsInfos->currentLanguage, nextLanguage) == 0) {
+        Logw("\"%s\" is already the current language", nextLanguage);
+        return;
+    }
+
     Logd("Changing language from \"%s\" to \"%s\"", graphicsInfos->currentLanguage, nextLanguage);
     
     uint32_t index;
