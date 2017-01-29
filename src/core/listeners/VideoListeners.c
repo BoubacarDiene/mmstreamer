@@ -172,7 +172,7 @@ static void onVideo4GfxCb(VIDEO_BUFFER_S *videoBuffer, void *userData)
             }
         }
         
-        graphicsObj->setData(graphicsObj, videoInfos->graphicsDest, &pData->buffer);
+        (void)graphicsObj->setData(graphicsObj, videoInfos->graphicsDest, &pData->buffer);
     }
 }
 
@@ -209,6 +209,6 @@ static void onVideo4ServerCb(VIDEO_BUFFER_S *videoBuffer, void *userData)
         pData->buffer.data   = videoBuffer->data;
         pData->buffer.length = videoBuffer->length;
             
-        serverObj->sendData(serverObj, serversInfos->serverParams[videoInfos->serverIndex], &pData->buffer);
+        (void)serverObj->sendData(serverObj, serversInfos->serverParams[videoInfos->serverIndex], &pData->buffer);
     }
 }

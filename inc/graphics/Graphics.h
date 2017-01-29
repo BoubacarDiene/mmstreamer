@@ -66,7 +66,8 @@ typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_FOCUS_F    )(GRAPHICS_S *obj, char *gfxE
 typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_CLICKABLE_F)(GRAPHICS_S *obj, char *gfxElementName, uint8_t isClickable);
 typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_DATA_F     )(GRAPHICS_S *obj, char *gfxElementName, void *data);
 
-typedef GRAPHICS_ERROR_E (*GRAPHICS_CREATE_IMAGE_F)(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
+typedef GRAPHICS_ERROR_E (*GRAPHICS_SAVE_VIDEO_FRAME_F)(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
+typedef GRAPHICS_ERROR_E (*GRAPHICS_TAKE_SCREENSHOT_F )(GRAPHICS_S *obj, GFX_IMAGE_S *inOut);
 
 typedef GRAPHICS_ERROR_E (*GRAPHICS_DRAW_ALL_ELEMENTS_F)(GRAPHICS_S *obj);
 
@@ -110,7 +111,8 @@ struct GRAPHICS_S {
     GRAPHICS_SET_CLICKABLE_F     setClickable;
     GRAPHICS_SET_DATA_F          setData;
     
-    GRAPHICS_CREATE_IMAGE_F      createImage;
+    GRAPHICS_SAVE_VIDEO_FRAME_F  saveVideoFrame;
+    GRAPHICS_TAKE_SCREENSHOT_F   takeScreenshot;
     
     GRAPHICS_DRAW_ALL_ELEMENTS_F drawAllElements;
     

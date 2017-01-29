@@ -94,6 +94,7 @@ static DRAWER_ERROR_E drawText_f (DRAWER_S *obj, GFX_RECT_S *rect, GFX_TEXT_S *t
 static DRAWER_ERROR_E setBgColor_f (DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S *color);
 
 static DRAWER_ERROR_E saveBuffer_f (DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
+static DRAWER_ERROR_E saveScreen_f (DRAWER_S *obj, GFX_IMAGE_S *inOut);
 
 static DRAWER_ERROR_E getEvent_f(DRAWER_S *obj, GFX_EVENT_S *gfxEvent);
 
@@ -121,6 +122,7 @@ DRAWER_ERROR_E Drawer_Init(DRAWER_S **obj)
     (*obj)->setBgColor   = setBgColor_f;
     
     (*obj)->saveBuffer   = saveBuffer_f;
+    (*obj)->saveScreen   = saveScreen_f;
     
     (*obj)->getEvent     = getEvent_f;
     
@@ -474,9 +476,9 @@ static DRAWER_ERROR_E drawText_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_TEXT_S *te
         ret = DRAWER_ERROR_DRAW;
         goto exit;
     }
-    
+
     Logd("Real size of text \"%s\": %u x %u", text->str, pData->text->w, pData->text->h);
-    
+
     if ((pData->text->w < (int8_t)rect->w) && (pData->text->h < (int8_t)rect->h)) {
         Logd("Centering text \"%s\" inside element", text->str);
         pData->rect.x = rect->x + ((rect->w - pData->text->w) / 2);
@@ -490,11 +492,11 @@ static DRAWER_ERROR_E drawText_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_TEXT_S *te
         pData->rect.w = rect->w;
         pData->rect.h = rect->h;
     }
-    
+
     SDL_BlitSurface(pData->text, NULL, pData->screen, &pData->rect);
-    
+
     SDL_FreeSurface(pData->text);
-    
+
     SDL_Flip(pData->screen);
     
 exit:
@@ -577,6 +579,7 @@ static DRAWER_ERROR_E saveBuffer_f(DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S 
 
     switch (inOut->format) {
         case GFX_IMAGE_FORMAT_PNG:
+            Logw("PNG not supported yet");
             break;
             
         case GFX_IMAGE_FORMAT_BMP:
@@ -614,6 +617,44 @@ exit:
     SDL_UnlockMutex(pData->lock);
     
     return ret;
+}
+
+/*!
+ *
+ */
+static DRAWER_ERROR_E saveScreen_f(DRAWER_S *obj, GFX_IMAGE_S *inOut)
+{
+    assert(obj && obj->pData && inOut);
+
+    DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)(obj->pData);
+
+    if (SDL_LockMutex(pData->lock) != 0) {
+        Loge("Failed to lock mutex");
+        return DRAWER_ERROR_LOCK;
+    }
+
+    Logd("Saving screenshot to \"%s\"", inOut->path);
+
+    switch (inOut->format) {
+        case GFX_IMAGE_FORMAT_PNG:
+            Logw("PNG not supported yet");
+            break;
+
+        case GFX_IMAGE_FORMAT_BMP:
+            SDL_SaveBMP(pData->screen, inOut->path);
+            break;
+
+        case GFX_IMAGE_FORMAT_JPG:
+            Logw("JPEG not supported yet");
+            break;
+
+        default:
+            ;
+    }
+
+    SDL_UnlockMutex(pData->lock);
+
+    return DRAWER_ERROR_NONE;
 }
 
 /*!

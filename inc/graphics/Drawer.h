@@ -60,6 +60,7 @@ typedef DRAWER_ERROR_E (*DRAWER_DRAW_TEXT_F )(DRAWER_S *obj, GFX_RECT_S *rect, G
 typedef DRAWER_ERROR_E (*DRAWER_SET_BGCOLOR_F)(DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S *color);
 
 typedef DRAWER_ERROR_E (*DRAWER_SAVE_BUFFER_F)(DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
+typedef DRAWER_ERROR_E (*DRAWER_SAVE_SCREEN_F)(DRAWER_S *obj, GFX_IMAGE_S *inOut);
 
 typedef DRAWER_ERROR_E (*DRAWER_GET_EVENT_F)(DRAWER_S *obj, GFX_EVENT_S *gfxEvent);
 
@@ -85,6 +86,7 @@ struct DRAWER_S {
     DRAWER_SET_BGCOLOR_F   setBgColor;
     
     DRAWER_SAVE_BUFFER_F   saveBuffer;
+    DRAWER_SAVE_SCREEN_F   saveScreen;
     
     DRAWER_GET_EVENT_F     getEvent;
     

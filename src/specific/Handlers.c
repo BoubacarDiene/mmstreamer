@@ -96,8 +96,13 @@ static void showElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
 static void hideGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 static void showGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void setFocus      (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void setFocus(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+
+static void saveVideoFrame(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+
+static void setClickable   (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void setNotClickable(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
 static void stopGraphics (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 static void startGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
@@ -126,7 +131,10 @@ static SPECIFIC_CLICK_HANDLERS_S gClickHandlers[] = {
 	{ "hideGroup",                  NULL,             hideGroup        },
 	{ "showGroup",                  NULL,             showGroup        },
 	{ "setFocus",                   NULL,             setFocus         },
+	{ "saveVideoFrame",             NULL,             saveVideoFrame   },
 	{ "takeScreenshot",             NULL,             takeScreenshot   },
+	{ "setClickable",               NULL,             setClickable     },
+	{ "setNotClickable",            NULL,             setNotClickable  },
 	{ "stopGraphics",               NULL,             stopGraphics     },
 	{ "startGraphics",              NULL,             startGraphics    },
 	{ "stopVideo",                  NULL,             stopVideo        },
@@ -365,7 +373,9 @@ static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElem
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
-    ctx->modules.graphicsObj->quit(ctx->modules.graphicsObj);
+    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+
+    (void)graphicsObj->quit(graphicsObj);
 }
 
 /*!
@@ -375,21 +385,23 @@ static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
 {
     assert(ctx && gfxElementName && gfxElementData);
 
-    (void)handlerData;
+    Logd("Handling click on element \"%s\"", gfxElementName);
     
     SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
-    
-    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
-    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
-    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
-    
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    GRAPHICS_S *graphicsObj              = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos      = &ctx->params.graphicsInfos;
+    uint32_t nbGfxElements               = graphicsInfos->nbGfxElements;
+    GFX_ELEMENT_S **gfxElements          = graphicsInfos->gfxElements;
     
     char nextLanguage[MIN_STR_SIZE];
     memset(nextLanguage, '\0', MIN_STR_SIZE);
-    
-    elementData->getters.getLanguage(elementData->getters.userData, graphicsInfos->currentLanguage, nextLanguage);
+
+    if (!handlerData || (strlen(handlerData) == 0)) {
+        elementData->getters.getLanguage(elementData->getters.userData, graphicsInfos->currentLanguage, nextLanguage);
+    }
+    else {
+        strncpy(nextLanguage, handlerData, sizeof(nextLanguage));
+    }
     
     Logd("Changing language from \"%s\" to \"%s\"", graphicsInfos->currentLanguage, nextLanguage);
     
@@ -408,7 +420,7 @@ static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
         memset(text.str, '\0', sizeof(text.str));
         elementData->getters.getString(elementData->getters.userData, data->ids.text.stringId, nextLanguage, text.str);
         
-        graphicsObj->setData(graphicsObj, gfxElements[index]->name, (void*)&text);
+        (void)graphicsObj->setData(graphicsObj, gfxElements[index]->name, (void*)&text);
     }
     
     memset(graphicsInfos->currentLanguage, '\0', MIN_STR_SIZE);
@@ -422,16 +434,16 @@ static void hideElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
 {
     assert(ctx && gfxElementName && gfxElementData);
 
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
     if (!handlerData) {
         Loge("Handler data is expected");
         return;
     }
-    
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
-    
-    Logd("Handling click on element \"%s\"", gfxElementName);
 
-    ctx->modules.graphicsObj->setVisible(ctx->modules.graphicsObj, handlerData, 0);
+    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+
+    (void)graphicsObj->setVisible(graphicsObj, handlerData, 0);
 }
 
 /*!
@@ -441,16 +453,16 @@ static void showElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
 {
     assert(ctx && gfxElementName && gfxElementData);
 
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
     if (!handlerData) {
         Loge("Handler data is expected");
         return;
     }
-    
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
-    
-    Logd("Handling click on element \"%s\"", gfxElementName);
 
-    ctx->modules.graphicsObj->setVisible(ctx->modules.graphicsObj, handlerData, 1);
+    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+
+    (void)graphicsObj->setVisible(graphicsObj, handlerData, 1);
 }
 
 /*!
@@ -460,12 +472,26 @@ static void hideGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
 {
     assert(ctx && gfxElementName && gfxElementData);
 
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
     if (!handlerData) {
         Loge("Handler data is expected");
         return;
     }
+
+    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
+    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
     
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    uint32_t index;
+    for (index = 0; index < nbGfxElements; index++) {
+        if (strncmp(gfxElements[index]->groupName, handlerData, sizeof(gfxElements[index]->groupName)) != 0) {
+            continue;
+        }
+
+        (void)graphicsObj->setVisible(graphicsObj, gfxElements[index]->name, 0);
+    }
 }
 
 /*!
@@ -475,12 +501,26 @@ static void showGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
 {
     assert(ctx && gfxElementName && gfxElementData);
 
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
     if (!handlerData) {
         Loge("Handler data is expected");
         return;
     }
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
+    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
+
+    uint32_t index;
+    for (index = 0; index < nbGfxElements; index++) {
+        if (strncmp(gfxElements[index]->groupName, handlerData, sizeof(gfxElements[index]->groupName)) != 0) {
+            continue;
+        }
+
+        (void)graphicsObj->setVisible(graphicsObj, gfxElements[index]->name, 1);
+    }
 }
 
 /*!
@@ -490,20 +530,26 @@ static void setFocus(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData,
 {
     assert(ctx && gfxElementName && gfxElementData);
 
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
     if (!handlerData) {
         Loge("Handler data is expected");
         return;
     }
-    
-    Logd("Handling click on element \"%s\"", gfxElementName);
+
+    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+
+    (void)graphicsObj->setFocus(graphicsObj, handlerData);
 }
 
 /*!
  *
  */
-static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void saveVideoFrame(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
+
+    Logd("Handling click on element \"%s\"", gfxElementName);
 
     if (!handlerData) {
         Loge("Handler data is expected");
@@ -518,7 +564,54 @@ static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
     GFX_IMAGE_S image;
     struct stat st;
 
+    if (stat(input->appDataDir, &st) < 0) {
+        Logd("Creating direcory : \"%s\"", input->appDataDir);
+        if (mkdir(input->appDataDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
+            Loge("%s", strerror(errno));
+            return;
+        }
+    }
+
+    switch (imageFormat) {
+        case GFX_IMAGE_FORMAT_JPG:
+            sprintf(image.path, "%s/picture_%ld.jpeg", input->appDataDir, time(NULL));
+            image.format = GFX_IMAGE_FORMAT_JPG;
+            break;
+
+        case GFX_IMAGE_FORMAT_PNG:
+            sprintf(image.path, "%s/picture_%ld.png", input->appDataDir, time(NULL));
+            image.format = GFX_IMAGE_FORMAT_PNG;
+            break;
+
+        default:
+            sprintf(image.path, "%s/picture_%ld.bmp", input->appDataDir, time(NULL));
+            image.format = GFX_IMAGE_FORMAT_BMP;
+    }
+
+    (void)graphicsObj->saveVideoFrame(graphicsObj, NULL, &image);
+}
+
+/*!
+ *
+ */
+static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+{
+    assert(ctx && gfxElementName && gfxElementData);
+
     Logd("Handling click on element \"%s\"", gfxElementName);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+
+    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
+    GRAPHICS_S *graphicsObj              = ctx->modules.graphicsObj;
+    INPUT_S *input                       = &ctx->input;
+
+    int32_t imageFormat = atoi(handlerData);
+    GFX_IMAGE_S image;
+    struct stat st;
 
     if (stat(input->appDataDir, &st) < 0) {
         Logd("Creating direcory : \"%s\"", input->appDataDir);
@@ -544,7 +637,45 @@ static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
             image.format = GFX_IMAGE_FORMAT_BMP;
     }
 
-    graphicsObj->createImage(graphicsObj, NULL, &image);
+    (void)graphicsObj->takeScreenshot(graphicsObj, &image);
+}
+
+/*!
+ *
+ */
+static void setClickable(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+{
+    assert(ctx && gfxElementName && gfxElementData);
+
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+
+    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+
+    (void)graphicsObj->setClickable(graphicsObj, handlerData, 1);
+}
+
+/*!
+ *
+ */
+static void setNotClickable(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+{
+    assert(ctx && gfxElementName && gfxElementData);
+
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+
+    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+
+    (void)graphicsObj->setClickable(graphicsObj, handlerData, 0);
 }
 
 /*!
@@ -553,8 +684,14 @@ static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
 static void stopGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
-    
+
+    (void)handlerData;
+
     Logd("Handling click on element \"%s\"", gfxElementName);
+
+    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+
+    (void)graphicsObj->destroyDrawer(graphicsObj);
 }
 
 /*!
@@ -563,8 +700,20 @@ static void stopGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementD
 static void startGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
-    
+
+    (void)handlerData;
+
     Logd("Handling click on element \"%s\"", gfxElementName);
+
+    GRAPHICS_S *graphicsObj           = ctx->modules.graphicsObj;
+    GRAPHICS_PARAMS_S *graphicsParams = &ctx->params.graphicsInfos.graphicsParams;
+
+    if (graphicsObj->createDrawer(graphicsObj, graphicsParams) != GRAPHICS_ERROR_NONE) {
+        Loge("createDrawer() failed");
+        return;
+    }
+
+    (void)graphicsObj->drawAllElements(graphicsObj);
 }
 
 /*!
@@ -573,8 +722,20 @@ static void startGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
 static void stopVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
-    
+
+    (void)handlerData;
+
     Logd("Handling click on element \"%s\"", gfxElementName);
+
+    VIDEO_S *videoObj         = ctx->modules.videoObj;
+    VIDEO_INFOS_S *videoInfos = &ctx->params.videoInfos;
+
+    uint32_t index;
+    for (index = 0; index < videoInfos->nbVideoListeners; index++) {
+        (void)videoObj->unregisterListener(videoObj, videoInfos->videoListeners[index]);
+    }
+
+    (void)videoObj->stopDeviceCapture(videoObj);
 }
 
 /*!
@@ -583,8 +744,33 @@ static void stopVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
 static void startVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
-    
+
+    (void)handlerData;
+
     Logd("Handling click on element \"%s\"", gfxElementName);
+
+    VIDEO_S *videoObj           = ctx->modules.videoObj;
+    VIDEO_INFOS_S *videoInfos   = &ctx->params.videoInfos;
+    VIDEO_PARAMS_S *videoParams = &videoInfos->videoParams;
+
+    if (videoObj->startDeviceCapture(videoObj, videoParams) != VIDEO_ERROR_NONE) {
+        return;
+    }
+
+    size_t maxBufferSize = -1;
+    VIDEO_RESOLUTION_S resolution;
+
+    (void)videoObj->getMaxBufferSize(videoObj, &maxBufferSize);
+    (void)videoObj->getFinalResolution(videoObj, &resolution);
+
+    Logd("maxBufferSize = %lu bytes / width = %u - height = %u", maxBufferSize, resolution.width, resolution.height);
+
+    uint32_t index;
+    for (index = 0; index < videoInfos->nbVideoListeners; index++) {
+        if (videoObj->registerListener(videoObj, videoInfos->videoListeners[index]) != VIDEO_ERROR_NONE) {
+            Loge("Failed to register listener \"%s\"", (videoInfos->videoListeners[index])->name);
+        }
+    }
 }
 
 /*!
@@ -594,35 +780,7 @@ static void stopServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDat
 {
     assert(ctx && gfxElementName && gfxElementData);
 
-    if (!handlerData) {
-        Loge("Handler data is expected");
-        return;
-    }
-
     Logd("Handling click on element \"%s\"", gfxElementName);
-}
-
-/*!
- *
- */
-static void startServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
-{
-    assert(ctx && gfxElementName && gfxElementData);
-
-    if (!handlerData) {
-        Loge("Handler data is expected");
-        return;
-    }
-
-    Logd("Handling click on element \"%s\"", gfxElementName);
-}
-
-/*!
- *
- */
-static void suspendServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
-{
-    assert(ctx && gfxElementName && gfxElementData);
 
     if (!handlerData) {
         Loge("Handler data is expected");
@@ -632,12 +790,62 @@ static void suspendServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
     SERVER_S *serverObj           = ctx->modules.serverObj;
     SERVERS_INFOS_S *serversInfos = &ctx->params.serversInfos;
 
+    uint32_t index;
+    for (index = 0; index < serversInfos->nbServers; index++) {
+        if (strcmp((serversInfos->serverParams[index])->name, handlerData) == 0) {
+            (void)serverObj->stop(serverObj, serversInfos->serverParams[index]);
+            break;
+        }
+    }
+}
+
+/*!
+ *
+ */
+static void startServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+{
+    assert(ctx && gfxElementName && gfxElementData);
+
     Logd("Handling click on element \"%s\"", gfxElementName);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+
+    SERVER_S *serverObj           = ctx->modules.serverObj;
+    SERVERS_INFOS_S *serversInfos = &ctx->params.serversInfos;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
         if (strcmp((serversInfos->serverParams[index])->name, handlerData) == 0) {
-            serverObj->suspendSender(serverObj, serversInfos->serverParams[index]);
+            (void)serverObj->start(serverObj, serversInfos->serverParams[index]);
+            break;
+        }
+    }
+}
+
+/*!
+ *
+ */
+static void suspendServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+{
+    assert(ctx && gfxElementName && gfxElementData);
+
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+
+    SERVER_S *serverObj           = ctx->modules.serverObj;
+    SERVERS_INFOS_S *serversInfos = &ctx->params.serversInfos;
+
+    uint32_t index;
+    for (index = 0; index < serversInfos->nbServers; index++) {
+        if (strcmp((serversInfos->serverParams[index])->name, handlerData) == 0) {
+            (void)serverObj->suspendSender(serverObj, serversInfos->serverParams[index]);
             break;
         }
     }
@@ -650,6 +858,8 @@ static void resumeServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementD
 {
     assert(ctx && gfxElementName && gfxElementData);
 
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
     if (!handlerData) {
         Loge("Handler data is expected");
         return;
@@ -658,12 +868,10 @@ static void resumeServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementD
     SERVER_S *serverObj           = ctx->modules.serverObj;
     SERVERS_INFOS_S *serversInfos = &ctx->params.serversInfos;
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
-
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
         if (strcmp((serversInfos->serverParams[index])->name, handlerData) == 0) {
-            serverObj->resumeSender(serverObj, serversInfos->serverParams[index]);
+            (void)serverObj->resumeSender(serverObj, serversInfos->serverParams[index]);
             break;
         }
     }
@@ -676,12 +884,23 @@ static void stopCient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
 {
     assert(ctx && gfxElementName && gfxElementData);
 
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
     if (!handlerData) {
         Loge("Handler data is expected");
         return;
     }
-    
-    Logd("Handling click on element \"%s\"", gfxElementName);
+
+    CLIENT_S *clientObj           = ctx->modules.clientObj;
+    CLIENTS_INFOS_S *clientsInfos = &ctx->params.clientsInfos;
+
+    uint32_t index;
+    for (index = 0; index < clientsInfos->nbClients; index++) {
+        if (strcmp((clientsInfos->clientParams[index])->name, handlerData) == 0) {
+            (void)clientObj->stop(clientObj, clientsInfos->clientParams[index]);
+            break;
+        }
+    }
 }
 
 /*!
@@ -691,10 +910,21 @@ static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
 {
     assert(ctx && gfxElementName && gfxElementData);
 
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
     if (!handlerData) {
         Loge("Handler data is expected");
         return;
     }
-    
-    Logd("Handling click on element \"%s\"", gfxElementName);
+
+    CLIENT_S *clientObj           = ctx->modules.clientObj;
+    CLIENTS_INFOS_S *clientsInfos = &ctx->params.clientsInfos;
+
+    uint32_t index;
+    for (index = 0; index < clientsInfos->nbClients; index++) {
+        if (strcmp((clientsInfos->clientParams[index])->name, handlerData) == 0) {
+            (void)clientObj->start(clientObj, clientsInfos->clientParams[index]);
+            break;
+        }
+    }
 }

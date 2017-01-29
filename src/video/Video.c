@@ -55,6 +55,7 @@
 
 typedef struct VIDEO_PRIVATE_DATA_S {
     volatile uint8_t   quit;
+    volatile uint8_t   started;
     
     LIST_S             *listenersList;
     TASK_S             *videoTask;
@@ -394,7 +395,14 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     assert(obj && obj->pData && params);
     
     VIDEO_PRIVATE_DATA_S *pData = (VIDEO_PRIVATE_DATA_S*)(obj->pData);
-    
+
+    if (pData->started) {
+        Loge("Stop video capture first");
+        goto init_exit;
+    }
+
+    pData->quit = 0;
+
     /* Set params and create context*/
     memcpy(&pData->videoParams, params, sizeof(VIDEO_PARAMS_S));
     
@@ -520,7 +528,9 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     
     (void)pData->videoTask->start(pData->videoTask, &pData->framesHandlerParams);
     (void)pData->videoTask->start(pData->videoTask, &pData->notificationParams);
-    
+
+    pData->started = 1;
+
     return VIDEO_ERROR_NONE;
 
 notification_create_exit:
@@ -555,6 +565,11 @@ static VIDEO_ERROR_E stopDeviceCapture_f(VIDEO_S *obj)
     assert(obj && obj->pData);
     
     VIDEO_PRIVATE_DATA_S *pData = (VIDEO_PRIVATE_DATA_S*)(obj->pData);
+
+    if (!pData->started) {
+        Loge("Video capture not started yet");
+        return VIDEO_ERROR_STOP;
+    }
     
     /* Stop tasks */
     pData->quit = 1;
@@ -586,7 +601,9 @@ static VIDEO_ERROR_E stopDeviceCapture_f(VIDEO_S *obj)
     if (V4l2_UnInit(&pData->v4l2) != V4L2_ERROR_NONE) {
         Loge("V4l2_UnInit() failed");
     }
-    
+
+    pData->started = 0;
+
     return VIDEO_ERROR_NONE;
 }
 

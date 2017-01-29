@@ -81,7 +81,8 @@ static GRAPHICS_ERROR_E setFocus_f    (GRAPHICS_S *obj, char *gfxElementName);
 static GRAPHICS_ERROR_E setClickable_f(GRAPHICS_S *obj, char *gfxElementName, uint8_t isClickable);
 static GRAPHICS_ERROR_E setData_f     (GRAPHICS_S *obj, char *gfxElementName, void *data);
 
-static GRAPHICS_ERROR_E createImage_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
+static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
+static GRAPHICS_ERROR_E takeScreenshot_f(GRAPHICS_S *obj, GFX_IMAGE_S *inOut);
 
 static GRAPHICS_ERROR_E drawAllElements_f(GRAPHICS_S *obj);
 
@@ -127,7 +128,8 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     (*obj)->setClickable    = setClickable_f;
     (*obj)->setData         = setData_f;
     
-    (*obj)->createImage     = createImage_f;
+    (*obj)->saveVideoFrame  = saveVideoFrame_f;
+    (*obj)->takeScreenshot  = takeScreenshot_f;
     
     (*obj)->drawAllElements = drawAllElements_f;
     
@@ -348,7 +350,8 @@ static GRAPHICS_ERROR_E setVisible_f(GRAPHICS_S *obj, char *gfxElementName, uint
     gfxElement->surfaceUpdated = 0;
  
     if (updateGroup_f(obj, gfxElement->groupName, NULL) != GRAPHICS_ERROR_NONE) {
-        Loge("Faled to update group : \"%s\"", gfxElement->groupName);
+        Loge("Failed to update group : \"%s\"", gfxElement->groupName);
+        gfxElement->isVisible = !isVisible;
         ret = GRAPHICS_ERROR_DRAWER;
     }
 
@@ -514,12 +517,12 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
     
     if (gfxElement->redrawGroup) {
         if (updateGroup_f(obj, gfxElement->groupName, NULL) != GRAPHICS_ERROR_NONE) {
-            Loge("Faled to update group : \"%s\"", gfxElement->groupName);
+            Loge("Failed to update group : \"%s\"", gfxElement->groupName);
             ret = GRAPHICS_ERROR_DRAWER;
         }
     }
     else if (updateElement_f(obj, gfxElement) != GRAPHICS_ERROR_NONE) {
-        Loge("Faled to update element : \"%s\"", gfxElementName);
+        Loge("Failed to update element : \"%s\"", gfxElementName);
         ret = GRAPHICS_ERROR_DRAWER;
     }
     
@@ -532,7 +535,7 @@ exit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E createImage_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut)
+static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut)
 {
     assert(obj && obj->pData && inOut);
     
@@ -557,6 +560,22 @@ static GRAPHICS_ERROR_E createImage_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMA
         return GRAPHICS_ERROR_DRAWER;
     }
     
+    return GRAPHICS_ERROR_NONE;
+}
+
+/*!
+ *
+ */
+static GRAPHICS_ERROR_E takeScreenshot_f(GRAPHICS_S *obj, GFX_IMAGE_S *inOut)
+{
+    assert(obj && obj->pData && inOut);
+
+    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+
+    if (pData->drawer->saveScreen(pData->drawer, inOut) != DRAWER_ERROR_NONE) {
+        return GRAPHICS_ERROR_DRAWER;
+    }
+
     return GRAPHICS_ERROR_NONE;
 }
 

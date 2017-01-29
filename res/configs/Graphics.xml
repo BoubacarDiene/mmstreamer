@@ -117,6 +117,61 @@
             down  <=> Element at bottom of current element which gains focus when user moves down
 
       OnClick : Handlers are called seuentially according to their order of definition
+
+                Here is the list of predefined click handlers :
+
+                01- closeApplication : "data" is not used
+
+                02- changeLanguage   : "data" empty => next language in Strings.xml is chosen
+                                       "data" can also be used to set a specific language ("en, "fr", ...)
+
+                03- hideElement      : "data" contains the name of graphics element to hide
+
+                04- showElement      : "data" contains the name of graphics element to display
+
+                05- hideGroup        : "data" contains the group's name to hide (=> all elements which
+                                       belong to that group are hidden)
+
+                06- showGroup        : "data" contains the group's name to display (=> all elements which
+                                       belong to that group are displayed)
+
+                07- setFocus         : "data" contains the name of graphics element that gains focus
+
+                08- saveVideoFrame   : "data" contains the file format (PNG not implemented yet !!) :
+                                       0 => BMP
+                                       1 => PNG
+                                       2 => JPEG
+
+                09- takeScreenshot   : "data" contains the file format (Only BMP is currently handled !!) :
+                                       0 => BMP
+                                       1 => PNG
+                                       2 => JPEG
+
+                10- setClickable     : "data" contains the name of graphics element that becomes clickable
+
+                11- setNotClickable  : "data" contains the name of graphics element that becomes not clickable
+
+                12- stopGraphics     : "data" is not used
+
+                13- startGraphics    : "data" is not used
+
+                14- stopVideo        : "data" is not used
+                                       Note: It is recommended to uspend server(s) first !
+
+                15- startVideo       : "data" is not used
+                                       Note: Do not forget to resume server(s) if suspended before
+
+                16- stopServer       : "data" contains the name of server to stop
+
+                17- startServer      : "data" contains the name of server to start
+
+                18- suspendServer    : "data" contains the name of server to suspend
+
+                19- resumeServer     : "data" contains the name of server to resume
+
+                20- stopCient        : "data" contains the name of client to stop
+
+                21- startClient      : "data" contains the name of client to start
     -->
     <Elements>
       <Element name="videoZone" group="videoView" redrawGroup="1" type="0" x="160" y="160" width="640" height="480">
@@ -142,6 +197,7 @@
         <Image imageId="0" hiddenColorId="1" />
         <Nav left="" up="textBtn1" right="" down="textBtn2" />
         <OnClick>
+            <Handler name="saveVideoFrame" data="0" />
             <Handler name="takeScreenshot" data="0" />
         </OnClick>
       </Element>
@@ -164,10 +220,11 @@
         </OnClick>
       </Element>
 
-      <Element name="textTitle1" group="title" redrawGroup="0" type="2" x="260" y="50" width="100" height="50">
+      <Element name="textTitle1" group="title" redrawGroup="0" type="2" x="260" y="50" width="200" height="50">
         <Config visible="1" clickable="0" focusable="0" hasFocus="0" />
         <Text stringId="4" fontId="2" colorId="2" size="20" />
         <OnClick>
+            <Handler name="suspendServer" data="inet-videoServer" />
             <Handler name="stopVideo" data="" />
         </OnClick>
       </Element>
