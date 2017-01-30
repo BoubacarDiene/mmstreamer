@@ -975,7 +975,7 @@ static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, KEEP_ALIVE_METHOD_E method, ui
     CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx             = pData->ctx;
     GRAPHICS_S *graphicsObj    = ctx->modules.graphicsObj;
-    
+
     switch (method) {
         case KEEP_ALIVE_EVENTS_BASED:
             if (graphicsObj && graphicsObj->handleEvents(graphicsObj) != GRAPHICS_ERROR_NONE) {

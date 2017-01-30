@@ -386,7 +386,7 @@ static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElem
             break;
 
         case KEEP_ALIVE_TIMER_BASED:
-            sem_post(&ctx->keepAliveSem);
+            // Wait until timeout
             break;
 
         default:
