@@ -76,7 +76,7 @@ static CORE_ERROR_E unloadServersParams_f(CORE_S *obj);
 static CORE_ERROR_E loadClientsParams_f  (CORE_S *obj);
 static CORE_ERROR_E unloadClientsParams_f(CORE_S *obj);
 
-static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, CORE_KEEP_ALIVE_METHOD_E method, uint32_t timeout_s);
+static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, KEEP_ALIVE_METHOD_E method, uint32_t timeout_s);
 
 static void getString_f  (void *userData, uint32_t stringId, char *language, char *strOut);
 static void getColor_f   (void *userData, int32_t colorId, GFX_COLOR_S *colorOut);
@@ -967,24 +967,24 @@ static CORE_ERROR_E unloadClientsParams_f(CORE_S *obj)
 /*!
  *
  */
-static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, CORE_KEEP_ALIVE_METHOD_E method, uint32_t timeout_s)
+static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, KEEP_ALIVE_METHOD_E method, uint32_t timeout_s)
 {
     assert(obj && obj->pData);
     
     CORE_ERROR_E ret           = CORE_ERROR_NONE;
     CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
-    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
+    CONTEXT_S *ctx             = pData->ctx;
+    GRAPHICS_S *graphicsObj    = ctx->modules.graphicsObj;
     
     switch (method) {
-        case CORE_KEEP_ALIVE_EVENTS_BASED:
+        case KEEP_ALIVE_EVENTS_BASED:
             if (graphicsObj && graphicsObj->handleEvents(graphicsObj) != GRAPHICS_ERROR_NONE) {
                 Loge("Error occurred while handling events");
                 ret = CORE_ERROR_KEEP_ALIVE;
             }
             break;
             
-        case CORE_KEEP_ALIVE_SEMAPHORE_BASED:
+        case KEEP_ALIVE_SEMAPHORE_BASED:
             if (sem_init(&ctx->keepAliveSem, 0, 0) != 0) {
                 Loge("sem_init() failed");
                 ret = CORE_ERROR_KEEP_ALIVE;
@@ -994,7 +994,7 @@ static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, CORE_KEEP_ALIVE_METHOD_E metho
             (void)sem_destroy(&ctx->keepAliveSem);
             break;
             
-        case CORE_KEEP_ALIVE_TIMER_BASED:
+        case KEEP_ALIVE_TIMER_BASED:
             sleep(timeout_s);
             break;
             

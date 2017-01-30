@@ -374,8 +374,24 @@ static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElem
     Logd("Handling click on element \"%s\"", gfxElementName);
 
     GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+    INPUT_S *input          = &ctx->input;
 
-    (void)graphicsObj->quit(graphicsObj);
+    switch (input->keepAliveMethod) {
+        case KEEP_ALIVE_EVENTS_BASED:
+            (void)graphicsObj->quit(graphicsObj);
+            break;
+
+        case KEEP_ALIVE_SEMAPHORE_BASED:
+            sem_post(&ctx->keepAliveSem);
+            break;
+
+        case KEEP_ALIVE_TIMER_BASED:
+            sem_post(&ctx->keepAliveSem);
+            break;
+
+        default:
+            ;
+    }
 }
 
 /*!

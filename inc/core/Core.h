@@ -45,10 +45,9 @@ extern "C" {
 /*                                           TYPEDEF                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum CORE_ERROR_E             CORE_ERROR_E;
-typedef enum CORE_KEEP_ALIVE_METHOD_E CORE_KEEP_ALIVE_METHOD_E;
+typedef enum CORE_ERROR_E CORE_ERROR_E;
 
-typedef struct CORE_S                 CORE_S;
+typedef struct CORE_S     CORE_S;
 
 typedef CORE_ERROR_E (*CORE_LOAD_ALL_PARAMS_F  )(CORE_S *obj);
 typedef CORE_ERROR_E (*CORE_UNLOAD_ALL_PARAMS_F)(CORE_S *obj);
@@ -65,7 +64,7 @@ typedef CORE_ERROR_E (*CORE_UNLOAD_SERVERS_PARAMS_F)(CORE_S *obj);
 typedef CORE_ERROR_E (*CORE_LOAD_CLIENTS_PARAMS_F  )(CORE_S *obj);
 typedef CORE_ERROR_E (*CORE_UNLOAD_CLIENTS_PARAMS_F)(CORE_S *obj);
 
-typedef CORE_ERROR_E (*CORE_KEEP_APP_RUNNING_F)(CORE_S *obj, CORE_KEEP_ALIVE_METHOD_E method, uint32_t timeout_s);
+typedef CORE_ERROR_E (*CORE_KEEP_APP_RUNNING_F)(CORE_S *obj, KEEP_ALIVE_METHOD_E method, uint32_t timeout_s);
 
 enum CORE_ERROR_E {
     CORE_ERROR_NONE,
@@ -74,12 +73,6 @@ enum CORE_ERROR_E {
     CORE_ERROR_PARAMS,
     CORE_ERROR_XML,
     CORE_ERROR_KEEP_ALIVE
-};
-
-enum CORE_KEEP_ALIVE_METHOD_E {
-    CORE_KEEP_ALIVE_EVENTS_BASED,
-    CORE_KEEP_ALIVE_SEMAPHORE_BASED,
-    CORE_KEEP_ALIVE_TIMER_BASED
 };
 
 struct CORE_S {
@@ -100,7 +93,7 @@ struct CORE_S {
     
     CORE_KEEP_APP_RUNNING_F       keepAppRunning;
     
-    void                              *pData;
+    void                          *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */

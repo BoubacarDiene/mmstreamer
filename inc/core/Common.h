@@ -52,17 +52,25 @@ extern "C" {
 /*                                           TYPEDEFS                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct VIDEO_CONFIG_S   VIDEO_CONFIG_S;
+typedef enum KEEP_ALIVE_METHOD_E KEEP_ALIVE_METHOD_E;
 
-typedef struct GRAPHICS_INFOS_S GRAPHICS_INFOS_S;
-typedef struct VIDEO_INFOS_S    VIDEO_INFOS_S;
-typedef struct SERVERS_INFOS_S  SERVERS_INFOS_S;
-typedef struct CLIENTS_INFOS_S  CLIENTS_INFOS_S;
+typedef struct VIDEO_CONFIG_S    VIDEO_CONFIG_S;
 
-typedef struct PARAMS_S         PARAMS_S;
-typedef struct MODULES_S        MODULES_S;
-typedef struct INPUT_S          INPUT_S;
-typedef struct CONTEXT_S        CONTEXT_S;
+typedef struct GRAPHICS_INFOS_S  GRAPHICS_INFOS_S;
+typedef struct VIDEO_INFOS_S     VIDEO_INFOS_S;
+typedef struct SERVERS_INFOS_S   SERVERS_INFOS_S;
+typedef struct CLIENTS_INFOS_S   CLIENTS_INFOS_S;
+
+typedef struct PARAMS_S          PARAMS_S;
+typedef struct MODULES_S         MODULES_S;
+typedef struct INPUT_S           INPUT_S;
+typedef struct CONTEXT_S         CONTEXT_S;
+
+enum KEEP_ALIVE_METHOD_E {
+    KEEP_ALIVE_EVENTS_BASED,
+    KEEP_ALIVE_SEMAPHORE_BASED,
+    KEEP_ALIVE_TIMER_BASED
+};
 
 struct VIDEO_CONFIG_S {
     uint32_t             caps;
