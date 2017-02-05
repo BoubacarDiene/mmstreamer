@@ -41,6 +41,9 @@ OUT_BUILD_CORE_H  := ${OUT_BUILD_INC}/core
 OUT_BUILD_SPECIFIC_H := ${OUT_BUILD_INC}/specific
 OUT_BUILD_SPECIFIC_C := ${OUT_BUILD_SRC}/specific
 
+OUT_BUILD_CONFIGS_C  := ${OUT_BUILD_SPECIFIC_C}/configs
+OUT_BUILD_HANDLERS_C := ${OUT_BUILD_SPECIFIC_C}/handlers
+
 OUT_BUILD_GRAPHICS     := ${OUT_BUILD}/graphics
 OUT_BUILD_INC_GRAPHICS := ${OUT_BUILD_GRAPHICS}/include
 
@@ -58,15 +61,17 @@ HEADERS := -I${OUT_BUILD_INC}          \
 CFLAGS  += ${HEADERS}
 
 # Files
-CONFIG   := specific/Config
-HANDLERS := specific/Handlers
-SPECIFIC := specific/Specific
+VIDEO_CONFIG     := specific/configs/VideoConfig
+GENERIC_HANDLERS := specific/handlers/Generic
+CUSTOM_HANDERS   := specific/handlers/Custom
+SPECIFIC         := specific/Specific
 
 CORE_COMMON := core/Common
 
 # Objects
-OBJS := ${OUT_BUILD_SRC}/${CONFIG}.o \
-		${OUT_BUILD_SRC}/${HANDLERS}.o   \
+OBJS := ${OUT_BUILD_SRC}/${VIDEO_CONFIG}.o   \
+		${OUT_BUILD_SRC}/${GENERIC_HANDLERS}.o \
+		${OUT_BUILD_SRC}/${CUSTOM_HANDERS}.o   \
 		${OUT_BUILD_SRC}/${SPECIFIC}.o
 	
 #################################################################
@@ -107,6 +112,12 @@ prepare-specific-sources:
 	if [ ! -d ${OUT_BUILD_SPECIFIC_C} ]; then \
 	    ${MKDIR} ${OUT_BUILD_SPECIFIC_C};     \
 	fi
+	if [ ! -d ${OUT_BUILD_CONFIGS_C} ]; then \
+	    ${MKDIR} ${OUT_BUILD_CONFIGS_C};     \
+	fi
+	if [ ! -d ${OUT_BUILD_HANDLERS_C} ]; then \
+	    ${MKDIR} ${OUT_BUILD_HANDLERS_C};     \
+	fi
 
 	${PRINT} ***** Copying specific sources *****
 	${CP} ${INC}/${COMMON}.h      ${OUT_BUILD_UTILS_H}/.
@@ -117,9 +128,10 @@ prepare-specific-sources:
 
 	${CP} ${INC}/${SPECIFIC}.h    ${OUT_BUILD_SPECIFIC_H}/.
 	
-	${CP} ${SRC}/${CONFIG}.c   ${OUT_BUILD_SPECIFIC_C}/.
-	${CP} ${SRC}/${HANDLERS}.c ${OUT_BUILD_SPECIFIC_C}/.
-	${CP} ${SRC}/${SPECIFIC}.c ${OUT_BUILD_SPECIFIC_C}/.
+	${CP} ${SRC}/${VIDEO_CONFIG}.c     ${OUT_BUILD_CONFIGS_C}/.
+	${CP} ${SRC}/${GENERIC_HANDLERS}.c ${OUT_BUILD_HANDLERS_C}/.
+	${CP} ${SRC}/${CUSTOM_HANDERS}.c   ${OUT_BUILD_HANDLERS_C}/.
+	${CP} ${SRC}/${SPECIFIC}.c         ${OUT_BUILD_SPECIFIC_C}/.
 
 #################################################################
 #                              Clean                            #

@@ -137,8 +137,6 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     
     (*obj)->quit            = quit_f;
     
-    pData->quit             = 0;
-    
     LIST_PARAMS_S listParams;
     memset(&listParams, '\0', sizeof(LIST_PARAMS_S));
     listParams.compareCb    = compareCb;
@@ -149,9 +147,9 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
         goto exit;
     }
     
-    pData->focusedElement       = NULL;
-    pData->lastDrawnElement     = NULL;
-    pData->videoElement = NULL;
+    pData->focusedElement   = NULL;
+    pData->lastDrawnElement = NULL;
+    pData->videoElement     = NULL;
     
     (*obj)->pData = (void*)pData;
     

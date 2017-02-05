@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Config.c
+* \file   VideoConfig.c
 * \brief  TODO
 * \author Boubacar DIENE
 */
@@ -36,7 +36,7 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "SPECIFIC-CONFIG"
+#define TAG "SPECIFIC-VIDEOCONFIG"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -89,32 +89,3 @@ VIDEO_CONFIG_S gVideoConfig[] = {
 };
 
 uint32_t gNbVideoConfigs = (uint32_t)(sizeof(gVideoConfig) / sizeof(gVideoConfig[0]));
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-SPECIFIC_ERROR_E getVideoConfig_f(SPECIFIC_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice);
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          FUNCTIONS                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-SPECIFIC_ERROR_E getVideoConfig_f(SPECIFIC_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice)
-{
-    assert(obj && config);
-
-    if (configChoice >= gNbVideoConfigs) {
-        Loge("Bad choice %u / Nb video configs : %u", configChoice, gNbVideoConfigs);
-        return SPECIFIC_ERROR_PARAMS;
-    }
-
-    config->caps        = gVideoConfig[configChoice].caps;
-    config->type        = gVideoConfig[configChoice].type;
-    config->pixelformat = gVideoConfig[configChoice].pixelformat;
-    config->colorspace  = gVideoConfig[configChoice].colorspace;
-    config->memory      = gVideoConfig[configChoice].memory;
-    config->awaitMode   = gVideoConfig[configChoice].awaitMode;
-
-    return SPECIFIC_ERROR_NONE;
-}

@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Handlers.c
+* \file   Generic.c
 * \brief  TODO
 * \author Boubacar DIENE
 */
@@ -36,57 +36,16 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "SPECIFIC-HANDLERS"
+#define TAG "SPECIFIC-GENERIC"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef void (*SPECIFIC_CLICK_HANDLER_F)(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-typedef struct SPECIFIC_CLICK_HANDLERS_S {
-    char                     *name;
-    char                     *data;
-    SPECIFIC_CLICK_HANDLER_F fct;
-} SPECIFIC_CLICK_HANDLERS_S;
-
-typedef struct SPECIFIC_ELEMENT_DATA_S {
-    uint32_t                  index;
-    
-    union {
-        SPECIFIC_TEXT_IDS_S   text;
-        SPECIFIC_IMAGE_IDS_S  image;
-    } ids;
-    
-    uint32_t                  nbClickHandlers;
-    SPECIFIC_CLICK_HANDLERS_S *clickHandlers;
-    
-    SPECIFIC_GETTERS_S        getters;
-} SPECIFIC_ELEMENT_DATA_S;
-
 /* -------------------------------------------------------------------------------------------- */
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-/* Public functions */
-SPECIFIC_ERROR_E initElementData_f  (SPECIFIC_S *obj, void **data);
-SPECIFIC_ERROR_E uninitElementData_f(SPECIFIC_S *obj, void **data);
-
-SPECIFIC_ERROR_E setElementGetters_f  (SPECIFIC_S *obj, void *data, SPECIFIC_GETTERS_S *getters);
-SPECIFIC_ERROR_E unsetElementGetters_f(SPECIFIC_S *obj, void *data);
-
-SPECIFIC_ERROR_E setElementTextIds_f  (SPECIFIC_S *obj, void *data, SPECIFIC_TEXT_IDS_S *textIds);
-SPECIFIC_ERROR_E unsetElementTextIds_f(SPECIFIC_S *obj, void *data);
-
-SPECIFIC_ERROR_E setElementImageIds_f  (SPECIFIC_S *obj, void *data, SPECIFIC_IMAGE_IDS_S *imageIds);
-SPECIFIC_ERROR_E unsetElementImageIds_f(SPECIFIC_S *obj, void *data);
-
-SPECIFIC_ERROR_E setClickHandlers_f  (SPECIFIC_S *obj, void *data, SPECIFIC_HANDLERS_S *handlers, uint32_t nbHandlers, uint32_t index);
-SPECIFIC_ERROR_E unsetClickHandlers_f(SPECIFIC_S *obj, void *data);
-
-SPECIFIC_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent);
-
-/* Click handlers */
 static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
@@ -119,11 +78,16 @@ static void resumeServer (CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
 static void stopCient  (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
+static void customHandler(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+
+
+extern SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, void *gfxElementData, char *handlerData);
+
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-static SPECIFIC_CLICK_HANDLERS_S gClickHandlers[] = {
+SPECIFIC_CLICK_HANDLERS_S gGenericClickHandlers[] = {
 	{ "closeApplication",           NULL,             closeApplication },
 	{ "changeLanguage",             NULL,             changeLanguage   },
 	{ "hideElement",                NULL,             hideElement      },
@@ -145,218 +109,11 @@ static SPECIFIC_CLICK_HANDLERS_S gClickHandlers[] = {
 	{ "resumeServer",               NULL,             resumeServer     },
 	{ "stopCient",                  NULL,             stopCient        },
 	{ "startClient",                NULL,             startClient      },
+	{ "customHandler",              NULL,             customHandler    },
 	{ NULL,                         NULL,             NULL             }
 };
 
-uint32_t gNbClickHandlers = (uint32_t)(sizeof(gClickHandlers) / sizeof(gClickHandlers[0]));
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          FUNCTIONS                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-/*!
- *
- */
-SPECIFIC_ERROR_E initElementData_f(SPECIFIC_S *obj, void **data)
-{
-    assert(obj && data);
-
-    SPECIFIC_ELEMENT_DATA_S *elementData;
-    assert((elementData = calloc(1, sizeof(SPECIFIC_ELEMENT_DATA_S))));
-
-    *data = elementData;
-
-    return SPECIFIC_ERROR_NONE;
-}
-
-/*!
- *
- */
-SPECIFIC_ERROR_E uninitElementData_f(SPECIFIC_S *obj, void **data)
-{
-    assert(obj && data && *data);
-
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)(*data);
-
-    free(elementData);
-    elementData = NULL;
-
-    return SPECIFIC_ERROR_NONE;
-}
-
-/*!
- *
- */
-SPECIFIC_ERROR_E setElementGetters_f(SPECIFIC_S *obj, void *data, SPECIFIC_GETTERS_S *getters)
-{
-    assert(obj && data && getters);
-
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
-
-    elementData->getters.getString   = getters->getString;
-    elementData->getters.getColor    = getters->getColor;
-    elementData->getters.getFont     = getters->getFont;
-    elementData->getters.getImage    = getters->getImage;
-    elementData->getters.getLanguage = getters->getLanguage;
-
-    elementData->getters.userData    = getters->userData;
-
-    return SPECIFIC_ERROR_NONE;
-}
-
-/*!
- *
- */
-SPECIFIC_ERROR_E unsetElementGetters_f(SPECIFIC_S *obj, void *data)
-{
-    assert(obj && data);
-
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
-
-    elementData->getters.userData = NULL;
-
-    return SPECIFIC_ERROR_NONE;
-}
-
-/*!
- *
- */
-SPECIFIC_ERROR_E setElementTextIds_f(SPECIFIC_S *obj, void *data, SPECIFIC_TEXT_IDS_S *textIds)
-{
-    assert(obj && data && textIds);
-
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
-
-    elementData->ids.text.stringId = textIds->stringId;
-    elementData->ids.text.fontId   = textIds->fontId;
-    elementData->ids.text.colorId  = textIds->colorId;
-
-    return SPECIFIC_ERROR_NONE;
-}
-
-/*!
- *
- */
-SPECIFIC_ERROR_E unsetElementTextIds_f(SPECIFIC_S *obj, void *data)
-{
-    assert(obj && data);
-
-    return SPECIFIC_ERROR_NONE;
-}
-
-/*!
- *
- */
-SPECIFIC_ERROR_E setElementImageIds_f(SPECIFIC_S *obj, void *data, SPECIFIC_IMAGE_IDS_S *imageIds)
-{
-    assert(obj && data && imageIds);
-
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
-
-    elementData->ids.image.imageId       = imageIds->imageId;
-    elementData->ids.image.hiddenColorId = imageIds->hiddenColorId;
-
-    return SPECIFIC_ERROR_NONE;
-}
-
-/*!
- *
- */
-SPECIFIC_ERROR_E unsetElementImageIds_f(SPECIFIC_S *obj, void *data)
-{
-    assert(obj && data);
-
-    return SPECIFIC_ERROR_NONE;
-}
-
-/*!
- *
- */
-SPECIFIC_ERROR_E setClickHandlers_f(SPECIFIC_S *obj, void *data, SPECIFIC_HANDLERS_S *handlers, uint32_t nbHandlers, uint32_t index)
-{
-    assert(obj && data);
-
-    if (!handlers || (nbHandlers == 0)) {
-        return SPECIFIC_ERROR_PARAMS;
-    }
-
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
-
-    elementData->index           = index;
-    elementData->nbClickHandlers = nbHandlers;
-
-    assert((elementData->clickHandlers = calloc(1, nbHandlers * sizeof(SPECIFIC_CLICK_HANDLERS_S))));
-
-    uint32_t i, j;
-    for (i = 0; i < nbHandlers; i++) {
-        (elementData->clickHandlers[i]).name = strdup((handlers[i]).name);
-        (elementData->clickHandlers[i]).data = strdup((handlers[i]).data);
-
-        j = 0;
-        while ((j < gNbClickHandlers)
-                && gClickHandlers[j].name
-                && (strcmp(gClickHandlers[j].name, (handlers[i]).name) != 0)) {
-            j++;
-        }
-
-        if (gClickHandlers[j].name) {
-            (elementData->clickHandlers[i]).fct = gClickHandlers[j].fct;
-        }
-    }
-
-    return SPECIFIC_ERROR_NONE;
-}
-
-/*!
- *
- */
-SPECIFIC_ERROR_E unsetClickHandlers_f(SPECIFIC_S *obj, void *data)
-{
-    assert(obj && data);
-
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
-
-    uint32_t i;
-    for (i = 0; i < elementData->nbClickHandlers; i++) {
-        if ((elementData->clickHandlers[i]).name) {
-            free((elementData->clickHandlers[i]).name);
-            (elementData->clickHandlers[i]).name = NULL;
-        }
-        if ((elementData->clickHandlers[i]).data) {
-            free((elementData->clickHandlers[i]).data);
-            (elementData->clickHandlers[i]).data = NULL;
-        }
-        (elementData->clickHandlers[i]).fct = NULL;
-    }
-
-    elementData->clickHandlers = NULL;
-
-    return SPECIFIC_ERROR_NONE;
-}
-
-/*!
- *
- */
-SPECIFIC_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent)
-{
-    assert(ctx && gfxEvent);
-
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxEvent->gfxElementPData;
-
-    if (!elementData) {
-        return SPECIFIC_ERROR_PARAMS;
-    }
-
-    uint32_t i;
-    for (i = 0; i < elementData->nbClickHandlers; i++) {
-        if ((elementData->clickHandlers[i]).fct) {
-            Logd("Calling click handler : %s", (elementData->clickHandlers[i]).name);
-            (elementData->clickHandlers[i]).fct(ctx, gfxEvent->gfxElementName, elementData, (elementData->clickHandlers[i]).data);
-        }
-    }
-
-    return SPECIFIC_ERROR_NONE;
-}
+uint32_t gNbGenericClickHandlers = (uint32_t)(sizeof(gGenericClickHandlers) / sizeof(gGenericClickHandlers[0]));
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                        CLICK HANDLERS                                        */
@@ -948,4 +705,72 @@ static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
             break;
         }
     }
+}
+
+/*!
+ *
+ */
+static void customHandler(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+{
+    assert(ctx && gfxElementName && gfxElementData);
+
+    Logd("Handling click on element \"%s\"", gfxElementName);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+
+    // Retrieve functionName and elementName
+    char *result = NULL;
+
+    char functionName[MAX_NAME_SIZE];
+    char elementName[MAX_NAME_SIZE];
+
+    result = strstr(handlerData, ";");
+    if (!result) {
+        Loge("Bad format. Expected: customFunctionName;gfxElementName;param1;param2;...");
+        return;
+    }
+
+    uint32_t handlerDataLen = strlen(handlerData);
+    uint8_t functionNameLen   = handlerDataLen - strlen(result);
+
+    memset(functionName, '\0', sizeof(functionName));
+    strncpy(functionName, handlerData, functionNameLen);
+    Logd("Custom method name : %s", functionName);
+
+    result = strstr(handlerData + functionNameLen + 1, ";");
+    if (!result) {
+        Loge("Bad format. Expected: customFunctionName;gfxElementName;param1;param2;...");
+        return;
+    }
+
+    uint8_t elementNameLen = handlerDataLen - functionNameLen - strlen(result) - 1;
+
+    memset(elementName, '\0', sizeof(elementName));
+    strncpy(elementName, handlerData + functionNameLen + 1, elementNameLen);
+    Logd("Gfx element name : %s", elementName);
+
+    // Get element data
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
+    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
+
+    uint32_t index;
+    for (index = 0; index < nbGfxElements; index++) {
+        if (strncmp(gfxElements[index]->name, elementName, sizeof(gfxElements[index]->name)) == 0) {
+            break;
+        }
+    }
+
+    if (index >= nbGfxElements) {
+        Loge("Element \"%s\" not found", elementName);
+        return;
+    }
+
+    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElements[index]->pData;
+
+    // Call custom click handler
+    (void)callCustomHandler(ctx, functionName, elementData, handlerData + functionNameLen + elementNameLen + 2);
 }

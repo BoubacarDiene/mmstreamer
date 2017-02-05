@@ -45,13 +45,17 @@ extern "C" {
 /*                                           TYPEDEFS                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum SPECIFIC_ERROR_E          SPECIFIC_ERROR_E;
+typedef enum SPECIFIC_ERROR_E            SPECIFIC_ERROR_E;
 
-typedef struct SPECIFIC_HANDLERS_S     SPECIFIC_HANDLERS_S;
-typedef struct SPECIFIC_GETTERS_S      SPECIFIC_GETTERS_S;
-typedef struct SPECIFIC_TEXT_IDS_S     SPECIFIC_TEXT_IDS_S;
-typedef struct SPECIFIC_IMAGE_IDS_S    SPECIFIC_IMAGE_IDS_S;
-typedef struct SPECIFIC_S              SPECIFIC_S;
+typedef struct SPECIFIC_GETTERS_S        SPECIFIC_GETTERS_S;
+typedef struct SPECIFIC_TEXT_IDS_S       SPECIFIC_TEXT_IDS_S;
+typedef struct SPECIFIC_IMAGE_IDS_S      SPECIFIC_IMAGE_IDS_S;
+typedef struct SPECIFIC_HANDLERS_S       SPECIFIC_HANDLERS_S;
+typedef struct SPECIFIC_CLICK_HANDLERS_S SPECIFIC_CLICK_HANDLERS_S;
+typedef struct SPECIFIC_ELEMENT_DATA_S   SPECIFIC_ELEMENT_DATA_S;
+typedef struct SPECIFIC_S                SPECIFIC_S;
+
+typedef void (*SPECIFIC_CLICK_HANDLER_F)(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
 typedef void (*SPECIFIC_GET_STRING_F  )(void *userData, uint32_t stringId, char *language, char *strOut);
 typedef void (*SPECIFIC_GET_COLOR_F   )(void *userData, int32_t colorId, GFX_COLOR_S *colorOut);
@@ -85,11 +89,6 @@ enum SPECIFIC_ERROR_E {
     SPECIFIC_ERROR_PARAMS
 };
 
-struct SPECIFIC_HANDLERS_S {
-    char *name;
-    char *data;
-};
-
 struct SPECIFIC_GETTERS_S {
     SPECIFIC_GET_STRING_F   getString;
     SPECIFIC_GET_COLOR_F    getColor;
@@ -109,6 +108,31 @@ struct SPECIFIC_TEXT_IDS_S {
 struct SPECIFIC_IMAGE_IDS_S {
     uint32_t imageId;
     int32_t  hiddenColorId;
+};
+
+struct SPECIFIC_HANDLERS_S {
+    char *name;
+    char *data;
+};
+
+struct SPECIFIC_CLICK_HANDLERS_S {
+    char                     *name;
+    char                     *data;
+    SPECIFIC_CLICK_HANDLER_F fct;
+};
+
+struct SPECIFIC_ELEMENT_DATA_S {
+    uint32_t                  index;
+
+    union {
+        SPECIFIC_TEXT_IDS_S   text;
+        SPECIFIC_IMAGE_IDS_S  image;
+    } ids;
+
+    uint32_t                  nbClickHandlers;
+    SPECIFIC_CLICK_HANDLERS_S *clickHandlers;
+
+    SPECIFIC_GETTERS_S        getters;
 };
 
 struct SPECIFIC_S {
