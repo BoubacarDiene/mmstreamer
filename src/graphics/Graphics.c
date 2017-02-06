@@ -501,7 +501,18 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
         case GFX_ELEMENT_TYPE_IMAGE:
             strncpy(gfxElement->data.image.path, ((GFX_IMAGE_S*)data)->path, strlen(((GFX_IMAGE_S*)data)->path));
             gfxElement->data.image.format      = ((GFX_IMAGE_S*)data)->format;
-            gfxElement->data.image.hiddenColor = ((GFX_IMAGE_S*)data)->hiddenColor;
+            if (!((GFX_IMAGE_S*)data)->hiddenColor) {
+                if (gfxElement->data.image.hiddenColor) {
+                    free(gfxElement->data.image.hiddenColor);
+                    gfxElement->data.image.hiddenColor = NULL;
+                }
+            }
+            else {
+                if (!gfxElement->data.image.hiddenColor) {
+                    assert((gfxElement->data.image.hiddenColor = calloc(1, sizeof(GFX_COLOR_S))));
+                }
+                memcpy(gfxElement->data.image.hiddenColor, ((GFX_IMAGE_S*)data)->hiddenColor, sizeof(GFX_COLOR_S));
+            }
             break;
                 
         case GFX_ELEMENT_TYPE_TEXT:

@@ -167,8 +167,9 @@ static void updateImage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
     elementData->getters.getImage(elementData->getters.userData, imageId, &image);
 
     if (hiddenColorId >= 0) {
-        assert((image.hiddenColor = calloc(1, sizeof(GFX_COLOR_S))));
-        elementData->getters.getColor(elementData->getters.userData, hiddenColorId, image.hiddenColor);
+        GFX_COLOR_S hiddenColor;
+        image.hiddenColor = &hiddenColor;
+        elementData->getters.getColor(elementData->getters.userData, hiddenColorId, &hiddenColor);
     }
 
     (void)graphicsObj->setData(graphicsObj, gfxElementName, (void*)&image);

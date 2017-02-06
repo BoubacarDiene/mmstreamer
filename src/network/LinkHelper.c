@@ -279,13 +279,13 @@ static void keepMeAlive_f(LINK_HELPER_S *obj)
     struct sigaction sa;
     
     (void)sigemptyset(&sigset);
-	sa.sa_mask     = sigset;
-	sa.sa_flags    = 0;
-	sa.sa_restorer = NULL;
-	sa.sa_handler  = signalHandler_f;
+    sa.sa_mask     = sigset;
+    sa.sa_flags    = 0;
+    sa.sa_restorer = NULL;
+    sa.sa_handler  = signalHandler_f;
 	
-	(void)sigaction(SIGTERM, &sa, NULL);
-	(void)sigaction(SIGPIPE, &sa, NULL);
+    (void)sigaction(SIGTERM, &sa, NULL);
+    (void)sigaction(SIGPIPE, &sa, NULL);
 }
 
 /*!
