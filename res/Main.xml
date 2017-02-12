@@ -40,7 +40,7 @@
 
     4 independent modules are currently defined:
 
-        + Video    : Capture video signal from video devices
+        + Videos   : Capture video signal from video devices
         + Servers  : Stream video frames using unix or inet socket
         + Clients  : Get video from a local or a remote streamer
         + Graphics : Locally display video and control some features
@@ -60,7 +60,7 @@
     - xmlFile : Path to the config file of the module
   -->
   <Graphics enable="1" autoStart="1" xmlFile="configs/Graphics.xml"/>
-  <Video    enable="1" autoStart="1" xmlFile="configs/Video.xml"   />
+  <Videos   enable="1" autoStart="1" xmlFile="configs/Videos.xml"   />
   <Servers  enable="1" autoStart="1" xmlFile="configs/Servers.xml" />
   <Clients  enable="0" autoStart="1" xmlFile="configs/Clients.xml" />
 

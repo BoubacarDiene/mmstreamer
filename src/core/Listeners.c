@@ -49,8 +49,8 @@
 extern LISTENERS_ERROR_E setGraphicsListeners_f  (LISTENERS_S *obj);
 extern LISTENERS_ERROR_E unsetGraphicsListeners_f(LISTENERS_S *obj);
 
-extern LISTENERS_ERROR_E setVideoListeners_f  (LISTENERS_S *obj);
-extern LISTENERS_ERROR_E unsetVideoListeners_f(LISTENERS_S *obj);
+extern LISTENERS_ERROR_E setVideosListeners_f  (LISTENERS_S *obj);
+extern LISTENERS_ERROR_E unsetVideosListeners_f(LISTENERS_S *obj);
 
 extern LISTENERS_ERROR_E setServersListeners_f  (LISTENERS_S *obj);
 extern LISTENERS_ERROR_E unsetServersListeners_f(LISTENERS_S *obj);
@@ -79,8 +79,8 @@ LISTENERS_ERROR_E Listeners_Init(LISTENERS_S **obj, CONTEXT_S *ctx, SPECIFIC_S *
     (*obj)->setGraphicsListeners   = setGraphicsListeners_f;
     (*obj)->unsetGraphicsListeners = unsetGraphicsListeners_f;
     
-    (*obj)->setVideoListeners      = setVideoListeners_f;
-    (*obj)->unsetVideoListeners    = unsetVideoListeners_f;
+    (*obj)->setVideosListeners     = setVideosListeners_f;
+    (*obj)->unsetVideosListeners   = unsetVideosListeners_f;
     
     (*obj)->setServersListeners    = setServersListeners_f;
     (*obj)->unsetServersListeners  = unsetServersListeners_f;

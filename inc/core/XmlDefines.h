@@ -38,6 +38,7 @@ extern "C" {
 #define XML_TAG_MAIN                     "Main"
 #define XML_TAG_GENERAL                  "General"
 #define XML_TAG_GRAPHICS                 "Graphics"
+#define XML_TAG_VIDEOS                   "Videos"
 #define XML_TAG_VIDEO                    "Video"
 #define XML_TAG_SERVERS                  "Servers"
 #define XML_TAG_SERVER                   "Server"

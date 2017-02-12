@@ -11,7 +11,7 @@ suit your needs.
 
 mmstreamer currently includes 4 independent modules :
 
-  - Video    : To capture frames from video devices
+  - Videos   : To capture frames from video devices
   - Servers  : To stream frames using unix or inet socket
   - Clients  : To get video stream from local or remote streamer
   - Graphics : To locally display video
@@ -21,7 +21,7 @@ possible. Unless you have very specific needs, the following xml resources shoul
 be sufficient to use it :
 
   - res/Main.xml             : Choose which modules to launch and how to keep app alive
-  - res/configs/Video.xml    : Configure video device and output
+  - res/configs/Videos.xml   : Configure video devices and outputs
   - res/configs/Servers.xml  : Configure servers
   - res/configs/Clients.xml  : Configure clients
   - res/configs/Graphics.xml : Customize UI and locally display captured video
@@ -35,7 +35,7 @@ be sufficient to use it :
 A simple usage of mmstreamer is to make it behave like a HTTP streamer by streaming
 video signal from your personal computer's webcam toward browsers.
 
-To reach this goal, "Video" module continuously captures frames from camera which it
+To reach this goal, "Videos" module continuously captures frames from camera which it
 can locally display using "Graphics" module  before they are sent to connected clients
 through "Servers" module.
 
@@ -47,7 +47,7 @@ used to connect and get stream from its servers. However, feel free to implement
 own client.
 
 Finally, note that mmstreamer can have different other usages. Your mind is its only
-limit. For example, by enabling "Clients" and "Graphics" / "Servers" modules ("Video"
+limit. For example, by enabling "Clients" and "Graphics" / "Servers" modules ("Videos"
 disabled), it is possible to get video from a remote streamer (E.g. vlc - See below)
 and display it locally and/or stream it over another network interface.
 

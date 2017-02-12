@@ -51,7 +51,7 @@
 
       Note : Obviously, gfxDest and serverDest are only used if the related modules are enabled
              (see Main.xml). It's up to you to properly set configs so as to avoid conflicts (E.g.
-             In case video module already feeds the same server and/or graphics element, there's
+             In case videos module already feeds the same server and/or graphics element, there's
              no need to enable client for the same purpose.
     -->
     <General name="inet-videoClient"
@@ -103,7 +103,7 @@
 
       Note : Obviously, gfxDest and serverDest are only used if the related modules are enabled
              (see Main.xml). It's up to you to properly set configs so as to avoid conflicts (E.g.
-             In case video module already feeds the same server and/or graphics element, there's
+             In case videos module already feeds the same server and/or graphics element, there's
              no need to enable client for the same purpose.
     -->
     <General name="unix-videoClient"

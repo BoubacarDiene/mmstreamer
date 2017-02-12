@@ -70,7 +70,7 @@ LISTENERS_ERROR_E setClientsListeners_f(LISTENERS_S *obj)
     LISTENERS_PDATA_S *pData = (LISTENERS_PDATA_S*)(obj->pData);
     INPUT_S *input           = &pData->ctx->input;
     
-    if (!input->graphicsEnabled && !input->serverEnabled) {
+    if (!input->graphicsEnabled && !input->serversEnabled) {
         Logw("At least server or graphics module must be enabled");
     }
     else {
@@ -161,7 +161,7 @@ static void onClientDataCb(CLIENT_PARAMS_S *params, BUFFER_S *buffer, void *user
         }
     }
     
-    if (input->serverEnabled && serverObj && serverDest) {
+    if (input->serversEnabled && serverObj && serverDest) {
         SERVERS_INFOS_S *serversInfos = &pData->ctx->params.serversInfos;
         if (serverIndex[i] == -1) {
             for (j = 0; j < serversInfos->nbServers; j++) {

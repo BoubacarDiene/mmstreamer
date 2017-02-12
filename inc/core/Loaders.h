@@ -60,6 +60,7 @@ typedef struct XML_STRING_S        XML_STRING_S;
 typedef struct XML_STRINGS_S       XML_STRINGS_S;
 
 typedef struct XML_VIDEO_S         XML_VIDEO_S;
+typedef struct XML_VIDEOS_S        XML_VIDEOS_S;
 
 typedef struct XML_COMMON_S        XML_COMMON_S;
 typedef struct XML_SCREEN_S        XML_SCREEN_S;
@@ -83,8 +84,8 @@ typedef struct LOADERS_S           LOADERS_S;
 typedef LOADERS_ERROR_E (*LOADERS_LOAD_GRAPHICS_XML_F  )(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S *xmlGraphics);
 typedef LOADERS_ERROR_E (*LOADERS_UNLOAD_GRAPHICS_XML_F)(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics);
 
-typedef LOADERS_ERROR_E (*LOADERS_LOAD_VIDEO_XML_F  )(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEO_S *xmlVideo);
-typedef LOADERS_ERROR_E (*LOADERS_UNLOAD_VIDEO_XML_F)(LOADERS_S *obj, XML_VIDEO_S *xmlVideo);
+typedef LOADERS_ERROR_E (*LOADERS_LOAD_VIDEOS_XML_F  )(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xmlVideos);
+typedef LOADERS_ERROR_E (*LOADERS_UNLOAD_VIDEOS_XML_F)(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos);
 
 typedef LOADERS_ERROR_E (*LOADERS_LOAD_SERVERS_XML_F  )(LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *xmlServers);
 typedef LOADERS_ERROR_E (*LOADERS_UNLOAD_SERVERS_XML_F)(LOADERS_S *obj, XML_SERVERS_S *xmlServers);
@@ -148,7 +149,8 @@ struct XML_VIDEO_S {
     uint32_t configChoice;
     char     *graphicsDest;
     char     *serverDest;
-    
+
+    char     *deviceName;
     char     *deviceSrc;
     uint16_t deviceWidth;
     uint16_t deviceHeight;
@@ -158,8 +160,13 @@ struct XML_VIDEO_S {
     
     uint8_t  nbBuffers;
     uint8_t  desiredFps;
+};
+
+struct XML_VIDEOS_S {
+    uint8_t     nbVideos;
+    XML_VIDEO_S *videos;
     
-    void     *reserved;
+    void        *reserved;
 };
 
 struct XML_COMMON_S {
@@ -311,7 +318,7 @@ struct XML_CLIENTS_S {
 
 struct XML_S {
     XML_GRAPHICS_S xmlGraphics;
-    XML_VIDEO_S    xmlVideo;
+    XML_VIDEOS_S   xmlVideos;
     XML_SERVERS_S  xmlServers;
     XML_CLIENTS_S  xmlClients;
 };
@@ -320,8 +327,8 @@ struct LOADERS_S {
     LOADERS_LOAD_GRAPHICS_XML_F   loadGraphicsXml;
     LOADERS_UNLOAD_GRAPHICS_XML_F unloadGraphicsXml;
     
-    LOADERS_LOAD_VIDEO_XML_F      loadVideoXml;
-    LOADERS_UNLOAD_VIDEO_XML_F    unloadVideoXml;
+    LOADERS_LOAD_VIDEOS_XML_F     loadVideosXml;
+    LOADERS_UNLOAD_VIDEOS_XML_F   unloadVideosXml;
     
     LOADERS_LOAD_SERVERS_XML_F    loadServersXml;
     LOADERS_UNLOAD_SERVERS_XML_F  unloadServersXml;

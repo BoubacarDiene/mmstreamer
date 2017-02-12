@@ -57,20 +57,21 @@ typedef struct VIDEO_S            VIDEO_S;
 
 typedef void (*ON_VIDEO_BUFFER_AVAILABLE_CB)(VIDEO_BUFFER_S *videoBuffer, void *userData);
 
-typedef VIDEO_ERROR_E (*VIDEO_REGISTER_LISTENER_F  )(VIDEO_S *obj, VIDEO_LISTENER_S *listener);
-typedef VIDEO_ERROR_E (*VIDEO_UNREGISTER_LISTENER_F)(VIDEO_S *obj, VIDEO_LISTENER_S *listener);
+typedef VIDEO_ERROR_E (*VIDEO_REGISTER_LISTENER_F  )(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_LISTENER_S *listener);
+typedef VIDEO_ERROR_E (*VIDEO_UNREGISTER_LISTENER_F)(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_LISTENER_S *listener);
 
-typedef VIDEO_ERROR_E (*VIDEO_GET_FINAL_RESOLUTION_F)(VIDEO_S *obj, VIDEO_RESOLUTION_S *resolution);
-typedef VIDEO_ERROR_E (*VIDEO_GET_MAX_BUFFER_SIZE_F)(VIDEO_S *obj, size_t *size);
+typedef VIDEO_ERROR_E (*VIDEO_GET_FINAL_RESOLUTION_F)(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_RESOLUTION_S *resolution);
+typedef VIDEO_ERROR_E (*VIDEO_GET_MAX_BUFFER_SIZE_F)(VIDEO_S *obj, VIDEO_PARAMS_S *params, size_t *size);
 
 typedef VIDEO_ERROR_E (*VIDEO_START_DEVICE_CAPTURE_F)(VIDEO_S *obj, VIDEO_PARAMS_S *params);
-typedef VIDEO_ERROR_E (*VIDEO_STOP_DEVICE_CAPTURE_F )(VIDEO_S *obj);
+typedef VIDEO_ERROR_E (*VIDEO_STOP_DEVICE_CAPTURE_F )(VIDEO_S *obj, VIDEO_PARAMS_S *params);
 
 enum VIDEO_ERROR_E {
     VIDEO_ERROR_NONE,
     VIDEO_ERROR_INIT,
     VIDEO_ERROR_UNINIT,
     VIDEO_ERROR_LOCK,
+    VIDEO_ERROR_LIST,
     VIDEO_ERROR_START,
     VIDEO_ERROR_STOP,
     VIDEO_ERROR_PARAMS
@@ -101,6 +102,8 @@ struct VIDEO_BUFFER_S {
 };
 
 struct VIDEO_PARAMS_S {
+    char                 name[MAX_NAME_SIZE];
+
     /* Open device */
     char                 path[MAX_PATH_SIZE];
     uint32_t             caps;

@@ -47,8 +47,11 @@
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-LOADERS_ERROR_E loadVideoXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEO_S *xmlVideo);
-LOADERS_ERROR_E unloadVideoXml_f(LOADERS_S *obj, XML_VIDEO_S *xmlVideo);
+LOADERS_ERROR_E loadVideosXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xmlVideos);
+LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos);
+
+static void onVideoStartCb(void *userData, const char **attrs);
+static void onVideoEndCb  (void *userData);
 
 static void onGeneralCb(void *userData, const char **attrs);
 static void onDeviceCb (void *userData, const char **attrs);
@@ -68,18 +71,19 @@ static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 /*!
  *
  */
-LOADERS_ERROR_E loadVideoXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEO_S *xmlVideo)
+LOADERS_ERROR_E loadVideosXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xmlVideos)
 {
-    assert(obj && ctx && xmlVideo);
+    assert(obj && ctx && xmlVideos);
     
     PARSER_S *parserObj = ctx->modules.parserObj;
     INPUT_S *input      = &ctx->input;
     
-    xmlVideo->reserved  = ctx;
+    xmlVideos->reserved = ctx;
     
-    Logd("Parsing file : \"%s/%s\"", input->xmlRootDir, input->videoXml);
+    Logd("Parsing file : \"%s/%s\"", input->xmlRootDir, input->videosXml);
     
     PARSER_TAGS_HANDLER_S tagsHandlers[] = {
+    	{ XML_TAG_VIDEO,    onVideoStartCb,   onVideoEndCb,   NULL },
     	{ XML_TAG_GENERAL,  onGeneralCb,      NULL,           NULL },
     	{ XML_TAG_DEVICE,   onDeviceCb,       NULL,           NULL },
     	{ XML_TAG_OUTPUT,   onOutputCb,       NULL,           NULL },
@@ -88,15 +92,15 @@ LOADERS_ERROR_E loadVideoXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEO_S *xmlV
     };
     
     PARSER_PARAMS_S parserParams;
-    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->xmlRootDir, input->videoXml);
+    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->xmlRootDir, input->videosXml);
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
     parserParams.onErrorCb    = onErrorCb;
-    parserParams.userData     = xmlVideo;
+    parserParams.userData     = xmlVideos;
     
     if (parserObj->parse(parserObj, &parserParams) != PARSER_ERROR_NONE) {
         Loge("Failed to parse file");
-        xmlVideo->reserved = NULL;
+        xmlVideos->reserved = NULL;
         return LOADERS_ERROR_XML;
     }
     
@@ -106,26 +110,37 @@ LOADERS_ERROR_E loadVideoXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEO_S *xmlV
 /*!
  *
  */
-LOADERS_ERROR_E unloadVideoXml_f(LOADERS_S *obj, XML_VIDEO_S *xmlVideo)
+LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos)
 {
-    assert(obj && xmlVideo);
+    assert(obj && xmlVideos);
     
-    if (xmlVideo->graphicsDest) {
-        free(xmlVideo->graphicsDest);
-        xmlVideo->graphicsDest = NULL;
+    uint8_t index;
+    XML_VIDEO_S *video;
+    
+    for (index = 0; index < xmlVideos->nbVideos; index++) {
+        video = &xmlVideos->videos[index];
+        if (video->graphicsDest) {
+            free(video->graphicsDest);
+            video->graphicsDest = NULL;
+        }
+    
+        if (video->serverDest) {
+            free(video->serverDest);
+            video->serverDest = NULL;
+        }
+    
+        if (video->deviceSrc) {
+            free(video->deviceSrc);
+            video->deviceSrc = NULL;
+        }
+    
+        if (video->deviceName) {
+            free(video->deviceName);
+            video->deviceName = NULL;
+        }
     }
     
-    if (xmlVideo->serverDest) {
-        free(xmlVideo->serverDest);
-        xmlVideo->serverDest = NULL;
-    }
-    
-    if (xmlVideo->deviceSrc) {
-        free(xmlVideo->deviceSrc);
-        xmlVideo->deviceSrc = NULL;
-    }
-    
-    xmlVideo->reserved = NULL;
+    xmlVideos->reserved = NULL;
     
     return LOADERS_ERROR_NONE;
 }
@@ -137,37 +152,71 @@ LOADERS_ERROR_E unloadVideoXml_f(LOADERS_S *obj, XML_VIDEO_S *xmlVideo)
 /*!
  *
  */
+static void onVideoStartCb(void *userData, const char **attrs)
+{
+    assert(userData);
+    
+    (void)attrs;
+    
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    
+    Logd("Adding video %u", (xmlVideos->nbVideos + 1));
+    
+    xmlVideos->videos = realloc(xmlVideos->videos, (xmlVideos->nbVideos + 1) * sizeof(XML_VIDEO_S));
+    assert(xmlVideos->videos);
+    
+    memset(&xmlVideos->videos[xmlVideos->nbVideos], '\0', sizeof(XML_VIDEO_S));
+}
+
+/*!
+ *
+ */
+static void onVideoEndCb(void *userData)
+{
+    assert(userData);
+    
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+
+    xmlVideos->nbVideos++;
+    
+    Logd("Video %u added", xmlVideos->nbVideos);
+}
+
+/*!
+ *
+ */
 static void onGeneralCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEO_S *xmlVideo = (XML_VIDEO_S*)userData;
-    CONTEXT_S *ctx        = (CONTEXT_S*)xmlVideo->reserved;
-    PARSER_S *parserObj   = ctx->modules.parserObj;
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
+    PARSER_S *parserObj     = ctx->modules.parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_PRIORITY,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&xmlVideo->priority,
+    	    .attrValue.scalar  = (void*)&video->priority,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
     	    .attrName          = XML_ATTR_CONFIG_CHOICE,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&xmlVideo->configChoice,
+    	    .attrValue.scalar  = (void*)&video->configChoice,
     	    .attrGetter.scalar = parserObj->getUint32
         },
     	{
     	    .attrName          = XML_ATTR_GFX_DEST,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&xmlVideo->graphicsDest,
+    	    .attrValue.vector  = (void**)&video->graphicsDest,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
     	    .attrName          = XML_ATTR_SERVER_DEST,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&xmlVideo->serverDest,
+    	    .attrValue.vector  = (void**)&video->serverDest,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
@@ -182,14 +231,14 @@ static void onGeneralCb(void *userData, const char **attrs)
     	Loge("Failed to retrieve attributes in \"General\" tag");
     }
     
-    if (xmlVideo->graphicsDest && (strlen(xmlVideo->graphicsDest) == 0)) {
-        free(xmlVideo->graphicsDest);
-        xmlVideo->graphicsDest = NULL;
+    if (video->graphicsDest && (strlen(video->graphicsDest) == 0)) {
+        free(video->graphicsDest);
+        video->graphicsDest = NULL;
     }
     
-    if (xmlVideo->serverDest && (strlen(xmlVideo->serverDest) == 0)) {
-        free(xmlVideo->serverDest);
-        xmlVideo->serverDest = NULL;
+    if (video->serverDest && (strlen(video->serverDest) == 0)) {
+        free(video->serverDest);
+        video->serverDest = NULL;
     }
 }
 
@@ -200,27 +249,34 @@ static void onDeviceCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEO_S *xmlVideo = (XML_VIDEO_S*)userData;
-    CONTEXT_S *ctx        = (CONTEXT_S*)xmlVideo->reserved;
-    PARSER_S *parserObj   = ctx->modules.parserObj;
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
+    PARSER_S *parserObj     = ctx->modules.parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
+    	    .attrName          = XML_ATTR_NAME,
+    	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
+    	    .attrValue.vector  = (void**)&video->deviceName,
+    	    .attrGetter.vector = parserObj->getString
+        },
+    	{
     	    .attrName          = XML_ATTR_SRC,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&xmlVideo->deviceSrc,
+    	    .attrValue.vector  = (void**)&video->deviceSrc,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
     	    .attrName          = XML_ATTR_WIDTH,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&xmlVideo->deviceWidth,
+    	    .attrValue.scalar  = (void*)&video->deviceWidth,
     	    .attrGetter.scalar = parserObj->getUint16
         },
     	{
     	    .attrName          = XML_ATTR_HEIGHT,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&xmlVideo->deviceHeight,
+    	    .attrValue.scalar  = (void*)&video->deviceHeight,
     	    .attrGetter.scalar = parserObj->getUint16
         },
     	{
@@ -243,21 +299,22 @@ static void onOutputCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEO_S *xmlVideo = (XML_VIDEO_S*)userData;
-    CONTEXT_S *ctx        = (CONTEXT_S*)xmlVideo->reserved;
-    PARSER_S *parserObj   = ctx->modules.parserObj;
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
+    PARSER_S *parserObj     = ctx->modules.parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_WIDTH,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&xmlVideo->outputWidth,
+    	    .attrValue.scalar  = (void*)&video->outputWidth,
     	    .attrGetter.scalar = parserObj->getUint16
         },
     	{
     	    .attrName          = XML_ATTR_HEIGHT,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&xmlVideo->outputHeight,
+    	    .attrValue.scalar  = (void*)&video->outputHeight,
     	    .attrGetter.scalar = parserObj->getUint16
         },
     	{
@@ -280,21 +337,22 @@ static void onBufferCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEO_S *xmlVideo = (XML_VIDEO_S*)userData;
-    CONTEXT_S *ctx        = (CONTEXT_S*)xmlVideo->reserved;
-    PARSER_S *parserObj   = ctx->modules.parserObj;
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
+    PARSER_S *parserObj     = ctx->modules.parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_NB_BUFFERS,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&xmlVideo->nbBuffers,
+    	    .attrValue.scalar  = (void*)&video->nbBuffers,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
     	    .attrName          = XML_ATTR_DESIRED_FPS,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&xmlVideo->desiredFps,
+    	    .attrValue.scalar  = (void*)&video->desiredFps,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{

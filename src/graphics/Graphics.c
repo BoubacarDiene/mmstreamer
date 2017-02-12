@@ -81,8 +81,9 @@ static GRAPHICS_ERROR_E setFocus_f    (GRAPHICS_S *obj, char *gfxElementName);
 static GRAPHICS_ERROR_E setClickable_f(GRAPHICS_S *obj, char *gfxElementName, uint8_t isClickable);
 static GRAPHICS_ERROR_E setData_f     (GRAPHICS_S *obj, char *gfxElementName, void *data);
 
-static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
-static GRAPHICS_ERROR_E takeScreenshot_f(GRAPHICS_S *obj, GFX_IMAGE_S *inOut);
+static GRAPHICS_ERROR_E saveVideoFrame_f  (GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
+static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName, GFX_IMAGE_S *inOut);
+static GRAPHICS_ERROR_E takeScreenshot_f  (GRAPHICS_S *obj, GFX_IMAGE_S *inOut);
 
 static GRAPHICS_ERROR_E drawAllElements_f(GRAPHICS_S *obj);
 
@@ -115,33 +116,34 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     GRAPHICS_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(GRAPHICS_PRIVATE_DATA_S))));
     
-    (*obj)->createDrawer    = createDrawer_f;
-    (*obj)->destroyDrawer   = destroyDrawer_f;
+    (*obj)->createDrawer     = createDrawer_f;
+    (*obj)->destroyDrawer    = destroyDrawer_f;
     
-    (*obj)->createElement   = createElement_f;
-    (*obj)->pushElement     = pushElement_f;
-    (*obj)->removeElement   = removeElement_f;
-    (*obj)->removeAll       = removeAll_f;
+    (*obj)->createElement    = createElement_f;
+    (*obj)->pushElement      = pushElement_f;
+    (*obj)->removeElement    = removeElement_f;
+    (*obj)->removeAll        = removeAll_f;
     
-    (*obj)->setVisible      = setVisible_f;
-    (*obj)->setFocus        = setFocus_f;
-    (*obj)->setClickable    = setClickable_f;
-    (*obj)->setData         = setData_f;
+    (*obj)->setVisible       = setVisible_f;
+    (*obj)->setFocus         = setFocus_f;
+    (*obj)->setClickable     = setClickable_f;
+    (*obj)->setData          = setData_f;
     
-    (*obj)->saveVideoFrame  = saveVideoFrame_f;
-    (*obj)->takeScreenshot  = takeScreenshot_f;
+    (*obj)->saveVideoFrame   = saveVideoFrame_f;
+    (*obj)->saveVideoElement = saveVideoElement_f;
+    (*obj)->takeScreenshot   = takeScreenshot_f;
     
-    (*obj)->drawAllElements = drawAllElements_f;
+    (*obj)->drawAllElements  = drawAllElements_f;
     
-    (*obj)->handleEvents    = handleEvents_f;
+    (*obj)->handleEvents     = handleEvents_f;
     
-    (*obj)->quit            = quit_f;
+    (*obj)->quit             = quit_f;
     
     LIST_PARAMS_S listParams;
     memset(&listParams, '\0', sizeof(LIST_PARAMS_S));
-    listParams.compareCb    = compareCb;
-    listParams.releaseCb    = releaseCb;
-    listParams.browseCb     = browseCb;
+    listParams.compareCb     = compareCb;
+    listParams.releaseCb     = releaseCb;
+    listParams.browseCb      = browseCb;
     
     if (List_Init(&pData->gfxElementsList, &listParams) != LIST_ERROR_NONE) {
         goto exit;
@@ -453,7 +455,7 @@ static GRAPHICS_ERROR_E setClickable_f(GRAPHICS_S *obj, char *gfxElementName, ui
     
     gfxElement->isClickable = isClickable;
 
-exit:    
+exit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
     
     return ret;
@@ -575,6 +577,50 @@ static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_
     }
     
     return GRAPHICS_ERROR_NONE;
+}
+
+/*!
+ *
+ */
+static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName, GFX_IMAGE_S *inOut)
+{
+    assert(obj && obj->pData && gfxElementName && inOut);
+
+    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+
+    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+        return GRAPHICS_ERROR_LOCK;
+    }
+
+    GRAPHICS_ERROR_E ret      = GRAPHICS_ERROR_PARAMS;
+    GFX_ELEMENT_S *gfxElement = NULL;
+
+    if (getElement_f(obj, gfxElementName, &gfxElement) != GRAPHICS_ERROR_NONE) {
+        Loge("Element \"%s\" not found", gfxElementName);
+        goto exit;
+    }
+
+    if (gfxElement->type != GFX_ELEMENT_TYPE_VIDEO) {
+        Loge("\"%s\" is not a video element", gfxElementName);
+        goto exit;
+    }
+
+    if (!gfxElement->data.buffer.data || (gfxElement->data.buffer.length == 0)) {
+        Logw("No video frame to save");
+        goto exit;
+    }
+
+    if (pData->drawer->saveBuffer(pData->drawer, &gfxElement->data.buffer, inOut) != DRAWER_ERROR_NONE) {
+        ret = GRAPHICS_ERROR_DRAWER;
+        goto exit;
+    }
+
+    ret = GRAPHICS_ERROR_NONE;
+
+exit:
+    (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+
+    return ret;
 }
 
 /*!

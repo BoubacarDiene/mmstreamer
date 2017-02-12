@@ -66,8 +66,9 @@ typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_FOCUS_F    )(GRAPHICS_S *obj, char *gfxE
 typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_CLICKABLE_F)(GRAPHICS_S *obj, char *gfxElementName, uint8_t isClickable);
 typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_DATA_F     )(GRAPHICS_S *obj, char *gfxElementName, void *data);
 
-typedef GRAPHICS_ERROR_E (*GRAPHICS_SAVE_VIDEO_FRAME_F)(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
-typedef GRAPHICS_ERROR_E (*GRAPHICS_TAKE_SCREENSHOT_F )(GRAPHICS_S *obj, GFX_IMAGE_S *inOut);
+typedef GRAPHICS_ERROR_E (*GRAPHICS_SAVE_VIDEO_FRAME_F  )(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
+typedef GRAPHICS_ERROR_E (*GRAPHICS_SAVE_VIDEO_ELEMENT_F)(GRAPHICS_S *obj, char *gfxElementName, GFX_IMAGE_S *inOut);
+typedef GRAPHICS_ERROR_E (*GRAPHICS_TAKE_SCREENSHOT_F   )(GRAPHICS_S *obj, GFX_IMAGE_S *inOut);
 
 typedef GRAPHICS_ERROR_E (*GRAPHICS_DRAW_ALL_ELEMENTS_F)(GRAPHICS_S *obj);
 
@@ -98,29 +99,30 @@ struct GRAPHICS_PARAMS_S {
 };
 
 struct GRAPHICS_S {
-    GRAPHICS_CREATE_DRAWER_F     createDrawer;
-    GRAPHICS_DESTROY_DRAWER_F    destroyDrawer;
+    GRAPHICS_CREATE_DRAWER_F      createDrawer;
+    GRAPHICS_DESTROY_DRAWER_F     destroyDrawer;
     
-    GRAPHICS_CREATE_ELEMENT_F    createElement;
-    GRAPHICS_PUSH_ELEMENT_F      pushElement;
-    GRAPHICS_REMOVE_ELEMENT_F    removeElement;
-    GRAPHICS_REMOVE_ALL_F        removeAll;
+    GRAPHICS_CREATE_ELEMENT_F     createElement;
+    GRAPHICS_PUSH_ELEMENT_F       pushElement;
+    GRAPHICS_REMOVE_ELEMENT_F     removeElement;
+    GRAPHICS_REMOVE_ALL_F         removeAll;
     
-    GRAPHICS_SET_VISIBLE_F       setVisible;
-    GRAPHICS_SET_FOCUS_F         setFocus;
-    GRAPHICS_SET_CLICKABLE_F     setClickable;
-    GRAPHICS_SET_DATA_F          setData;
+    GRAPHICS_SET_VISIBLE_F        setVisible;
+    GRAPHICS_SET_FOCUS_F          setFocus;
+    GRAPHICS_SET_CLICKABLE_F      setClickable;
+    GRAPHICS_SET_DATA_F           setData;
     
-    GRAPHICS_SAVE_VIDEO_FRAME_F  saveVideoFrame;
-    GRAPHICS_TAKE_SCREENSHOT_F   takeScreenshot;
+    GRAPHICS_SAVE_VIDEO_FRAME_F   saveVideoFrame;
+    GRAPHICS_SAVE_VIDEO_ELEMENT_F saveVideoElement;
+    GRAPHICS_TAKE_SCREENSHOT_F    takeScreenshot;
     
-    GRAPHICS_DRAW_ALL_ELEMENTS_F drawAllElements;
+    GRAPHICS_DRAW_ALL_ELEMENTS_F  drawAllElements;
     
-    GRAPHICS_HANDLE_EVENTS_F     handleEvents;
+    GRAPHICS_HANDLE_EVENTS_F      handleEvents;
     
-    GRAPHICS_QUIT_F              quit;
+    GRAPHICS_QUIT_F               quit;
     
-    void                         *pData;
+    void                          *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */

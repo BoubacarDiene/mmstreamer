@@ -116,7 +116,7 @@
             right <=> Element at right of current element which gains focus when user moves to right
             down  <=> Element at bottom of current element which gains focus when user moves down
 
-      OnClick : Handlers are called seuentially according to their order of definition
+      OnClick : Handlers are called sequentially according to their order of definition
 
                 Here is the list of predefined click handlers :
 
@@ -137,10 +137,8 @@
 
                 07- setFocus         : "data" contains the name of graphics element that gains focus
 
-                08- saveVideoFrame   : "data" contains the file format (PNG not implemented yet !!) :
-                                       0 => BMP
-                                       1 => PNG
-                                       2 => JPEG
+                08- saveVideoElement : "data" contains the name of video element whose content is saved in a
+                                       .bmp image file
 
                 09- takeScreenshot   : "data" contains the file format (Only BMP is currently handled !!) :
                                        0 => BMP
@@ -155,10 +153,10 @@
 
                 13- startGraphics    : "data" is not used
 
-                14- stopVideo        : "data" is not used
-                                       Note: It is recommended to uspend server(s) first !
+                14- stopVideo        : "data" contains the name of video device to stop
+                                       Note: It is recommended to suspend server(s) first !
 
-                15- startVideo       : "data" is not used
+                15- startVideo       : "data" contains the name of video device to start
                                        Note: Do not forget to resume server(s) if suspended before
 
                 16- stopServer       : "data" contains the name of server to stop
@@ -205,7 +203,7 @@
         <Image imageId="0" hiddenColorId="1" />
         <Nav left="" up="textBtn1" right="" down="textBtn2" />
         <OnClick>
-            <Handler name="saveVideoFrame" data="0" />
+            <Handler name="saveVideoElement" data="videoZone" />
             <Handler name="takeScreenshot" data="0" />
         </OnClick>
       </Element>
@@ -235,7 +233,7 @@
         <Text stringId="4" fontId="2" colorId="2" size="20" />
         <OnClick>
             <Handler name="suspendServer" data="inet-videoServer" />
-            <Handler name="stopVideo" data="" />
+            <Handler name="stopVideo" data="camera0" />
         </OnClick>
       </Element>
     </Elements>

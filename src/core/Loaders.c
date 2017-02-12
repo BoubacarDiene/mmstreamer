@@ -53,8 +53,8 @@
 extern LOADERS_ERROR_E loadGraphicsXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S *xmlGraphics);
 extern LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics);
 
-extern LOADERS_ERROR_E loadVideoXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEO_S *xmlVideo);
-extern LOADERS_ERROR_E unloadVideoXml_f(LOADERS_S *obj, XML_VIDEO_S *xmlVideo);
+extern LOADERS_ERROR_E loadVideosXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xmlVideos);
+extern LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos);
 
 extern LOADERS_ERROR_E loadServersXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *xmlServers);
 extern LOADERS_ERROR_E unloadServersXml_f(LOADERS_S *obj, XML_SERVERS_S *xmlServers);
@@ -76,8 +76,8 @@ LOADERS_ERROR_E Loaders_Init(LOADERS_S **obj)
     (*obj)->loadGraphicsXml   = loadGraphicsXml_f;
     (*obj)->unloadGraphicsXml = unloadGraphicsXml_f;
     
-    (*obj)->loadVideoXml      = loadVideoXml_f;
-    (*obj)->unloadVideoXml    = unloadVideoXml_f;
+    (*obj)->loadVideosXml     = loadVideosXml_f;
+    (*obj)->unloadVideosXml   = unloadVideosXml_f;
     
     (*obj)->loadServersXml    = loadServersXml_f;
     (*obj)->unloadServersXml  = unloadServersXml_f;

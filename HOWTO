@@ -28,7 +28,7 @@
 2- How to update mmstreamer's configuration
 
   - See res/Main.xml             : Choose which modules to launch and how to keep mmstreamer alive
-  - See res/configs/Video.xml    : Configure video device and output
+  - See res/configs/Videos.xml   : Configure video devices and outputs
   - See res/configs/Servers.xml  : Configure servers
   - See res/configs/Clients.xml  : Configure clients
   - See res/configs/Graphics.xml : Customize UI and locally display captured video

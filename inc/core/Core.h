@@ -55,8 +55,8 @@ typedef CORE_ERROR_E (*CORE_UNLOAD_ALL_PARAMS_F)(CORE_S *obj);
 typedef CORE_ERROR_E (*CORE_LOAD_GRAPHICS_PARAMS_F  )(CORE_S *obj);
 typedef CORE_ERROR_E (*CORE_UNLOAD_GRAPHICS_PARAMS_F)(CORE_S *obj);
 
-typedef CORE_ERROR_E (*CORE_LOAD_VIDEO_PARAMS_F  )(CORE_S *obj);
-typedef CORE_ERROR_E (*CORE_UNLOAD_VIDEO_PARAMS_F)(CORE_S *obj);
+typedef CORE_ERROR_E (*CORE_LOAD_VIDEOS_PARAMS_F  )(CORE_S *obj);
+typedef CORE_ERROR_E (*CORE_UNLOAD_VIDEOS_PARAMS_F)(CORE_S *obj);
 
 typedef CORE_ERROR_E (*CORE_LOAD_SERVERS_PARAMS_F  )(CORE_S *obj);
 typedef CORE_ERROR_E (*CORE_UNLOAD_SERVERS_PARAMS_F)(CORE_S *obj);
@@ -82,8 +82,8 @@ struct CORE_S {
     CORE_LOAD_GRAPHICS_PARAMS_F   loadGraphicsParams;
     CORE_UNLOAD_GRAPHICS_PARAMS_F unloadGraphicsParams;
     
-    CORE_LOAD_VIDEO_PARAMS_F      loadVideoParams;
-    CORE_UNLOAD_VIDEO_PARAMS_F    unloadVideoParams;
+    CORE_LOAD_VIDEOS_PARAMS_F     loadVideosParams;
+    CORE_UNLOAD_VIDEOS_PARAMS_F   unloadVideosParams;
     
     CORE_LOAD_SERVERS_PARAMS_F    loadServersParams;
     CORE_UNLOAD_SERVERS_PARAMS_F  unloadServersParams;

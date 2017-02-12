@@ -350,18 +350,16 @@ exit:
 static SERVER_ERROR_E stop_f(SERVER_S *obj, SERVER_PARAMS_S *params)
 {
     assert(obj && obj->pData && params);
-    
+
     SERVER_PRIVATE_DATA_S *pData = (SERVER_PRIVATE_DATA_S*)(obj->pData);
-    
-    if (pData->serversList) {
-        if (pData->serversList->lock(pData->serversList) != LIST_ERROR_NONE) {
-            Loge("Failed to lock serversList");
-            return SERVER_ERROR_LOCK;
-        }
-        (void)pData->serversList->remove(pData->serversList, (void*)params->name);
-        (void)pData->serversList->unlock(pData->serversList);
+
+    if (!pData->serversList || pData->serversList->lock(pData->serversList) != LIST_ERROR_NONE) {
+        Loge("Failed to lock serversList");
+        return SERVER_ERROR_LOCK;
     }
-    
+    (void)pData->serversList->remove(pData->serversList, (void*)params->name);
+    (void)pData->serversList->unlock(pData->serversList);
+
     return SERVER_ERROR_NONE;
 }
 
@@ -440,6 +438,20 @@ static SERVER_ERROR_E suspendSender_f(SERVER_S *obj, SERVER_PARAMS_S *params)
 
     ctx->senderSuspended = 1;
 
+    while (sem_trywait(&ctx->sem) == 0) {
+        Logd("Resettig semaphore counter to zero");
+    }
+
+    if (pthread_mutex_lock(&ctx->lock) != 0) {
+        ret = SERVER_ERROR_LOCK;
+        goto exit;
+    }
+
+    ctx->bufferIn.length = 0;
+    ctx->bufferIn.data   = NULL;
+
+    (void)pthread_mutex_unlock(&ctx->lock);
+
 exit:
     return ret;
 }
@@ -513,12 +525,14 @@ static SERVER_ERROR_E sendData_f(SERVER_S *obj, SERVER_PARAMS_S *params, BUFFER_
         ret = SERVER_ERROR_LOCK;
         goto exit;
     }
-    
-    ctx->bufferIn.length = buffer->length;
-    ctx->bufferIn.data   = buffer->data;
-    
-    (void)sem_post(&ctx->sem);
-    
+
+    if (!ctx->senderSuspended) {
+        ctx->bufferIn.length = buffer->length;
+        ctx->bufferIn.data   = buffer->data;
+
+        (void)sem_post(&ctx->sem);
+    }
+
     (void)pthread_mutex_unlock(&ctx->lock);
     
 exit:
@@ -999,11 +1013,16 @@ static void senderTaskFct_f(TASK_PARAMS_S *params)
             if (pthread_mutex_lock(&ctx->lock) != 0) {
                 goto exit;
             }
-            
-            ctx->bufferOut.length = ctx->bufferIn.length;
-            assert((ctx->bufferOut.data = calloc(1, ctx->bufferOut.length)));
-            memcpy(ctx->bufferOut.data, ctx->bufferIn.data, ctx->bufferOut.length);
-            
+
+            if (ctx->bufferIn.data && (ctx->bufferIn.length != 0)) {
+                ctx->bufferOut.length = ctx->bufferIn.length;
+                assert((ctx->bufferOut.data = calloc(1, ctx->bufferOut.length)));
+                memcpy(ctx->bufferOut.data, ctx->bufferIn.data, ctx->bufferOut.length);
+            }
+            else {
+                nbClients = 0; // Force exit!
+            }
+
             (void)pthread_mutex_unlock(&ctx->lock);
         }
         else {

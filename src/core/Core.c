@@ -67,8 +67,8 @@ static CORE_ERROR_E unloadAllParams_f(CORE_S *obj);
 static CORE_ERROR_E loadGraphicsParams_f  (CORE_S *obj);
 static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj);
 
-static CORE_ERROR_E loadVideoParams_f  (CORE_S *obj);
-static CORE_ERROR_E unloadVideoParams_f(CORE_S *obj);
+static CORE_ERROR_E loadVideosParams_f  (CORE_S *obj);
+static CORE_ERROR_E unloadVideosParams_f(CORE_S *obj);
 
 static CORE_ERROR_E loadServersParams_f  (CORE_S *obj);
 static CORE_ERROR_E unloadServersParams_f(CORE_S *obj);
@@ -101,8 +101,8 @@ CORE_ERROR_E Core_Init(CORE_S **obj, CONTEXT_S *ctx)
     (*obj)->loadGraphicsParams   = loadGraphicsParams_f;
     (*obj)->unloadGraphicsParams = unloadGraphicsParams_f;
     
-    (*obj)->loadVideoParams      = loadVideoParams_f;
-    (*obj)->unloadVideoParams    = unloadVideoParams_f;
+    (*obj)->loadVideosParams     = loadVideosParams_f;
+    (*obj)->unloadVideosParams   = unloadVideosParams_f;
     
     (*obj)->loadServersParams    = loadServersParams_f;
     (*obj)->unloadServersParams  = unloadServersParams_f;
@@ -192,8 +192,8 @@ static CORE_ERROR_E loadAllParams_f(CORE_S *obj)
         goto graphics_exit;
     }
     
-    if ((ret = loadVideoParams_f(obj)) != CORE_ERROR_NONE) {
-        Loge("Failed to load video params");
+    if ((ret = loadVideosParams_f(obj)) != CORE_ERROR_NONE) {
+        Loge("Failed to load videos params");
         goto video_exit;
     }
     
@@ -213,7 +213,7 @@ clients_exit:
     (void)unloadServersParams_f(obj);
 
 servers_exit:
-    (void)unloadVideoParams_f(obj);
+    (void)unloadVideosParams_f(obj);
 
 video_exit:
     (void)unloadGraphicsParams_f(obj);
@@ -229,7 +229,7 @@ static CORE_ERROR_E unloadAllParams_f(CORE_S *obj)
 {
     (void)unloadClientsParams_f(obj);
     (void)unloadServersParams_f(obj);
-    (void)unloadVideoParams_f(obj);
+    (void)unloadVideosParams_f(obj);
     (void)unloadGraphicsParams_f(obj);
 
     return CORE_ERROR_NONE;
@@ -529,57 +529,72 @@ static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj)
 /*!
  *
  */
-static CORE_ERROR_E loadVideoParams_f(CORE_S *obj)
+static CORE_ERROR_E loadVideosParams_f(CORE_S *obj)
 {
     assert(obj && obj->pData);
     
     CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
 
-    if (pData->loadersObj->loadVideoXml(pData->loadersObj, pData->ctx, &pData->xml.xmlVideo) != LOADERS_ERROR_NONE) {
-        Loge("Failed to load video xml");
+    if (pData->loadersObj->loadVideosXml(pData->loadersObj, pData->ctx, &pData->xml.xmlVideos) != LOADERS_ERROR_NONE) {
+        Loge("Failed to load videos xml");
         return CORE_ERROR_XML;
     }
     
-    XML_VIDEO_S *xmlVideo       = &pData->xml.xmlVideo;
-    VIDEO_INFOS_S *videoInfos   = &pData->ctx->params.videoInfos;
-    VIDEO_PARAMS_S *videoParams = &videoInfos->videoParams;
+    XML_VIDEOS_S *xmlVideos        = &pData->xml.xmlVideos;
+    VIDEOS_INFOS_S *videosInfos    = &pData->ctx->params.videosInfos;
+    VIDEO_DEVICE_S ***videoDevices = &videosInfos->devices;
+    VIDEO_DEVICE_S *videoDevice    = NULL;
+    uint8_t *nbDevices             = &videosInfos->nbDevices;
+    VIDEO_CONFIG_S videoConfig     = { 0 };
 
-    VIDEO_CONFIG_S videoConfig;
+    *nbDevices = xmlVideos->nbVideos;
+    
+    Logd("Setting videos params");
 
-    if (pData->specificObj->getVideoConfig(pData->specificObj, &videoConfig, xmlVideo->configChoice) != SPECIFIC_ERROR_NONE) {
-        Loge("getVideoConfig() failed");
-        goto badConfig_exit;
+    assert((*videoDevices = (VIDEO_DEVICE_S**)calloc(*nbDevices, sizeof(VIDEO_DEVICE_S*))));
+
+    uint8_t index;
+    for (index = 0; index < *nbDevices; index++) {
+        assert(((*videoDevices)[index] = calloc(1, sizeof(VIDEO_DEVICE_S))));
+
+        if (pData->specificObj->getVideoConfig(pData->specificObj,
+                                                &videoConfig,
+                                                xmlVideos->videos[index].configChoice) != SPECIFIC_ERROR_NONE) {
+            Loge("getVideoConfig() failed");
+            goto badConfig_exit;
+        }
+
+        videoDevice = (*videoDevices)[index];
+
+        strncpy(videoDevice->videoParams.name, xmlVideos->videos[index].deviceName, sizeof(videoDevice->videoParams.name));
+        strncpy(videoDevice->videoParams.path, xmlVideos->videos[index].deviceSrc, sizeof(videoDevice->videoParams.path));
+
+        videoDevice->videoParams.caps        = videoConfig.caps;
+        videoDevice->videoParams.type        = videoConfig.type;
+        videoDevice->videoParams.pixelformat = videoConfig.pixelformat;
+        videoDevice->videoParams.colorspace  = videoConfig.colorspace;
+        videoDevice->videoParams.memory      = videoConfig.memory;
+        videoDevice->videoParams.awaitMode   = videoConfig.awaitMode;
+
+        videoDevice->videoParams.priority    = xmlVideos->videos[index].priority;
+        videoDevice->videoParams.desiredFps  = xmlVideos->videos[index].desiredFps;
+        videoDevice->videoParams.count       = xmlVideos->videos[index].nbBuffers;
+
+        videoDevice->videoParams.captureResolution.width  = xmlVideos->videos[index].deviceWidth;
+        videoDevice->videoParams.captureResolution.height = xmlVideos->videos[index].deviceHeight;
+
+        videoDevice->videoParams.outputResolution.width   = xmlVideos->videos[index].outputWidth;
+        videoDevice->videoParams.outputResolution.height  = xmlVideos->videos[index].outputHeight;
+
+        videoDevice->graphicsDest  = xmlVideos->videos[index].graphicsDest ? strdup(xmlVideos->videos[index].graphicsDest) : NULL;
+        videoDevice->graphicsIndex = -1;
+        videoDevice->serverDest    = xmlVideos->videos[index].serverDest ? strdup(xmlVideos->videos[index].serverDest) : NULL;
+        videoDevice->serverIndex   = -1;
     }
-    
-    Logd("Setting video params");
-    
-    strncpy(videoParams->path, xmlVideo->deviceSrc, sizeof(videoParams->path));
-    
-    videoParams->caps        = videoConfig.caps;
-    videoParams->type        = videoConfig.type;
-    videoParams->pixelformat = videoConfig.pixelformat;
-    videoParams->colorspace  = videoConfig.colorspace;
-    videoParams->memory      = videoConfig.memory;
-    videoParams->awaitMode   = videoConfig.awaitMode;
-    
-    videoParams->priority    = xmlVideo->priority;
-    videoParams->desiredFps  = xmlVideo->desiredFps;
-    videoParams->count       = xmlVideo->nbBuffers;
-    
-    videoParams->captureResolution.width  = xmlVideo->deviceWidth;
-    videoParams->captureResolution.height = xmlVideo->deviceHeight;
-    
-    videoParams->outputResolution.width   = xmlVideo->outputWidth;
-    videoParams->outputResolution.height  = xmlVideo->outputHeight;
-    
-    videoInfos->graphicsDest   = xmlVideo->graphicsDest ? strdup(xmlVideo->graphicsDest) : NULL;
-    videoInfos->graphicsIndex  = -1;
-    videoInfos->serverDest     = xmlVideo->serverDest ? strdup(xmlVideo->serverDest) : NULL;
-    videoInfos->serverIndex    = -1;
-    
+
     Logd("Setting video listeners");
     
-    if (pData->listenersObj->setVideoListeners(pData->listenersObj) != LISTENERS_ERROR_NONE) {
+    if (pData->listenersObj->setVideosListeners(pData->listenersObj) != LISTENERS_ERROR_NONE) {
         Loge("Failed to set video listeners");
         goto badConfig_exit;
     }
@@ -587,17 +602,26 @@ static CORE_ERROR_E loadVideoParams_f(CORE_S *obj)
     return CORE_ERROR_NONE;
     
 badConfig_exit:
-    if (videoInfos->serverDest) {
-        free(videoInfos->serverDest);
-        videoInfos->serverDest = NULL;
-    }
+    for (index = 0; index < *nbDevices; index++) {
+        videoDevice = (*videoDevices)[index];
+
+        if (videoDevice->serverDest) {
+            free(videoDevice->serverDest);
+            videoDevice->serverDest = NULL;
+        }
     
-    if (videoInfos->graphicsDest) {
-        free(videoInfos->graphicsDest);
-        videoInfos->graphicsDest = NULL;
+        if (videoDevice->graphicsDest) {
+            free(videoDevice->graphicsDest);
+            videoDevice->graphicsDest = NULL;
+        }
     }
-    
-    (void)pData->loadersObj->unloadVideoXml(pData->loadersObj, xmlVideo);
+
+    if (*videoDevices) {
+        free(*videoDevices);
+        *videoDevices = NULL;
+    }
+
+    (void)pData->loadersObj->unloadVideosXml(pData->loadersObj, xmlVideos);
 
     return CORE_ERROR_PARAMS;
 }
@@ -605,26 +629,39 @@ badConfig_exit:
 /*!
  *
  */
-static CORE_ERROR_E unloadVideoParams_f(CORE_S *obj)
+static CORE_ERROR_E unloadVideosParams_f(CORE_S *obj)
 {
     assert(obj && obj->pData);
     
-    CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
-    VIDEO_INFOS_S *videoInfos      = &pData->ctx->params.videoInfos;
+    CORE_PRIVATE_DATA_S *pData     = (CORE_PRIVATE_DATA_S*)(obj->pData);
+    VIDEOS_INFOS_S *videosInfos    = &pData->ctx->params.videosInfos;
+    VIDEO_DEVICE_S ***videoDevices = &videosInfos->devices;
+    VIDEO_DEVICE_S *videoDevice    = NULL;
+    uint8_t nbDevices              = videosInfos->nbDevices;
     
-    (void)pData->listenersObj->unsetVideoListeners(pData->listenersObj);
+    (void)pData->listenersObj->unsetVideosListeners(pData->listenersObj);
     
-    if (videoInfos->serverDest) {
-        free(videoInfos->serverDest);
-        videoInfos->serverDest = NULL;
+    uint8_t index;
+    for (index = 0; index < nbDevices; index++) {
+        videoDevice = (*videoDevices)[index];
+
+        if (videoDevice->serverDest) {
+            free(videoDevice->serverDest);
+            videoDevice->serverDest = NULL;
+        }
+    
+        if (videoDevice->graphicsDest) {
+            free(videoDevice->graphicsDest);
+            videoDevice->graphicsDest = NULL;
+        }
+    }
+
+    if (*videoDevices) {
+        free(*videoDevices);
+        *videoDevices = NULL;
     }
     
-    if (videoInfos->graphicsDest) {
-        free(videoInfos->graphicsDest);
-        videoInfos->graphicsDest = NULL;
-    }
-    
-    (void)pData->loadersObj->unloadVideoXml(pData->loadersObj, &pData->xml.xmlVideo);
+    (void)pData->loadersObj->unloadVideosXml(pData->loadersObj, &pData->xml.xmlVideos);
     
     return CORE_ERROR_NONE;
 }
@@ -715,9 +752,9 @@ badConfig_exit:
         }
     }
     
-    if ((*serverParams)) {
-        free((*serverParams));
-        (*serverParams) = NULL;
+    if (*serverParams) {
+        free(*serverParams);
+        *serverParams = NULL;
     }
     
     (void)pData->loadersObj->unloadServersXml(pData->loadersObj, xmlServers);
@@ -748,9 +785,9 @@ static CORE_ERROR_E unloadServersParams_f(CORE_S *obj)
         }
     }
     
-    if ((*serverParams)) {
-        free((*serverParams));
-        (*serverParams) = NULL;
+    if (*serverParams) {
+        free(*serverParams);
+        *serverParams = NULL;
     }
     
     (void)pData->loadersObj->unloadServersXml(pData->loadersObj, &pData->xml.xmlServers);
@@ -871,14 +908,14 @@ badConfig_exit:
         }
     }
     
-    if ((*clientParams)) {
-        free((*clientParams));
-        (*clientParams) = NULL;
+    if (*clientParams) {
+        free(*clientParams);
+        *clientParams = NULL;
     }
     
-    if ((*graphicsDest)) {
-        free((*graphicsDest));
-        (*graphicsDest) = NULL;
+    if (*graphicsDest) {
+        free(*graphicsDest);
+        *graphicsDest = NULL;
     }
     
     if (*graphicsIndex) {
@@ -886,9 +923,9 @@ badConfig_exit:
         *graphicsIndex = NULL;
     }
     
-    if ((*serverDest)) {
-        free((*serverDest));
-        (*serverDest) = NULL;
+    if (*serverDest) {
+        free(*serverDest);
+        *serverDest = NULL;
     }
     
     if (*serverIndex) {
@@ -934,9 +971,9 @@ static CORE_ERROR_E unloadClientsParams_f(CORE_S *obj)
         }
     }
     
-    if ((*clientParams)) {
-        free((*clientParams));
-        (*clientParams) = NULL;
+    if (*clientParams) {
+        free(*clientParams);
+        *clientParams = NULL;
     }
     
     if (clientsInfos->graphicsDest) {

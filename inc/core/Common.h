@@ -55,9 +55,10 @@ extern "C" {
 typedef enum KEEP_ALIVE_METHOD_E KEEP_ALIVE_METHOD_E;
 
 typedef struct VIDEO_CONFIG_S    VIDEO_CONFIG_S;
+typedef struct VIDEO_DEVICE_S    VIDEO_DEVICE_S;
 
 typedef struct GRAPHICS_INFOS_S  GRAPHICS_INFOS_S;
-typedef struct VIDEO_INFOS_S     VIDEO_INFOS_S;
+typedef struct VIDEOS_INFOS_S    VIDEOS_INFOS_S;
 typedef struct SERVERS_INFOS_S   SERVERS_INFOS_S;
 typedef struct CLIENTS_INFOS_S   CLIENTS_INFOS_S;
 
@@ -81,6 +82,18 @@ struct VIDEO_CONFIG_S {
     VIDEO_AWAIT_MODE_E   awaitMode;
 };
 
+struct VIDEO_DEVICE_S {
+    uint8_t           nbVideoListeners;
+    VIDEO_LISTENER_S  **videoListeners;
+    VIDEO_PARAMS_S    videoParams;
+
+    char              *graphicsDest;
+    int8_t            graphicsIndex;
+
+    char              *serverDest;
+    int8_t            serverIndex;
+};
+
 struct GRAPHICS_INFOS_S {
     char              *currentLanguage;
     uint32_t          nbGfxElements;
@@ -88,16 +101,9 @@ struct GRAPHICS_INFOS_S {
     GRAPHICS_PARAMS_S graphicsParams;
 };
 
-struct VIDEO_INFOS_S {
-    uint8_t           nbVideoListeners;
-    VIDEO_LISTENER_S  **videoListeners;
-    VIDEO_PARAMS_S    videoParams;
-    
-    char              *graphicsDest;
-    int8_t            graphicsIndex;
-    
-    char              *serverDest;
-    int8_t            serverIndex;
+struct VIDEOS_INFOS_S {
+    uint8_t        nbDevices;
+    VIDEO_DEVICE_S **devices;
 };
 
 struct SERVERS_INFOS_S {
@@ -118,7 +124,7 @@ struct CLIENTS_INFOS_S {
 
 struct PARAMS_S {
     GRAPHICS_INFOS_S graphicsInfos;
-    VIDEO_INFOS_S    videoInfos;
+    VIDEOS_INFOS_S   videosInfos;
     SERVERS_INFOS_S  serversInfos;
     CLIENTS_INFOS_S  clientsInfos;
 };
@@ -142,16 +148,16 @@ struct INPUT_S {
     uint8_t    autoStartGraphics;
     char       *graphicsXml;
     
-    uint8_t    videoEnabled;
-    uint8_t    autoStartVideo;
-    char       *videoXml;
+    uint8_t    videosEnabled;
+    uint8_t    autoStartVideos;
+    char       *videosXml;
     
-    uint8_t    serverEnabled;
-    uint8_t    autoStartServer;
+    uint8_t    serversEnabled;
+    uint8_t    autoStartServers;
     char       *serversXml;
     
-    uint8_t    clientEnabled;
-    uint8_t    autoStartClient;
+    uint8_t    clientsEnabled;
+    uint8_t    autoStartClients;
     char       *clientsXml;
 };
 

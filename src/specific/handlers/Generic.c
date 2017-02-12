@@ -57,7 +57,7 @@ static void showGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
 
 static void setFocus(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void saveVideoFrame(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void saveVideoElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
 static void setClickable   (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
@@ -95,7 +95,7 @@ SPECIFIC_CLICK_HANDLERS_S gGenericClickHandlers[] = {
 	{ "hideGroup",                  NULL,             hideGroup        },
 	{ "showGroup",                  NULL,             showGroup        },
 	{ "setFocus",                   NULL,             setFocus         },
-	{ "saveVideoFrame",             NULL,             saveVideoFrame   },
+	{ "saveVideoElement",           NULL,             saveVideoElement },
 	{ "takeScreenshot",             NULL,             takeScreenshot   },
 	{ "setClickable",               NULL,             setClickable     },
 	{ "setNotClickable",            NULL,             setNotClickable  },
@@ -323,7 +323,7 @@ static void setFocus(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData,
 /*!
  *
  */
-static void saveVideoFrame(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void saveVideoElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
 
@@ -333,12 +333,11 @@ static void saveVideoFrame(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
         Loge("Handler data is expected");
         return;
     }
-    
+
     SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
     GRAPHICS_S *graphicsObj              = ctx->modules.graphicsObj;
     INPUT_S *input                       = &ctx->input;
 
-    int32_t imageFormat = atoi(handlerData);
     GFX_IMAGE_S image;
     struct stat st;
 
@@ -350,23 +349,10 @@ static void saveVideoFrame(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
         }
     }
 
-    switch (imageFormat) {
-        case GFX_IMAGE_FORMAT_JPG:
-            sprintf(image.path, "%s/picture_%ld.jpeg", input->appDataDir, time(NULL));
-            image.format = GFX_IMAGE_FORMAT_JPG;
-            break;
+    sprintf(image.path, "%s/picture_%ld.bmp", input->appDataDir, time(NULL));
+    image.format = GFX_IMAGE_FORMAT_BMP;
 
-        case GFX_IMAGE_FORMAT_PNG:
-            sprintf(image.path, "%s/picture_%ld.png", input->appDataDir, time(NULL));
-            image.format = GFX_IMAGE_FORMAT_PNG;
-            break;
-
-        default:
-            sprintf(image.path, "%s/picture_%ld.bmp", input->appDataDir, time(NULL));
-            image.format = GFX_IMAGE_FORMAT_BMP;
-    }
-
-    (void)graphicsObj->saveVideoFrame(graphicsObj, NULL, &image);
+    (void)graphicsObj->saveVideoElement(graphicsObj, handlerData, &image);
 }
 
 /*!
@@ -501,19 +487,40 @@ static void stopVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
 {
     assert(ctx && gfxElementName && gfxElementData);
 
-    (void)handlerData;
-
     Logd("Handling click on element \"%s\"", gfxElementName);
 
-    VIDEO_S *videoObj         = ctx->modules.videoObj;
-    VIDEO_INFOS_S *videoInfos = &ctx->params.videoInfos;
-
-    uint32_t index;
-    for (index = 0; index < videoInfos->nbVideoListeners; index++) {
-        (void)videoObj->unregisterListener(videoObj, videoInfos->videoListeners[index]);
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
     }
 
-    (void)videoObj->stopDeviceCapture(videoObj);
+    VIDEO_S *videoObj             = ctx->modules.videoObj;
+    VIDEOS_INFOS_S *videosInfos   = &ctx->params.videosInfos;
+    VIDEO_DEVICE_S **videoDevices = videosInfos->devices;
+    uint8_t nbDevices             = videosInfos->nbDevices;
+    VIDEO_DEVICE_S *videoDevice   = NULL;
+
+    uint8_t nbVideoListeners           = 0;
+    VIDEO_LISTENER_S  **videoListeners = NULL;
+
+    uint32_t videoIndex, listenerIndex;
+    for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
+        videoDevice = videoDevices[videoIndex];
+
+        if (strcmp(videoDevice->videoParams.name, handlerData) == 0) {
+            Logd("Video device \"%s\" found", videoDevice->videoParams.name);
+
+            nbVideoListeners = videoDevice->nbVideoListeners;
+            videoListeners   = videoDevice->videoListeners;
+
+            for (listenerIndex = 0; listenerIndex < nbVideoListeners; listenerIndex++) {
+                (void)videoObj->unregisterListener(videoObj, &videoDevice->videoParams, videoListeners[listenerIndex]);
+            }
+
+            (void)videoObj->stopDeviceCapture(videoObj, &videoDevice->videoParams);
+            break;
+        }
+    }
 }
 
 /*!
@@ -523,30 +530,50 @@ static void startVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDat
 {
     assert(ctx && gfxElementName && gfxElementData);
 
-    (void)handlerData;
-
     Logd("Handling click on element \"%s\"", gfxElementName);
 
-    VIDEO_S *videoObj           = ctx->modules.videoObj;
-    VIDEO_INFOS_S *videoInfos   = &ctx->params.videoInfos;
-    VIDEO_PARAMS_S *videoParams = &videoInfos->videoParams;
-
-    if (videoObj->startDeviceCapture(videoObj, videoParams) != VIDEO_ERROR_NONE) {
+    if (!handlerData) {
+        Loge("Handler data is expected");
         return;
     }
 
-    size_t maxBufferSize = -1;
-    VIDEO_RESOLUTION_S resolution;
+    VIDEO_S *videoObj             = ctx->modules.videoObj;
+    VIDEOS_INFOS_S *videosInfos   = &ctx->params.videosInfos;
+    VIDEO_DEVICE_S **videoDevices = videosInfos->devices;
+    uint8_t nbDevices             = videosInfos->nbDevices;
+    VIDEO_DEVICE_S *videoDevice   = NULL;
 
-    (void)videoObj->getMaxBufferSize(videoObj, &maxBufferSize);
-    (void)videoObj->getFinalResolution(videoObj, &resolution);
+    size_t maxBufferSize          = -1;
+    VIDEO_RESOLUTION_S resolution = { 0 };
 
-    Logd("maxBufferSize = %lu bytes / width = %u - height = %u", maxBufferSize, resolution.width, resolution.height);
+    uint8_t nbVideoListeners           = 0;
+    VIDEO_LISTENER_S  **videoListeners = NULL;
 
-    uint32_t index;
-    for (index = 0; index < videoInfos->nbVideoListeners; index++) {
-        if (videoObj->registerListener(videoObj, videoInfos->videoListeners[index]) != VIDEO_ERROR_NONE) {
-            Loge("Failed to register listener \"%s\"", (videoInfos->videoListeners[index])->name);
+    uint32_t videoIndex, listenerIndex;
+    for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
+        videoDevice = videoDevices[videoIndex];
+
+        if (strcmp(videoDevice->videoParams.name, handlerData) == 0) {
+            Logd("Video device \"%s\" found", videoDevice->videoParams.name);
+
+            if (videoObj->startDeviceCapture(videoObj, &videoDevice->videoParams) != VIDEO_ERROR_NONE) {
+                return;
+            }
+
+            (void)videoObj->getMaxBufferSize(videoObj, &videoDevice->videoParams, &maxBufferSize);
+            (void)videoObj->getFinalResolution(videoObj, &videoDevice->videoParams, &resolution);
+
+            Logd("maxBufferSize = %lu bytes / width = %u - height = %u", maxBufferSize, resolution.width, resolution.height);
+
+            nbVideoListeners = videoDevice->nbVideoListeners;
+            videoListeners   = videoDevice->videoListeners;
+
+            for (listenerIndex = 0; listenerIndex < nbVideoListeners; listenerIndex++) {
+                if (videoObj->registerListener(videoObj, &videoDevice->videoParams, videoListeners[listenerIndex]) != VIDEO_ERROR_NONE) {
+                    Loge("Failed to register listener \"%s\"", (videoListeners[listenerIndex])->name);
+                }
+            }
+            break;
         }
     }
 }

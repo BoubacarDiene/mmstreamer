@@ -134,9 +134,9 @@ DRAWER_ERROR_E Drawer_Init(DRAWER_S **obj)
     pData->image         = NULL;
     pData->text          = NULL;
     
-    assert((pData->lock  = SDL_CreateMutex()));
+    assert((pData->lock = SDL_CreateMutex()));
     
-    (*obj)->pData        = (void*)pData;
+    (*obj)->pData = (void*)pData;
     
     return DRAWER_ERROR_NONE;
 }
