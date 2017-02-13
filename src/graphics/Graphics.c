@@ -116,6 +116,16 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     GRAPHICS_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(GRAPHICS_PRIVATE_DATA_S))));
     
+    LIST_PARAMS_S listParams;
+    memset(&listParams, '\0', sizeof(LIST_PARAMS_S));
+    listParams.compareCb = compareCb;
+    listParams.releaseCb = releaseCb;
+    listParams.browseCb  = browseCb;
+    
+    if (List_Init(&pData->gfxElementsList, &listParams) != LIST_ERROR_NONE) {
+        goto exit;
+    }
+    
     (*obj)->createDrawer     = createDrawer_f;
     (*obj)->destroyDrawer    = destroyDrawer_f;
     
@@ -138,20 +148,6 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     (*obj)->handleEvents     = handleEvents_f;
     
     (*obj)->quit             = quit_f;
-    
-    LIST_PARAMS_S listParams;
-    memset(&listParams, '\0', sizeof(LIST_PARAMS_S));
-    listParams.compareCb     = compareCb;
-    listParams.releaseCb     = releaseCb;
-    listParams.browseCb      = browseCb;
-    
-    if (List_Init(&pData->gfxElementsList, &listParams) != LIST_ERROR_NONE) {
-        goto exit;
-    }
-    
-    pData->focusedElement   = NULL;
-    pData->lastDrawnElement = NULL;
-    pData->videoElement     = NULL;
     
     (*obj)->pData = (void*)pData;
     

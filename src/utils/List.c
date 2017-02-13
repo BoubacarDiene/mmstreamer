@@ -94,6 +94,13 @@ LIST_ERROR_E List_Init(LIST_S **obj, LIST_PARAMS_S *params)
     (*obj)->params.releaseCb = params->releaseCb;
     (*obj)->params.browseCb  = params->browseCb;
     
+    LIST_PRIVATE_DATA_S *pData;
+    assert((pData = calloc(1, sizeof(LIST_PRIVATE_DATA_S))));
+    
+    if (pthread_mutex_init(&pData->lock, NULL) != 0) {
+        goto exit;
+    }
+    
     (*obj)->add            = add_f;
     (*obj)->remove         = remove_f;
     (*obj)->removeAll      = removeAll_f;
@@ -102,13 +109,6 @@ LIST_ERROR_E List_Init(LIST_S **obj, LIST_PARAMS_S *params)
     (*obj)->browseElements = browseElements_f;
     (*obj)->lock           = lock_f;
     (*obj)->unlock         = unlock_f;
-    
-    LIST_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(LIST_PRIVATE_DATA_S))));
-    
-    if (pthread_mutex_init(&pData->lock, NULL) != 0) {
-        goto exit;
-    }
     
     (*obj)->pData = (void*)pData;
     

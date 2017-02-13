@@ -98,8 +98,8 @@ static VIDEO_ERROR_E getMaxBufferSize_f  (VIDEO_S *obj, VIDEO_PARAMS_S *params, 
 static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params);
 static VIDEO_ERROR_E stopDeviceCapture_f (VIDEO_S *obj, VIDEO_PARAMS_S *params);
 
-static VIDEO_ERROR_E lockBuffer_f  (VIDEO_S *obj, VIDEO_PARAMS_S *params);
-static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj, VIDEO_PARAMS_S *params);
+static VIDEO_ERROR_E lockBuffer_f  (VIDEO_S *obj, VIDEO_CONTEXT_S *ctx);
+static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj, VIDEO_CONTEXT_S *ctx);
 
 static VIDEO_ERROR_E initVideoContext_f(VIDEO_CONTEXT_S *ctx, VIDEO_PARAMS_S *params);
 static VIDEO_ERROR_E uninitVideoContext_f(VIDEO_CONTEXT_S *ctx);
@@ -357,7 +357,7 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
         goto exit;
     }
 
-    /* Add server's ctx to list */
+    /* Add video ctx to list */
     VIDEO_PRIVATE_DATA_S *pData = (VIDEO_PRIVATE_DATA_S*)(obj->pData);
 
     if (!pData->videosList || (pData->videosList->lock(pData->videosList) != LIST_ERROR_NONE)) {
@@ -566,7 +566,7 @@ static VIDEO_ERROR_E stopDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
         ret = VIDEO_ERROR_STOP;
     }
 
-    /* UnInit v4l2 */
+    /* Remove video ctx */
     VIDEO_PRIVATE_DATA_S *pData = (VIDEO_PRIVATE_DATA_S*)(obj->pData);
 
     if (!pData->videosList || (pData->videosList->lock(pData->videosList) != LIST_ERROR_NONE)) {
@@ -583,55 +583,31 @@ exit:
 /*!
  *
  */
-static VIDEO_ERROR_E lockBuffer_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
+static VIDEO_ERROR_E lockBuffer_f(VIDEO_S *obj, VIDEO_CONTEXT_S *ctx)
 {
-    assert(obj && obj->pData && params);
-
-    VIDEO_CONTEXT_S *ctx = NULL;
-    VIDEO_ERROR_E ret    = VIDEO_ERROR_NONE;
-
-    if ((ret = getVideoContext_f(obj, params->name, &ctx)) != VIDEO_ERROR_NONE) {
-        Loge("Failed to retrieve %s's context", params->name);
-        goto exit;
-    }
+    assert(obj && obj->pData && ctx);
 
     if (pthread_mutex_lock(&ctx->bufferLock) != 0) {
         Loge("pthread_mutex_lock() failed");
-        ret = VIDEO_ERROR_LOCK;
-        goto exit;
+        return VIDEO_ERROR_LOCK;
     }
     
-    ret = VIDEO_ERROR_NONE;
-
-exit:
-    return ret;
+    return VIDEO_ERROR_NONE;
 }
 
 /*!
  *
  */
-static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
+static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj, VIDEO_CONTEXT_S *ctx)
 {
-    assert(obj && obj->pData && params);
-
-    VIDEO_CONTEXT_S *ctx = NULL;
-    VIDEO_ERROR_E ret    = VIDEO_ERROR_NONE;
-
-    if ((ret = getVideoContext_f(obj, params->name, &ctx)) != VIDEO_ERROR_NONE) {
-        Loge("Failed to retrieve %s's context", params->name);
-        goto exit;
-    }
+    assert(obj && obj->pData && ctx);
 
     if (pthread_mutex_unlock(&ctx->bufferLock) != 0) {
         Loge("pthread_mutex_unlock() failed");
-        ret = VIDEO_ERROR_LOCK;
-        goto exit;
+        return VIDEO_ERROR_LOCK;
     }
 
-    ret = VIDEO_ERROR_NONE;
-
-exit:
-    return ret;
+    return VIDEO_ERROR_NONE;
 }
 
 /*!
@@ -757,6 +733,9 @@ static VIDEO_ERROR_E uninitVideoContext_f(VIDEO_CONTEXT_S *ctx)
         ret = VIDEO_ERROR_UNINIT;
     }
 
+    free(ctx);
+    ctx = NULL;
+
     return ret;
 }
 
@@ -850,7 +829,7 @@ static void framesHandlerFct_f(TASK_PARAMS_S *params)
         ctx->v4l2->dequeueBuffer(ctx->v4l2);
             
         /* Fill in listener's buffer */
-        (void)lockBuffer_f(video, &ctx->params);
+        (void)lockBuffer_f(video, ctx);
         
         if (!(video->buffer.data)) {
             assert((video->buffer.data = calloc(1, ctx->v4l2->maxBufferSize)));
@@ -864,7 +843,7 @@ static void framesHandlerFct_f(TASK_PARAMS_S *params)
         
         ctx->nbFramesLost++;
             
-        (void)unlockBuffer_f(video, &ctx->params);
+        (void)unlockBuffer_f(video, ctx);
         
         /* Notify listeners */
         sem_post(&ctx->notificationSem);
@@ -893,7 +872,7 @@ static void notificationFct_f(TASK_PARAMS_S *params)
     
     LIST_S *list = ctx->listenersList;
 
-    (void)lockBuffer_f(video, &ctx->params);
+    (void)lockBuffer_f(video, ctx);
     
     if (list->lock(list) != LIST_ERROR_NONE) {
         Loge("Failed to lock list");
@@ -910,7 +889,7 @@ static void notificationFct_f(TASK_PARAMS_S *params)
                 break;
             }
             
-            /* IMPORTANT: Listener has to handle buffer very quickly so no heavy operations please!! */
+            /* IMPORTANT: Listener has to handle buffer very quickly so no heavy operation please!! */
             listener->onVideoBufferAvailableCb(&video->buffer, listener->userData);
         }
     }
@@ -920,7 +899,7 @@ static void notificationFct_f(TASK_PARAMS_S *params)
     ctx->nbFramesLost--;
 
 exit:
-    (void)unlockBuffer_f(video, &ctx->params);
+    (void)unlockBuffer_f(video, ctx);
 }
 
 /*!
@@ -934,14 +913,14 @@ static void framesHandlerAtExit_f(TASK_PARAMS_S *params)
     VIDEO_CONTEXT_S *ctx = (VIDEO_CONTEXT_S*)params->userData;
     
     /* Release buffer */
-    (void)lockBuffer_f(video, &ctx->params);
+    (void)lockBuffer_f(video, ctx);
     
     if (video->buffer.data) {
         free(video->buffer.data);
         video->buffer.data = NULL;
     }
     
-    (void)unlockBuffer_f(video, &ctx->params);
+    (void)unlockBuffer_f(video, ctx);
 }
 
 /*!

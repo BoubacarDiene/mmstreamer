@@ -95,23 +95,6 @@ CORE_ERROR_E Core_Init(CORE_S **obj, CONTEXT_S *ctx)
 {
     assert(obj && ctx && (*obj = calloc(1, sizeof(CORE_S))));
     
-    (*obj)->loadAllParams        = loadAllParams_f;
-    (*obj)->unloadAllParams      = unloadAllParams_f;
-    
-    (*obj)->loadGraphicsParams   = loadGraphicsParams_f;
-    (*obj)->unloadGraphicsParams = unloadGraphicsParams_f;
-    
-    (*obj)->loadVideosParams     = loadVideosParams_f;
-    (*obj)->unloadVideosParams   = unloadVideosParams_f;
-    
-    (*obj)->loadServersParams    = loadServersParams_f;
-    (*obj)->unloadServersParams  = unloadServersParams_f;
-    
-    (*obj)->loadClientsParams    = loadClientsParams_f;
-    (*obj)->unloadClientsParams  = unloadClientsParams_f;
-    
-    (*obj)->keepAppRunning       = keepAppRunning_f;
-    
     CORE_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(CORE_PRIVATE_DATA_S))));
     
@@ -129,6 +112,23 @@ CORE_ERROR_E Core_Init(CORE_S **obj, CONTEXT_S *ctx)
         Loge("Listeners_Init() failed");
         goto listeners_exit;
     }
+    
+    (*obj)->loadAllParams        = loadAllParams_f;
+    (*obj)->unloadAllParams      = unloadAllParams_f;
+    
+    (*obj)->loadGraphicsParams   = loadGraphicsParams_f;
+    (*obj)->unloadGraphicsParams = unloadGraphicsParams_f;
+    
+    (*obj)->loadVideosParams     = loadVideosParams_f;
+    (*obj)->unloadVideosParams   = unloadVideosParams_f;
+    
+    (*obj)->loadServersParams    = loadServersParams_f;
+    (*obj)->unloadServersParams  = unloadServersParams_f;
+    
+    (*obj)->loadClientsParams    = loadClientsParams_f;
+    (*obj)->unloadClientsParams  = unloadClientsParams_f;
+    
+    (*obj)->keepAppRunning       = keepAppRunning_f;
     
     pData->ctx = ctx;
 
