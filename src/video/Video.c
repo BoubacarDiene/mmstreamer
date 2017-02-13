@@ -101,8 +101,8 @@ static VIDEO_ERROR_E stopDeviceCapture_f (VIDEO_S *obj, VIDEO_PARAMS_S *params);
 static VIDEO_ERROR_E lockBuffer_f  (VIDEO_S *obj, VIDEO_CONTEXT_S *ctx);
 static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj, VIDEO_CONTEXT_S *ctx);
 
-static VIDEO_ERROR_E initVideoContext_f(VIDEO_CONTEXT_S *ctx, VIDEO_PARAMS_S *params);
-static VIDEO_ERROR_E uninitVideoContext_f(VIDEO_CONTEXT_S *ctx);
+static VIDEO_ERROR_E initVideoContext_f(VIDEO_CONTEXT_S **ctx, VIDEO_PARAMS_S *params);
+static VIDEO_ERROR_E uninitVideoContext_f(VIDEO_CONTEXT_S **ctx);
 static VIDEO_ERROR_E getVideoContext_f(VIDEO_S *obj, char *videoName, VIDEO_CONTEXT_S **ctxOut);
 
 static void framesHandlerFct_f   (TASK_PARAMS_S *params);
@@ -341,18 +341,14 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
 
     VIDEO_CONTEXT_S *ctx = NULL;
 
-    /* Check if video capture has already been started on this device */
+    /* Check if video capture has already been started */
     if (getVideoContext_f(obj, params->name, &ctx) == VIDEO_ERROR_NONE) {
         Loge("%s's context exists", params->name);
         return VIDEO_ERROR_START;
     }
 
-    VIDEO_ERROR_E ret    = VIDEO_ERROR_NONE;
-
     /* Initialize video context */
-    assert((ctx = calloc(1, sizeof(VIDEO_CONTEXT_S))));
-
-    if ((ret = initVideoContext_f(ctx, params)) != VIDEO_ERROR_NONE) {
+    if (initVideoContext_f(&ctx, params) != VIDEO_ERROR_NONE) {
         Loge("Failed to init video context");
         goto exit;
     }
@@ -486,7 +482,7 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     (void)ctx->videoTask->start(ctx->videoTask, &ctx->framesHandlerParams);
     (void)ctx->videoTask->start(ctx->videoTask, &ctx->notificationParams);
 
-    return ret;
+    return VIDEO_ERROR_NONE;
 
 notificationCreate_exit:
     (void)ctx->videoTask->destroy(ctx->videoTask, &ctx->framesHandlerParams);
@@ -504,7 +500,6 @@ configure_exit:
 open_exit:
     if (!pData->videosList || (pData->videosList->lock(pData->videosList) != LIST_ERROR_NONE)) {
         Loge("Failed to lock videosList");
-        ret = VIDEO_ERROR_LOCK;
     }
     else {
         pData->videosList->remove(pData->videosList, (void*)ctx->params.name);
@@ -512,13 +507,13 @@ open_exit:
     }
 
 list_exit:
-    (void)uninitVideoContext_f(ctx);
+    (void)uninitVideoContext_f(&ctx);
 
 exit:
     free(ctx);
     ctx = NULL;
 
-    return ret;
+    return VIDEO_ERROR_START;
 }
 
 /*!
@@ -613,11 +608,12 @@ static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj, VIDEO_CONTEXT_S *ctx)
 /*!
  *
  */
-static VIDEO_ERROR_E initVideoContext_f(VIDEO_CONTEXT_S *ctx, VIDEO_PARAMS_S *params)
+static VIDEO_ERROR_E initVideoContext_f(VIDEO_CONTEXT_S **ctx, VIDEO_PARAMS_S *params)
 {
     assert(ctx && params);
+    assert((*ctx = calloc(1, sizeof(VIDEO_CONTEXT_S))));
 
-    memcpy(&ctx->params, params, sizeof(VIDEO_PARAMS_S));
+    memcpy(&(*ctx)->params, params, sizeof(VIDEO_PARAMS_S));
 
     LIST_PARAMS_S listParams;
     memset(&listParams, '\0', sizeof(LIST_PARAMS_S));
@@ -625,37 +621,37 @@ static VIDEO_ERROR_E initVideoContext_f(VIDEO_CONTEXT_S *ctx, VIDEO_PARAMS_S *pa
     listParams.releaseCb = releaseListenerCb;
     listParams.browseCb  = NULL;
 
-    if (List_Init(&ctx->listenersList, &listParams) != LIST_ERROR_NONE) {
+    if (List_Init(&(*ctx)->listenersList, &listParams) != LIST_ERROR_NONE) {
         Loge("List_Init() failed");
         goto list_exit;
     }
 
-    if (Task_Init(&ctx->videoTask) != TASK_ERROR_NONE) {
+    if (Task_Init(&(*ctx)->videoTask) != TASK_ERROR_NONE) {
         Loge("Task_Init() failed");
         goto task_exit;
     }
 
-    if (pthread_mutex_init(&ctx->framesHandlerLock, NULL) != 0) {
+    if (pthread_mutex_init(&(*ctx)->framesHandlerLock, NULL) != 0) {
         Loge("pthread_mutex_init() failed");
         goto framesHandlerLock_exit;
     }
 
-    if (sem_init(&ctx->notificationSem, 0, 0) != 0) {
+    if (sem_init(&(*ctx)->notificationSem, 0, 0) != 0) {
         Loge("sem_init() failed");
         goto notificationSem_exit;
     }
 
-    if (pthread_mutex_init(&ctx->notificationLock, NULL) != 0) {
+    if (pthread_mutex_init(&(*ctx)->notificationLock, NULL) != 0) {
         Loge("pthread_mutex_init() failed");
         goto notificationLock_exit;
     }
 
-    if (pthread_mutex_init(&ctx->bufferLock, NULL) != 0) {
+    if (pthread_mutex_init(&(*ctx)->bufferLock, NULL) != 0) {
         Loge("pthread_mutex_init() failed");
         goto bufferLock_exit;
     }
 
-    if (V4l2_Init(&ctx->v4l2) != V4L2_ERROR_NONE) {
+    if (V4l2_Init(&(*ctx)->v4l2) != V4L2_ERROR_NONE) {
         Loge("V4l2_Init() failed");
         goto v4l2_exit;
     }
@@ -663,27 +659,27 @@ static VIDEO_ERROR_E initVideoContext_f(VIDEO_CONTEXT_S *ctx, VIDEO_PARAMS_S *pa
     return VIDEO_ERROR_NONE;
 
 v4l2_exit:
-    (void)pthread_mutex_destroy(&ctx->bufferLock);
+    (void)pthread_mutex_destroy(&(*ctx)->bufferLock);
 
 bufferLock_exit:
-    (void)pthread_mutex_destroy(&ctx->notificationLock);
+    (void)pthread_mutex_destroy(&(*ctx)->notificationLock);
 
 notificationLock_exit:
-    (void)sem_destroy(&ctx->notificationSem);
+    (void)sem_destroy(&(*ctx)->notificationSem);
 
 notificationSem_exit:
-    (void)pthread_mutex_destroy(&ctx->framesHandlerLock);
+    (void)pthread_mutex_destroy(&(*ctx)->framesHandlerLock);
 
 framesHandlerLock_exit:
-    (void)Task_UnInit(&ctx->videoTask);
+    (void)Task_UnInit(&(*ctx)->videoTask);
 
 task_exit:
-    (void)List_UnInit(&ctx->listenersList);
+    (void)List_UnInit(&(*ctx)->listenersList);
 
 list_exit:
-    if (ctx) {
-        free(ctx);
-        ctx = NULL;
+    if (*ctx) {
+        free(*ctx);
+        *ctx = NULL;
     }
 
     return VIDEO_ERROR_INIT;
@@ -692,49 +688,49 @@ list_exit:
 /*!
  *
  */
-static VIDEO_ERROR_E uninitVideoContext_f(VIDEO_CONTEXT_S *ctx)
+static VIDEO_ERROR_E uninitVideoContext_f(VIDEO_CONTEXT_S **ctx)
 {
-    assert(ctx);
+    assert(ctx && *ctx);
 
     VIDEO_ERROR_E ret = VIDEO_ERROR_NONE;
 
-    if (V4l2_UnInit(&ctx->v4l2) != V4L2_ERROR_NONE) {
+    if (V4l2_UnInit(&(*ctx)->v4l2) != V4L2_ERROR_NONE) {
         Loge("V4l2_UnInit() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
 
-    if (pthread_mutex_destroy(&ctx->bufferLock) != 0) {
+    if (pthread_mutex_destroy(&(*ctx)->bufferLock) != 0) {
         Loge("pthread_mutex_destroy() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
 
-    if (pthread_mutex_destroy(&ctx->notificationLock) != 0) {
+    if (pthread_mutex_destroy(&(*ctx)->notificationLock) != 0) {
         Loge("pthread_mutex_destroy() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
 
-    if (sem_destroy(&ctx->notificationSem) != 0) {
+    if (sem_destroy(&(*ctx)->notificationSem) != 0) {
         Loge("sem_destroy() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
 
-    if (pthread_mutex_destroy(&ctx->framesHandlerLock) != 0) {
+    if (pthread_mutex_destroy(&(*ctx)->framesHandlerLock) != 0) {
         Loge("pthread_mutex_destroy() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
 
-    if (Task_UnInit(&ctx->videoTask) != TASK_ERROR_NONE) {
+    if (Task_UnInit(&(*ctx)->videoTask) != TASK_ERROR_NONE) {
         Loge("Task_UnInit() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
 
-    if (List_UnInit(&ctx->listenersList) != LIST_ERROR_NONE) {
+    if (List_UnInit(&(*ctx)->listenersList) != LIST_ERROR_NONE) {
         Loge("List_UnInit() failed");
         ret = VIDEO_ERROR_UNINIT;
     }
 
-    free(ctx);
-    ctx = NULL;
+    free(*ctx);
+    *ctx = NULL;
 
     return ret;
 }
@@ -945,7 +941,7 @@ static void releaseVideoCb(LIST_S *obj, void *element)
 
     VIDEO_CONTEXT_S *ctx = (VIDEO_CONTEXT_S*)element;
 
-    uninitVideoContext_f(ctx);
+    uninitVideoContext_f(&ctx);
 }
 
 /*!

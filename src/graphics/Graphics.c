@@ -552,12 +552,18 @@ static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_
     assert(obj && obj->pData && inOut);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    BUFFER_S videoBuffer;
+
+    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+        return GRAPHICS_ERROR_LOCK;
+    }
+
+    GRAPHICS_ERROR_E ret = GRAPHICS_ERROR_PARAMS;
+    BUFFER_S videoBuffer = { 0 };
 
     if (!buffer) {
         if (!pData->videoElement) {
             Loge("No video frame to save");
-            return GRAPHICS_ERROR_PARAMS;
+            goto exit;
         }
         Logd("Creating screenshot from the last drawn video frame");
         videoBuffer.data   = pData->videoElement->data.buffer.data;
@@ -569,10 +575,16 @@ static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_
     }
     
     if (pData->drawer->saveBuffer(pData->drawer, &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
-        return GRAPHICS_ERROR_DRAWER;
+        ret = GRAPHICS_ERROR_DRAWER;
+        goto exit;
     }
-    
-    return GRAPHICS_ERROR_NONE;
+
+    ret = GRAPHICS_ERROR_NONE;
+
+exit:
+    (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+
+    return ret;
 }
 
 /*!
@@ -588,25 +600,36 @@ static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName
         return GRAPHICS_ERROR_LOCK;
     }
 
-    GRAPHICS_ERROR_E ret      = GRAPHICS_ERROR_PARAMS;
-    GFX_ELEMENT_S *gfxElement = NULL;
+    GRAPHICS_ERROR_E ret = GRAPHICS_ERROR_PARAMS;
+    BUFFER_S videoBuffer = { 0 };
 
-    if (getElement_f(obj, gfxElementName, &gfxElement) != GRAPHICS_ERROR_NONE) {
-        Loge("Element \"%s\" not found", gfxElementName);
-        goto exit;
+    if (!pData->videoElement && (strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE) == 0)) {
+        videoBuffer.data   = pData->videoElement->data.buffer.data;
+        videoBuffer.length = pData->videoElement->data.buffer.length;
+    }
+    else {
+        GFX_ELEMENT_S *gfxElement = NULL;
+
+        if (getElement_f(obj, gfxElementName, &gfxElement) != GRAPHICS_ERROR_NONE) {
+            Loge("Element \"%s\" not found", gfxElementName);
+            goto exit;
+        }
+
+        if (gfxElement->type != GFX_ELEMENT_TYPE_VIDEO) {
+            Loge("\"%s\" is not a video element", gfxElementName);
+            goto exit;
+        }
+
+        if (!gfxElement->data.buffer.data || (gfxElement->data.buffer.length == 0)) {
+            Logw("No video frame to save");
+            goto exit;
+        }
+
+        videoBuffer.data   = gfxElement->data.buffer.data;
+        videoBuffer.length = gfxElement->data.buffer.length;
     }
 
-    if (gfxElement->type != GFX_ELEMENT_TYPE_VIDEO) {
-        Loge("\"%s\" is not a video element", gfxElementName);
-        goto exit;
-    }
-
-    if (!gfxElement->data.buffer.data || (gfxElement->data.buffer.length == 0)) {
-        Logw("No video frame to save");
-        goto exit;
-    }
-
-    if (pData->drawer->saveBuffer(pData->drawer, &gfxElement->data.buffer, inOut) != DRAWER_ERROR_NONE) {
+    if (pData->drawer->saveBuffer(pData->drawer, &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
         ret = GRAPHICS_ERROR_DRAWER;
         goto exit;
     }

@@ -109,6 +109,7 @@ static CLIENT_ERROR_E sendData_f(CLIENT_S *obj, CLIENT_PARAMS_S *params, BUFFER_
 
 static CLIENT_ERROR_E openClientSocket_f(CLIENT_CONTEXT_S *ctx, LINK_HELPER_S *linkHelper);
 static CLIENT_ERROR_E closeClientSocket_f(CLIENT_CONTEXT_S *ctx);
+static CLIENT_ERROR_E getClientContext_f(CLIENT_S *obj, char *clientName, CLIENT_CONTEXT_S **ctxOut, uint8_t lock);
 
 static void watcherTaskFct_f (TASK_PARAMS_S *params);
 static void receiverTaskFct_f(TASK_PARAMS_S *params);
@@ -199,11 +200,16 @@ CLIENT_ERROR_E Client_UnInit(CLIENT_S **obj)
 static CLIENT_ERROR_E start_f(CLIENT_S *obj, CLIENT_PARAMS_S *params)
 {
     assert(obj && obj->pData && params);
-    
-    CLIENT_PRIVATE_DATA_S *pData = (CLIENT_PRIVATE_DATA_S*)(obj->pData);
-    
+
+    CLIENT_CONTEXT_S *ctx = NULL;
+
+    /* Check if client is already started or not */
+    if (getClientContext_f(obj, params->name, &ctx, 1) == CLIENT_ERROR_NONE) {
+        Loge("%s's context exists", params->name);
+        return CLIENT_ERROR_START;
+    }
+
     /* Init context */
-    CLIENT_CONTEXT_S *ctx;
     assert((ctx = calloc(1, sizeof(CLIENT_CONTEXT_S))));
     
     strncpy(ctx->params.name, params->name, sizeof(ctx->params.name));
@@ -217,6 +223,8 @@ static CLIENT_ERROR_E start_f(CLIENT_S *obj, CLIENT_PARAMS_S *params)
     ctx->params.userData         = params->userData;
     
     /* Init socket */
+    CLIENT_PRIVATE_DATA_S *pData = (CLIENT_PRIVATE_DATA_S*)(obj->pData);
+
     if (openClientSocket_f(ctx, pData->linkHelper) != CLIENT_ERROR_NONE) {
         Loge("openClientSocket_f() failed");
         goto exit;
@@ -312,19 +320,29 @@ exit:
 static CLIENT_ERROR_E stop_f(CLIENT_S *obj, CLIENT_PARAMS_S *params)
 {
     assert(obj && obj->pData && params);
-    
-    CLIENT_PRIVATE_DATA_S *pData = (CLIENT_PRIVATE_DATA_S*)(obj->pData);
-    
-    if (pData->clientsList) {
-        if (pData->clientsList->lock(pData->clientsList) != LIST_ERROR_NONE) {
-            Loge("Failed to lock clientsList");
-            return CLIENT_ERROR_LOCK;
-        }
-        (void)pData->clientsList->remove(pData->clientsList, (void*)params->name);
-        (void)pData->clientsList->unlock(pData->clientsList);
+
+    CLIENT_CONTEXT_S *ctx = NULL;
+    CLIENT_ERROR_E ret    = CLIENT_ERROR_NONE;
+
+    /* Ensure that the client is started */
+    if ((ret = getClientContext_f(obj, params->name, &ctx, 1)) != CLIENT_ERROR_NONE) {
+        Loge("%s's context does not exist", params->name);
+        goto exit;
     }
-    
-    return CLIENT_ERROR_NONE;
+
+    CLIENT_PRIVATE_DATA_S *pData = (CLIENT_PRIVATE_DATA_S*)(obj->pData);
+
+    if (!pData->clientsList || pData->clientsList->lock(pData->clientsList) != LIST_ERROR_NONE) {
+        Loge("Failed to lock clientsList");
+        ret = CLIENT_ERROR_LOCK;
+        goto exit;
+    }
+
+    (void)pData->clientsList->remove(pData->clientsList, (void*)params->name);
+    (void)pData->clientsList->unlock(pData->clientsList);
+
+exit:
+    return ret;
 }
 
 /*!
@@ -333,15 +351,13 @@ static CLIENT_ERROR_E stop_f(CLIENT_S *obj, CLIENT_PARAMS_S *params)
 static CLIENT_ERROR_E sendData_f(CLIENT_S *obj, CLIENT_PARAMS_S *params, BUFFER_S *buffer)
 {
     assert(obj && obj->pData && params && buffer);
-    
+
     CLIENT_PRIVATE_DATA_S *pData = (CLIENT_PRIVATE_DATA_S*)(obj->pData);
     
     if (!pData->clientsList) {
         Loge("No element in list");
         return CLIENT_ERROR_LIST;
     }
-    
-    CLIENT_ERROR_E ret = CLIENT_ERROR_NONE;
     
     if (pData->clientsList->lock(pData->clientsList) != LIST_ERROR_NONE) {
         Loge("Failed to lock clientsList");
@@ -350,31 +366,10 @@ static CLIENT_ERROR_E sendData_f(CLIENT_S *obj, CLIENT_PARAMS_S *params, BUFFER_
     
     // Retrieve client context
     CLIENT_CONTEXT_S *ctx = NULL;
-    
-    uint32_t nbElements;
-    if (pData->clientsList->getNbElements(pData->clientsList, &nbElements) != LIST_ERROR_NONE) {
-        Loge("Failed to get number of elements");
-        ret = CLIENT_ERROR_LIST;
-        goto exit;
-    }
-    
-    while (nbElements > 0) {
-        if (pData->clientsList->getElement(pData->clientsList, (void**)&ctx) != LIST_ERROR_NONE) {
-            Loge("Failed to retrieve element");
-            ret = CLIENT_ERROR_LIST;
-            goto exit;
-        }
-        
-        if (!strncmp(ctx->params.name, params->name, strlen(params->name))) {
-            break;
-        }
-            
-        nbElements--;
-    }
-        
-    if (nbElements == 0) {
-        Loge("Element %s not found", params->name);
-        ret = CLIENT_ERROR_LIST;
+    CLIENT_ERROR_E ret    = CLIENT_ERROR_NONE;
+
+    if ((ret = getClientContext_f(obj, params->name, &ctx, 0)) != CLIENT_ERROR_NONE) {
+        Loge("%s's context exists", params->name);
         goto exit;
     }
     
@@ -615,6 +610,62 @@ static CLIENT_ERROR_E closeClientSocket_f(CLIENT_CONTEXT_S *ctx)
     }
     
     return CLIENT_ERROR_NONE;
+}
+
+/*!
+ *
+ */
+static CLIENT_ERROR_E getClientContext_f(CLIENT_S *obj, char *clientName, CLIENT_CONTEXT_S **ctxOut, uint8_t lock)
+{
+    assert(obj && obj->pData && clientName && ctxOut);
+
+    CLIENT_PRIVATE_DATA_S *pData = (CLIENT_PRIVATE_DATA_S*)(obj->pData);
+
+    if (!pData->clientsList) {
+        Loge("There is currently no element in list");
+        return CLIENT_ERROR_LIST;
+    }
+
+    CLIENT_ERROR_E ret = CLIENT_ERROR_NONE;
+
+    if (lock && (pData->clientsList->lock(pData->clientsList) != LIST_ERROR_NONE)) {
+        Loge("Failed to lock clientsList");
+        return CLIENT_ERROR_LIST;
+    }
+
+    uint32_t nbElements;
+    if (pData->clientsList->getNbElements(pData->clientsList, &nbElements) != LIST_ERROR_NONE) {
+        Loge("Failed to get number of elements");
+        ret = CLIENT_ERROR_LIST;
+        goto exit;
+    }
+
+    while (nbElements > 0) {
+        if (pData->clientsList->getElement(pData->clientsList, (void**)ctxOut) != LIST_ERROR_NONE) {
+            Loge("Failed to retrieve element");
+            ret = CLIENT_ERROR_LIST;
+            goto exit;
+        }
+
+        if (!strcmp((*ctxOut)->params.name, clientName)) {
+            break;
+        }
+
+        nbElements--;
+    }
+
+    if (nbElements == 0) {
+        //Loge("Element %s not found", clientName);
+        ret = CLIENT_ERROR_LIST;
+        goto exit;
+    }
+
+exit:
+    if (lock) {
+        (void)pData->clientsList->unlock(pData->clientsList);
+    }
+
+    return ret;
 }
 
 /*!

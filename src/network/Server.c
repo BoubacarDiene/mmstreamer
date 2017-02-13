@@ -226,11 +226,16 @@ SERVER_ERROR_E Server_UnInit(SERVER_S **obj)
 static SERVER_ERROR_E start_f(SERVER_S *obj, SERVER_PARAMS_S *params)
 {
     assert(obj && obj->pData && params);
-    
-    SERVER_PRIVATE_DATA_S *pData = (SERVER_PRIVATE_DATA_S*)(obj->pData);
-    
+
+    SERVER_CONTEXT_S *ctx = NULL;
+
+    /* Check if server is already running or not */
+    if (getServerContext_f(obj, params->name, &ctx) == SERVER_ERROR_NONE) {
+        Loge("%s's context exists", params->name);
+        return SERVER_ERROR_START;
+    }
+
     /* Init context */
-    SERVER_CONTEXT_S *ctx;
     assert((ctx = calloc(1, sizeof(SERVER_CONTEXT_S))));
     
     strncpy(ctx->params.name, params->name, sizeof(ctx->params.name));
@@ -247,6 +252,8 @@ static SERVER_ERROR_E start_f(SERVER_S *obj, SERVER_PARAMS_S *params)
     ctx->params.userData               = params->userData;
     
     /* Init socket */
+    SERVER_PRIVATE_DATA_S *pData = (SERVER_PRIVATE_DATA_S*)(obj->pData);
+
     if (openServerSocket_f(ctx, pData->linkHelper) != SERVER_ERROR_NONE) {
         Loge("openServerSocket_f() failed");
         goto exit;
@@ -351,16 +358,28 @@ static SERVER_ERROR_E stop_f(SERVER_S *obj, SERVER_PARAMS_S *params)
 {
     assert(obj && obj->pData && params);
 
+    SERVER_CONTEXT_S *ctx = NULL;
+    SERVER_ERROR_E ret    = SERVER_ERROR_NONE;
+
+    /* Ensure that the server is running */
+    if ((ret = getServerContext_f(obj, params->name, &ctx)) != SERVER_ERROR_NONE) {
+        Loge("%s's context does not exist", params->name);
+        goto exit;
+    }
+
     SERVER_PRIVATE_DATA_S *pData = (SERVER_PRIVATE_DATA_S*)(obj->pData);
 
     if (!pData->serversList || pData->serversList->lock(pData->serversList) != LIST_ERROR_NONE) {
         Loge("Failed to lock serversList");
-        return SERVER_ERROR_LOCK;
+        ret = SERVER_ERROR_LOCK;
+        goto exit;
     }
+
     (void)pData->serversList->remove(pData->serversList, (void*)params->name);
     (void)pData->serversList->unlock(pData->serversList);
 
-    return SERVER_ERROR_NONE;
+exit:
+    return ret;
 }
 
 /*!
@@ -742,7 +761,7 @@ static SERVER_ERROR_E getServerContext_f(SERVER_S *obj, char *serverName, SERVER
     }
         
     if (nbElements == 0) {
-        Loge("Element %s not found", serverName);
+        //Loge("Element %s not found", serverName);
         ret = SERVER_ERROR_LIST;
         goto exit;
     }

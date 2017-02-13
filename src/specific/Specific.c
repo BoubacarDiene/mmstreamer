@@ -284,14 +284,14 @@ SPECIFIC_ERROR_E setClickHandlers_f(SPECIFIC_S *obj, void *data, SPECIFIC_HANDLE
 {
     assert(obj && data);
 
-    if (!handlers || (nbHandlers == 0)) {
-        return SPECIFIC_ERROR_PARAMS;
-    }
-
     SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
 
     elementData->index           = index;
     elementData->nbClickHandlers = nbHandlers;
+
+    if (!handlers || (nbHandlers == 0)) {
+        return SPECIFIC_ERROR_PARAMS;
+    }
 
     assert((elementData->clickHandlers = calloc(1, nbHandlers * sizeof(SPECIFIC_CLICK_HANDLERS_S))));
 
