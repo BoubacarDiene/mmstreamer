@@ -592,6 +592,12 @@ static void onScreenCb(void *userData, const char **attrs)
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
+    	    .attrName          = XML_ATTR_SHOW_CURSOR,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&screen->showCursor,
+    	    .attrGetter.scalar = parserObj->getUint8
+        },
+    	{
     	    .attrName          = XML_ATTR_CAPTION,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
     	    .attrValue.vector  = (void**)&screen->caption,
@@ -1200,6 +1206,12 @@ static void onColorCb(void *userData, const char **attrs)
     	    .attrName          = XML_ATTR_BLUE,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&color->blue,
+    	    .attrGetter.scalar = parserObj->getUint8
+        },
+    	{
+    	    .attrName          = XML_ATTR_ALPHA,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&color->alpha,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{

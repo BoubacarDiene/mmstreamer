@@ -48,9 +48,10 @@ HEADERS := -I${OUT_BUILD_INC} -I${OUT_BUILD_INC_DEPS}
 CFLAGS  += ${HEADERS}
 
 # Files
-DRAWER    := graphics/Drawer
-GFXCOMMON := graphics/GfxCommon
-GRAPHICS  := graphics/Graphics
+DRAWER     := graphics/Drawer
+DRAWER_SRC := graphics/drawers/Drawer${SDL_BUILD_VERSION}
+GFXCOMMON  := graphics/GfxCommon
+GRAPHICS   := graphics/Graphics
 
 # Objects
 OBJS := ${OUT_BUILD_SRC}/${DRAWER}.o   \
@@ -66,6 +67,13 @@ all: prepare-graphics-sources ${OBJS}
 # objects
 %.o: %.c
 	${CC} ${CFLAGS} -c $< -o ${OUT_BUILD_OBJS}/$(notdir $@)
+
+#################################################################
+#                              Install                          #
+#################################################################
+
+install: prepare-release
+	${PRINT} ***** Nothing to install *****
 
 #################################################################
 #                             Prepare                           #
@@ -101,8 +109,8 @@ prepare-graphics-sources:
 	${CP} ${INC}/${GFXCOMMON}.h ${OUT_BUILD_GRAPHICS_H}/.
 	${CP} ${INC}/${GRAPHICS}.h  ${OUT_BUILD_GRAPHICS_H}/.
 	
-	${CP} ${SRC}/${DRAWER}.c    ${OUT_BUILD_GRAPHICS_C}/.
-	${CP} ${SRC}/${GRAPHICS}.c  ${OUT_BUILD_GRAPHICS_C}/.
+	${CP} ${SRC}/${DRAWER_SRC}.c ${OUT_BUILD_GRAPHICS_C}/$(notdir ${DRAWER}.c)
+	${CP} ${SRC}/${GRAPHICS}.c   ${OUT_BUILD_GRAPHICS_C}/.
 
 #################################################################
 #                              Clean                            #

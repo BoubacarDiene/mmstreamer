@@ -273,6 +273,7 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
 
     screenParams->bitsPerPixel = xmlGraphics->screen.bitsPerPixel;
     screenParams->isFullScreen = xmlGraphics->screen.fullscreen;
+    screenParams->showCursor   = xmlGraphics->screen.showCursor;
     
     if (strlen(xmlGraphics->screen.caption) > 0) {
         screenParams->isTitleBarUsed = 1;
@@ -1082,6 +1083,7 @@ static void getColor_f(void *userData, int32_t colorId, GFX_COLOR_S *colorOut)
     colorOut->red   = common->xmlColors.colors[colorId].red;
 	colorOut->green = common->xmlColors.colors[colorId].green;
 	colorOut->blue  = common->xmlColors.colors[colorId].blue;
+	colorOut->alpha = common->xmlColors.colors[colorId].alpha;
 }
 
 /*!

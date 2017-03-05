@@ -72,7 +72,7 @@ EXPAT_TARGET    := expat
 FREETYPE_TARGET := freetype
 JPEG_TARGET     := jpeg
 SDL_TARGET      := sdl${SDL_BUILD_VERSION}
-	
+
 #################################################################
 #                               Build                           #
 #################################################################
@@ -123,7 +123,7 @@ ${SDL_TARGET}-main:
 	    tar xvf ${SDL_PATH}/${SDL_MAIN_SRC}.tar.gz -C ${SDL_PATH}; \
 	    cd ${SDL_PATH}/${SDL_MAIN_SRC} \
 	    && sed -e '/_XData32/s:register long:register _Xconst long:' -i src/video/x11/SDL_x11sym.h ||: \
-	    && ./configure --build=`uname -m` --host=arm-linux --prefix=${OUT_BUILD_DIR} --disable-static \
+	    && ./configure --prefix=${OUT_BUILD_DIR} \
 	    && make && make install \
 	    && cd -; \
 	    touch ${SDL_PATH}/${SDL_MAIN_SRC}.built; \
@@ -134,7 +134,7 @@ ${SDL_TARGET}-image:
 	if [ ! -f ${SDL_PATH}/${SDL_IMAGE_SRC}.built ]; then \
 	    tar xvf ${SDL_PATH}/${SDL_IMAGE_SRC}.tar.gz -C ${SDL_PATH}; \
 	    cd ${SDL_PATH}/${SDL_IMAGE_SRC} \
-	    && ./configure --build=`uname -m` --host=arm-linux --prefix=${OUT_BUILD_DIR} --with-sdl-prefix=${OUT_BUILD_DIR} \
+	    && ./configure --prefix=${OUT_BUILD_DIR} --with-sdl-prefix=${OUT_BUILD_DIR} \
 	    && make && make install \
 	    && cd -; \
 	    touch ${SDL_PATH}/${SDL_IMAGE_SRC}.built; \
@@ -145,13 +145,20 @@ ${SDL_TARGET}-ttf:
 	if [ ! -f ${SDL_PATH}/${SDL_TTF_SRC}.built ]; then \
 	    tar xvf ${SDL_PATH}/${SDL_TTF_SRC}.tar.gz -C ${SDL_PATH}; \
 	    cd ${SDL_PATH}/${SDL_TTF_SRC} \
-	    && ./configure --build=`uname -m` --host=arm-linux --prefix=${OUT_BUILD_DIR} --with-freetype-prefix=${OUT_BUILD_DIR} --with-sdl-prefix=${OUT_BUILD_DIR} \
+	    && ./configure --prefix=${OUT_BUILD_DIR} --with-freetype-prefix=${OUT_BUILD_DIR} --with-sdl-prefix=${OUT_BUILD_DIR} \
 	    && make && make install \
 	    && cd -; \
 	    touch ${SDL_PATH}/${SDL_TTF_SRC}.built; \
 	fi
 
 ${SDL_TARGET}: ${SDL_TARGET}-main ${SDL_TARGET}-image ${SDL_TARGET}-ttf
+
+#################################################################
+#                              Install                          #
+#################################################################
+
+install: prepare-release
+	${PRINT} ***** Nothing to install *****
 
 #################################################################
 #                             Prepare                           #

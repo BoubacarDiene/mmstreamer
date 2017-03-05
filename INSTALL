@@ -5,18 +5,28 @@
 
 1- Install dependencies
 
-  - libv4l-dev
-  - libx11-dev
-  - libxext-dev
-  - libjpeg-dev
+  1.1- Needed packages
 
-  Example on ubuntu 16.04:
+    - libv4l-dev
+    - libx11-dev
+    - libxext-dev
+    - libjpeg-dev
 
-  $ sudo apt update
-  $ sudo apt install libv4l-dev
-  $ sudo apt install libx11-dev
-  $ sudo apt install libxext-dev
-  $ sudo apt install libjpeg-dev
+    Example on ubuntu 16.04:
+
+    $ sudo apt update
+    $ sudo apt install libv4l-dev
+    $ sudo apt install libx11-dev
+    $ sudo apt install libxext-dev
+    $ sudo apt install libjpeg-dev
+
+  1.2- Maybe necessary to build SDL2_ttf (in case v2 of Drawer is used)
+
+    Create symbolic link to libGL.so.1
+
+    Example on ubuntu 16.04 64 bits:
+
+    $ sudo ln -s /usr/lib/x86_64-linux-gnu/mesa/libGL.so.1 /usr/lib/libGL.so
 
 2- Build / Reset
 

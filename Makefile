@@ -15,7 +15,7 @@
 #         - libjpeg
 #         - libSDL
 #         - libSDL_image
-#         - lSDL_ttf
+#         - libSDL_ttf
 #
 #         and binary:
 #         - mmstreamer
@@ -94,7 +94,12 @@ HEADERS            := -I${OUT_BUILD_INC}           \
 CFLAGS             += ${HEADERS} -DMAIN_CONFIG_FILE=\"${OUT_RELEASE}/res/Main.xml\"
 
 DEPS_LDFLAGS       := -L${OUT_BUILD_LIB_DEPS} -Wl,-rpath,${OUT_BUILD_LIB_DEPS}
-DEPS_LDFLAGS       += -lSDL -lSDL_image -lSDL_ttf -lfreetype -ljpeg -lexpat
+ifeq (${SDL_BUILD_VERSION},2)
+    DEPS_LDFLAGS   += -lSDL2 -lSDL2_image -lSDL2_ttf
+else
+    DEPS_LDFLAGS   += -lSDL -lSDL_image -lSDL_ttf
+endif
+DEPS_LDFLAGS       += -lfreetype -ljpeg -lexpat
 LDFLAGS            += ${DEPS_LDFLAGS}
 
 # Files
@@ -130,9 +135,14 @@ ${BIN_NAME}: ${OBJS}
 #################################################################
 
 install: prepare-release
-	make -f build/Makefile.vid install
-	make -f build/Makefile.net install
+	make -f build/Makefile.vid  install
+	make -f build/Makefile.net  install
+	make -f build/Makefile.deps install
+	make -f build/Makefile.gfx  install
+	make -f build/Makefile.spec install
+	make -f build/Makefile.core install
 	
+	${CP} ${INC}/*                     ${OUT_RELEASE_INC}/.
 	${CP} ${OUT_BUILD_BIN}/${BIN_NAME} ${OUT_RELEASE_BIN}/.
 	${CP} ${RES}/*                     ${OUT_RELEASE_RES}/.
 	

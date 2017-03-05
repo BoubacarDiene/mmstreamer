@@ -157,7 +157,7 @@ static PARSER_ERROR_E parse_f(PARSER_S *obj, PARSER_PARAMS_S *params)
 {
     assert(obj && obj->pData && params);
     
-    if (access(params->path, R_OK) != 0) {
+    if (access(params->path, F_OK) != 0) {
         Loge("File \"%s\" not found", params->path);
         return PARSER_ERROR_FILE;
     }

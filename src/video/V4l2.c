@@ -149,7 +149,7 @@ static V4L2_ERROR_E openDevice_f(V4L2_S *obj, V4L2_OPEN_DEVICE_PARAMS_S *params)
     
     V4L2_ERROR_E ret = V4L2_ERROR_NONE;
     
-    if (access(params->path, R_OK|W_OK) != 0) {
+    if (access(params->path, F_OK) != 0) {
         Loge("\"%s\" does not exist", params->path);
         ret = V4L2_ERROR_UNKNOWN_DEVICE;
         goto exit;

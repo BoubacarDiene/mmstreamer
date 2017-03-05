@@ -81,7 +81,7 @@ static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
 static void customHandler(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
 
-extern SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, void *gfxElementData, char *handlerData);
+extern SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
@@ -748,56 +748,35 @@ static void customHandler(CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
         return;
     }
 
-    // Retrieve functionName and elementName
+    // Retrieve functionName and targetName
     char *result = NULL;
 
-    char functionName[MAX_NAME_SIZE];
-    char elementName[MAX_NAME_SIZE];
+    char functionName[MAX_NAME_SIZE] = { 0 };
+    char targetName[MAX_NAME_SIZE]   = { 0 };
 
     result = strstr(handlerData, ";");
     if (!result) {
-        Loge("Bad format. Expected: customFunctionName;gfxElementName;param1;param2;...");
+        Loge("Bad format. Expected: customFunctionName;targetName;param1;param2;...");
         return;
     }
 
     uint32_t handlerDataLen = strlen(handlerData);
-    uint8_t functionNameLen   = handlerDataLen - strlen(result);
+    uint8_t functionNameLen = handlerDataLen - strlen(result);
 
-    memset(functionName, '\0', sizeof(functionName));
     strncpy(functionName, handlerData, functionNameLen);
     Logd("Custom method name : %s", functionName);
 
     result = strstr(handlerData + functionNameLen + 1, ";");
     if (!result) {
-        Loge("Bad format. Expected: customFunctionName;gfxElementName;param1;param2;...");
+        Loge("Bad format. Expected: customFunctionName;targetName;param1;param2;...");
         return;
     }
 
-    uint8_t elementNameLen = handlerDataLen - functionNameLen - strlen(result) - 1;
+    uint8_t targetNameLen = handlerDataLen - functionNameLen - strlen(result) - 1;
 
-    memset(elementName, '\0', sizeof(elementName));
-    strncpy(elementName, handlerData + functionNameLen + 1, elementNameLen);
-    Logd("Gfx element name : %s", elementName);
-
-    // Get element data
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
-    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
-    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
-
-    uint32_t index;
-    for (index = 0; index < nbGfxElements; index++) {
-        if (strncmp(gfxElements[index]->name, elementName, sizeof(gfxElements[index]->name)) == 0) {
-            break;
-        }
-    }
-
-    if (index >= nbGfxElements) {
-        Loge("Element \"%s\" not found", elementName);
-        return;
-    }
-
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElements[index]->pData;
+    strncpy(targetName, handlerData + functionNameLen + 1, targetNameLen);
+    Logd("Gfx element / group name : %s", targetName);
 
     // Call custom click handler
-    (void)callCustomHandler(ctx, functionName, elementData, handlerData + functionNameLen + elementNameLen + 2);
+    (void)callCustomHandler(ctx, functionName, targetName, handlerData + functionNameLen + targetNameLen + 2);
 }

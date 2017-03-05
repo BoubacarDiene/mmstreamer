@@ -105,6 +105,7 @@ struct XML_COLOR_S {
     uint8_t  red;
     uint8_t  green;
     uint8_t  blue;
+    uint8_t  alpha;
 };
 
 struct XML_COLORS_S {
@@ -189,6 +190,7 @@ struct XML_SCREEN_S {
     uint16_t height;
     uint8_t  bitsPerPixel;
     uint8_t  fullscreen;
+    uint8_t  showCursor;
     char     *caption;
     
     uint8_t  useColor;

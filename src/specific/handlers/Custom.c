@@ -46,36 +46,35 @@
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, void *gfxElementData, char *handlerData);
+SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
 
-static void updateText (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void updateImage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static SPECIFIC_ERROR_E getElementIndex(CONTEXT_S *ctx, char *elementName, uint32_t *index);
+
+static void updateText (CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData);
+static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
 SPECIFIC_CLICK_HANDLERS_S gCustomClickHandlers[] = {
-	{ "updateText",                 NULL,             updateText  },
-	{ "updateImage",                NULL,             updateImage },
-	{ NULL,                         NULL,             NULL        }
+	{ "updateText",                     NULL,             updateText             },
+	{ "updateImage",                    NULL,             updateImage            },
+	{ NULL,                             NULL,             NULL                   }
 };
 
 uint32_t gNbCustomClickHandlers = (uint32_t)(sizeof(gCustomClickHandlers) / sizeof(gCustomClickHandlers[0]));
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          FUNCTIONS                                           */
+/*                                      PUBLIC FUNCTIONS                                        */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, void *gfxElementData, char *handlerData)
+SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData)
 {
-    assert(functionName && gfxElementData);
-
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
-    GFX_ELEMENT_S *gfxElement            = ctx->params.graphicsInfos.gfxElements[elementData->index];
+    assert(functionName && targetName);
 
     uint32_t index;
     for (index = 0; index < gNbCustomClickHandlers; index++) {
@@ -94,7 +93,36 @@ SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, void *gfx
         return SPECIFIC_ERROR_PARAMS;
     }
 
-    gCustomClickHandlers[index].fct(ctx, gfxElement->name, gfxElementData, handlerData);
+    gCustomClickHandlers[index].fct(ctx, targetName, NULL, handlerData);
+
+    return SPECIFIC_ERROR_NONE;
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/*                                     PRIVATE FUNCTIONS                                        */
+/* -------------------------------------------------------------------------------------------- */
+
+/*!
+ *
+ */
+static SPECIFIC_ERROR_E getElementIndex(CONTEXT_S *ctx, char *elementName, uint32_t *index)
+{
+    assert(ctx && elementName && index);
+
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
+    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
+
+    for (*index = 0; *index < nbGfxElements; (*index)++) {
+        if (strncmp(gfxElements[*index]->name, elementName, sizeof(gfxElements[*index]->name)) == 0) {
+            break;
+        }
+    }
+
+    if (*index >= nbGfxElements) {
+        Loge("Element \"%s\" not found", elementName);
+        return SPECIFIC_ERROR_PARAMS;
+    }
 
     return SPECIFIC_ERROR_NONE;
 }
@@ -106,24 +134,31 @@ SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, void *gfx
 /*!
  *
  */
-static void updateText(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void updateText(CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(ctx && targetName);
+
+    (void)pData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
         return;
     }
 
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
-    GRAPHICS_S *graphicsObj              = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos      = &ctx->params.graphicsInfos;
-    GFX_ELEMENT_S *gfxElement            = graphicsInfos->gfxElements[elementData->index];
+    uint32_t index;
+    if (getElementIndex(ctx, targetName, &index) != SPECIFIC_ERROR_NONE) {
+        return;
+    }
+
+    GRAPHICS_S *graphicsObj               = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos       = &ctx->params.graphicsInfos;
+    GFX_ELEMENT_S *gfxElement             = graphicsInfos->gfxElements[index];
+    SPECIFIC_ELEMENT_DATA_S *elementData  = (SPECIFIC_ELEMENT_DATA_S*)gfxElement->pData;
 
     uint32_t stringId, fontId, fontSize, colorId;
     sscanf(handlerData, "%u;%u;%u;%u", &stringId, &fontId, &fontSize, &colorId);
 
-    Logd("Updating text of element \"%s\" / Params : %u | %u | %u | %u", gfxElementName, stringId, fontId, fontSize, colorId);
+    Logd("Updating text of element \"%s\" / Params : %u | %u | %u | %u", gfxElement->name, stringId, fontId, fontSize, colorId);
 
     GFX_TEXT_S text;
     memset(&text, '\0', sizeof(GFX_TEXT_S));
@@ -135,31 +170,36 @@ static void updateText(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDat
 
     elementData->getters.getColor(elementData->getters.userData, colorId, &text.color);
 
-    (void)graphicsObj->setData(graphicsObj, gfxElementName, (void*)&text);
+    (void)graphicsObj->setData(graphicsObj, gfxElement->name, (void*)&text);
 }
 
 /*!
  *
  */
-static void updateImage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(ctx && targetName);
 
     if (!handlerData) {
         Loge("Handler data is expected");
         return;
     }
 
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
-    GRAPHICS_S *graphicsObj              = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos      = &ctx->params.graphicsInfos;
-    GFX_ELEMENT_S *gfxElement            = graphicsInfos->gfxElements[elementData->index];
+    uint32_t index;
+    if (getElementIndex(ctx, targetName, &index) != SPECIFIC_ERROR_NONE) {
+        return;
+    }
+
+    GRAPHICS_S *graphicsObj               = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos       = &ctx->params.graphicsInfos;
+    GFX_ELEMENT_S *gfxElement             = graphicsInfos->gfxElements[index];
+    SPECIFIC_ELEMENT_DATA_S *elementData  = (SPECIFIC_ELEMENT_DATA_S*)gfxElement->pData;
 
     uint32_t imageId;
     int32_t hiddenColorId;
     sscanf(handlerData, "%u;%d", &imageId, &hiddenColorId);
 
-    Logd("Updating image of element \"%s\" / Params : %u | %d", gfxElementName, imageId, hiddenColorId);
+    Logd("Updating image of element \"%s\" / Params : %u | %d", gfxElement->name, imageId, hiddenColorId);
 
     GFX_IMAGE_S image;
     memset(&image, '\0', sizeof(GFX_IMAGE_S));
@@ -172,5 +212,5 @@ static void updateImage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
         elementData->getters.getColor(elementData->getters.userData, hiddenColorId, &hiddenColor);
     }
 
-    (void)graphicsObj->setData(graphicsObj, gfxElementName, (void*)&image);
+    (void)graphicsObj->setData(graphicsObj, gfxElement->name, (void*)&image);
 }

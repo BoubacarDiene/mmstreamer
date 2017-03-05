@@ -92,6 +92,7 @@ struct GFX_COLOR_S {
     uint8_t red;
     uint8_t green;
     uint8_t blue;
+    uint8_t alpha;
 };
 
 struct GFX_TEXT_S {
@@ -121,6 +122,7 @@ struct GFX_SCREEN_S {
     uint8_t            bitsPerPixel;
     
     uint8_t            isFullScreen;
+    uint8_t            showCursor;
     
     uint8_t            isTitleBarUsed;        // 1 => Show / 0 => Hide (so caption and icon not used)
     char               caption[MAX_STR_SIZE];

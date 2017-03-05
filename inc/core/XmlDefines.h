@@ -100,6 +100,7 @@ extern "C" {
 #define XML_ATTR_HEIGHT                  "height"
 #define XML_ATTR_BITS_PER_PIXEL          "bitsPerPixel"
 #define XML_ATTR_FULLSCREEN              "fullscreen"
+#define XML_ATTR_SHOW_CURSOR             "showCursor"
 #define XML_ATTR_CAPTION                 "caption"
 #define XML_ATTR_VIDEOFORMAT             "videoFormat"
 #define XML_ATTR_USE_COLOR               "useColor"

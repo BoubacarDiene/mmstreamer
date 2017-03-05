@@ -12,13 +12,13 @@
   <!--
     MANDATORY : Increment id by '1' starting from 0
   -->
-  <Color id="0"  red="0"   green="0"   blue="0"   />
-  <Color id="1"  red="255" green="255" blue="255" />
-  <Color id="2"  red="255" green="0"   blue="255" />
-  <Color id="3"  red="255" green="0"   blue="0"   />
-  <Color id="4"  red="68"  green="68"  blue="68"  />
-  <Color id="5"  red="0"   green="0"   blue="255" />
-  <Color id="6"  red="75"  green="75"  blue="75"  />
+  <Color id="0"  red="0"   green="0"   blue="0"   alpha="255" />
+  <Color id="1"  red="255" green="255" blue="255" alpha="255" />
+  <Color id="2"  red="255" green="0"   blue="255" alpha="255" />
+  <Color id="3"  red="255" green="0"   blue="0"   alpha="255" />
+  <Color id="4"  red="68"  green="68"  blue="68"  alpha="255" />
+  <Color id="5"  red="0"   green="0"   blue="255" alpha="255" />
+  <Color id="6"  red="75"  green="75"  blue="75"  alpha="255" />
 
 </Colors>
 

@@ -74,13 +74,12 @@ ${VIDEO_LIB_NAME}.so: ${OBJS}
 # objects
 %.o: %.c
 	${CC} ${CFLAGS} -c $< -o ${OUT_BUILD_OBJS}/$(notdir $@) -fPIC
-	
+
 #################################################################
 #                              Install                          #
 #################################################################
 
 install: prepare-release
-	${CP} ${OUT_BUILD_INC}/${VIDEO}.h           ${OUT_RELEASE_INC}/.
 	${CP} ${OUT_BUILD_LIB}/${VIDEO_LIB_NAME}.so ${OUT_RELEASE_LIB}/.
 
 #################################################################

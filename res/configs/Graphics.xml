@@ -36,6 +36,10 @@
       - fullScreen     : 1 <=> Application is launched in fullscreen mode
                          0 <=> width and height are used
 
+      - showCursor     : Show mouse cursor or not
+                         0 <=> Hide
+                         1 <=> Show
+
       - caption        : Window title
                          If empty, winddow's title bar will be hidden.
 
@@ -48,6 +52,7 @@
           height="680"
           bitsPerPixel="32"
           fullscreen="0"
+          showCursor="0"
           caption=""
           videoFormat="0">
     <!--
@@ -172,12 +177,12 @@
                 21- startClient      : "data" contains the name of client to start
 
                 22- customHandler    : "data" must have the following format :
-                                       functionName;elementName;param1;param2;param3;...
+                                       functionName;targetName;param1;param2;param3;...
 
                                        where functionName is the name of function to call in Custom.c
-                                       and param1;param2;param3;... its list of expected parameters.
+                                       and param1;param2;param3;... the list of expected parameters.
 
-                                       Note : Add your custom click handlers in Custom.c!!
+                                       Note : Add your custom click handlers in Custom.c !!
     -->
     <Elements>
       <Element name="videoZone" group="videoView" redrawGroup="1" type="0" x="160" y="160" width="640" height="480">

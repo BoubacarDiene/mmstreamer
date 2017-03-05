@@ -84,15 +84,12 @@ ${SERVER_LIB_NAME}.so: ${COMMON_OBJS} ${SERVER_OBJS}
 # objects
 %.o: %.c
 	${CC} ${CFLAGS} -c $< -o ${OUT_BUILD_OBJS}/$(notdir $@) -fPIC
-	
+
 #################################################################
 #                              Install                          #
 #################################################################
 
 install: prepare-release
-	${CP} ${OUT_BUILD_INC}/${CLIENT}.h            ${OUT_RELEASE_INC}/.
-	${CP} ${OUT_BUILD_INC}/${LINKHELPER}.h        ${OUT_RELEASE_INC}/.
-	${CP} ${OUT_BUILD_INC}/${SERVER}.h            ${OUT_RELEASE_INC}/.
 	${CP} ${OUT_BUILD_LIB}/${CLIENT_LIB_NAME}.so  ${OUT_RELEASE_LIB}/.
 	${CP} ${OUT_BUILD_LIB}/${SERVER_LIB_NAME}.so  ${OUT_RELEASE_LIB}/.
 
