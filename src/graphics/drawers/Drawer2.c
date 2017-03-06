@@ -271,8 +271,13 @@ static DRAWER_ERROR_E initScreen_f(DRAWER_S *obj, GFX_SCREEN_S *screenParams)
         Logd("Loading icon : \"%s\"", screenParams->icon.path);
         //pData->image = IMG_LOAD(screenParams->icon.path);
         pData->image = SDL_LoadBMP(screenParams->icon.path);
+
+        if (!pData->image) {
+            Loge("Failed to load image \"%s\"", screenParams->icon.path);
+            goto exit;
+        }
         
-        if (pData->image && screenParams->icon.hiddenColor) {
+        if (screenParams->icon.hiddenColor) {
             SDL_SetColorKey(pData->image,
                             SDL_TRUE,
                             SDL_MapRGBA(pData->image->format,
@@ -390,8 +395,7 @@ static DRAWER_ERROR_E drawVideo_f(DRAWER_S *obj, GFX_RECT_S *rect, BUFFER_S *buf
                                                     pData->rect.h);
         if (!pData->video.overlay) {
             Loge("Failed to create yuv texture - %s", SDL_GetError());
-            SDL_UnlockMutex(pData->lock);
-            return DRAWER_ERROR_DRAW;
+            goto exit;
         }
     }
     

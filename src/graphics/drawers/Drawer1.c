@@ -213,8 +213,13 @@ static DRAWER_ERROR_E initScreen_f(DRAWER_S *obj, GFX_SCREEN_S *screenParams)
         Logd("Loading icon : \"%s\"", screenParams->icon.path);
         //pData->image = IMG_LOAD(screenParams->icon.path);
         pData->image = SDL_LoadBMP(screenParams->icon.path);
+
+        if (!pData->image) {
+            Loge("Failed to load image \"%s\"", screenParams->icon.path);
+            goto exit;
+        }
         
-        if (pData->image && screenParams->icon.hiddenColor) {
+        if (screenParams->icon.hiddenColor) {
             SDL_SetColorKey(pData->image, SDL_SRCCOLORKEY,
                             SDL_MapRGB(pData->image->format,
                                         screenParams->icon.hiddenColor->red,

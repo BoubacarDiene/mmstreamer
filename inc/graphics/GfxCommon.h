@@ -54,6 +54,7 @@ typedef struct GFX_COLOR_S         GFX_COLOR_S;
 typedef struct GFX_TEXT_S          GFX_TEXT_S;
 typedef struct GFX_IMAGE_S         GFX_IMAGE_S;
 typedef struct GFX_RECT_S          GFX_RECT_S;
+typedef struct GFX_NAV_S           GFX_NAV_S;
 typedef struct GFX_SCREEN_S        GFX_SCREEN_S;
 typedef struct GFX_ELEMENT_S       GFX_ELEMENT_S;
 typedef struct GFX_EVENT_S         GFX_EVENT_S;
@@ -116,6 +117,13 @@ struct GFX_RECT_S {
     uint16_t h;
 };
 
+struct GFX_NAV_S {
+    char left[MAX_NAME_SIZE];
+    char up[MAX_NAME_SIZE];
+    char right[MAX_NAME_SIZE];
+    char down[MAX_NAME_SIZE];
+};
+
 struct GFX_SCREEN_S {
     GFX_RECT_S         rect;
     
@@ -158,10 +166,7 @@ struct GFX_ELEMENT_S {
     uint8_t            isFocusable;
     uint8_t            hasFocus;
     
-    char               navLeft[MAX_NAME_SIZE];
-    char               navUp[MAX_NAME_SIZE];
-    char               navRight[MAX_NAME_SIZE];
-    char               navDown[MAX_NAME_SIZE];
+    GFX_NAV_S          nav;
 
     uint8_t            surfaceUpdated; //reserved
     

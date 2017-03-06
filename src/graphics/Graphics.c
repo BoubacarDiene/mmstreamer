@@ -719,7 +719,7 @@ static GRAPHICS_ERROR_E handleEvents_f(GRAPHICS_S *obj)
             
             case GFX_EVENT_TYPE_ENTER:
                 if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                    if (pData->focusedElement) {
+                    if (pData->focusedElement && pData->focusedElement->isClickable) {
                         evt.gfxElementName  = strdup(pData->focusedElement->name);
                         evt.gfxElementPData = pData->focusedElement->pData;
                     }
@@ -740,8 +740,8 @@ static GRAPHICS_ERROR_E handleEvents_f(GRAPHICS_S *obj)
                     
             case GFX_EVENT_TYPE_MOVE_LEFT:
                 if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                    if (pData->focusedElement && (strlen(pData->focusedElement->navLeft) != 0)) {
-                        evt.gfxElementName = strdup(pData->focusedElement->navLeft);
+                    if (pData->focusedElement && (strlen(pData->focusedElement->nav.left) != 0)) {
+                        evt.gfxElementName = strdup(pData->focusedElement->nav.left);
                     }
                     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
                 }
@@ -754,8 +754,8 @@ static GRAPHICS_ERROR_E handleEvents_f(GRAPHICS_S *obj)
             
             case GFX_EVENT_TYPE_MOVE_UP:
                 if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                    if (pData->focusedElement && (strlen(pData->focusedElement->navUp) != 0)) {
-                        evt.gfxElementName = strdup(pData->focusedElement->navUp);
+                    if (pData->focusedElement && (strlen(pData->focusedElement->nav.up) != 0)) {
+                        evt.gfxElementName = strdup(pData->focusedElement->nav.up);
                     }
                     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
                 }
@@ -768,8 +768,8 @@ static GRAPHICS_ERROR_E handleEvents_f(GRAPHICS_S *obj)
                     
             case GFX_EVENT_TYPE_MOVE_RIGHT:
                 if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                    if (pData->focusedElement && (strlen(pData->focusedElement->navRight) != 0)) {
-                        evt.gfxElementName = strdup(pData->focusedElement->navRight);
+                    if (pData->focusedElement && (strlen(pData->focusedElement->nav.right) != 0)) {
+                        evt.gfxElementName = strdup(pData->focusedElement->nav.right);
                     }
                     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
                 }
@@ -782,8 +782,8 @@ static GRAPHICS_ERROR_E handleEvents_f(GRAPHICS_S *obj)
                     
             case GFX_EVENT_TYPE_MOVE_DOWN:
                 if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                    if (pData->focusedElement && (strlen(pData->focusedElement->navDown) != 0)) {
-                        evt.gfxElementName = strdup(pData->focusedElement->navDown);
+                    if (pData->focusedElement && (strlen(pData->focusedElement->nav.down) != 0)) {
+                        evt.gfxElementName = strdup(pData->focusedElement->nav.down);
                     }
                     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
                 }

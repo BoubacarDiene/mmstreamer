@@ -395,10 +395,18 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
             (*gfxElements)[index]->hasFocus    = xmlGraphics->elements[index].hasFocus;
             
             if (xmlGraphics->elements[index].nav) {
-                strncpy((*gfxElements)[index]->navLeft,  xmlGraphics->elements[index].nav->left,  sizeof((*gfxElements)[index]->navLeft));
-                strncpy((*gfxElements)[index]->navUp,    xmlGraphics->elements[index].nav->up,    sizeof((*gfxElements)[index]->navUp));
-                strncpy((*gfxElements)[index]->navRight, xmlGraphics->elements[index].nav->right, sizeof((*gfxElements)[index]->navRight));
-                strncpy((*gfxElements)[index]->navDown,  xmlGraphics->elements[index].nav->down,  sizeof((*gfxElements)[index]->navDown));
+                strncpy((*gfxElements)[index]->nav.left,
+                            xmlGraphics->elements[index].nav->left,
+                            sizeof((*gfxElements)[index]->nav.left));
+                strncpy((*gfxElements)[index]->nav.up,
+                            xmlGraphics->elements[index].nav->up,
+                            sizeof((*gfxElements)[index]->nav.up));
+                strncpy((*gfxElements)[index]->nav.right,
+                            xmlGraphics->elements[index].nav->right,
+                            sizeof((*gfxElements)[index]->nav.right));
+                strncpy((*gfxElements)[index]->nav.down,
+                            xmlGraphics->elements[index].nav->down,
+                            sizeof((*gfxElements)[index]->nav.down));
             }
             
             SPECIFIC_GETTERS_S getters;
