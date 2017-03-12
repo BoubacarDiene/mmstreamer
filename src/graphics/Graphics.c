@@ -79,6 +79,7 @@ static GRAPHICS_ERROR_E removeAll_f    (GRAPHICS_S *obj);
 static GRAPHICS_ERROR_E setVisible_f  (GRAPHICS_S *obj, char *gfxElementName, uint8_t isVisible);
 static GRAPHICS_ERROR_E setFocus_f    (GRAPHICS_S *obj, char *gfxElementName);
 static GRAPHICS_ERROR_E setClickable_f(GRAPHICS_S *obj, char *gfxElementName, uint8_t isClickable);
+static GRAPHICS_ERROR_E setNav_f      (GRAPHICS_S *obj, char *gfxElementName, GFX_NAV_S *nav);
 static GRAPHICS_ERROR_E setData_f     (GRAPHICS_S *obj, char *gfxElementName, void *data);
 
 static GRAPHICS_ERROR_E saveVideoFrame_f  (GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
@@ -137,6 +138,7 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     (*obj)->setVisible       = setVisible_f;
     (*obj)->setFocus         = setFocus_f;
     (*obj)->setClickable     = setClickable_f;
+    (*obj)->setNav           = setNav_f;
     (*obj)->setData          = setData_f;
     
     (*obj)->saveVideoFrame   = saveVideoFrame_f;
@@ -454,6 +456,43 @@ static GRAPHICS_ERROR_E setClickable_f(GRAPHICS_S *obj, char *gfxElementName, ui
 exit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
     
+    return ret;
+}
+
+/*!
+ *
+ */
+static GRAPHICS_ERROR_E setNav_f(GRAPHICS_S *obj, char *gfxElementName, GFX_NAV_S *nav)
+{
+    assert(obj && obj->pData && gfxElementName && nav);
+
+    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+
+    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+        return GRAPHICS_ERROR_LOCK;
+    }
+
+    GFX_ELEMENT_S *gfxElement = NULL;
+    GRAPHICS_ERROR_E ret      = GRAPHICS_ERROR_NONE;
+
+    if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
+        gfxElement = pData->focusedElement;
+    }
+    else if (pData->videoElement && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
+        gfxElement = pData->videoElement;
+    }
+    else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
+        gfxElement = pData->lastDrawnElement;
+    }
+    else if (getElement_f(obj, gfxElementName, &gfxElement) != GRAPHICS_ERROR_NONE) {
+        goto exit;
+    }
+
+    memcpy(&gfxElement->nav, nav, sizeof(GFX_NAV_S));
+
+exit:
+    (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+
     return ret;
 }
 

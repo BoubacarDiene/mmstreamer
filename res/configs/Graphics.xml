@@ -219,6 +219,7 @@
         <Nav left="" up="imageBtn1" right="" down="textBtn3" />
         <OnClick>
             <Handler name="changeLanguage" data="" />
+            <!--Handler name="customHandler" data="updateNav;textBtn2;;textBtn3;;imageBtn1" /-->
         </OnClick>
       </Element>
 

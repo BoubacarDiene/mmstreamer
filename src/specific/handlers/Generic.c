@@ -47,7 +47,7 @@
 /* -------------------------------------------------------------------------------------------- */
 
 static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void changeLanguage  (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
 static void hideElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 static void showElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
@@ -58,7 +58,7 @@ static void showGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
 static void setFocus(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
 static void saveVideoElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void takeScreenshot  (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
 static void setClickable   (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 static void setNotClickable(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
@@ -82,6 +82,7 @@ static void customHandler(CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
 
 
 extern SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
+extern SPECIFIC_ERROR_E getSubstring     (CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
@@ -748,35 +749,20 @@ static void customHandler(CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
         return;
     }
 
-    // Retrieve functionName and targetName
-    char *result = NULL;
-
+    uint32_t offset                  = 0;
     char functionName[MAX_NAME_SIZE] = { 0 };
     char targetName[MAX_NAME_SIZE]   = { 0 };
 
-    result = strstr(handlerData, ";");
-    if (!result) {
+    if (getSubstring(ctx, handlerData, ";", functionName, &offset) != SPECIFIC_ERROR_NONE) {
         Loge("Bad format. Expected: customFunctionName;targetName;param1;param2;...");
         return;
     }
 
-    uint32_t handlerDataLen = strlen(handlerData);
-    uint8_t functionNameLen = handlerDataLen - strlen(result);
-
-    strncpy(functionName, handlerData, functionNameLen);
-    Logd("Custom method name : %s", functionName);
-
-    result = strstr(handlerData + functionNameLen + 1, ";");
-    if (!result) {
-        Loge("Bad format. Expected: customFunctionName;targetName;param1;param2;...");
-        return;
+    if (getSubstring(ctx, handlerData, ";", targetName, &offset) != SPECIFIC_ERROR_NONE) {
+        strncpy(targetName, handlerData + offset, sizeof(targetName));
     }
 
-    uint8_t targetNameLen = handlerDataLen - functionNameLen - strlen(result) - 1;
+    Logd("Function : \"%s\" / Target : \"%s\"", functionName, targetName);
 
-    strncpy(targetName, handlerData + functionNameLen + 1, targetNameLen);
-    Logd("Gfx element / group name : %s", targetName);
-
-    // Call custom click handler
-    (void)callCustomHandler(ctx, functionName, targetName, handlerData + functionNameLen + targetNameLen + 2);
+    (void)callCustomHandler(ctx, functionName, targetName, handlerData + offset);
 }

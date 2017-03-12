@@ -64,6 +64,7 @@ typedef GRAPHICS_ERROR_E (*GRAPHICS_REMOVE_ALL_F    )(GRAPHICS_S *obj);
 typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_VISIBLE_F  )(GRAPHICS_S *obj, char *gfxElementName, uint8_t isVisible);
 typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_FOCUS_F    )(GRAPHICS_S *obj, char *gfxElementName);
 typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_CLICKABLE_F)(GRAPHICS_S *obj, char *gfxElementName, uint8_t isClickable);
+typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_NAV_F      )(GRAPHICS_S *obj, char *gfxElementName, GFX_NAV_S *nav);
 typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_DATA_F     )(GRAPHICS_S *obj, char *gfxElementName, void *data);
 
 typedef GRAPHICS_ERROR_E (*GRAPHICS_SAVE_VIDEO_FRAME_F  )(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
@@ -110,6 +111,7 @@ struct GRAPHICS_S {
     GRAPHICS_SET_VISIBLE_F        setVisible;
     GRAPHICS_SET_FOCUS_F          setFocus;
     GRAPHICS_SET_CLICKABLE_F      setClickable;
+    GRAPHICS_SET_NAV_F            setNav;
     GRAPHICS_SET_DATA_F           setData;
     
     GRAPHICS_SAVE_VIDEO_FRAME_F   saveVideoFrame;

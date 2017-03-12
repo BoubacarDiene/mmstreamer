@@ -47,11 +47,13 @@
 /* -------------------------------------------------------------------------------------------- */
 
 SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
+SPECIFIC_ERROR_E getSubstring     (CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset);
 
 static SPECIFIC_ERROR_E getElementIndex(CONTEXT_S *ctx, char *elementName, uint32_t *index);
 
 static void updateText (CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData);
 static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData);
+static void updateNav  (CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
@@ -60,6 +62,7 @@ static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *han
 SPECIFIC_CLICK_HANDLERS_S gCustomClickHandlers[] = {
 	{ "updateText",                     NULL,             updateText             },
 	{ "updateImage",                    NULL,             updateImage            },
+	{ "updateNav",                      NULL,             updateNav              },
 	{ NULL,                             NULL,             NULL                   }
 };
 
@@ -94,6 +97,33 @@ SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *tar
     }
 
     gCustomClickHandlers[index].fct(ctx, targetName, NULL, handlerData);
+
+    return SPECIFIC_ERROR_NONE;
+}
+
+/*!
+ *
+ */
+SPECIFIC_ERROR_E getSubstring(CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset)
+{
+    (void)ctx;
+
+    if (!haystack || !needle || !out || !offset) {
+        Loge("Bad params");
+        return SPECIFIC_ERROR_PARAMS;
+    }
+
+    char *result = strstr(haystack + *offset, needle);
+    if (!result) {
+        return SPECIFIC_ERROR_PARAMS;
+    }
+
+    int len = strlen(haystack + *offset) - strlen(result);
+    if (len > 0) {
+        strncpy(out, haystack + *offset, len);
+    }
+
+    *offset += len + 1;
 
     return SPECIFIC_ERROR_NONE;
 }
@@ -213,4 +243,52 @@ static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *han
     }
 
     (void)graphicsObj->setData(graphicsObj, gfxElement->name, (void*)&image);
+}
+
+/*!
+ *
+ */
+static void updateNav(CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData)
+{
+    assert(ctx && targetName);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return;
+    }
+
+    uint32_t index;
+    if (getElementIndex(ctx, targetName, &index) != SPECIFIC_ERROR_NONE) {
+        return;
+    }
+
+    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    GFX_ELEMENT_S *gfxElement       = graphicsInfos->gfxElements[index];
+
+    GFX_NAV_S nav   = { 0 };
+    uint32_t offset = 0;
+
+    if (getSubstring(ctx, handlerData, ";", nav.left, &offset) != SPECIFIC_ERROR_NONE) {
+        Loge("Bad format. Expected: <left>;<up>;<right>;<down>");
+        return;
+    }
+
+    if (getSubstring(ctx, handlerData, ";", nav.up, &offset) != SPECIFIC_ERROR_NONE) {
+        Loge("Bad format. Expected: <left>;<up>;<right>;<down>");
+        return;
+    }
+
+    if (getSubstring(ctx, handlerData, ";", nav.right, &offset) != SPECIFIC_ERROR_NONE) {
+        Loge("Bad format. Expected: <left>;<up>;<right>;<down>");
+        return;
+    }
+
+    if (getSubstring(ctx, handlerData, ";", nav.down, &offset) != SPECIFIC_ERROR_NONE) {
+        strncpy(nav.down, handlerData + offset, sizeof(nav.down));
+    }
+
+    Logd("Updating nav of element \"%s\" / Params : %s | %s | %s | %s", gfxElement->name, nav.left, nav.up, nav.right, nav.down);
+
+    (void)graphicsObj->setNav(graphicsObj, gfxElement->name, &nav);
 }
