@@ -15,7 +15,7 @@
 
 # Project
 PROJECT_NAME    := mmstreamer
-PROJECT_VERSION := 0.6
+PROJECT_VERSION := 0.7
 
 # Path
 LOCAL           := ${shell pwd}
@@ -43,7 +43,7 @@ TASK            := utils/Task
 # Build
 DEBUG           := no
 LOG_LEVEL       := 1
-OPTIONS         := -Wall -Wextra
+OPTIONS         := -Wall -Wextra -Wno-missing-braces
 
 ifeq (${DEBUG},no)
 	OPTIONS     += -O3 -s
