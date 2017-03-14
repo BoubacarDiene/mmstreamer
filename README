@@ -3,6 +3,11 @@
 ----------------------------------||== README ==||----------------------------------
 ----------------------------------/              \----------------------------------
 
+0- Where to begin
+
+- INSTALL : Prepare your environment and build mmstreamer project
+- HOWTO   : Run mmstreamer + update configuration files
+
 1- Description
 
 mmstreamer is a v4l2-based media streamer entirely written in C and made for the linux
