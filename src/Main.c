@@ -67,13 +67,33 @@ static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 /*                                           MAIN                                               */
 /* -------------------------------------------------------------------------------------------- */
 
+static void usage(const char * const program)
+{
+    Loge("Usage: %s [-c <path to Main.xml>]", program);
+}
+
 /*!
  * main() function
  */
-int main(void)
+int main(int argc, char **argv)
 {
-    int ret = EXIT_FAILURE;
-    
+    int32_t opt   = -1;
+    char *mainXml = MAIN_XML_FILE;
+
+    while ((opt = getopt(argc, argv, "c:")) != -1) {
+        switch (opt) {
+            case 'c':
+                mainXml = optarg;
+                break;
+
+            default:;
+                usage(argv[0]);
+                exit(EXIT_FAILURE);
+        }
+    }
+
+    int32_t ret = EXIT_FAILURE;
+
     CONTEXT_S *mCtx;
     assert((mCtx = calloc(1, sizeof(CONTEXT_S))));
     
@@ -86,7 +106,7 @@ int main(void)
         goto parserInit_exit;
     }
     
-    Logd("Parsing main config file : \"%s\"", MAIN_CONFIG_FILE);
+    Logd("Parsing main config file : \"%s\"", mainXml);
     
     PARSER_TAGS_HANDLER_S tagsHandlers[] = {
     	{ XML_TAG_GENERAL,   onGeneralCb,   NULL,  NULL },
@@ -98,7 +118,7 @@ int main(void)
     };
     
     PARSER_PARAMS_S parserParams;
-    strncpy(parserParams.path, MAIN_CONFIG_FILE, sizeof(parserParams.path));
+    strncpy(parserParams.path, mainXml, sizeof(parserParams.path));
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
     parserParams.onErrorCb    = onErrorCb;

@@ -91,7 +91,7 @@ HEADERS            := -I${OUT_BUILD_INC}           \
                        -I${OUT_BUILD_INC_CORE}     \
                        -I${OUT_BUILD_INC_VIDEO}    \
                        -I${OUT_BUILD_INC_DEPS}
-CFLAGS             += ${HEADERS} -DMAIN_CONFIG_FILE=\"${OUT_RELEASE}/res/Main.xml\"
+CFLAGS             += ${HEADERS} -DMAIN_XML_FILE=\"${OUT_RELEASE}/res/Main.xml\"
 
 DEPS_LDFLAGS       := -L${OUT_BUILD_LIB_DEPS} -Wl,-rpath,${OUT_BUILD_LIB_DEPS}
 ifeq (${SDL_BUILD_VERSION},2)
