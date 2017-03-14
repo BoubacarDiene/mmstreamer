@@ -118,7 +118,7 @@ SPECIFIC_ERROR_E getSubstring(CONTEXT_S *ctx, const char *haystack, const char *
         return SPECIFIC_ERROR_PARAMS;
     }
 
-    int len = strlen(haystack + *offset) - strlen(result);
+    int32_t len = strlen(haystack + *offset) - strlen(result);
     if (len > 0) {
         strncpy(out, haystack + *offset, len);
     }
@@ -190,9 +190,7 @@ static void updateText(CONTEXT_S *ctx, char *targetName, void *pData, char *hand
 
     Logd("Updating text of element \"%s\" / Params : %u | %u | %u | %u", gfxElement->name, stringId, fontId, fontSize, colorId);
 
-    GFX_TEXT_S text;
-    memset(&text, '\0', sizeof(GFX_TEXT_S));
-
+    GFX_TEXT_S text = { 0 };
     elementData->getters.getString(elementData->getters.userData, stringId, graphicsInfos->currentLanguage, text.str);
 
     elementData->getters.getFont(elementData->getters.userData, fontId, text.ttfFont);
@@ -231,9 +229,7 @@ static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *han
 
     Logd("Updating image of element \"%s\" / Params : %u | %d", gfxElement->name, imageId, hiddenColorId);
 
-    GFX_IMAGE_S image;
-    memset(&image, '\0', sizeof(GFX_IMAGE_S));
-
+    GFX_IMAGE_S image = { 0 };
     elementData->getters.getImage(elementData->getters.userData, imageId, &image);
 
     if (hiddenColorId >= 0) {

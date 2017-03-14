@@ -167,8 +167,7 @@ static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
     uint32_t nbGfxElements               = graphicsInfos->nbGfxElements;
     GFX_ELEMENT_S **gfxElements          = graphicsInfos->gfxElements;
     
-    char nextLanguage[MIN_STR_SIZE];
-    memset(nextLanguage, '\0', MIN_STR_SIZE);
+    char nextLanguage[MIN_STR_SIZE]      = { 0 };
 
     if (!handlerData || (strlen(handlerData) == 0)) {
         elementData->getters.getLanguage(elementData->getters.userData, graphicsInfos->currentLanguage, nextLanguage);
