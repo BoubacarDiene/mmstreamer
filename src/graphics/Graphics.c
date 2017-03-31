@@ -88,7 +88,8 @@ static GRAPHICS_ERROR_E takeScreenshot_f  (GRAPHICS_S *obj, GFX_IMAGE_S *inOut);
 
 static GRAPHICS_ERROR_E drawAllElements_f(GRAPHICS_S *obj);
 
-static GRAPHICS_ERROR_E handleEvents_f(GRAPHICS_S *obj);
+static GRAPHICS_ERROR_E simulateGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent);
+static GRAPHICS_ERROR_E handleGfxEvents_f (GRAPHICS_S *obj);
 
 static GRAPHICS_ERROR_E quit_f(GRAPHICS_S *obj);
 
@@ -98,6 +99,7 @@ static GRAPHICS_ERROR_E updateElement_f    (GRAPHICS_S *obj, GFX_ELEMENT_S *gfxE
 static GRAPHICS_ERROR_E drawElement_f      (GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement);
 static GRAPHICS_ERROR_E getElement_f       (GRAPHICS_S *obj, char *gfxElementName, GFX_ELEMENT_S **gfxElement);
 static GRAPHICS_ERROR_E getClickedElement_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent);
+static GRAPHICS_ERROR_E handleGfxEvent_f   (GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent);
 
 static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData);
 static void    releaseCb(LIST_S *obj, void *element);
@@ -147,7 +149,8 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     
     (*obj)->drawAllElements  = drawAllElements_f;
     
-    (*obj)->handleEvents     = handleEvents_f;
+    (*obj)->simulateGfxEvent = simulateGfxEvent_f;
+    (*obj)->handleGfxEvents  = handleGfxEvents_f;
     
     (*obj)->quit             = quit_f;
     
@@ -725,125 +728,46 @@ static GRAPHICS_ERROR_E drawAllElements_f(GRAPHICS_S *obj)
 /*!
  *
  */
-static GRAPHICS_ERROR_E handleEvents_f(GRAPHICS_S *obj)
+static GRAPHICS_ERROR_E simulateGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
+{
+    assert(obj && obj->pData && gfxEvent);
+
+    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+
+    if (!pData->quit) {
+        Logw("Too late! Stopping graphics module");
+        return GRAPHICS_ERROR_NONE;
+    }
+
+    return handleGfxEvent_f(obj, gfxEvent);;
+}
+
+/*!
+ *
+ */
+static GRAPHICS_ERROR_E handleGfxEvents_f(GRAPHICS_S *obj)
 {
     assert(obj && obj->pData);
-    
+
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    
+
     if (!pData->drawer) {
         return GRAPHICS_ERROR_DRAWER;
     }
-    
+
     GFX_EVENT_S evt;
-    
+
     while (!pData->quit) {
         if (pData->drawer->getEvent(pData->drawer, &evt) != DRAWER_ERROR_NONE) {
             continue;
         }
-        
+
         evt.gfxElementName  = NULL;
         evt.gfxElementPData = NULL;
-        
-        switch (evt.type) {
-            case GFX_EVENT_TYPE_QUIT:
-            case GFX_EVENT_TYPE_ESC:
-                if (pData->params.onGfxEventCb) {
-                    pData->params.onGfxEventCb(&evt, pData->params.userData);
-                }
-                else {
-                    pData->quit = 1;
-                }
-                break;
-            
-            case GFX_EVENT_TYPE_ENTER:
-                if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                    if (pData->focusedElement && pData->focusedElement->isClickable) {
-                        evt.gfxElementName  = strdup(pData->focusedElement->name);
-                        evt.gfxElementPData = pData->focusedElement->pData;
-                    }
-                    (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
-                }
-                
-                if (evt.gfxElementName && pData->params.onGfxEventCb) {
-                    pData->params.onGfxEventCb(&evt, pData->params.userData);
-                }
-                break;
-                
-            case GFX_EVENT_TYPE_CLICK:
-                if (pData->params.onGfxEventCb && (getClickedElement_f(obj, &evt) == GRAPHICS_ERROR_NONE)) {
-                    setFocus_f(obj, evt.gfxElementName);
-                    pData->params.onGfxEventCb(&evt, pData->params.userData);
-                }
-                break;
-                    
-            case GFX_EVENT_TYPE_MOVE_LEFT:
-                if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                    if (pData->focusedElement && (strlen(pData->focusedElement->nav.left) != 0)) {
-                        evt.gfxElementName = strdup(pData->focusedElement->nav.left);
-                    }
-                    (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
-                }
-                
-                if (evt.gfxElementName) {
-                    Logd("LEFT: moving to : \"%s\"", evt.gfxElementName);
-                    setFocus_f(obj, evt.gfxElementName);
-                }
-                break;
-            
-            case GFX_EVENT_TYPE_MOVE_UP:
-                if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                    if (pData->focusedElement && (strlen(pData->focusedElement->nav.up) != 0)) {
-                        evt.gfxElementName = strdup(pData->focusedElement->nav.up);
-                    }
-                    (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
-                }
-                
-                if (evt.gfxElementName) {
-                    Logd("UP: moving to : \"%s\"", evt.gfxElementName);
-                    setFocus_f(obj, evt.gfxElementName);
-                }
-                break;
-                    
-            case GFX_EVENT_TYPE_MOVE_RIGHT:
-                if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                    if (pData->focusedElement && (strlen(pData->focusedElement->nav.right) != 0)) {
-                        evt.gfxElementName = strdup(pData->focusedElement->nav.right);
-                    }
-                    (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
-                }
-                
-                if (evt.gfxElementName) {
-                    Logd("RIGHT: moving to : \"%s\"", evt.gfxElementName);
-                    setFocus_f(obj, evt.gfxElementName);
-                }
-                break;
-                    
-            case GFX_EVENT_TYPE_MOVE_DOWN:
-                if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                    if (pData->focusedElement && (strlen(pData->focusedElement->nav.down) != 0)) {
-                        evt.gfxElementName = strdup(pData->focusedElement->nav.down);
-                    }
-                    (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
-                }
-                
-                if (evt.gfxElementName) {
-                    Logd("DOWN: moving to : \"%s\"", evt.gfxElementName);
-                    setFocus_f(obj, evt.gfxElementName);
-                }
-                break;
-                   
-            default:
-                ;
-        }
-        
-        if (evt.gfxElementName) {
-            free(evt.gfxElementName);
-            evt.gfxElementName = NULL;
-            evt.gfxElementPData   = NULL;
-        }
+
+        (void)handleGfxEvent_f(obj, &evt);
     }
-    
+
     return GRAPHICS_ERROR_NONE;
 }
 
@@ -1122,6 +1046,121 @@ exit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
     
     return ret;
+}
+
+/*!
+ *
+ */
+static GRAPHICS_ERROR_E handleGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
+{
+    assert(obj && obj->pData && gfxEvent);
+
+    if (gfxEvent->gfxElementName || gfxEvent->gfxElementPData) {
+        Loge("Bad params - Element's name and pData should be null");
+        return GRAPHICS_ERROR_PARAMS;
+    }
+
+    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+
+    switch (gfxEvent->type) {
+        case GFX_EVENT_TYPE_QUIT:
+        case GFX_EVENT_TYPE_ESC:
+            if (pData->params.onGfxEventCb) {
+                pData->params.onGfxEventCb(gfxEvent, pData->params.userData);
+            }
+            else {
+                pData->quit = 1;
+            }
+            break;
+
+        case GFX_EVENT_TYPE_ENTER:
+            if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
+                if (pData->focusedElement && pData->focusedElement->isClickable) {
+                    gfxEvent->gfxElementName  = strdup(pData->focusedElement->name);
+                    gfxEvent->gfxElementPData = pData->focusedElement->pData;
+                }
+                (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+            }
+
+            if (gfxEvent->gfxElementName && pData->params.onGfxEventCb) {
+                pData->params.onGfxEventCb(gfxEvent, pData->params.userData);
+            }
+            break;
+
+        case GFX_EVENT_TYPE_CLICK:
+            if (pData->params.onGfxEventCb && (getClickedElement_f(obj, gfxEvent) == GRAPHICS_ERROR_NONE)) {
+                setFocus_f(obj, gfxEvent->gfxElementName);
+                pData->params.onGfxEventCb(gfxEvent, pData->params.userData);
+            }
+            break;
+
+        case GFX_EVENT_TYPE_MOVE_LEFT:
+            if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
+                if (pData->focusedElement && (strlen(pData->focusedElement->nav.left) != 0)) {
+                    gfxEvent->gfxElementName = strdup(pData->focusedElement->nav.left);
+                }
+                (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+            }
+
+            if (gfxEvent->gfxElementName) {
+                Logd("LEFT: moving to : \"%s\"", gfxEvent->gfxElementName);
+                setFocus_f(obj, gfxEvent->gfxElementName);
+            }
+            break;
+
+        case GFX_EVENT_TYPE_MOVE_UP:
+            if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
+                if (pData->focusedElement && (strlen(pData->focusedElement->nav.up) != 0)) {
+                    gfxEvent->gfxElementName = strdup(pData->focusedElement->nav.up);
+                }
+                (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+            }
+
+            if (gfxEvent->gfxElementName) {
+                Logd("UP: moving to : \"%s\"", gfxEvent->gfxElementName);
+                setFocus_f(obj, gfxEvent->gfxElementName);
+            }
+            break;
+
+        case GFX_EVENT_TYPE_MOVE_RIGHT:
+            if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
+                if (pData->focusedElement && (strlen(pData->focusedElement->nav.right) != 0)) {
+                    gfxEvent->gfxElementName = strdup(pData->focusedElement->nav.right);
+                }
+                (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+            }
+
+            if (gfxEvent->gfxElementName) {
+                Logd("RIGHT: moving to : \"%s\"", gfxEvent->gfxElementName);
+                setFocus_f(obj, gfxEvent->gfxElementName);
+            }
+            break;
+
+        case GFX_EVENT_TYPE_MOVE_DOWN:
+            if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
+                if (pData->focusedElement && (strlen(pData->focusedElement->nav.down) != 0)) {
+                    gfxEvent->gfxElementName = strdup(pData->focusedElement->nav.down);
+                }
+                (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+            }
+
+            if (gfxEvent->gfxElementName) {
+                Logd("DOWN: moving to : \"%s\"", gfxEvent->gfxElementName);
+                setFocus_f(obj, gfxEvent->gfxElementName);
+            }
+            break;
+
+        default:
+            ;
+    }
+
+    if (gfxEvent->gfxElementName) {
+        free(gfxEvent->gfxElementName);
+        gfxEvent->gfxElementName  = NULL;
+        gfxEvent->gfxElementPData = NULL;
+    }
+
+    return GRAPHICS_ERROR_NONE;
 }
 
 /*!
