@@ -734,7 +734,7 @@ static GRAPHICS_ERROR_E simulateGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEven
 
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
 
-    if (!pData->quit) {
+    if (pData->quit) {
         Logw("Too late! Stopping graphics module");
         return GRAPHICS_ERROR_NONE;
     }
