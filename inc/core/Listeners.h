@@ -36,7 +36,7 @@ extern "C" {
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Common.h"
-#include "specific/Specific.h"
+#include "control/Control.h"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           DEFINE                                            */
@@ -72,7 +72,7 @@ enum LISTENERS_ERROR_E {
 
 struct LISTENERS_PDATA_S {
     CONTEXT_S  *ctx;
-    SPECIFIC_S *specificObj;
+    CONTROL_S  *controlObj;
     BUFFER_S   buffer;
 };
 
@@ -96,7 +96,7 @@ struct LISTENERS_S {
 /*                                      PUBLIC FUNCTIONS                                        */
 /* -------------------------------------------------------------------------------------------- */
 
-LISTENERS_ERROR_E Listeners_Init  (LISTENERS_S **obj, CONTEXT_S *ctx, SPECIFIC_S *specificObj);
+LISTENERS_ERROR_E Listeners_Init  (LISTENERS_S **obj, CONTEXT_S *ctx, CONTROL_S *controlObj);
 LISTENERS_ERROR_E Listeners_UnInit(LISTENERS_S **obj);
 
 #ifdef __cplusplus

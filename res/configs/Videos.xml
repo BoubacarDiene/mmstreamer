@@ -25,7 +25,7 @@
                        2 <=> Highest
 
       - configChoice : Config from which retrieve v4l2 parameters
-                       (Cf. specific/Config.c to add more configs)
+                       (Cf. control/configs/VideoConfig.c to add more configs)
                        0 <=> MJPEG (MMAP)
                        1 <=> MJPEG (USERPTR)
                        2 <=> YVYU  (MMAP)

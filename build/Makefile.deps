@@ -36,35 +36,35 @@ include build/Makefile.inc
 #################################################################
 
 # Path
-OUT_BUILD_DIR   := ${OUT_BUILD}/deps
-OUT_BUILD_INC   := ${OUT_BUILD_DIR}/include
-OUT_BUILD_LIB   := ${OUT_BUILD_DIR}/lib
-OUT_BUILD_DEPS  := ${OUT_BUILD_DIR}/deps
+OUT_BUILD_DIR  := ${OUT_BUILD}/deps
+OUT_BUILD_INC  := ${OUT_BUILD_DIR}/include
+OUT_BUILD_LIB  := ${OUT_BUILD_DIR}/lib
+OUT_BUILD_DEPS := ${OUT_BUILD_DIR}/deps
 
-EXPAT_SUB_DIR   := expat
-EXPAT_PATH      := ${OUT_BUILD_DEPS}/${EXPAT_SUB_DIR}
-EXPAT_SRC       := expat-${EXPAT_LIB_VERSION}
+EXPAT_SUB_DIR := expat
+EXPAT_PATH    := ${OUT_BUILD_DEPS}/${EXPAT_SUB_DIR}
+EXPAT_SRC     := expat-${EXPAT_LIB_VERSION}
 
-FREETYPE_SUB_DIR:= freetype
-FREETYPE_PATH   := ${OUT_BUILD_DEPS}/${FREETYPE_SUB_DIR}
-FREETYPE_SRC    := freetype-${FREETYPE_LIB_VERSION}
+FREETYPE_SUB_DIR := freetype
+FREETYPE_PATH    := ${OUT_BUILD_DEPS}/${FREETYPE_SUB_DIR}
+FREETYPE_SRC     := freetype-${FREETYPE_LIB_VERSION}
 
-JPEG_SUB_DIR    := jpeg
-JPEG_PATH       := ${OUT_BUILD_DEPS}/${JPEG_SUB_DIR}
-JPEG_DIR        := jpeg-${JPEG_LIB_VERSION}
-JPEG_SRC        := jpegsrc.v${JPEG_LIB_VERSION}
+JPEG_SUB_DIR := jpeg
+JPEG_PATH    := ${OUT_BUILD_DEPS}/${JPEG_SUB_DIR}
+JPEG_DIR     := jpeg-${JPEG_LIB_VERSION}
+JPEG_SRC     := jpegsrc.v${JPEG_LIB_VERSION}
 
-SDL_SUB_DIR     := sdl/v${SDL_BUILD_VERSION}
-SDL_PATH        := ${OUT_BUILD_DEPS}/${SDL_SUB_DIR}
+SDL_SUB_DIR := sdl/v${SDL_BUILD_VERSION}
+SDL_PATH    := ${OUT_BUILD_DEPS}/${SDL_SUB_DIR}
 
 ifeq (${SDL_BUILD_VERSION},2)
-    SDL_MAIN_SRC    := SDL2-${SDL_MAIN_VERSION}
-    SDL_IMAGE_SRC   := SDL2_image-${SDL_IMAGE_VERSION}
-    SDL_TTF_SRC     := SDL2_ttf-${SDL_TTF_VERSION}
+    SDL_MAIN_SRC  := SDL2-${SDL_MAIN_VERSION}
+    SDL_IMAGE_SRC := SDL2_image-${SDL_IMAGE_VERSION}
+    SDL_TTF_SRC   := SDL2_ttf-${SDL_TTF_VERSION}
 else
-    SDL_MAIN_SRC    := SDL-${SDL_MAIN_VERSION}
-    SDL_IMAGE_SRC   := SDL_image-${SDL_IMAGE_VERSION}
-    SDL_TTF_SRC     := SDL_ttf-${SDL_TTF_VERSION}
+    SDL_MAIN_SRC  := SDL-${SDL_MAIN_VERSION}
+    SDL_IMAGE_SRC := SDL_image-${SDL_IMAGE_VERSION}
+    SDL_TTF_SRC   := SDL_ttf-${SDL_TTF_VERSION}
 endif
 
 # Targets
@@ -166,14 +166,14 @@ install: prepare-release
 
 prepare-dependencies:
 	${PRINT} ***** Preparing dependencies build directories *****
-	if [ ! -d ${OUT_BUILD_INC} ]; then   \
-	    ${MKDIR} ${OUT_BUILD_INC};       \
+	if [ ! -d ${OUT_BUILD_INC} ]; then \
+	    ${MKDIR} ${OUT_BUILD_INC};     \
 	fi
-	if [ ! -d ${OUT_BUILD_LIB} ]; then   \
-	    ${MKDIR} ${OUT_BUILD_LIB};       \
+	if [ ! -d ${OUT_BUILD_LIB} ]; then \
+	    ${MKDIR} ${OUT_BUILD_LIB};     \
 	fi
-	if [ ! -d ${OUT_BUILD_DEPS} ]; then  \
-	    ${MKDIR} ${OUT_BUILD_DEPS};      \
+	if [ ! -d ${OUT_BUILD_DEPS} ]; then \
+	    ${MKDIR} ${OUT_BUILD_DEPS};     \
 	fi
 
 	${PRINT} ***** Copying dependencies files *****

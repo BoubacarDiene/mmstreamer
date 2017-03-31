@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Generic.c
+* \file   SingleInput.c
 * \brief  TODO
 * \author Boubacar DIENE
 */
@@ -29,14 +29,14 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-#include "specific/Specific.h"
+#include "control/Control.h"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           DEFINE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "SPECIFIC-GENERIC"
+#define TAG "CONTROL-SINGLEINPUT"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -81,14 +81,14 @@ static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
 static void customHandler(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
 
-extern SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
-extern SPECIFIC_ERROR_E getSubstring     (CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset);
+extern CONTROL_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
+extern CONTROL_ERROR_E getSubstring     (CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-SPECIFIC_CLICK_HANDLERS_S gGenericClickHandlers[] = {
+CONTROL_CLICK_HANDLERS_S gGenericClickHandlers[] = {
 	{ "closeApplication",           NULL,             closeApplication },
 	{ "changeLanguage",             NULL,             changeLanguage   },
 	{ "hideElement",                NULL,             hideElement      },
@@ -161,7 +161,7 @@ static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
 
     Logd("Handling click on element \"%s\"", gfxElementName);
     
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
     GRAPHICS_S *graphicsObj              = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos      = &ctx->params.graphicsInfos;
     uint32_t nbGfxElements               = graphicsInfos->nbGfxElements;
@@ -185,14 +185,14 @@ static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
     
     uint32_t index;
     GFX_TEXT_S text;
-    SPECIFIC_ELEMENT_DATA_S *data;
+    CONTROL_ELEMENT_DATA_S *data;
     
     for (index = 0; index < nbGfxElements; index++) {
         if (gfxElements[index]->type != GFX_ELEMENT_TYPE_TEXT) {
             continue;
         }
         
-        data = (SPECIFIC_ELEMENT_DATA_S*)gfxElements[index]->pData;
+        data = (CONTROL_ELEMENT_DATA_S*)gfxElements[index]->pData;
         
         memcpy(&text, &gfxElements[index]->data.text, sizeof(GFX_TEXT_S));
         memset(text.str, '\0', sizeof(text.str));
@@ -334,7 +334,7 @@ static void saveVideoElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElem
         return;
     }
 
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
     GRAPHICS_S *graphicsObj              = ctx->modules.graphicsObj;
     INPUT_S *input                       = &ctx->input;
 
@@ -369,7 +369,7 @@ static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
         return;
     }
 
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxElementData;
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
     GRAPHICS_S *graphicsObj              = ctx->modules.graphicsObj;
     INPUT_S *input                       = &ctx->input;
 
@@ -752,12 +752,12 @@ static void customHandler(CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
     char functionName[MAX_NAME_SIZE] = { 0 };
     char targetName[MAX_NAME_SIZE]   = { 0 };
 
-    if (getSubstring(ctx, handlerData, ";", functionName, &offset) != SPECIFIC_ERROR_NONE) {
+    if (getSubstring(ctx, handlerData, ";", functionName, &offset) != CONTROL_ERROR_NONE) {
         Loge("Bad format. Expected: customFunctionName;targetName;param1;param2;...");
         return;
     }
 
-    if (getSubstring(ctx, handlerData, ";", targetName, &offset) != SPECIFIC_ERROR_NONE) {
+    if (getSubstring(ctx, handlerData, ";", targetName, &offset) != CONTROL_ERROR_NONE) {
         strncpy(targetName, handlerData + offset, sizeof(targetName));
     }
 

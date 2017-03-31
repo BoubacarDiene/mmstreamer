@@ -20,9 +20,9 @@
     - Strings : All used strings are listed inside by language
   -->
   <Common defaultLanguage="en">
-    <Colors  xmlFile="common/Colors.xml" />
-    <Images  xmlFile="common/Images.xml" />
-    <Fonts   xmlFile="common/Fonts.xml" />
+    <Colors  xmlFile="common/Colors.xml"  />
+    <Images  xmlFile="common/Images.xml"  />
+    <Fonts   xmlFile="common/Fonts.xml"   />
     <Strings xmlFile="common/Strings.xml" />
   </Common>
 
@@ -219,7 +219,7 @@
         <Nav left="" up="imageBtn1" right="" down="textBtn3" />
         <OnClick>
             <Handler name="changeLanguage" data="" />
-            <!--Handler name="customHandler" data="updateNav;textBtn2;;textBtn3;;imageBtn1" /-->
+            <!--Handler name="customHandler" data="updateNav;textBtn2;;textBtn3;;imageBtn1" /--><!-- fctName;elemName;left;up;right;down -->
         </OnClick>
       </Element>
 

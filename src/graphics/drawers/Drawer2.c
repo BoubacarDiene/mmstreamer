@@ -747,7 +747,6 @@ static DRAWER_ERROR_E saveScreen_f(DRAWER_S *obj, GFX_IMAGE_S *inOut)
             ;
     }
 
-exit:
     SDL_UnlockMutex(pData->lock);
 
     return DRAWER_ERROR_NONE;

@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Specific.c
+* \file   Control.c
 * \brief  TODO
 * \author Boubacar DIENE
 */
@@ -29,22 +29,22 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-#include "specific/Specific.h"
+#include "control/Control.h"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           DEFINE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "SPECIFIC"
+#define TAG "CONTROL"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct SPECIFIC_PRIVATE_DATA_S {
+typedef struct CONTROL_PRIVATE_DATA_S {
     CONTEXT_S   *ctx;
-} SPECIFIC_PRIVATE_DATA_S;
+} CONTROL_PRIVATE_DATA_S;
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
@@ -53,31 +53,31 @@ typedef struct SPECIFIC_PRIVATE_DATA_S {
 extern VIDEO_CONFIG_S gVideoConfig[];
 extern uint32_t gNbVideoConfigs;
 
-extern SPECIFIC_CLICK_HANDLERS_S gGenericClickHandlers[];
+extern CONTROL_CLICK_HANDLERS_S gGenericClickHandlers[];
 extern uint32_t gNbGenericClickHandlers;
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-SPECIFIC_ERROR_E getVideoConfig_f(SPECIFIC_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice);
+CONTROL_ERROR_E getVideoConfig_f(CONTROL_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice);
 
-SPECIFIC_ERROR_E initElementData_f  (SPECIFIC_S *obj, void **data);
-SPECIFIC_ERROR_E uninitElementData_f(SPECIFIC_S *obj, void **data);
+CONTROL_ERROR_E initElementData_f  (CONTROL_S *obj, void **data);
+CONTROL_ERROR_E uninitElementData_f(CONTROL_S *obj, void **data);
 
-SPECIFIC_ERROR_E setElementGetters_f  (SPECIFIC_S *obj, void *data, SPECIFIC_GETTERS_S *getters);
-SPECIFIC_ERROR_E unsetElementGetters_f(SPECIFIC_S *obj, void *data);
+CONTROL_ERROR_E setElementGetters_f  (CONTROL_S *obj, void *data, CONTROL_GETTERS_S *getters);
+CONTROL_ERROR_E unsetElementGetters_f(CONTROL_S *obj, void *data);
 
-SPECIFIC_ERROR_E setElementTextIds_f  (SPECIFIC_S *obj, void *data, SPECIFIC_TEXT_IDS_S *textIds);
-SPECIFIC_ERROR_E unsetElementTextIds_f(SPECIFIC_S *obj, void *data);
+CONTROL_ERROR_E setElementTextIds_f  (CONTROL_S *obj, void *data, CONTROL_TEXT_IDS_S *textIds);
+CONTROL_ERROR_E unsetElementTextIds_f(CONTROL_S *obj, void *data);
 
-SPECIFIC_ERROR_E setElementImageIds_f  (SPECIFIC_S *obj, void *data, SPECIFIC_IMAGE_IDS_S *imageIds);
-SPECIFIC_ERROR_E unsetElementImageIds_f(SPECIFIC_S *obj, void *data);
+CONTROL_ERROR_E setElementImageIds_f  (CONTROL_S *obj, void *data, CONTROL_IMAGE_IDS_S *imageIds);
+CONTROL_ERROR_E unsetElementImageIds_f(CONTROL_S *obj, void *data);
 
-SPECIFIC_ERROR_E setClickHandlers_f  (SPECIFIC_S *obj, void *data, SPECIFIC_HANDLERS_S *handlers, uint32_t nbHandlers, uint32_t index);
-SPECIFIC_ERROR_E unsetClickHandlers_f(SPECIFIC_S *obj, void *data);
+CONTROL_ERROR_E setClickHandlers_f  (CONTROL_S *obj, void *data, CONTROL_HANDLERS_S *handlers, uint32_t nbHandlers, uint32_t index);
+CONTROL_ERROR_E unsetClickHandlers_f(CONTROL_S *obj, void *data);
 
-SPECIFIC_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent);
+CONTROL_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                      PUBLIC FUNCTIONS                                        */
@@ -86,12 +86,12 @@ SPECIFIC_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent);
 /*!
  *
  */
-SPECIFIC_ERROR_E Specific_Init(SPECIFIC_S **obj, CONTEXT_S *ctx)
+CONTROL_ERROR_E Control_Init(CONTROL_S **obj, CONTEXT_S *ctx)
 {
-    assert(obj && ctx && (*obj = calloc(1, sizeof(SPECIFIC_S))));
+    assert(obj && ctx && (*obj = calloc(1, sizeof(CONTROL_S))));
 
-    SPECIFIC_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(SPECIFIC_PRIVATE_DATA_S))));
+    CONTROL_PRIVATE_DATA_S *pData;
+    assert((pData = calloc(1, sizeof(CONTROL_PRIVATE_DATA_S))));
 
     (*obj)->getVideoConfig       = getVideoConfig_f;
 
@@ -116,17 +116,17 @@ SPECIFIC_ERROR_E Specific_Init(SPECIFIC_S **obj, CONTEXT_S *ctx)
 
     (*obj)->pData = (void*)pData;
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E Specific_UnInit(SPECIFIC_S **obj)
+CONTROL_ERROR_E Control_UnInit(CONTROL_S **obj)
 {
     assert(obj && *obj && (*obj)->pData);
 
-    SPECIFIC_PRIVATE_DATA_S *pData = (SPECIFIC_PRIVATE_DATA_S*)((*obj)->pData);
+    CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)((*obj)->pData);
 
     pData->ctx = NULL;
 
@@ -136,20 +136,20 @@ SPECIFIC_ERROR_E Specific_UnInit(SPECIFIC_S **obj)
     free(*obj);
     *obj = NULL;
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                     PRIVATE FUNCTIONS                                        */
 /* -------------------------------------------------------------------------------------------- */
 
-SPECIFIC_ERROR_E getVideoConfig_f(SPECIFIC_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice)
+CONTROL_ERROR_E getVideoConfig_f(CONTROL_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice)
 {
     assert(obj && config);
 
     if (configChoice >= gNbVideoConfigs) {
         Loge("Bad choice %u / Nb video configs : %u", configChoice, gNbVideoConfigs);
-        return SPECIFIC_ERROR_PARAMS;
+        return CONTROL_ERROR_PARAMS;
     }
 
     config->caps        = gVideoConfig[configChoice].caps;
@@ -159,47 +159,47 @@ SPECIFIC_ERROR_E getVideoConfig_f(SPECIFIC_S *obj, VIDEO_CONFIG_S *config, uint3
     config->memory      = gVideoConfig[configChoice].memory;
     config->awaitMode   = gVideoConfig[configChoice].awaitMode;
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E initElementData_f(SPECIFIC_S *obj, void **data)
+CONTROL_ERROR_E initElementData_f(CONTROL_S *obj, void **data)
 {
     assert(obj && data);
 
-    SPECIFIC_ELEMENT_DATA_S *elementData;
-    assert((elementData = calloc(1, sizeof(SPECIFIC_ELEMENT_DATA_S))));
+    CONTROL_ELEMENT_DATA_S *elementData;
+    assert((elementData = calloc(1, sizeof(CONTROL_ELEMENT_DATA_S))));
 
     *data = elementData;
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E uninitElementData_f(SPECIFIC_S *obj, void **data)
+CONTROL_ERROR_E uninitElementData_f(CONTROL_S *obj, void **data)
 {
     assert(obj && data && *data);
 
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)(*data);
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)(*data);
 
     free(elementData);
     elementData = NULL;
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E setElementGetters_f(SPECIFIC_S *obj, void *data, SPECIFIC_GETTERS_S *getters)
+CONTROL_ERROR_E setElementGetters_f(CONTROL_S *obj, void *data, CONTROL_GETTERS_S *getters)
 {
     assert(obj && data && getters);
 
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
 
     elementData->getters.getString   = getters->getString;
     elementData->getters.getColor    = getters->getColor;
@@ -209,91 +209,91 @@ SPECIFIC_ERROR_E setElementGetters_f(SPECIFIC_S *obj, void *data, SPECIFIC_GETTE
 
     elementData->getters.userData    = getters->userData;
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E unsetElementGetters_f(SPECIFIC_S *obj, void *data)
+CONTROL_ERROR_E unsetElementGetters_f(CONTROL_S *obj, void *data)
 {
     assert(obj && data);
 
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
 
     elementData->getters.userData = NULL;
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E setElementTextIds_f(SPECIFIC_S *obj, void *data, SPECIFIC_TEXT_IDS_S *textIds)
+CONTROL_ERROR_E setElementTextIds_f(CONTROL_S *obj, void *data, CONTROL_TEXT_IDS_S *textIds)
 {
     assert(obj && data && textIds);
 
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
 
     elementData->ids.text.stringId = textIds->stringId;
     elementData->ids.text.fontId   = textIds->fontId;
     elementData->ids.text.colorId  = textIds->colorId;
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E unsetElementTextIds_f(SPECIFIC_S *obj, void *data)
+CONTROL_ERROR_E unsetElementTextIds_f(CONTROL_S *obj, void *data)
 {
     assert(obj && data);
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E setElementImageIds_f(SPECIFIC_S *obj, void *data, SPECIFIC_IMAGE_IDS_S *imageIds)
+CONTROL_ERROR_E setElementImageIds_f(CONTROL_S *obj, void *data, CONTROL_IMAGE_IDS_S *imageIds)
 {
     assert(obj && data && imageIds);
 
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
 
     elementData->ids.image.imageId       = imageIds->imageId;
     elementData->ids.image.hiddenColorId = imageIds->hiddenColorId;
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E unsetElementImageIds_f(SPECIFIC_S *obj, void *data)
+CONTROL_ERROR_E unsetElementImageIds_f(CONTROL_S *obj, void *data)
 {
     assert(obj && data);
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E setClickHandlers_f(SPECIFIC_S *obj, void *data, SPECIFIC_HANDLERS_S *handlers, uint32_t nbHandlers, uint32_t index)
+CONTROL_ERROR_E setClickHandlers_f(CONTROL_S *obj, void *data, CONTROL_HANDLERS_S *handlers, uint32_t nbHandlers, uint32_t index)
 {
     assert(obj && data);
 
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
 
     elementData->index           = index;
     elementData->nbClickHandlers = nbHandlers;
 
     if (!handlers || (nbHandlers == 0)) {
-        return SPECIFIC_ERROR_PARAMS;
+        return CONTROL_ERROR_PARAMS;
     }
 
-    assert((elementData->clickHandlers = calloc(1, nbHandlers * sizeof(SPECIFIC_CLICK_HANDLERS_S))));
+    assert((elementData->clickHandlers = calloc(1, nbHandlers * sizeof(CONTROL_CLICK_HANDLERS_S))));
 
     uint32_t i, j;
     for (i = 0; i < nbHandlers; i++) {
@@ -312,17 +312,17 @@ SPECIFIC_ERROR_E setClickHandlers_f(SPECIFIC_S *obj, void *data, SPECIFIC_HANDLE
         }
     }
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E unsetClickHandlers_f(SPECIFIC_S *obj, void *data)
+CONTROL_ERROR_E unsetClickHandlers_f(CONTROL_S *obj, void *data)
 {
     assert(obj && data);
 
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)data;
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
 
     uint32_t i;
     for (i = 0; i < elementData->nbClickHandlers; i++) {
@@ -339,20 +339,20 @@ SPECIFIC_ERROR_E unsetClickHandlers_f(SPECIFIC_S *obj, void *data)
 
     elementData->clickHandlers = NULL;
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent)
+CONTROL_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent)
 {
     assert(ctx && gfxEvent);
 
-    SPECIFIC_ELEMENT_DATA_S *elementData = (SPECIFIC_ELEMENT_DATA_S*)gfxEvent->gfxElementPData;
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxEvent->gfxElementPData;
 
     if (!elementData) {
-        return SPECIFIC_ERROR_PARAMS;
+        return CONTROL_ERROR_PARAMS;
     }
 
     uint32_t i;
@@ -363,5 +363,5 @@ SPECIFIC_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent)
         }
     }
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }

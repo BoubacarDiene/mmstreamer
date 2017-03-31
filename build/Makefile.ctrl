@@ -1,11 +1,11 @@
 ##
 #
-# \file Makefile.spec
+# \file Makefile.ctrl
 #
 # \author Boubacar DIENE <boubacar.diene@gmail.com>
 # \date   September 04, 2016
 #
-# \brief  Create specific .o files
+# \brief  Create control .o files
 #
 ##
 
@@ -17,7 +17,7 @@
 .SUFFIXES:
 
 # Define particular targets
-.PHONY: prepare-specific-sources, clean-specific
+.PHONY: prepare-control-sources, clean-control
 
 #################################################################
 #                             Include                           #
@@ -30,7 +30,7 @@ include build/Makefile.inc
 #################################################################
 
 # Path
-OUT_BUILD_DIR  := ${OUT_BUILD}/specific
+OUT_BUILD_DIR  := ${OUT_BUILD}/control
 OUT_BUILD_INC  := ${OUT_BUILD_DIR}/include
 OUT_BUILD_SRC  := ${OUT_BUILD_DIR}/src
 OUT_BUILD_OBJS := ${OUT_BUILD_DIR}/objs
@@ -38,11 +38,11 @@ OUT_BUILD_OBJS := ${OUT_BUILD_DIR}/objs
 OUT_BUILD_UTILS_H := ${OUT_BUILD_INC}/utils
 OUT_BUILD_CORE_H  := ${OUT_BUILD_INC}/core
 
-OUT_BUILD_SPECIFIC_H := ${OUT_BUILD_INC}/specific
-OUT_BUILD_SPECIFIC_C := ${OUT_BUILD_SRC}/specific
+OUT_BUILD_CONTROL_H := ${OUT_BUILD_INC}/control
+OUT_BUILD_CONTROL_C := ${OUT_BUILD_SRC}/control
 
-OUT_BUILD_CONFIGS_C  := ${OUT_BUILD_SPECIFIC_C}/configs
-OUT_BUILD_HANDLERS_C := ${OUT_BUILD_SPECIFIC_C}/handlers
+OUT_BUILD_CONFIGS_C  := ${OUT_BUILD_CONTROL_C}/configs
+OUT_BUILD_HANDLERS_C := ${OUT_BUILD_CONTROL_C}/handlers
 
 OUT_BUILD_GRAPHICS     := ${OUT_BUILD}/graphics
 OUT_BUILD_INC_GRAPHICS := ${OUT_BUILD_GRAPHICS}/include
@@ -61,25 +61,25 @@ HEADERS := -I${OUT_BUILD_INC}          \
 CFLAGS  += ${HEADERS}
 
 # Files
-VIDEO_CONFIG     := specific/configs/VideoConfig
-GENERIC_HANDLERS := specific/handlers/Generic
-CUSTOM_HANDERS   := specific/handlers/Custom
-SPECIFIC         := specific/Specific
+VIDEO_CONFIG          := control/configs/VideoConfig
+SINGLE_INPUT_HANDLERS := control/handlers/SingleInput
+MULTI_INPUTS_HANDERS  := control/handlers/MultiInputs
+CONTROL               := control/Control
 
 CORE_COMMON := core/Common
 
 # Objects
-OBJS := ${OUT_BUILD_SRC}/${VIDEO_CONFIG}.o   \
-		${OUT_BUILD_SRC}/${GENERIC_HANDLERS}.o \
-		${OUT_BUILD_SRC}/${CUSTOM_HANDERS}.o   \
-		${OUT_BUILD_SRC}/${SPECIFIC}.o
+OBJS := ${OUT_BUILD_SRC}/${VIDEO_CONFIG}.o     \
+		${OUT_BUILD_SRC}/${SINGLE_INPUT_HANDLERS}.o \
+		${OUT_BUILD_SRC}/${MULTI_INPUTS_HANDERS}.o   \
+		${OUT_BUILD_SRC}/${CONTROL}.o
 	
 #################################################################
 #                               Build                           #
 #################################################################
 
 # all
-all: prepare-specific-sources ${OBJS}
+all: prepare-control-sources ${OBJS}
 
 # objects
 %.o: %.c
@@ -96,16 +96,16 @@ install: prepare-release
 #                             Prepare                           #
 #################################################################
 
-prepare-specific-sources:
-	${PRINT} ***** Preparing specific build directories *****
-	if [ ! -d ${OUT_BUILD_INC} ]; then   \
-	    ${MKDIR} ${OUT_BUILD_INC};       \
+prepare-control-sources:
+	${PRINT} ***** Preparing control build directories *****
+	if [ ! -d ${OUT_BUILD_INC} ]; then \
+	    ${MKDIR} ${OUT_BUILD_INC};     \
 	fi
-	if [ ! -d ${OUT_BUILD_SRC} ]; then   \
-	    ${MKDIR} ${OUT_BUILD_SRC};       \
+	if [ ! -d ${OUT_BUILD_SRC} ]; then \
+	    ${MKDIR} ${OUT_BUILD_SRC};     \
 	fi
-	if [ ! -d ${OUT_BUILD_OBJS} ]; then   \
-	    ${MKDIR} ${OUT_BUILD_OBJS};       \
+	if [ ! -d ${OUT_BUILD_OBJS} ]; then \
+	    ${MKDIR} ${OUT_BUILD_OBJS};     \
 	fi
 	if [ ! -d ${OUT_BUILD_UTILS_H} ]; then \
 	    ${MKDIR} ${OUT_BUILD_UTILS_H};     \
@@ -113,11 +113,11 @@ prepare-specific-sources:
 	if [ ! -d ${OUT_BUILD_CORE_H} ]; then \
 	    ${MKDIR} ${OUT_BUILD_CORE_H};     \
 	fi
-	if [ ! -d ${OUT_BUILD_SPECIFIC_H} ]; then \
-	    ${MKDIR} ${OUT_BUILD_SPECIFIC_H};     \
+	if [ ! -d ${OUT_BUILD_CONTROL_H} ]; then \
+	    ${MKDIR} ${OUT_BUILD_CONTROL_H};     \
 	fi
-	if [ ! -d ${OUT_BUILD_SPECIFIC_C} ]; then \
-	    ${MKDIR} ${OUT_BUILD_SPECIFIC_C};     \
+	if [ ! -d ${OUT_BUILD_CONTROL_C} ]; then \
+	    ${MKDIR} ${OUT_BUILD_CONTROL_C};     \
 	fi
 	if [ ! -d ${OUT_BUILD_CONFIGS_C} ]; then \
 	    ${MKDIR} ${OUT_BUILD_CONFIGS_C};     \
@@ -126,28 +126,28 @@ prepare-specific-sources:
 	    ${MKDIR} ${OUT_BUILD_HANDLERS_C};     \
 	fi
 
-	${PRINT} ***** Copying specific sources *****
-	${CP} ${INC}/${COMMON}.h      ${OUT_BUILD_UTILS_H}/.
-	${CP} ${INC}/${LOG}.h         ${OUT_BUILD_UTILS_H}/.
+	${PRINT} ***** Copying control sources *****
+	${CP} ${INC}/${COMMON}.h ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${LOG}.h    ${OUT_BUILD_UTILS_H}/.
 	${CP} ${INC}/${PARSER}.h ${OUT_BUILD_UTILS_H}/.
 
 	${CP} ${INC}/${CORE_COMMON}.h ${OUT_BUILD_CORE_H}/.
 
-	${CP} ${INC}/${SPECIFIC}.h    ${OUT_BUILD_SPECIFIC_H}/.
+	${CP} ${INC}/${CONTROL}.h ${OUT_BUILD_CONTROL_H}/.
 	
-	${CP} ${SRC}/${VIDEO_CONFIG}.c     ${OUT_BUILD_CONFIGS_C}/.
-	${CP} ${SRC}/${GENERIC_HANDLERS}.c ${OUT_BUILD_HANDLERS_C}/.
-	${CP} ${SRC}/${CUSTOM_HANDERS}.c   ${OUT_BUILD_HANDLERS_C}/.
-	${CP} ${SRC}/${SPECIFIC}.c         ${OUT_BUILD_SPECIFIC_C}/.
+	${CP} ${SRC}/${VIDEO_CONFIG}.c          ${OUT_BUILD_CONFIGS_C}/.
+	${CP} ${SRC}/${SINGLE_INPUT_HANDLERS}.c ${OUT_BUILD_HANDLERS_C}/.
+	${CP} ${SRC}/${MULTI_INPUTS_HANDERS}.c  ${OUT_BUILD_HANDLERS_C}/.
+	${CP} ${SRC}/${CONTROL}.c               ${OUT_BUILD_CONTROL_C}/.
 
 #################################################################
 #                              Clean                            #
 #################################################################
 
-clean-specific:
-	${PRINT} ***** Removing generated specific files *****
+clean-control:
+	${PRINT} ***** Removing generated control files *****
 	${RM} ${OUT_BUILD_OBJS} ||:
 
-mrproper-specific: clean-specific
-	${PRINT} ***** Cleaning specific output *****
+mrproper-control: clean-control
+	${PRINT} ***** Cleaning control output *****
 	${RM} ${OUT_BUILD} ||:

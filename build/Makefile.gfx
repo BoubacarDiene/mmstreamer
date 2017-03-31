@@ -81,17 +81,17 @@ install: prepare-release
 
 prepare-graphics-sources:
 	${PRINT} ***** Preparing graphics build directories *****
-	if [ ! -d ${OUT_BUILD_INC} ]; then        \
-	    ${MKDIR} ${OUT_BUILD_INC};            \
+	if [ ! -d ${OUT_BUILD_INC} ]; then \
+	    ${MKDIR} ${OUT_BUILD_INC};     \
 	fi
-	if [ ! -d ${OUT_BUILD_SRC} ]; then        \
-	    ${MKDIR} ${OUT_BUILD_SRC};            \
+	if [ ! -d ${OUT_BUILD_SRC} ]; then \
+	    ${MKDIR} ${OUT_BUILD_SRC};     \
 	fi
-	if [ ! -d ${OUT_BUILD_OBJS} ]; then       \
-	    ${MKDIR} ${OUT_BUILD_OBJS};           \
+	if [ ! -d ${OUT_BUILD_OBJS} ]; then \
+	    ${MKDIR} ${OUT_BUILD_OBJS};     \
 	fi
-	if [ ! -d ${OUT_BUILD_UTILS_H} ]; then    \
-	    ${MKDIR} ${OUT_BUILD_UTILS_H};        \
+	if [ ! -d ${OUT_BUILD_UTILS_H} ]; then \
+	    ${MKDIR} ${OUT_BUILD_UTILS_H};     \
 	fi
 	if [ ! -d ${OUT_BUILD_GRAPHICS_H} ]; then \
 	    ${MKDIR} ${OUT_BUILD_GRAPHICS_H};     \
@@ -101,9 +101,9 @@ prepare-graphics-sources:
 	fi
 
 	${PRINT} ***** Copying graphics sources *****
-	${CP} ${INC}/${COMMON}.h    ${OUT_BUILD_UTILS_H}/.
-	${CP} ${INC}/${LIST}.h      ${OUT_BUILD_UTILS_H}/.
-	${CP} ${INC}/${LOG}.h       ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${COMMON}.h ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${LIST}.h   ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${LOG}.h    ${OUT_BUILD_UTILS_H}/.
 	
 	${CP} ${INC}/${DRAWER}.h    ${OUT_BUILD_GRAPHICS_H}/.
 	${CP} ${INC}/${GFXCOMMON}.h ${OUT_BUILD_GRAPHICS_H}/.

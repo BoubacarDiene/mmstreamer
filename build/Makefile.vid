@@ -88,17 +88,17 @@ install: prepare-release
 
 prepare-video-sources:
 	${PRINT} ***** Preparing video build directories *****
-	if [ ! -d ${OUT_BUILD_INC} ]; then   \
-	    ${MKDIR} ${OUT_BUILD_INC};       \
+	if [ ! -d ${OUT_BUILD_INC} ]; then \
+	    ${MKDIR} ${OUT_BUILD_INC};     \
 	fi
-	if [ ! -d ${OUT_BUILD_LIB} ]; then   \
-	    ${MKDIR} ${OUT_BUILD_LIB};       \
+	if [ ! -d ${OUT_BUILD_LIB} ]; then \
+	    ${MKDIR} ${OUT_BUILD_LIB};     \
 	fi
-	if [ ! -d ${OUT_BUILD_SRC} ]; then   \
-	    ${MKDIR} ${OUT_BUILD_SRC};       \
+	if [ ! -d ${OUT_BUILD_SRC} ]; then \
+	    ${MKDIR} ${OUT_BUILD_SRC};     \
 	fi
-	if [ ! -d ${OUT_BUILD_OBJS} ]; then    \
-	    ${MKDIR} ${OUT_BUILD_OBJS};        \
+	if [ ! -d ${OUT_BUILD_OBJS} ]; then \
+	    ${MKDIR} ${OUT_BUILD_OBJS};     \
 	fi
 	if [ ! -d ${OUT_BUILD_UTILS_H} ]; then \
 	    ${MKDIR} ${OUT_BUILD_UTILS_H};     \
@@ -119,14 +119,14 @@ prepare-video-sources:
 	${CP} ${INC}/${LOG}.h    ${OUT_BUILD_UTILS_H}/.
 	${CP} ${INC}/${TASK}.h   ${OUT_BUILD_UTILS_H}/.
 	
-	${CP} ${INC}/${V4L2}.h   ${OUT_BUILD_VIDEO_H}/.
-	${CP} ${INC}/${VIDEO}.h  ${OUT_BUILD_VIDEO_H}/.
+	${CP} ${INC}/${V4L2}.h  ${OUT_BUILD_VIDEO_H}/.
+	${CP} ${INC}/${VIDEO}.h ${OUT_BUILD_VIDEO_H}/.
 	
-	${CP} ${SRC}/${LIST}.c   ${OUT_BUILD_UTILS_C}/.
-	${CP} ${SRC}/${TASK}.c   ${OUT_BUILD_UTILS_C}/.
+	${CP} ${SRC}/${LIST}.c ${OUT_BUILD_UTILS_C}/.
+	${CP} ${SRC}/${TASK}.c ${OUT_BUILD_UTILS_C}/.
 	
-	${CP} ${SRC}/${V4L2}.c   ${OUT_BUILD_VIDEO_C}/.
-	${CP} ${SRC}/${VIDEO}.c  ${OUT_BUILD_VIDEO_C}/.
+	${CP} ${SRC}/${V4L2}.c  ${OUT_BUILD_VIDEO_C}/.
+	${CP} ${SRC}/${VIDEO}.c ${OUT_BUILD_VIDEO_C}/.
 
 #################################################################
 #                              Clean                            #

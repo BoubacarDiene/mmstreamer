@@ -115,7 +115,7 @@ static void onGfxEventCb(GFX_EVENT_S *gfxEvent, void *userData)
             
         case GFX_EVENT_TYPE_CLICK:
         case GFX_EVENT_TYPE_ENTER:
-            pData->specificObj->handleClick(pData->ctx, gfxEvent);
+            pData->controlObj->handleClick(pData->ctx, gfxEvent);
             break;
             
         default:

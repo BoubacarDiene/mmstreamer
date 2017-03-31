@@ -48,7 +48,7 @@ typedef struct CORE_PRIVATE_DATA_S {
     CONTEXT_S   *ctx;
     XML_S       xml;
     
-    SPECIFIC_S  *specificObj;
+    CONTROL_S   *controlObj;
     LOADERS_S   *loadersObj;
     LISTENERS_S *listenersObj;
 } CORE_PRIVATE_DATA_S;
@@ -98,9 +98,9 @@ CORE_ERROR_E Core_Init(CORE_S **obj, CONTEXT_S *ctx)
     CORE_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(CORE_PRIVATE_DATA_S))));
     
-    if (Specific_Init(&pData->specificObj, ctx) != SPECIFIC_ERROR_NONE) {
-        Loge("Specific_Init() failed");
-        goto specific_exit;
+    if (Control_Init(&pData->controlObj, ctx) != CONTROL_ERROR_NONE) {
+        Loge("Control_Init() failed");
+        goto control_exit;
     }
     
     if (Loaders_Init(&pData->loadersObj) != LOADERS_ERROR_NONE) {
@@ -108,7 +108,7 @@ CORE_ERROR_E Core_Init(CORE_S **obj, CONTEXT_S *ctx)
         goto loader_exit;
     }
     
-    if (Listeners_Init(&pData->listenersObj, ctx, pData->specificObj) != LISTENERS_ERROR_NONE) {
+    if (Listeners_Init(&pData->listenersObj, ctx, pData->controlObj) != LISTENERS_ERROR_NONE) {
         Loge("Listeners_Init() failed");
         goto listeners_exit;
     }
@@ -140,9 +140,9 @@ listeners_exit:
     (void)Loaders_UnInit(&pData->loadersObj);
 
 loader_exit:
-    (void)Specific_UnInit(&pData->specificObj);
+    (void)Control_UnInit(&pData->controlObj);
 
-specific_exit:
+control_exit:
     free((*obj)->pData);
     (*obj)->pData = NULL;
     
@@ -163,7 +163,7 @@ CORE_ERROR_E Core_UnInit(CORE_S **obj)
     
     (void)Listeners_UnInit(&pData->listenersObj);
     (void)Loaders_UnInit(&pData->loadersObj);
-    (void)Specific_UnInit(&pData->specificObj);
+    (void)Control_UnInit(&pData->controlObj);
     
     pData->ctx = NULL;
     
@@ -327,7 +327,7 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
                 goto badConfig_exit;
             }
             
-            (void)pData->specificObj->initElementData(pData->specificObj, &(*gfxElements)[index]->pData);
+            (void)pData->controlObj->initElementData(pData->controlObj, &(*gfxElements)[index]->pData);
             
             strncpy((*gfxElements)[index]->name, xmlGraphics->elements[index].name, sizeof((*gfxElements)[index]->name));
             strncpy((*gfxElements)[index]->groupName, xmlGraphics->elements[index].groupName, sizeof((*gfxElements)[index]->groupName));
@@ -346,11 +346,11 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
                         goto badConfig_exit;
                     }
 
-                    SPECIFIC_IMAGE_IDS_S imageIds;
+                    CONTROL_IMAGE_IDS_S imageIds;
                     imageIds.imageId       = xmlGraphics->elements[index].image->imageId;
                     imageIds.hiddenColorId = xmlGraphics->elements[index].image->hiddenColorId;
 	                
-                    (void)pData->specificObj->setElementImageIds(pData->specificObj, (*gfxElements)[index]->pData, &imageIds);
+                    (void)pData->controlObj->setElementImageIds(pData->controlObj, (*gfxElements)[index]->pData, &imageIds);
 	                
                     getImage_f((void*)&xmlGraphics->common, imageIds.imageId, &(*gfxElements)[index]->data.image);
 	                
@@ -366,12 +366,12 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
                         goto badConfig_exit;
                     }
                     
-                    SPECIFIC_TEXT_IDS_S textIds;
+                    CONTROL_TEXT_IDS_S textIds;
                     textIds.stringId = xmlGraphics->elements[index].text->stringId;
                     textIds.fontId   = xmlGraphics->elements[index].text->fontId;
                     textIds.colorId  = xmlGraphics->elements[index].text->colorId;
 	                
-                    (void)pData->specificObj->setElementTextIds(pData->specificObj, (*gfxElements)[index]->pData, &textIds);
+                    (void)pData->controlObj->setElementTextIds(pData->controlObj, (*gfxElements)[index]->pData, &textIds);
                     
                     getString_f((void*)&xmlGraphics->common, textIds.stringId, graphicsInfos->currentLanguage, (*gfxElements)[index]->data.text.str);
                     getFont_f((void*)&xmlGraphics->common, textIds.fontId, (*gfxElements)[index]->data.text.ttfFont);
@@ -409,7 +409,7 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
                             sizeof((*gfxElements)[index]->nav.down));
             }
             
-            SPECIFIC_GETTERS_S getters;
+            CONTROL_GETTERS_S getters;
             getters.getString   = getString_f;
             getters.getColor    = getColor_f;
             getters.getFont     = getFont_f;
@@ -418,10 +418,10 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
             
             getters.userData    = (void*)&xmlGraphics->common;
 	                
-            (void)pData->specificObj->setElementGetters(pData->specificObj, (*gfxElements)[index]->pData, &getters);
+            (void)pData->controlObj->setElementGetters(pData->controlObj, (*gfxElements)[index]->pData, &getters);
             
-            (void)pData->specificObj->setClickHandlers(pData->specificObj, (*gfxElements)[index]->pData,
-	                                            (SPECIFIC_HANDLERS_S*)xmlGraphics->elements[index].clickHandlers,
+            (void)pData->controlObj->setClickHandlers(pData->controlObj, (*gfxElements)[index]->pData,
+	                                            (CONTROL_HANDLERS_S*)xmlGraphics->elements[index].clickHandlers,
 	                                            xmlGraphics->elements[index].nbClickHandlers, index);
             
             if (graphicsObj->pushElement(graphicsObj, (*gfxElements)[index]) != GRAPHICS_ERROR_NONE) {
@@ -445,11 +445,11 @@ badConfig_exit:
         for (index = 0; index < *nbGfxElements; index++) {
             if ((*gfxElements)[index]) {
                 if ((*gfxElements)[index]->pData) {
-                    (void)pData->specificObj->unsetClickHandlers(pData->specificObj, (*gfxElements)[index]->pData);
-                    (void)pData->specificObj->unsetElementGetters(pData->specificObj, (*gfxElements)[index]->pData);
-                    (void)pData->specificObj->unsetElementTextIds(pData->specificObj, (*gfxElements)[index]->pData);
-                    (void)pData->specificObj->unsetElementImageIds(pData->specificObj, (*gfxElements)[index]->pData);
-                    (void)pData->specificObj->uninitElementData(pData->specificObj, &(*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetClickHandlers(pData->controlObj, (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetElementGetters(pData->controlObj, (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetElementTextIds(pData->controlObj, (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetElementImageIds(pData->controlObj, (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->uninitElementData(pData->controlObj, &(*gfxElements)[index]->pData);
                 }
                 if (((*gfxElements)[index]->type == GFX_ELEMENT_TYPE_IMAGE) && (*gfxElements)[index]->data.image.hiddenColor) {
                     free((*gfxElements)[index]->data.image.hiddenColor);
@@ -499,11 +499,11 @@ static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj)
         for (index = 0; index < nbGfxElements; index++) {
             if ((*gfxElements)[index]) {
                 if ((*gfxElements)[index]->pData) {
-                    (void)pData->specificObj->unsetClickHandlers(pData->specificObj, (*gfxElements)[index]->pData);
-                    (void)pData->specificObj->unsetElementGetters(pData->specificObj, (*gfxElements)[index]->pData);
-                    (void)pData->specificObj->unsetElementTextIds(pData->specificObj, (*gfxElements)[index]->pData);
-                    (void)pData->specificObj->unsetElementImageIds(pData->specificObj, (*gfxElements)[index]->pData);
-                    (void)pData->specificObj->uninitElementData(pData->specificObj, &(*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetClickHandlers(pData->controlObj, (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetElementGetters(pData->controlObj, (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetElementTextIds(pData->controlObj, (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetElementImageIds(pData->controlObj, (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->uninitElementData(pData->controlObj, &(*gfxElements)[index]->pData);
                 }
                 if (((*gfxElements)[index]->type == GFX_ELEMENT_TYPE_IMAGE) && (*gfxElements)[index]->data.image.hiddenColor) {
                     free((*gfxElements)[index]->data.image.hiddenColor);
@@ -566,9 +566,9 @@ static CORE_ERROR_E loadVideosParams_f(CORE_S *obj)
     for (index = 0; index < *nbDevices; index++) {
         assert(((*videoDevices)[index] = calloc(1, sizeof(VIDEO_DEVICE_S))));
 
-        if (pData->specificObj->getVideoConfig(pData->specificObj,
+        if (pData->controlObj->getVideoConfig(pData->controlObj,
                                                 &videoConfig,
-                                                xmlVideos->videos[index].configChoice) != SPECIFIC_ERROR_NONE) {
+                                                xmlVideos->videos[index].configChoice) != CONTROL_ERROR_NONE) {
             Loge("getVideoConfig() failed");
             goto badConfig_exit;
         }
@@ -1024,7 +1024,7 @@ static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, KEEP_ALIVE_METHOD_E method, ui
 
     switch (method) {
         case KEEP_ALIVE_EVENTS_BASED:
-            if (graphicsObj && graphicsObj->handleEvents(graphicsObj) != GRAPHICS_ERROR_NONE) {
+            if (graphicsObj && graphicsObj->handleGfxEvents(graphicsObj) != GRAPHICS_ERROR_NONE) {
                 Loge("Error occurred while handling events");
                 ret = CORE_ERROR_KEEP_ALIVE;
             }

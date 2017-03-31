@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Custom.c
+* \file   MultiInputs.c
 * \brief  TODO
 * \author Boubacar DIENE
 */
@@ -29,14 +29,14 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-#include "specific/Specific.h"
+#include "control/Control.h"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           DEFINE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "SPECIFIC-CUSTOM"
+#define TAG "CONTROL-MULTIINPUTS"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -46,10 +46,10 @@
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
-SPECIFIC_ERROR_E getSubstring     (CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset);
+CONTROL_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
+CONTROL_ERROR_E getSubstring     (CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset);
 
-static SPECIFIC_ERROR_E getElementIndex(CONTEXT_S *ctx, char *elementName, uint32_t *index);
+static CONTROL_ERROR_E getElementIndex(CONTEXT_S *ctx, char *elementName, uint32_t *index);
 
 static void updateText (CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData);
 static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData);
@@ -59,11 +59,11 @@ static void updateNav  (CONTEXT_S *ctx, char *targetName, void *pData, char *han
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-SPECIFIC_CLICK_HANDLERS_S gCustomClickHandlers[] = {
-	{ "updateText",                     NULL,             updateText             },
-	{ "updateImage",                    NULL,             updateImage            },
-	{ "updateNav",                      NULL,             updateNav              },
-	{ NULL,                             NULL,             NULL                   }
+CONTROL_CLICK_HANDLERS_S gCustomClickHandlers[] = {
+	{ "updateText",              NULL,             updateText  },
+	{ "updateImage",             NULL,             updateImage },
+	{ "updateNav",               NULL,             updateNav   },
+	{ NULL,                      NULL,             NULL        }
 };
 
 uint32_t gNbCustomClickHandlers = (uint32_t)(sizeof(gCustomClickHandlers) / sizeof(gCustomClickHandlers[0]));
@@ -75,47 +75,47 @@ uint32_t gNbCustomClickHandlers = (uint32_t)(sizeof(gCustomClickHandlers) / size
 /*!
  *
  */
-SPECIFIC_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData)
+CONTROL_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData)
 {
     assert(functionName && targetName);
 
     uint32_t index;
     for (index = 0; index < gNbCustomClickHandlers; index++) {
-        if (strncmp(gCustomClickHandlers[index].name, functionName, sizeof(gCustomClickHandlers[index].name)) == 0) {
+        if (strcmp(gCustomClickHandlers[index].name, functionName) == 0) {
             break;
         }
     }
 
     if (index >= gNbCustomClickHandlers) {
         Loge("Method \"%s\" not found", functionName);
-        return SPECIFIC_ERROR_PARAMS;
+        return CONTROL_ERROR_PARAMS;
     }
 
     if (!gCustomClickHandlers[index].fct) {
         Loge("Method \"%s\" not defined", functionName);
-        return SPECIFIC_ERROR_PARAMS;
+        return CONTROL_ERROR_PARAMS;
     }
 
     gCustomClickHandlers[index].fct(ctx, targetName, NULL, handlerData);
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /*!
  *
  */
-SPECIFIC_ERROR_E getSubstring(CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset)
+CONTROL_ERROR_E getSubstring(CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset)
 {
     (void)ctx;
 
     if (!haystack || !needle || !out || !offset) {
         Loge("Bad params");
-        return SPECIFIC_ERROR_PARAMS;
+        return CONTROL_ERROR_PARAMS;
     }
 
     char *result = strstr(haystack + *offset, needle);
     if (!result) {
-        return SPECIFIC_ERROR_PARAMS;
+        return CONTROL_ERROR_PARAMS;
     }
 
     int32_t len = strlen(haystack + *offset) - strlen(result);
@@ -125,7 +125,7 @@ SPECIFIC_ERROR_E getSubstring(CONTEXT_S *ctx, const char *haystack, const char *
 
     *offset += len + 1;
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /* -------------------------------------------------------------------------------------------- */
@@ -135,7 +135,7 @@ SPECIFIC_ERROR_E getSubstring(CONTEXT_S *ctx, const char *haystack, const char *
 /*!
  *
  */
-static SPECIFIC_ERROR_E getElementIndex(CONTEXT_S *ctx, char *elementName, uint32_t *index)
+static CONTROL_ERROR_E getElementIndex(CONTEXT_S *ctx, char *elementName, uint32_t *index)
 {
     assert(ctx && elementName && index);
 
@@ -144,17 +144,17 @@ static SPECIFIC_ERROR_E getElementIndex(CONTEXT_S *ctx, char *elementName, uint3
     GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
 
     for (*index = 0; *index < nbGfxElements; (*index)++) {
-        if (strncmp(gfxElements[*index]->name, elementName, sizeof(gfxElements[*index]->name)) == 0) {
+        if (strcmp(gfxElements[*index]->name, elementName) == 0) {
             break;
         }
     }
 
     if (*index >= nbGfxElements) {
         Loge("Element \"%s\" not found", elementName);
-        return SPECIFIC_ERROR_PARAMS;
+        return CONTROL_ERROR_PARAMS;
     }
 
-    return SPECIFIC_ERROR_NONE;
+    return CONTROL_ERROR_NONE;
 }
 
 /* -------------------------------------------------------------------------------------------- */
@@ -176,14 +176,14 @@ static void updateText(CONTEXT_S *ctx, char *targetName, void *pData, char *hand
     }
 
     uint32_t index;
-    if (getElementIndex(ctx, targetName, &index) != SPECIFIC_ERROR_NONE) {
+    if (getElementIndex(ctx, targetName, &index) != CONTROL_ERROR_NONE) {
         return;
     }
 
     GRAPHICS_S *graphicsObj               = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos       = &ctx->params.graphicsInfos;
     GFX_ELEMENT_S *gfxElement             = graphicsInfos->gfxElements[index];
-    SPECIFIC_ELEMENT_DATA_S *elementData  = (SPECIFIC_ELEMENT_DATA_S*)gfxElement->pData;
+    CONTROL_ELEMENT_DATA_S *elementData  = (CONTROL_ELEMENT_DATA_S*)gfxElement->pData;
 
     uint32_t stringId, fontId, fontSize, colorId;
     sscanf(handlerData, "%u;%u;%u;%u", &stringId, &fontId, &fontSize, &colorId);
@@ -214,14 +214,14 @@ static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *han
     }
 
     uint32_t index;
-    if (getElementIndex(ctx, targetName, &index) != SPECIFIC_ERROR_NONE) {
+    if (getElementIndex(ctx, targetName, &index) != CONTROL_ERROR_NONE) {
         return;
     }
 
     GRAPHICS_S *graphicsObj               = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos       = &ctx->params.graphicsInfos;
     GFX_ELEMENT_S *gfxElement             = graphicsInfos->gfxElements[index];
-    SPECIFIC_ELEMENT_DATA_S *elementData  = (SPECIFIC_ELEMENT_DATA_S*)gfxElement->pData;
+    CONTROL_ELEMENT_DATA_S *elementData  = (CONTROL_ELEMENT_DATA_S*)gfxElement->pData;
 
     uint32_t imageId;
     int32_t hiddenColorId;
@@ -254,7 +254,7 @@ static void updateNav(CONTEXT_S *ctx, char *targetName, void *pData, char *handl
     }
 
     uint32_t index;
-    if (getElementIndex(ctx, targetName, &index) != SPECIFIC_ERROR_NONE) {
+    if (getElementIndex(ctx, targetName, &index) != CONTROL_ERROR_NONE) {
         return;
     }
 
@@ -265,22 +265,22 @@ static void updateNav(CONTEXT_S *ctx, char *targetName, void *pData, char *handl
     GFX_NAV_S nav   = { 0 };
     uint32_t offset = 0;
 
-    if (getSubstring(ctx, handlerData, ";", nav.left, &offset) != SPECIFIC_ERROR_NONE) {
+    if (getSubstring(ctx, handlerData, ";", nav.left, &offset) != CONTROL_ERROR_NONE) {
         Loge("Bad format. Expected: <left>;<up>;<right>;<down>");
         return;
     }
 
-    if (getSubstring(ctx, handlerData, ";", nav.up, &offset) != SPECIFIC_ERROR_NONE) {
+    if (getSubstring(ctx, handlerData, ";", nav.up, &offset) != CONTROL_ERROR_NONE) {
         Loge("Bad format. Expected: <left>;<up>;<right>;<down>");
         return;
     }
 
-    if (getSubstring(ctx, handlerData, ";", nav.right, &offset) != SPECIFIC_ERROR_NONE) {
+    if (getSubstring(ctx, handlerData, ";", nav.right, &offset) != CONTROL_ERROR_NONE) {
         Loge("Bad format. Expected: <left>;<up>;<right>;<down>");
         return;
     }
 
-    if (getSubstring(ctx, handlerData, ";", nav.down, &offset) != SPECIFIC_ERROR_NONE) {
+    if (getSubstring(ctx, handlerData, ";", nav.down, &offset) != CONTROL_ERROR_NONE) {
         strncpy(nav.down, handlerData + offset, sizeof(nav.down));
     }
 

@@ -44,66 +44,66 @@ include build/Makefile.inc
 
 # Binary name
 ifeq (${DEBUG},no)
-    BIN_NAME       := ${PROJECT_NAME}-${PROJECT_VERSION}
+    BIN_NAME := ${PROJECT_NAME}-${PROJECT_VERSION}
 else
-    BIN_NAME       := ${PROJECT_NAME}-${PROJECT_VERSION}.dbg
+    BIN_NAME := ${PROJECT_NAME}-${PROJECT_VERSION}.dbg
 endif
 
 # Path
-OUT_BUILD_DIR      := ${OUT_BUILD}/main
-OUT_BUILD_INC      := ${OUT_BUILD_DIR}/include
-OUT_BUILD_SRC      := ${OUT_BUILD_DIR}/src
-OUT_BUILD_BIN      := ${OUT_BUILD_DIR}/bin
-OUT_BUILD_OBJS     := ${OUT_BUILD_DIR}/objs
+OUT_BUILD_DIR  := ${OUT_BUILD}/main
+OUT_BUILD_INC  := ${OUT_BUILD_DIR}/include
+OUT_BUILD_SRC  := ${OUT_BUILD_DIR}/src
+OUT_BUILD_BIN  := ${OUT_BUILD_DIR}/bin
+OUT_BUILD_OBJS := ${OUT_BUILD_DIR}/objs
 
-OUT_BUILD_UTILS_H  := ${OUT_BUILD_INC}/utils
-OUT_BUILD_UTILS_C  := ${OUT_BUILD_SRC}/utils
+OUT_BUILD_UTILS_H := ${OUT_BUILD_INC}/utils
+OUT_BUILD_UTILS_C := ${OUT_BUILD_SRC}/utils
 
 OUT_BUILD_GRAPHICS      := ${OUT_BUILD}/graphics
 OUT_BUILD_INC_GRAPHICS  := ${OUT_BUILD_GRAPHICS}/include
 OUT_BUILD_OBJS_GRAPHICS := ${OUT_BUILD_GRAPHICS}/objs
 
-OUT_BUILD_NETWORK       := ${OUT_BUILD}/net
-OUT_BUILD_INC_NETWORK   := ${OUT_BUILD_NETWORK}/include
-OUT_BUILD_OBJS_NETWORK  := ${OUT_BUILD_NETWORK}/objs
+OUT_BUILD_NETWORK      := ${OUT_BUILD}/net
+OUT_BUILD_INC_NETWORK  := ${OUT_BUILD_NETWORK}/include
+OUT_BUILD_OBJS_NETWORK := ${OUT_BUILD_NETWORK}/objs
 
-OUT_BUILD_SPECIFIC      := ${OUT_BUILD}/specific
-OUT_BUILD_INC_SPECIFIC  := ${OUT_BUILD_SPECIFIC}/include
-OUT_BUILD_OBJS_SPECIFIC := ${OUT_BUILD_SPECIFIC}/objs
+OUT_BUILD_CONTROL      := ${OUT_BUILD}/control
+OUT_BUILD_INC_CONTROL  := ${OUT_BUILD_CONTROL}/include
+OUT_BUILD_OBJS_CONTROL := ${OUT_BUILD_CONTROL}/objs
 
-OUT_BUILD_CORE          := ${OUT_BUILD}/core
-OUT_BUILD_INC_CORE      := ${OUT_BUILD_CORE}/include
-OUT_BUILD_OBJS_CORE     := ${OUT_BUILD_CORE}/objs
+OUT_BUILD_CORE      := ${OUT_BUILD}/core
+OUT_BUILD_INC_CORE  := ${OUT_BUILD_CORE}/include
+OUT_BUILD_OBJS_CORE := ${OUT_BUILD_CORE}/objs
 
-OUT_BUILD_VIDEO         := ${OUT_BUILD}/video
-OUT_BUILD_INC_VIDEO     := ${OUT_BUILD_VIDEO}/include
-OUT_BUILD_OBJS_VIDEO    := ${OUT_BUILD_VIDEO}/objs
+OUT_BUILD_VIDEO      := ${OUT_BUILD}/video
+OUT_BUILD_INC_VIDEO  := ${OUT_BUILD_VIDEO}/include
+OUT_BUILD_OBJS_VIDEO := ${OUT_BUILD_VIDEO}/objs
 
-OUT_BUILD_DEPS          := ${OUT_BUILD}/deps
-OUT_BUILD_INC_DEPS      := ${OUT_BUILD_DEPS}/include
-OUT_BUILD_LIB_DEPS      := ${OUT_BUILD_DEPS}/lib
+OUT_BUILD_DEPS     := ${OUT_BUILD}/deps
+OUT_BUILD_INC_DEPS := ${OUT_BUILD_DEPS}/include
+OUT_BUILD_LIB_DEPS := ${OUT_BUILD_DEPS}/lib
 
 # Build options
-HEADERS            := -I${OUT_BUILD_INC}           \
-                       -I${OUT_BUILD_INC_GRAPHICS} \
-                       -I${OUT_BUILD_INC_NETWORK}  \
-                       -I${OUT_BUILD_INC_SPECIFIC} \
-                       -I${OUT_BUILD_INC_CORE}     \
-                       -I${OUT_BUILD_INC_VIDEO}    \
-                       -I${OUT_BUILD_INC_DEPS}
-CFLAGS             += ${HEADERS} -DMAIN_XML_FILE=\"${OUT_RELEASE}/res/Main.xml\"
+HEADERS          := -I${OUT_BUILD_INC}          \
+                    -I${OUT_BUILD_INC_GRAPHICS} \
+                    -I${OUT_BUILD_INC_NETWORK}  \
+                    -I${OUT_BUILD_INC_CONTROL}  \
+                    -I${OUT_BUILD_INC_CORE}     \
+                    -I${OUT_BUILD_INC_VIDEO}    \
+                    -I${OUT_BUILD_INC_DEPS}
+CFLAGS           += ${HEADERS} -DMAIN_XML_FILE=\"${OUT_RELEASE}/res/Main.xml\"
 
-DEPS_LDFLAGS       := -L${OUT_BUILD_LIB_DEPS} -Wl,-rpath,${OUT_BUILD_LIB_DEPS}
+DEPS_LDFLAGS     := -L${OUT_BUILD_LIB_DEPS} -Wl,-rpath,${OUT_BUILD_LIB_DEPS}
 ifeq (${SDL_BUILD_VERSION},2)
-    DEPS_LDFLAGS   += -lSDL2 -lSDL2_image -lSDL2_ttf
+    DEPS_LDFLAGS += -lSDL2 -lSDL2_image -lSDL2_ttf
 else
-    DEPS_LDFLAGS   += -lSDL -lSDL_image -lSDL_ttf
+    DEPS_LDFLAGS += -lSDL -lSDL_image -lSDL_ttf
 endif
-DEPS_LDFLAGS       += -lfreetype -ljpeg -lexpat
-LDFLAGS            += ${DEPS_LDFLAGS}
+DEPS_LDFLAGS     += -lfreetype -ljpeg -lexpat
+LDFLAGS          += ${DEPS_LDFLAGS}
 
 # Files
-MAIN               := Main
+MAIN := Main
 
 # Objects
 OBJS := ${OUT_BUILD_SRC}/${LIST}.o   \
@@ -120,7 +120,7 @@ all: prepare-sources build-submodules ${BIN_NAME}
 
 # Binary
 ${BIN_NAME}: ${OBJS}
-	${CC} ${CFLAGS} -o ${OUT_BUILD_BIN}/$@ ${OUT_BUILD_OBJS}/*.o ${OUT_BUILD_OBJS_GRAPHICS}/*.o ${OUT_BUILD_OBJS_SPECIFIC}/*.o \
+	${CC} ${CFLAGS} -o ${OUT_BUILD_BIN}/$@ ${OUT_BUILD_OBJS}/*.o ${OUT_BUILD_OBJS_GRAPHICS}/*.o ${OUT_BUILD_OBJS_CONTROL}/*.o \
             ${OUT_BUILD_OBJS_CORE}/*.o \
             ${shell find ${OUT_BUILD_OBJS_VIDEO}/*.o ! -name $(notdir ${LIST}.o) ! -name $(notdir ${TASK}.o)} \
             ${shell find ${OUT_BUILD_OBJS_NETWORK}/*.o ! -name $(notdir ${LIST}.o) ! -name $(notdir ${TASK}.o)} \
@@ -139,7 +139,7 @@ install: prepare-release
 	make -f build/Makefile.net  install
 	make -f build/Makefile.deps install
 	make -f build/Makefile.gfx  install
-	make -f build/Makefile.spec install
+	make -f build/Makefile.ctrl install
 	make -f build/Makefile.core install
 	
 	${CP} ${INC}/*                     ${OUT_RELEASE_INC}/.
@@ -156,17 +156,17 @@ install: prepare-release
 
 prepare-sources:
 	${PRINT} ***** Preparing build directories *****
-	if [ ! -d ${OUT_BUILD_INC} ]; then   \
-	    ${MKDIR} ${OUT_BUILD_INC};       \
+	if [ ! -d ${OUT_BUILD_INC} ]; then \
+	    ${MKDIR} ${OUT_BUILD_INC};     \
 	fi
-	if [ ! -d ${OUT_BUILD_SRC} ]; then   \
-	    ${MKDIR} ${OUT_BUILD_SRC};       \
+	if [ ! -d ${OUT_BUILD_SRC} ]; then \
+	    ${MKDIR} ${OUT_BUILD_SRC};     \
 	fi
-	if [ ! -d ${OUT_BUILD_BIN} ]; then   \
-	    ${MKDIR} ${OUT_BUILD_BIN};       \
+	if [ ! -d ${OUT_BUILD_BIN} ]; then \
+	    ${MKDIR} ${OUT_BUILD_BIN};     \
 	fi
-	if [ ! -d ${OUT_BUILD_OBJS} ]; then   \
-	    ${MKDIR} ${OUT_BUILD_OBJS};       \
+	if [ ! -d ${OUT_BUILD_OBJS} ]; then \
+	    ${MKDIR} ${OUT_BUILD_OBJS};     \
 	fi
 	if [ ! -d ${OUT_BUILD_UTILS_H} ]; then \
 	    ${MKDIR} ${OUT_BUILD_UTILS_H};     \
@@ -176,17 +176,17 @@ prepare-sources:
 	fi
 
 	${PRINT} ***** Copying network sources *****
-	${CP} ${INC}/${COMMON}.h     ${OUT_BUILD_UTILS_H}/.
-	${CP} ${INC}/${LIST}.h       ${OUT_BUILD_UTILS_H}/.
-	${CP} ${INC}/${LOG}.h        ${OUT_BUILD_UTILS_H}/.
-	${CP} ${INC}/${PARSER}.h     ${OUT_BUILD_UTILS_H}/.
-	${CP} ${INC}/${TASK}.h       ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${COMMON}.h ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${LIST}.h   ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${LOG}.h    ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${PARSER}.h ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${TASK}.h   ${OUT_BUILD_UTILS_H}/.
 	
-	${CP} ${SRC}/${LIST}.c       ${OUT_BUILD_UTILS_C}/.
-	${CP} ${SRC}/${PARSER}.c     ${OUT_BUILD_UTILS_C}/.
-	${CP} ${SRC}/${TASK}.c       ${OUT_BUILD_UTILS_C}/.
+	${CP} ${SRC}/${LIST}.c   ${OUT_BUILD_UTILS_C}/.
+	${CP} ${SRC}/${PARSER}.c ${OUT_BUILD_UTILS_C}/.
+	${CP} ${SRC}/${TASK}.c   ${OUT_BUILD_UTILS_C}/.
 	
-	${CP} ${SRC}/${MAIN}.c       ${OUT_BUILD_SRC}/.
+	${CP} ${SRC}/${MAIN}.c   ${OUT_BUILD_SRC}/.
 
 #################################################################
 #                            Submodules                         #
@@ -198,7 +198,7 @@ build-submodules:
 	make -f build/Makefile.net  all
 	make -f build/Makefile.deps all
 	make -f build/Makefile.gfx  all
-	make -f build/Makefile.spec all
+	make -f build/Makefile.ctrl all
 	make -f build/Makefile.core all
 
 #################################################################
@@ -211,7 +211,7 @@ clean-all:
 	make -f build/Makefile.net  clean-network
 	make -f build/Makefile.deps clean-dependencies
 	make -f build/Makefile.gfx  clean-graphics
-	make -f build/Makefile.spec clean-specific
+	make -f build/Makefile.ctrl clean-control
 	make -f build/Makefile.core clean-core
 	${RM} ${OUT}/${PROJECT_NAME}-${PROJECT_VERSION}* ||:
 
@@ -221,6 +221,6 @@ mrproper-all: clean-all
 	make -f build/Makefile.net  mrproper-network
 	make -f build/Makefile.deps mrproper-dependencies
 	make -f build/Makefile.gfx  mrproper-graphics
-	make -f build/Makefile.spec mrproper-specific
+	make -f build/Makefile.ctrl mrproper-control
 	make -f build/Makefile.core mrproper-core
 	${RM} ${OUT} ||:
