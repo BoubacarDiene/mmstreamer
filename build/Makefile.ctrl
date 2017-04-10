@@ -41,7 +41,6 @@ OUT_BUILD_CORE_H  := ${OUT_BUILD_INC}/core
 OUT_BUILD_CONTROL_H := ${OUT_BUILD_INC}/control
 OUT_BUILD_CONTROL_C := ${OUT_BUILD_SRC}/control
 
-OUT_BUILD_CONFIGS_C  := ${OUT_BUILD_CONTROL_C}/configs
 OUT_BUILD_HANDLERS_C := ${OUT_BUILD_CONTROL_C}/handlers
 
 OUT_BUILD_GRAPHICS     := ${OUT_BUILD}/graphics
@@ -61,7 +60,6 @@ HEADERS := -I${OUT_BUILD_INC}          \
 CFLAGS  += ${HEADERS}
 
 # Files
-VIDEO_CONFIG          := control/configs/VideoConfig
 SINGLE_INPUT_HANDLERS := control/handlers/SingleInput
 MULTI_INPUTS_HANDERS  := control/handlers/MultiInputs
 CONTROL               := control/Control
@@ -69,10 +67,9 @@ CONTROL               := control/Control
 CORE_COMMON := core/Common
 
 # Objects
-OBJS := ${OUT_BUILD_SRC}/${VIDEO_CONFIG}.o     \
-		${OUT_BUILD_SRC}/${SINGLE_INPUT_HANDLERS}.o \
-		${OUT_BUILD_SRC}/${MULTI_INPUTS_HANDERS}.o   \
-		${OUT_BUILD_SRC}/${CONTROL}.o
+OBJS := ${OUT_BUILD_SRC}/${SINGLE_INPUT_HANDLERS}.o \
+	${OUT_BUILD_SRC}/${MULTI_INPUTS_HANDERS}.o  \
+	${OUT_BUILD_SRC}/${CONTROL}.o
 	
 #################################################################
 #                               Build                           #
@@ -119,9 +116,6 @@ prepare-control-sources:
 	if [ ! -d ${OUT_BUILD_CONTROL_C} ]; then \
 	    ${MKDIR} ${OUT_BUILD_CONTROL_C};     \
 	fi
-	if [ ! -d ${OUT_BUILD_CONFIGS_C} ]; then \
-	    ${MKDIR} ${OUT_BUILD_CONFIGS_C};     \
-	fi
 	if [ ! -d ${OUT_BUILD_HANDLERS_C} ]; then \
 	    ${MKDIR} ${OUT_BUILD_HANDLERS_C};     \
 	fi
@@ -135,7 +129,6 @@ prepare-control-sources:
 
 	${CP} ${INC}/${CONTROL}.h ${OUT_BUILD_CONTROL_H}/.
 	
-	${CP} ${SRC}/${VIDEO_CONFIG}.c          ${OUT_BUILD_CONFIGS_C}/.
 	${CP} ${SRC}/${SINGLE_INPUT_HANDLERS}.c ${OUT_BUILD_HANDLERS_C}/.
 	${CP} ${SRC}/${MULTI_INPUTS_HANDERS}.c  ${OUT_BUILD_HANDLERS_C}/.
 	${CP} ${SRC}/${CONTROL}.c               ${OUT_BUILD_CONTROL_C}/.

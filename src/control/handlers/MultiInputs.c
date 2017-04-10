@@ -46,8 +46,8 @@
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-CONTROL_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
-CONTROL_ERROR_E getSubstring     (CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset);
+CONTROL_ERROR_E callMultiInputsHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
+CONTROL_ERROR_E getSubstring          (CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset);
 
 static CONTROL_ERROR_E getElementIndex(CONTEXT_S *ctx, char *elementName, uint32_t *index);
 
@@ -59,14 +59,14 @@ static void updateNav  (CONTEXT_S *ctx, char *targetName, void *pData, char *han
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-CONTROL_CLICK_HANDLERS_S gCustomClickHandlers[] = {
+CONTROL_CLICK_HANDLERS_S gMultiInputsClickHandlers[] = {
 	{ "updateText",              NULL,             updateText  },
 	{ "updateImage",             NULL,             updateImage },
 	{ "updateNav",               NULL,             updateNav   },
 	{ NULL,                      NULL,             NULL        }
 };
 
-uint32_t gNbCustomClickHandlers = (uint32_t)(sizeof(gCustomClickHandlers) / sizeof(gCustomClickHandlers[0]));
+uint32_t gNbMultiInputsClickHandlers = (uint32_t)(sizeof(gMultiInputsClickHandlers) / sizeof(gMultiInputsClickHandlers[0]));
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                      PUBLIC FUNCTIONS                                        */
@@ -75,28 +75,28 @@ uint32_t gNbCustomClickHandlers = (uint32_t)(sizeof(gCustomClickHandlers) / size
 /*!
  *
  */
-CONTROL_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData)
+CONTROL_ERROR_E callMultiInputsHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData)
 {
     assert(functionName && targetName);
 
     uint32_t index;
-    for (index = 0; index < gNbCustomClickHandlers; index++) {
-        if (strcmp(gCustomClickHandlers[index].name, functionName) == 0) {
+    for (index = 0; index < gNbMultiInputsClickHandlers; index++) {
+        if (strcmp(gMultiInputsClickHandlers[index].name, functionName) == 0) {
             break;
         }
     }
 
-    if (index >= gNbCustomClickHandlers) {
+    if (index >= gNbMultiInputsClickHandlers) {
         Loge("Method \"%s\" not found", functionName);
         return CONTROL_ERROR_PARAMS;
     }
 
-    if (!gCustomClickHandlers[index].fct) {
+    if (!gMultiInputsClickHandlers[index].fct) {
         Loge("Method \"%s\" not defined", functionName);
         return CONTROL_ERROR_PARAMS;
     }
 
-    gCustomClickHandlers[index].fct(ctx, targetName, NULL, handlerData);
+    gMultiInputsClickHandlers[index].fct(ctx, targetName, NULL, handlerData);
 
     return CONTROL_ERROR_NONE;
 }
@@ -180,10 +180,10 @@ static void updateText(CONTEXT_S *ctx, char *targetName, void *pData, char *hand
         return;
     }
 
-    GRAPHICS_S *graphicsObj               = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos       = &ctx->params.graphicsInfos;
-    GFX_ELEMENT_S *gfxElement             = graphicsInfos->gfxElements[index];
-    CONTROL_ELEMENT_DATA_S *elementData  = (CONTROL_ELEMENT_DATA_S*)gfxElement->pData;
+    GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos     = &ctx->params.graphicsInfos;
+    GFX_ELEMENT_S *gfxElement           = graphicsInfos->gfxElements[index];
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElement->pData;
 
     uint32_t stringId, fontId, fontSize, colorId;
     sscanf(handlerData, "%u;%u;%u;%u", &stringId, &fontId, &fontSize, &colorId);
@@ -218,10 +218,10 @@ static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *han
         return;
     }
 
-    GRAPHICS_S *graphicsObj               = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos       = &ctx->params.graphicsInfos;
-    GFX_ELEMENT_S *gfxElement             = graphicsInfos->gfxElements[index];
-    CONTROL_ELEMENT_DATA_S *elementData  = (CONTROL_ELEMENT_DATA_S*)gfxElement->pData;
+    GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos     = &ctx->params.graphicsInfos;
+    GFX_ELEMENT_S *gfxElement           = graphicsInfos->gfxElements[index];
+    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElement->pData;
 
     uint32_t imageId;
     int32_t hiddenColorId;

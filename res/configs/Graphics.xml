@@ -176,13 +176,11 @@
 
                 21- startClient      : "data" contains the name of client to start
 
-                22- customHandler    : "data" must have the following format :
+                22- multiInputs      : "data" must have the following format :
                                        functionName;targetName;param1;param2;param3;...
 
-                                       where functionName is the name of function to call in Custom.c
-                                       and param1;param2;param3;... the list of expected parameters.
-
-                                       Note : Add your custom click handlers in Custom.c !!
+                                       where functionName is the name of function to call and
+                                       param1;param2;param3;... the list of expected parameters.
     -->
     <Elements>
       <Element name="videoZone" group="videoView" redrawGroup="1" type="0" x="160" y="160" width="640" height="480">
@@ -219,7 +217,7 @@
         <Nav left="" up="imageBtn1" right="" down="textBtn3" />
         <OnClick>
             <Handler name="changeLanguage" data="" />
-            <!--Handler name="customHandler" data="updateNav;textBtn2;;textBtn3;;imageBtn1" /--><!-- fctName;elemName;left;up;right;down -->
+            <!--Handler name="multiInputs" data="updateNav;textBtn2;;textBtn3;;imageBtn1" /--><!-- fctName;elemName;left;up;right;down -->
         </OnClick>
       </Element>
 
@@ -229,8 +227,8 @@
         <Nav left="" up="textBtn2" right="" down="textBtn1" />
         <OnClick>
             <Handler name="showElement" data="imageBtn" />
-            <Handler name="customHandler" data="updateText;textBtn1;0;1;20;1" /><!-- fctName;elemName;stringId;fontId;fontSize;colorId -->
-            <Handler name="customHandler" data="updateImage;imageBtn1;0;-1" /><!-- fctName;elemName;imageId;hidenColorId -->
+            <Handler name="multiInputs" data="updateText;textBtn1;0;1;20;1" /><!-- fctName;elemName;stringId;fontId;fontSize;colorId -->
+            <Handler name="multiInputs" data="updateImage;imageBtn1;0;-1" /><!-- fctName;elemName;imageId;hidenColorId -->
         </OnClick>
       </Element>
 

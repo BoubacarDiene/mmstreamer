@@ -78,17 +78,17 @@ static void resumeServer (CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
 static void stopCient  (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void customHandler(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void multiInputs(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
 
 
-extern CONTROL_ERROR_E callCustomHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
-extern CONTROL_ERROR_E getSubstring     (CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset);
+extern CONTROL_ERROR_E callMultiInputsHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
+extern CONTROL_ERROR_E getSubstring          (CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-CONTROL_CLICK_HANDLERS_S gGenericClickHandlers[] = {
+CONTROL_CLICK_HANDLERS_S gSingleInputClickHandlers[] = {
 	{ "closeApplication",           NULL,             closeApplication },
 	{ "changeLanguage",             NULL,             changeLanguage   },
 	{ "hideElement",                NULL,             hideElement      },
@@ -110,11 +110,11 @@ CONTROL_CLICK_HANDLERS_S gGenericClickHandlers[] = {
 	{ "resumeServer",               NULL,             resumeServer     },
 	{ "stopCient",                  NULL,             stopCient        },
 	{ "startClient",                NULL,             startClient      },
-	{ "customHandler",              NULL,             customHandler    },
+	{ "multiInputs",                NULL,             multiInputs      },
 	{ NULL,                         NULL,             NULL             }
 };
 
-uint32_t gNbGenericClickHandlers = (uint32_t)(sizeof(gGenericClickHandlers) / sizeof(gGenericClickHandlers[0]));
+uint32_t gNbSingleInputClickHandlers = (uint32_t)(sizeof(gSingleInputClickHandlers) / sizeof(gSingleInputClickHandlers[0]));
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                        CLICK HANDLERS                                        */
@@ -162,12 +162,12 @@ static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
     Logd("Handling click on element \"%s\"", gfxElementName);
     
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
-    GRAPHICS_S *graphicsObj              = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos      = &ctx->params.graphicsInfos;
-    uint32_t nbGfxElements               = graphicsInfos->nbGfxElements;
-    GFX_ELEMENT_S **gfxElements          = graphicsInfos->gfxElements;
+    GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos     = &ctx->params.graphicsInfos;
+    uint32_t nbGfxElements              = graphicsInfos->nbGfxElements;
+    GFX_ELEMENT_S **gfxElements         = graphicsInfos->gfxElements;
     
-    char nextLanguage[MIN_STR_SIZE]      = { 0 };
+    char nextLanguage[MIN_STR_SIZE]     = { 0 };
 
     if (!handlerData || (strlen(handlerData) == 0)) {
         elementData->getters.getLanguage(elementData->getters.userData, graphicsInfos->currentLanguage, nextLanguage);
@@ -335,8 +335,8 @@ static void saveVideoElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElem
     }
 
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
-    GRAPHICS_S *graphicsObj              = ctx->modules.graphicsObj;
-    INPUT_S *input                       = &ctx->input;
+    GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
+    INPUT_S *input                      = &ctx->input;
 
     GFX_IMAGE_S image;
     struct stat st;
@@ -370,8 +370,8 @@ static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
     }
 
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
-    GRAPHICS_S *graphicsObj              = ctx->modules.graphicsObj;
-    INPUT_S *input                       = &ctx->input;
+    GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
+    INPUT_S *input                      = &ctx->input;
 
     int32_t imageFormat = atoi(handlerData);
     GFX_IMAGE_S image;
@@ -737,7 +737,7 @@ static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
 /*!
  *
  */
-static void customHandler(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void multiInputs(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
     assert(ctx && gfxElementName && gfxElementData);
 
@@ -763,5 +763,5 @@ static void customHandler(CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
 
     Logd("Function : \"%s\" / Target : \"%s\"", functionName, targetName);
 
-    (void)callCustomHandler(ctx, functionName, targetName, handlerData + offset);
+    (void)callMultiInputsHandler(ctx, functionName, targetName, handlerData + offset);
 }

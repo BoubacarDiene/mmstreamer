@@ -29,6 +29,7 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
+#include "core/Configs.h"
 #include "core/Listeners.h"
 #include "core/Loaders.h"
 #include "core/Core.h"
@@ -48,6 +49,7 @@ typedef struct CORE_PRIVATE_DATA_S {
     CONTEXT_S   *ctx;
     XML_S       xml;
     
+    CONFIGS_S   *configsObj;
     CONTROL_S   *controlObj;
     LOADERS_S   *loadersObj;
     LISTENERS_S *listenersObj;
@@ -98,6 +100,11 @@ CORE_ERROR_E Core_Init(CORE_S **obj, CONTEXT_S *ctx)
     CORE_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(CORE_PRIVATE_DATA_S))));
     
+    if (Configs_Init(&pData->configsObj) != CONFIGS_ERROR_NONE) {
+        Loge("Configs_Init() failed");
+        goto configs_exit;
+    }
+
     if (Control_Init(&pData->controlObj, ctx) != CONTROL_ERROR_NONE) {
         Loge("Control_Init() failed");
         goto control_exit;
@@ -143,6 +150,9 @@ loader_exit:
     (void)Control_UnInit(&pData->controlObj);
 
 control_exit:
+    (void)Configs_UnInit(&pData->configsObj);
+
+configs_exit:
     free((*obj)->pData);
     (*obj)->pData = NULL;
     
@@ -164,6 +174,7 @@ CORE_ERROR_E Core_UnInit(CORE_S **obj)
     (void)Listeners_UnInit(&pData->listenersObj);
     (void)Loaders_UnInit(&pData->loadersObj);
     (void)Control_UnInit(&pData->controlObj);
+    (void)Configs_UnInit(&pData->configsObj);
     
     pData->ctx = NULL;
     
@@ -566,9 +577,9 @@ static CORE_ERROR_E loadVideosParams_f(CORE_S *obj)
     for (index = 0; index < *nbDevices; index++) {
         assert(((*videoDevices)[index] = calloc(1, sizeof(VIDEO_DEVICE_S))));
 
-        if (pData->controlObj->getVideoConfig(pData->controlObj,
+        if (pData->configsObj->getVideoConfig(pData->configsObj,
                                                 &videoConfig,
-                                                xmlVideos->videos[index].configChoice) != CONTROL_ERROR_NONE) {
+                                                xmlVideos->videos[index].configChoice) != CONFIGS_ERROR_NONE) {
             Loge("getVideoConfig() failed");
             goto badConfig_exit;
         }

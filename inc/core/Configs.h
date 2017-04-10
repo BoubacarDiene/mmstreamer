@@ -20,72 +20,69 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   VideoConfig.c
-* \brief  TODO
+* \file   Configs.h
 * \author Boubacar DIENE
 */
+
+#ifndef __CORE_CONFIGS_H__
+#define __CORE_CONFIGS_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-#include "control/Control.h"
+#include "video/Video.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
-/* -------------------------------------------------------------------------------------------- */
-
-#undef  TAG
-#define TAG "CONTROL-VIDEOCONFIG"
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/*                                           DEFINE                                             */
 /* -------------------------------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/*                                           TYPEDEFS                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-VIDEO_CONFIG_S gVideoConfig[] = {
-    // Choice 0
-	{
-	    .caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING,
-	    .type        = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-	    .pixelformat = V4L2_PIX_FMT_MJPEG,
-	    .colorspace  = V4L2_COLORSPACE_JPEG,
-	    .memory      = V4L2_MEMORY_MMAP,
-	    .awaitMode   = VIDEO_AWAIT_MODE_BLOCKING
-	},
+typedef enum CONFIGS_ERROR_E  CONFIGS_ERROR_E;
 
-    // Choice 1
-	{
-	    .caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING,
-	    .type        = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-	    .pixelformat = V4L2_PIX_FMT_MJPEG,
-	    .colorspace  = V4L2_COLORSPACE_JPEG,
-	    .memory      = V4L2_MEMORY_USERPTR,
-	    .awaitMode   = VIDEO_AWAIT_MODE_BLOCKING
-	},
+typedef struct VIDEO_CONFIG_S VIDEO_CONFIG_S;
+typedef struct CONFIGS_S      CONFIGS_S;
 
-    // Choice 2
-	{
-	    .caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING,
-	    .type        = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-	    .pixelformat = V4L2_PIX_FMT_YVYU,
-	    .colorspace  = V4L2_COLORSPACE_SMPTE170M,
-	    .memory      = V4L2_MEMORY_MMAP,
-	    .awaitMode   = VIDEO_AWAIT_MODE_BLOCKING
-	},
+typedef CONFIGS_ERROR_E (*CONFIGS_GET_VIDEO_CONFIG_F)(CONFIGS_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice);
 
-    // Choice 3
-	{
-	    .caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING,
-	    .type        = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-	    .pixelformat = V4L2_PIX_FMT_YVYU,
-	    .colorspace  = V4L2_COLORSPACE_SMPTE170M,
-	    .memory      = V4L2_MEMORY_USERPTR,
-	    .awaitMode   = VIDEO_AWAIT_MODE_BLOCKING
-	}
+enum CONFIGS_ERROR_E {
+    CONFIGS_ERROR_NONE,
+    CONFIGS_ERROR_INIT,
+    CONFIGS_ERROR_UNINIT,
+    CONFIGS_ERROR_PARAMS
 };
 
-uint32_t gNbVideoConfigs = (uint32_t)(sizeof(gVideoConfig) / sizeof(gVideoConfig[0]));
+struct VIDEO_CONFIG_S {
+    uint32_t             caps;
+    enum v4l2_buf_type   type;
+    uint32_t             pixelformat;
+    enum v4l2_colorspace colorspace;
+    enum v4l2_memory     memory;
+    VIDEO_AWAIT_MODE_E   awaitMode;
+};
+
+struct CONFIGS_S {
+    CONFIGS_GET_VIDEO_CONFIG_F getVideoConfig;
+
+    void                       *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/*                                      PUBLIC FUNCTIONS                                        */
+/* -------------------------------------------------------------------------------------------- */
+
+CONFIGS_ERROR_E Configs_Init  (CONFIGS_S **obj);
+CONFIGS_ERROR_E Configs_UnInit(CONFIGS_S **obj);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif //__CORE_CONFIGS_H__

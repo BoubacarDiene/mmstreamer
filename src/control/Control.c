@@ -50,17 +50,12 @@ typedef struct CONTROL_PRIVATE_DATA_S {
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-extern VIDEO_CONFIG_S gVideoConfig[];
-extern uint32_t gNbVideoConfigs;
-
-extern CONTROL_CLICK_HANDLERS_S gGenericClickHandlers[];
-extern uint32_t gNbGenericClickHandlers;
+extern CONTROL_CLICK_HANDLERS_S gSingleInputClickHandlers[];
+extern uint32_t gNbSingleInputClickHandlers;
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
-
-CONTROL_ERROR_E getVideoConfig_f(CONTROL_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice);
 
 CONTROL_ERROR_E initElementData_f  (CONTROL_S *obj, void **data);
 CONTROL_ERROR_E uninitElementData_f(CONTROL_S *obj, void **data);
@@ -92,8 +87,6 @@ CONTROL_ERROR_E Control_Init(CONTROL_S **obj, CONTEXT_S *ctx)
 
     CONTROL_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(CONTROL_PRIVATE_DATA_S))));
-
-    (*obj)->getVideoConfig       = getVideoConfig_f;
 
     (*obj)->initElementData      = initElementData_f;
     (*obj)->uninitElementData    = uninitElementData_f;
@@ -142,25 +135,6 @@ CONTROL_ERROR_E Control_UnInit(CONTROL_S **obj)
 /* -------------------------------------------------------------------------------------------- */
 /*                                     PRIVATE FUNCTIONS                                        */
 /* -------------------------------------------------------------------------------------------- */
-
-CONTROL_ERROR_E getVideoConfig_f(CONTROL_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice)
-{
-    assert(obj && config);
-
-    if (configChoice >= gNbVideoConfigs) {
-        Loge("Bad choice %u / Nb video configs : %u", configChoice, gNbVideoConfigs);
-        return CONTROL_ERROR_PARAMS;
-    }
-
-    config->caps        = gVideoConfig[configChoice].caps;
-    config->type        = gVideoConfig[configChoice].type;
-    config->pixelformat = gVideoConfig[configChoice].pixelformat;
-    config->colorspace  = gVideoConfig[configChoice].colorspace;
-    config->memory      = gVideoConfig[configChoice].memory;
-    config->awaitMode   = gVideoConfig[configChoice].awaitMode;
-
-    return CONTROL_ERROR_NONE;
-}
 
 /*!
  *
@@ -301,14 +275,14 @@ CONTROL_ERROR_E setClickHandlers_f(CONTROL_S *obj, void *data, CONTROL_HANDLERS_
         (elementData->clickHandlers[i]).data = strdup((handlers[i]).data);
 
         j = 0;
-        while ((j < gNbGenericClickHandlers)
-                && gGenericClickHandlers[j].name
-                && (strcmp(gGenericClickHandlers[j].name, (handlers[i]).name) != 0)) {
+        while ((j < gNbSingleInputClickHandlers)
+                && gSingleInputClickHandlers[j].name
+                && (strcmp(gSingleInputClickHandlers[j].name, (handlers[i]).name) != 0)) {
             j++;
         }
 
-        if (gGenericClickHandlers[j].name) {
-            (elementData->clickHandlers[i]).fct = gGenericClickHandlers[j].fct;
+        if (gSingleInputClickHandlers[j].name) {
+            (elementData->clickHandlers[i]).fct = gSingleInputClickHandlers[j].fct;
         }
     }
 

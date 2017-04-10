@@ -54,7 +54,6 @@ extern "C" {
 
 typedef enum KEEP_ALIVE_METHOD_E KEEP_ALIVE_METHOD_E;
 
-typedef struct VIDEO_CONFIG_S    VIDEO_CONFIG_S;
 typedef struct VIDEO_DEVICE_S    VIDEO_DEVICE_S;
 
 typedef struct GRAPHICS_INFOS_S  GRAPHICS_INFOS_S;
@@ -71,15 +70,6 @@ enum KEEP_ALIVE_METHOD_E {
     KEEP_ALIVE_EVENTS_BASED,
     KEEP_ALIVE_SEMAPHORE_BASED,
     KEEP_ALIVE_TIMER_BASED
-};
-
-struct VIDEO_CONFIG_S {
-    uint32_t             caps;
-    enum v4l2_buf_type   type;
-    uint32_t             pixelformat;
-    enum v4l2_colorspace colorspace;
-    enum v4l2_memory     memory;
-    VIDEO_AWAIT_MODE_E   awaitMode;
 };
 
 struct VIDEO_DEVICE_S {

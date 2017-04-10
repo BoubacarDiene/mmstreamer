@@ -45,7 +45,7 @@ extern "C" {
 /*                                           TYPEDEFS                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum CONTROL_ERROR_E            CONTROL_ERROR_E;
+typedef enum   CONTROL_ERROR_E          CONTROL_ERROR_E;
 
 typedef struct CONTROL_GETTERS_S        CONTROL_GETTERS_S;
 typedef struct CONTROL_TEXT_IDS_S       CONTROL_TEXT_IDS_S;
@@ -62,8 +62,6 @@ typedef void (*CONTROL_GET_COLOR_F   )(void *userData, int32_t colorId, GFX_COLO
 typedef void (*CONTROL_GET_FONT_F    )(void *userData, uint32_t fontId, char *ttfFontOut);
 typedef void (*CONTROL_GET_IMAGE_F   )(void *userData, uint32_t imageId, GFX_IMAGE_S *imageOut);
 typedef void (*CONTROL_GET_LANGUAGE_F)(void *userData, char *currentIn, char *nextOut);
-
-typedef CONTROL_ERROR_E (*CONTROL_GET_VIDEO_CONFIG_F)(CONTROL_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice);
 
 typedef CONTROL_ERROR_E (*CONTROL_INIT_ELEMENT_DATA_F  )(CONTROL_S *obj, void **data);
 typedef CONTROL_ERROR_E (*CONTROL_UNINIT_ELEMENT_DATA_F)(CONTROL_S *obj, void **data);
@@ -96,7 +94,7 @@ struct CONTROL_GETTERS_S {
     CONTROL_GET_IMAGE_F    getImage;
     CONTROL_GET_LANGUAGE_F getLanguage;
     
-    void                    *userData;
+    void                   *userData;
 };
 
 struct CONTROL_TEXT_IDS_S {
@@ -116,28 +114,26 @@ struct CONTROL_HANDLERS_S {
 };
 
 struct CONTROL_CLICK_HANDLERS_S {
-    char                     *name;
-    char                     *data;
+    char                    *name;
+    char                    *data;
     CONTROL_CLICK_HANDLER_F fct;
 };
 
 struct CONTROL_ELEMENT_DATA_S {
-    uint32_t                  index;
+    uint32_t                 index;
 
     union {
         CONTROL_TEXT_IDS_S   text;
         CONTROL_IMAGE_IDS_S  image;
     } ids;
 
-    uint32_t                  nbClickHandlers;
+    uint32_t                 nbClickHandlers;
     CONTROL_CLICK_HANDLERS_S *clickHandlers;
 
     CONTROL_GETTERS_S        getters;
 };
 
 struct CONTROL_S {
-    CONTROL_GET_VIDEO_CONFIG_F        getVideoConfig;
-
     CONTROL_INIT_ELEMENT_DATA_F       initElementData;
     CONTROL_UNINIT_ELEMENT_DATA_F     uninitElementData;
 
@@ -155,7 +151,7 @@ struct CONTROL_S {
 
     CONTROL_HANDLE_CLICK_F            handleClick;
 
-    void                               *pData;
+    void                              *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */

@@ -38,8 +38,10 @@ OUT_BUILD_OBJS := ${OUT_BUILD_DIR}/objs
 OUT_BUILD_UTILS_H   := ${OUT_BUILD_INC}/utils
 OUT_BUILD_CONTROL_H := ${OUT_BUILD_INC}/control
 
-OUT_BUILD_CORE_H           := ${OUT_BUILD_INC}/core
-OUT_BUILD_CORE_C           := ${OUT_BUILD_SRC}/core
+OUT_BUILD_CORE_H    := ${OUT_BUILD_INC}/core
+OUT_BUILD_CORE_C    := ${OUT_BUILD_SRC}/core
+
+OUT_BUILD_CORE_CONFIGS_C   := ${OUT_BUILD_CORE_C}/configs
 OUT_BUILD_CORE_LISTENERS_C := ${OUT_BUILD_CORE_C}/listeners
 OUT_BUILD_CORE_LOADERS_C   := ${OUT_BUILD_CORE_C}/loaders
 
@@ -63,14 +65,19 @@ CFLAGS  += ${HEADERS}
 LISTENERS   := core/Listeners
 LOADERS     := core/Loaders
 CORE        := core/Core
+CONFIGS     := core/Configs
 CORE_COMMON := core/Common
 XML_DEFINES := core/XmlDefines
 
+VIDEO_CONFIG := core/configs/VideoConfig
+
+ROOT_LISTENERS     := core/listeners/Listeners
 CLIENTS_LISTENERS  := core/listeners/ClientsListeners
 GRAPHICS_LISTENERS := core/listeners/GraphicsListeners
 SERVERS_LISTENERS  := core/listeners/ServersListeners
 VIDEOS_LISTENERS   := core/listeners/VideosListeners
 
+ROOT_LOADER     := core/loaders/Loaders
 CLIENTS_LOADER  := core/loaders/ClientsLoader
 GRAPHICS_LOADER := core/loaders/GraphicsLoader
 SERVERS_LOADER  := core/loaders/ServersLoader
@@ -79,17 +86,18 @@ VIDEOS_LOADER   := core/loaders/VideosLoader
 CONTROL := control/Control
 
 # Objects
-OBJS := ${OUT_BUILD_SRC}/${CLIENTS_LISTENERS}.o  \
-		${OUT_BUILD_SRC}/${GRAPHICS_LISTENERS}.o \
-		${OUT_BUILD_SRC}/${SERVERS_LISTENERS}.o  \
-		${OUT_BUILD_SRC}/${VIDEOS_LISTENERS}.o   \
-		${OUT_BUILD_SRC}/${CLIENTS_LOADER}.o     \
-		${OUT_BUILD_SRC}/${GRAPHICS_LOADER}.o    \
-		${OUT_BUILD_SRC}/${SERVERS_LOADER}.o     \
-		${OUT_BUILD_SRC}/${VIDEOS_LOADER}.o      \
-		${OUT_BUILD_SRC}/${LISTENERS}.o          \
-		${OUT_BUILD_SRC}/${LOADERS}.o            \
-		${OUT_BUILD_SRC}/${CORE}.o
+OBJS := ${OUT_BUILD_SRC}/${VIDEO_CONFIG}.o       \
+        ${OUT_BUILD_SRC}/${CLIENTS_LISTENERS}.o  \
+	${OUT_BUILD_SRC}/${GRAPHICS_LISTENERS}.o \
+	${OUT_BUILD_SRC}/${SERVERS_LISTENERS}.o  \
+	${OUT_BUILD_SRC}/${VIDEOS_LISTENERS}.o   \
+        ${OUT_BUILD_SRC}/${ROOT_LISTENERS}.o     \
+	${OUT_BUILD_SRC}/${CLIENTS_LOADER}.o     \
+	${OUT_BUILD_SRC}/${GRAPHICS_LOADER}.o    \
+	${OUT_BUILD_SRC}/${SERVERS_LOADER}.o     \
+	${OUT_BUILD_SRC}/${VIDEOS_LOADER}.o      \
+	${OUT_BUILD_SRC}/${ROOT_LOADER}.o        \
+	${OUT_BUILD_SRC}/${CORE}.o
 	
 #################################################################
 #                               Build                           #
@@ -136,6 +144,9 @@ prepare-core-sources:
 	if [ ! -d ${OUT_BUILD_CORE_C} ]; then \
 	    ${MKDIR} ${OUT_BUILD_CORE_C};     \
 	fi
+	if [ ! -d ${OUT_BUILD_CORE_CONFIGS_C} ]; then \
+	    ${MKDIR} ${OUT_BUILD_CORE_CONFIGS_C};     \
+	fi
 	if [ ! -d ${OUT_BUILD_CORE_LISTENERS_C} ]; then \
 	    ${MKDIR} ${OUT_BUILD_CORE_LISTENERS_C};     \
 	fi
@@ -153,22 +164,25 @@ prepare-core-sources:
 	${CP} ${INC}/${LISTENERS}.h   ${OUT_BUILD_CORE_H}/.
 	${CP} ${INC}/${LOADERS}.h     ${OUT_BUILD_CORE_H}/.
 	${CP} ${INC}/${CORE}.h        ${OUT_BUILD_CORE_H}/.
+	${CP} ${INC}/${CONFIGS}.h     ${OUT_BUILD_CORE_H}/.
 	${CP} ${INC}/${CORE_COMMON}.h ${OUT_BUILD_CORE_H}/.
 	${CP} ${INC}/${XML_DEFINES}.h ${OUT_BUILD_CORE_H}/.
 	
+	${CP} ${SRC}/${VIDEO_CONFIG}.c ${OUT_BUILD_CORE_CONFIGS_C}/.
+
+	${CP} ${SRC}/${ROOT_LISTENERS}.c     ${OUT_BUILD_CORE_LISTENERS_C}/.
 	${CP} ${SRC}/${CLIENTS_LISTENERS}.c  ${OUT_BUILD_CORE_LISTENERS_C}/.
 	${CP} ${SRC}/${GRAPHICS_LISTENERS}.c ${OUT_BUILD_CORE_LISTENERS_C}/.
 	${CP} ${SRC}/${SERVERS_LISTENERS}.c  ${OUT_BUILD_CORE_LISTENERS_C}/.
 	${CP} ${SRC}/${VIDEOS_LISTENERS}.c   ${OUT_BUILD_CORE_LISTENERS_C}/.
 	
+	${CP} ${SRC}/${ROOT_LOADER}.c     ${OUT_BUILD_CORE_LOADERS_C}/.
 	${CP} ${SRC}/${CLIENTS_LOADER}.c  ${OUT_BUILD_CORE_LOADERS_C}/.
 	${CP} ${SRC}/${GRAPHICS_LOADER}.c ${OUT_BUILD_CORE_LOADERS_C}/.
 	${CP} ${SRC}/${SERVERS_LOADER}.c  ${OUT_BUILD_CORE_LOADERS_C}/.
 	${CP} ${SRC}/${VIDEOS_LOADER}.c   ${OUT_BUILD_CORE_LOADERS_C}/.
 	
-	${CP} ${SRC}/${LISTENERS}.c ${OUT_BUILD_CORE_C}/.
-	${CP} ${SRC}/${LOADERS}.c   ${OUT_BUILD_CORE_C}/.
-	${CP} ${SRC}/${CORE}.c      ${OUT_BUILD_CORE_C}/.
+	${CP} ${SRC}/${CORE}.c ${OUT_BUILD_CORE_C}/.
 
 #################################################################
 #                              Clean                            #
