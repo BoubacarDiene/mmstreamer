@@ -339,6 +339,11 @@ static DRAWER_ERROR_E unInitScreen_f(DRAWER_S *obj)
     
     DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)(obj->pData);
 
+    // Clear screen (double buffering enabled => 2 flip necessary to clear both buffers)
+    GFX_COLOR_S black = { 0 };
+    setBgColor_f(obj, NULL, &black);
+    setBgColor_f(obj, NULL, &black);
+
     if (pData->video.overlay) {
         SDL_DestroyTexture(pData->video.overlay);
     }
@@ -600,7 +605,7 @@ static DRAWER_ERROR_E setBgColor_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S 
 {
     assert(obj && obj->pData);
     
-    if (!rect || !color) {
+    if (!color) {
         Loge("Bad arguments");
         return DRAWER_ERROR_PARAMS;
     }
@@ -612,18 +617,20 @@ static DRAWER_ERROR_E setBgColor_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S 
         Loge("Failed to lock mutex");
         return DRAWER_ERROR_LOCK;
     }
-    
-    pData->rect.x = rect->x;
-    pData->rect.y = rect->y;
-    pData->rect.w = rect->w;
-    pData->rect.h = rect->h;
+
+    if (rect) {
+        pData->rect.x = rect->x;
+        pData->rect.y = rect->y;
+        pData->rect.w = rect->w;
+        pData->rect.h = rect->h;
+    }
 
     if (SDL_SetRenderDrawColor(pData->renderer, color->red, color->green, color->blue, color->alpha) < 0) {
         Loge("SDL_SetRenderDrawColor() failed - %s", SDL_GetError());
         goto exit;
     }
     
-    if (SDL_RenderFillRect(pData->renderer, &pData->rect) < 0) {
+    if (SDL_RenderFillRect(pData->renderer, rect ? &pData->rect : NULL) < 0) {
         Loge("SDL_RenderFillRect() failed - %s", SDL_GetError());
         goto exit;
     }

@@ -292,11 +292,16 @@ static DRAWER_ERROR_E unInitScreen_f(DRAWER_S *obj)
     assert(obj && obj->pData);
     
     DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)(obj->pData);
+
+    // Clear screen (double buffering enabled => 2 flip necessary to clear both buffers)
+    GFX_COLOR_S black = { 0 };
+    setBgColor_f(obj, NULL, &black);
+    setBgColor_f(obj, NULL, &black);
     
     if (pData->video.overlay) {
         SDL_FreeYUVOverlay(pData->video.overlay);
     }
-    
+
     TTF_Quit();
     IMG_Quit();
     SDL_Quit();
@@ -518,7 +523,7 @@ static DRAWER_ERROR_E setBgColor_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S 
 {
     assert(obj && obj->pData);
     
-    if (!rect || !color) {
+    if (!color) {
         Loge("Bad arguments");
         return DRAWER_ERROR_PARAMS;
     }
@@ -529,13 +534,15 @@ static DRAWER_ERROR_E setBgColor_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S 
         Loge("Failed to lock mutex");
         return DRAWER_ERROR_LOCK;
     }
+
+    if (rect) {
+        pData->rect.x = rect->x;
+        pData->rect.y = rect->y;
+        pData->rect.w = rect->w;
+        pData->rect.h = rect->h;
+    }
     
-    pData->rect.x = rect->x;
-    pData->rect.y = rect->y;
-    pData->rect.w = rect->w;
-    pData->rect.h = rect->h;
-    
-    SDL_FillRect(pData->screen, &pData->rect, SDL_MapRGB(pData->screen->format, color->red, color->green, color->blue));
+    SDL_FillRect(pData->screen, rect ? &pData->rect : NULL, SDL_MapRGB(pData->screen->format, color->red, color->green, color->blue));
     
     SDL_Flip(pData->screen);
     
