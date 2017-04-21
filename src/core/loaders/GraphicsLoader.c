@@ -266,6 +266,11 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
         xmlGraphics->common.stringsXmlFile = NULL;
     }
     
+    if (xmlGraphics->screen.fbDeviceName) {
+        free(xmlGraphics->screen.fbDeviceName);
+        xmlGraphics->screen.fbDeviceName = NULL;
+    }
+    
     if (xmlGraphics->screen.caption) {
         free(xmlGraphics->screen.caption);
         xmlGraphics->screen.caption = NULL;
@@ -578,6 +583,12 @@ static void onScreenCb(void *userData, const char **attrs)
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&screen->height,
     	    .attrGetter.scalar = parserObj->getUint16
+        },
+    	{
+    	    .attrName          = XML_ATTR_FRAMEBUFFER_DEVICE_NAME,
+    	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
+    	    .attrValue.vector  = (void*)&screen->fbDeviceName,
+    	    .attrGetter.vector = parserObj->getString
         },
     	{
     	    .attrName          = XML_ATTR_BITS_PER_PIXEL,

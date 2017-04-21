@@ -282,11 +282,15 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
     screenParams->rect.w = xmlGraphics->screen.width;
     screenParams->rect.h = xmlGraphics->screen.height;
 
+    if (xmlGraphics->screen.fbDeviceName && (strlen(xmlGraphics->screen.fbDeviceName) > 0)) {
+        strncpy(screenParams->fbDeviceName, xmlGraphics->screen.fbDeviceName, sizeof(screenParams->fbDeviceName));
+    }
+
     screenParams->bitsPerPixel = xmlGraphics->screen.bitsPerPixel;
     screenParams->isFullScreen = xmlGraphics->screen.fullscreen;
     screenParams->showCursor   = xmlGraphics->screen.showCursor;
     
-    if (strlen(xmlGraphics->screen.caption) > 0) {
+    if (xmlGraphics->screen.caption && (strlen(xmlGraphics->screen.caption) > 0)) {
         screenParams->isTitleBarUsed = 1;
         strncpy(screenParams->caption, xmlGraphics->screen.caption, sizeof(screenParams->caption));
     }

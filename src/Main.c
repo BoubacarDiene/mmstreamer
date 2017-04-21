@@ -370,7 +370,7 @@ startDeviceCapture_exit:
 
 loadVideosParams_exit:
 destroyDrawer_exit:
-    if (modules->graphicsObj && !input->autoStartGraphics) {
+    if (modules->graphicsObj && input->autoStartGraphics) {
         Logd("Destroying elements and drawer");
         (void)modules->graphicsObj->destroyDrawer(modules->graphicsObj);
     }

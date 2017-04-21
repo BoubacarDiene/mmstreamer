@@ -31,6 +31,10 @@
 
       - width / height : Screen size
 
+      - fbDeviceName   : Name of active framebuffer (fb0, fb1, ...)
+                         Used to update depth if different from bitsPerPixel below.
+                         IMPORTANT: mmstreamer must be run as root to avoid "Permission denied" error
+
       - bitsPerPixel   : Bits per pixel
 
       - fullScreen     : 1 <=> Application is launched in fullscreen mode
@@ -50,6 +54,7 @@
   -->
   <Screen width="840"
           height="680"
+          fbDeviceName="fb0"
           bitsPerPixel="32"
           fullscreen="0"
           showCursor="0"

@@ -50,13 +50,16 @@ CFLAGS  += ${HEADERS}
 # Files
 DRAWER     := graphics/Drawer
 DRAWER_SRC := graphics/drawers/Drawer${SDL_BUILD_VERSION}
+FBDEV      := graphics/FbDev
+FBDEV_SRC  := graphics/framebuffer/FbDev
 GFXCOMMON  := graphics/GfxCommon
 GRAPHICS   := graphics/Graphics
 
 # Objects
 OBJS := ${OUT_BUILD_SRC}/${DRAWER}.o   \
+		${OUT_BUILD_SRC}/${FBDEV}.o    \
 		${OUT_BUILD_SRC}/${GRAPHICS}.o
-	
+
 #################################################################
 #                               Build                           #
 #################################################################
@@ -106,10 +109,12 @@ prepare-graphics-sources:
 	${CP} ${INC}/${LOG}.h    ${OUT_BUILD_UTILS_H}/.
 	
 	${CP} ${INC}/${DRAWER}.h    ${OUT_BUILD_GRAPHICS_H}/.
+	${CP} ${INC}/${FBDEV}.h     ${OUT_BUILD_GRAPHICS_H}/.
 	${CP} ${INC}/${GFXCOMMON}.h ${OUT_BUILD_GRAPHICS_H}/.
 	${CP} ${INC}/${GRAPHICS}.h  ${OUT_BUILD_GRAPHICS_H}/.
 	
 	${CP} ${SRC}/${DRAWER_SRC}.c ${OUT_BUILD_GRAPHICS_C}/$(notdir ${DRAWER}.c)
+	${CP} ${SRC}/${FBDEV_SRC}.c  ${OUT_BUILD_GRAPHICS_C}/$(notdir ${FBDEV}.c)
 	${CP} ${SRC}/${GRAPHICS}.c   ${OUT_BUILD_GRAPHICS_C}/.
 
 #################################################################

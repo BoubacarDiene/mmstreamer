@@ -24,9 +24,7 @@
     - keepAliveMethod : Method to use to keep app running
                         0 => Events_based    : Can be used when keyEvents are handled by graphics module
                                                E.g: Click on Close button or Press Escape key
-                        1 => Semaphore_based : Can be used when you want to handle keyEvents differently.
-                                               To avoid infinite loop, you have to call "sem_post()" when app
-                                               needs to be stopped
+                        1 => Semaphore_based : Can be used when you want to handle keyEvents differently
                         2 => Timer_based     : Can be used when you want to run the application in a limited
                                                time
 
@@ -50,12 +48,10 @@
                 1 => YES
 
     - autoStart : Choose to automatically or manually start the module
-                  0 => Manual start i.e it is just initialized in Main.c
-                       You can start it whenever and where you want
-                  1 => Automatic start i.e iniatialized and started in Main.c
-
-                  Note: autoStart="1" => No need to update the source
-                        code as it is already handled (Cf. Main.c)
+                  0 => Manual start i.e it is just initialized in Main.c to let
+                       you start it later
+                  1 => Automatic start i.e iniatialized and started in Main.c but
+                       you can restart it whenever you want
 
     - xmlFile : Path to the config file of the module
   -->

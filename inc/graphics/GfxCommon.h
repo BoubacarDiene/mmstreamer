@@ -126,7 +126,8 @@ struct GFX_NAV_S {
 
 struct GFX_SCREEN_S {
     GFX_RECT_S         rect;
-    
+
+    char               fbDeviceName[MAX_NAME_SIZE]; // Framebuffer device name
     uint8_t            bitsPerPixel;
     
     uint8_t            isFullScreen;

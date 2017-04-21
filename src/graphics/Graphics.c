@@ -32,6 +32,7 @@
 #include "utils/Log.h"
 #include "utils/List.h"
 
+#include "graphics/FbDev.h"
 #include "graphics/Drawer.h"
 #include "graphics/Graphics.h"
 
@@ -57,7 +58,8 @@ typedef struct GRAPHICS_PRIVATE_DATA_S {
     GFX_ELEMENT_S      *lastDrawnElement;
     GFX_ELEMENT_S      *videoElement;
     
-    DRAWER_S           *drawer;
+    FBDEV_S            *fbDevObj;
+    DRAWER_S           *drawerObj;
 } GRAPHICS_PRIVATE_DATA_S;
 
 /* -------------------------------------------------------------------------------------------- */
@@ -129,6 +131,10 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
         goto exit;
     }
     
+    if (FbDev_Init(&pData->fbDevObj) != FBDEV_ERROR_NONE) {
+        goto fbDevExit;
+    }
+    
     (*obj)->createDrawer     = createDrawer_f;
     (*obj)->destroyDrawer    = destroyDrawer_f;
     
@@ -157,7 +163,10 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     (*obj)->pData = (void*)pData;
     
     return GRAPHICS_ERROR_NONE;
-    
+
+fbDevExit:
+    (void)List_UnInit(&pData->gfxElementsList);
+
 exit:
     free(pData);
     pData = NULL;
@@ -176,7 +185,8 @@ GRAPHICS_ERROR_E Graphics_UnInit(GRAPHICS_S **obj)
     assert(obj && *obj && (*obj)->pData);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)((*obj)->pData);
-    
+
+    (void)FbDev_UnInit(&pData->fbDevObj);
     (void)List_UnInit(&pData->gfxElementsList);
     
     free((*obj)->pData);
@@ -209,18 +219,35 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
     pData->params.onGfxEventCb = params->onGfxEventCb;
     pData->params.userData     = params->userData;
     
-    if (Drawer_Init(&pData->drawer) != DRAWER_ERROR_NONE) {
+    if (Drawer_Init(&pData->drawerObj) != DRAWER_ERROR_NONE) {
         Loge("Failed to init drawer");
         return GRAPHICS_ERROR_DRAWER;
     }
-    
-    if (pData->drawer->initScreen(pData->drawer, &params->screenParams) != DRAWER_ERROR_NONE) {
+
+    if (pData->fbDevObj->open(pData->fbDevObj, params->screenParams.fbDeviceName) == FBDEV_ERROR_NONE) {
+        FBDEV_INFOS_S fbInfos = { 0 };
+        (void)pData->fbDevObj->getInfos(pData->fbDevObj, &fbInfos);
+
+        Logd("\nFbDevice : \"%s\" / width = %u / height = %u / depth = %u\n",
+                params->screenParams.fbDeviceName, fbInfos.width, fbInfos.height, fbInfos.depth);
+
+        if (fbInfos.depth != (uint32_t)params->screenParams.bitsPerPixel) {
+            (void)pData->fbDevObj->setDepth(pData->fbDevObj, (uint32_t)params->screenParams.bitsPerPixel);
+        }
+    }
+
+    if (pData->drawerObj->initScreen(pData->drawerObj, &params->screenParams) != DRAWER_ERROR_NONE) {
         Loge("Failed to init screen");
-        (void)Drawer_UnInit(&pData->drawer);
-        return GRAPHICS_ERROR_DRAWER;
+        goto exit;
     }
     
     return GRAPHICS_ERROR_NONE;
+
+exit:
+    (void)pData->fbDevObj->close(pData->fbDevObj);
+    (void)Drawer_UnInit(&pData->drawerObj);
+
+    return GRAPHICS_ERROR_DRAWER;
 }
 
 /*!
@@ -234,8 +261,17 @@ static GRAPHICS_ERROR_E destroyDrawer_f(GRAPHICS_S *obj)
     
     pData->params.userData = NULL;
     
-    (void)pData->drawer->unInitScreen(pData->drawer);
-    (void)Drawer_UnInit(&pData->drawer);
+    (void)pData->drawerObj->unInitScreen(pData->drawerObj);
+
+    uint8_t opened = 0;
+    (void)pData->fbDevObj->isOpened(pData->fbDevObj, &opened);
+
+    if (opened) {
+        (void)pData->fbDevObj->restore(pData->fbDevObj);
+        (void)pData->fbDevObj->close(pData->fbDevObj);
+    }
+
+    (void)Drawer_UnInit(&pData->drawerObj);
     
     return GRAPHICS_ERROR_NONE;
 }
@@ -508,7 +544,7 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     
-    if (!pData->drawer) {
+    if (!pData->drawerObj) {
         return GRAPHICS_ERROR_DRAWER;
     }
     
@@ -556,7 +592,7 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
             break;
                 
         case GFX_ELEMENT_TYPE_TEXT:
-            if (pData->drawer->setBgColor(pData->drawer, &gfxElement->rect, &pData->params.colorOnReset) != DRAWER_ERROR_NONE) {
+            if (pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect, &pData->params.colorOnReset) != DRAWER_ERROR_NONE) {
                 Loge("Failed to set background color of element \"%s\"", gfxElement->name);
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
@@ -616,7 +652,7 @@ static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_
         videoBuffer.length = buffer->length;
     }
     
-    if (pData->drawer->saveBuffer(pData->drawer, &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
+    if (pData->drawerObj->saveBuffer(pData->drawerObj, &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
         ret = GRAPHICS_ERROR_DRAWER;
         goto exit;
     }
@@ -671,7 +707,7 @@ static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName
         videoBuffer.length = gfxElement->data.buffer.length;
     }
 
-    if (pData->drawer->saveBuffer(pData->drawer, &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
+    if (pData->drawerObj->saveBuffer(pData->drawerObj, &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
         ret = GRAPHICS_ERROR_DRAWER;
         goto exit;
     }
@@ -693,7 +729,7 @@ static GRAPHICS_ERROR_E takeScreenshot_f(GRAPHICS_S *obj, GFX_IMAGE_S *inOut)
 
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
 
-    if (pData->drawer->saveScreen(pData->drawer, inOut) != DRAWER_ERROR_NONE) {
+    if (pData->drawerObj->saveScreen(pData->drawerObj, inOut) != DRAWER_ERROR_NONE) {
         return GRAPHICS_ERROR_DRAWER;
     }
 
@@ -751,14 +787,14 @@ static GRAPHICS_ERROR_E handleGfxEvents_f(GRAPHICS_S *obj)
 
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
 
-    if (!pData->drawer) {
+    if (!pData->drawerObj) {
         return GRAPHICS_ERROR_DRAWER;
     }
 
     GFX_EVENT_S evt;
 
     while (!pData->quit) {
-        if (pData->drawer->getEvent(pData->drawer, &evt) != DRAWER_ERROR_NONE) {
+        if (pData->drawerObj->getEvent(pData->drawerObj, &evt) != DRAWER_ERROR_NONE) {
             continue;
         }
 
@@ -842,7 +878,7 @@ static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxEleme
     if (!gfxElement->isVisible) {
         // Clear surface
         if (!gfxElement->surfaceUpdated
-            && pData->drawer->setBgColor(pData->drawer, &gfxElement->rect, &pData->params.colorOnReset) != DRAWER_ERROR_NONE) {
+            && pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect, &pData->params.colorOnReset) != DRAWER_ERROR_NONE) {
             Loge("Failed to set background color of element \"%s\"", gfxElement->name);
             ret = GRAPHICS_ERROR_DRAWER;
             goto exit;
@@ -862,7 +898,7 @@ static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxEleme
             if (pData->focusedElement && strncmp(pData->focusedElement->name, gfxElement->name, MAX_NAME_SIZE)) {
                 Logd("\"%s\" was not the current focused element (Current : %s)", gfxElement->name, pData->focusedElement->name);
                 pData->focusedElement->hasFocus = 0;
-                if (pData->drawer->setBgColor(pData->drawer,
+                if (pData->drawerObj->setBgColor(pData->drawerObj,
                                                 &pData->focusedElement->rect,
                                                 &pData->params.colorOnBlur) != DRAWER_ERROR_NONE) {
                     Loge("Failed to set colorOnBlur on \"%s\"", pData->focusedElement->name);
@@ -876,7 +912,7 @@ static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxEleme
                 }
             }
             
-            if (pData->drawer->setBgColor(pData->drawer, &gfxElement->rect, &pData->params.colorOnFocus) != DRAWER_ERROR_NONE) {
+            if (pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect, &pData->params.colorOnFocus) != DRAWER_ERROR_NONE) {
                 Loge("Failed to set colorOnFocus on \"%s\"", gfxElement->name);
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
@@ -894,7 +930,7 @@ static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxEleme
             }
         }
         else if (gfxElement->isFocusable
-                    && pData->drawer->setBgColor(pData->drawer, &gfxElement->rect, &pData->params.colorOnBlur) != DRAWER_ERROR_NONE) {
+                    && pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect, &pData->params.colorOnBlur) != DRAWER_ERROR_NONE) {
             Loge("Failed to set colorOnBlur on \"%s\"", gfxElement->name);
             ret = GRAPHICS_ERROR_DRAWER;
             goto exit;
@@ -920,7 +956,7 @@ static GRAPHICS_ERROR_E drawElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement
     
     switch (gfxElement->type) {
         case GFX_ELEMENT_TYPE_VIDEO:
-            if (pData->drawer->drawVideo(pData->drawer, &gfxElement->rect, &gfxElement->data.buffer) != DRAWER_ERROR_NONE) {
+            if (pData->drawerObj->drawVideo(pData->drawerObj, &gfxElement->rect, &gfxElement->data.buffer) != DRAWER_ERROR_NONE) {
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
             }
@@ -928,14 +964,14 @@ static GRAPHICS_ERROR_E drawElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement
             break;
                 
         case GFX_ELEMENT_TYPE_IMAGE:
-            if (pData->drawer->drawImage(pData->drawer, &gfxElement->rect, &gfxElement->data.image) != DRAWER_ERROR_NONE) {
+            if (pData->drawerObj->drawImage(pData->drawerObj, &gfxElement->rect, &gfxElement->data.image) != DRAWER_ERROR_NONE) {
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
             }
             break;
                 
         case GFX_ELEMENT_TYPE_TEXT:
-            if (pData->drawer->drawText(pData->drawer, &gfxElement->rect, &gfxElement->data.text) != DRAWER_ERROR_NONE) {
+            if (pData->drawerObj->drawText(pData->drawerObj, &gfxElement->rect, &gfxElement->data.text) != DRAWER_ERROR_NONE) {
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
             }

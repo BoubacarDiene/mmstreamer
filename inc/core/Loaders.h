@@ -188,6 +188,7 @@ struct XML_COMMON_S {
 struct XML_SCREEN_S {
     uint16_t width;
     uint16_t height;
+    char     *fbDeviceName;
     uint8_t  bitsPerPixel;
     uint8_t  fullscreen;
     uint8_t  showCursor;

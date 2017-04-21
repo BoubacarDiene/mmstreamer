@@ -98,6 +98,7 @@ extern "C" {
 #define XML_ATTR_Y                       "y"
 #define XML_ATTR_WIDTH                   "width"
 #define XML_ATTR_HEIGHT                  "height"
+#define XML_ATTR_FRAMEBUFFER_DEVICE_NAME "fbDeviceName"
 #define XML_ATTR_BITS_PER_PIXEL          "bitsPerPixel"
 #define XML_ATTR_FULLSCREEN              "fullscreen"
 #define XML_ATTR_SHOW_CURSOR             "showCursor"
