@@ -16,8 +16,13 @@
 
     Notes:
     - <x.y> has to be replaced with the current version of the binary.
+
     - Another path to Main.xml config file can be specified using -c option
       E.g.: $ ./out/mmstreamer/bin/mmstreamer-<x.y> -c /tmp/Main.xml
+
+    - In case a "bitsPerPixel" different from the active framebuffer's depth is specified in
+      Graphics.xml, mmstreamer will try to change depth. To make it work, "root" permission
+      is required
 
     If you are using default xml config files provided in github, you should see
     video signal appeared in surface drawn by graphics module.

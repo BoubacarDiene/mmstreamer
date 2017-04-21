@@ -51,13 +51,14 @@ typedef struct GRAPHICS_PRIVATE_DATA_S {
     volatile uint8_t   quit;
     
     GRAPHICS_PARAMS_S  params;
+    FBDEV_INFOS_S      fbInfos;
     
     LIST_S             *gfxElementsList;
     
     GFX_ELEMENT_S      *focusedElement;
     GFX_ELEMENT_S      *lastDrawnElement;
     GFX_ELEMENT_S      *videoElement;
-    
+
     FBDEV_S            *fbDevObj;
     DRAWER_S           *drawerObj;
 } GRAPHICS_PRIVATE_DATA_S;
@@ -225,13 +226,12 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
     }
 
     if (pData->fbDevObj->open(pData->fbDevObj, params->screenParams.fbDeviceName) == FBDEV_ERROR_NONE) {
-        FBDEV_INFOS_S fbInfos = { 0 };
-        (void)pData->fbDevObj->getInfos(pData->fbDevObj, &fbInfos);
+        (void)pData->fbDevObj->getInfos(pData->fbDevObj, &pData->fbInfos);
 
         Logd("\nFbDevice : \"%s\" / width = %u / height = %u / depth = %u\n",
-                params->screenParams.fbDeviceName, fbInfos.width, fbInfos.height, fbInfos.depth);
+                params->screenParams.fbDeviceName, pData->fbInfos.width, pData->fbInfos.height, pData->fbInfos.depth);
 
-        if (fbInfos.depth != (uint32_t)params->screenParams.bitsPerPixel) {
+        if (pData->fbInfos.depth != (uint32_t)params->screenParams.bitsPerPixel) {
             (void)pData->fbDevObj->setDepth(pData->fbDevObj, (uint32_t)params->screenParams.bitsPerPixel);
         }
     }
@@ -267,7 +267,9 @@ static GRAPHICS_ERROR_E destroyDrawer_f(GRAPHICS_S *obj)
     (void)pData->fbDevObj->isOpened(pData->fbDevObj, &opened);
 
     if (opened) {
-        (void)pData->fbDevObj->restore(pData->fbDevObj);
+        if (pData->fbInfos.depth != (uint32_t)pData->params.screenParams.bitsPerPixel) {
+            (void)pData->fbDevObj->restore(pData->fbDevObj);
+        }
         (void)pData->fbDevObj->close(pData->fbDevObj);
     }
 

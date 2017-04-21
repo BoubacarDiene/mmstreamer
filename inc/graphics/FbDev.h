@@ -21,6 +21,8 @@
 
 /*!
 * \file   FbDev.h
+* \brief  Framebuffer device management
+*         IMPORTANT : Mmstreamer engine must be run as root to make it have rights to use fbDev
 * \author Boubacar DIENE
 */
 
