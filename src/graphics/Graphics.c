@@ -225,11 +225,21 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
         return GRAPHICS_ERROR_DRAWER;
     }
 
+    uint8_t opened = 0;
     if (pData->fbDevObj->open(pData->fbDevObj, params->screenParams.fbDeviceName) == FBDEV_ERROR_NONE) {
+        opened = 1;
+
         (void)pData->fbDevObj->getInfos(pData->fbDevObj, &pData->fbInfos);
 
         Logd("\nFbDevice : \"%s\" / width = %u / height = %u / depth = %u\n",
                 params->screenParams.fbDeviceName, pData->fbInfos.width, pData->fbInfos.height, pData->fbInfos.depth);
+
+        if ((pData->fbInfos.width < params->screenParams.rect.w)
+            || (pData->fbInfos.height < params->screenParams.rect.h)) {
+            Loge("Invalid resolution - Max values : width = %u / height = %u",
+                    pData->fbInfos.width, pData->fbInfos.height);
+            goto exit;
+        }
 
         if (pData->fbInfos.depth != (uint32_t)params->screenParams.bitsPerPixel) {
             (void)pData->fbDevObj->setDepth(pData->fbDevObj, (uint32_t)params->screenParams.bitsPerPixel);
@@ -238,13 +248,20 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
 
     if (pData->drawerObj->initScreen(pData->drawerObj, &params->screenParams) != DRAWER_ERROR_NONE) {
         Loge("Failed to init screen");
-        goto exit;
+        goto initScreenExit;
     }
     
     return GRAPHICS_ERROR_NONE;
 
+initScreenExit:
+    if (opened && (pData->fbInfos.depth != (uint32_t)params->screenParams.bitsPerPixel)) {
+        (void)pData->fbDevObj->restore(pData->fbDevObj);
+    }
+
 exit:
-    (void)pData->fbDevObj->close(pData->fbDevObj);
+    if (opened) {
+        (void)pData->fbDevObj->close(pData->fbDevObj);
+    }
     (void)Drawer_UnInit(&pData->drawerObj);
 
     return GRAPHICS_ERROR_DRAWER;

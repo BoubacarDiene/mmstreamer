@@ -51,7 +51,7 @@ CFLAGS  += ${HEADERS}
 DRAWER     := graphics/Drawer
 DRAWER_SRC := graphics/drawers/Drawer${SDL_BUILD_VERSION}
 FBDEV      := graphics/FbDev
-FBDEV_SRC  := graphics/framebuffer/FbDev
+FBDEV_SRC  := graphics/fbdev/FbDev
 GFXCOMMON  := graphics/GfxCommon
 GRAPHICS   := graphics/Graphics
 

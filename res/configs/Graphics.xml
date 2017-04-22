@@ -36,6 +36,7 @@
                          IMPORTANT: mmstreamer must be run as root to avoid "Permission denied" error
 
       - bitsPerPixel   : Bits per pixel
+                         Examples : 8, 16, 24, 32
 
       - fullScreen     : 1 <=> Application is launched in fullscreen mode
                          0 <=> width and height are used
