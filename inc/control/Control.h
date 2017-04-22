@@ -35,7 +35,7 @@ extern "C" {
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-#include "core/Common.h"
+#include "control/Handlers.h"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           DEFINE                                             */
@@ -50,8 +50,6 @@ typedef enum   CONTROL_ERROR_E          CONTROL_ERROR_E;
 typedef struct CONTROL_GETTERS_S        CONTROL_GETTERS_S;
 typedef struct CONTROL_TEXT_IDS_S       CONTROL_TEXT_IDS_S;
 typedef struct CONTROL_IMAGE_IDS_S      CONTROL_IMAGE_IDS_S;
-typedef struct CONTROL_HANDLERS_S       CONTROL_HANDLERS_S;
-typedef struct CONTROL_CLICK_HANDLERS_S CONTROL_CLICK_HANDLERS_S;
 typedef struct CONTROL_ELEMENT_DATA_S   CONTROL_ELEMENT_DATA_S;
 typedef struct CONTROL_S                CONTROL_S;
 
@@ -75,10 +73,10 @@ typedef CONTROL_ERROR_E (*CONTROL_UNSET_ELEMENT_TEXT_IDS_F)(CONTROL_S *obj, void
 typedef CONTROL_ERROR_E (*CONTROL_SET_ELEMENT_IMAGE_IDS_F  )(CONTROL_S *obj, void *data, CONTROL_IMAGE_IDS_S *imageIds);
 typedef CONTROL_ERROR_E (*CONTROL_UNSET_ELEMENT_IMAGE_IDS_F)(CONTROL_S *obj, void *data);
 
-typedef CONTROL_ERROR_E (*CONTROL_SET_CLICK_HANDLERS_F  )(CONTROL_S *obj, void *data, CONTROL_HANDLERS_S *handlers, uint32_t nbHandlers, uint32_t index);
+typedef CONTROL_ERROR_E (*CONTROL_SET_CLICK_HANDLERS_F  )(CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index);
 typedef CONTROL_ERROR_E (*CONTROL_UNSET_CLICK_HANDLERS_F)(CONTROL_S *obj, void *data);
 
-typedef CONTROL_ERROR_E (*CONTROL_HANDLE_CLICK_F)(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent);
+typedef CONTROL_ERROR_E (*CONTROL_HANDLE_CLICK_F)(CONTROL_S *obj, GFX_EVENT_S *gfxEvent);
 
 enum CONTROL_ERROR_E {
     CONTROL_ERROR_NONE,
@@ -108,29 +106,18 @@ struct CONTROL_IMAGE_IDS_S {
     int32_t  hiddenColorId;
 };
 
-struct CONTROL_HANDLERS_S {
-    char *name;
-    char *data;
-};
-
-struct CONTROL_CLICK_HANDLERS_S {
-    char                    *name;
-    char                    *data;
-    CONTROL_CLICK_HANDLER_F fct;
-};
-
 struct CONTROL_ELEMENT_DATA_S {
-    uint32_t                 index;
+    uint32_t                index;
 
     union {
-        CONTROL_TEXT_IDS_S   text;
-        CONTROL_IMAGE_IDS_S  image;
+        CONTROL_TEXT_IDS_S  text;
+        CONTROL_IMAGE_IDS_S image;
     } ids;
 
-    uint32_t                 nbClickHandlers;
-    CONTROL_CLICK_HANDLERS_S *clickHandlers;
+    uint32_t                nbClickHandlers;
+    CLICK_HANDLERS_S        *clickHandlers;
 
-    CONTROL_GETTERS_S        getters;
+    CONTROL_GETTERS_S       getters;
 };
 
 struct CONTROL_S {

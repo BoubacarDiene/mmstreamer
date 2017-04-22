@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   GraphicsListeners.c
+* \file   Handlers.c
 * \brief  TODO
 * \author Boubacar DIENE
 */
@@ -29,14 +29,14 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-#include "core/Listeners.h"
+#include "control/Handlers.h"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           DEFINE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "GRAPHICS-LISTENERS"
+#define TAG "HANDLERS"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -46,79 +46,151 @@
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-LISTENERS_ERROR_E setGraphicsListeners_f  (LISTENERS_S *obj);
-LISTENERS_ERROR_E unsetGraphicsListeners_f(LISTENERS_S *obj);
-
-static void onGfxEventCb(GFX_EVENT_S *gfxEvent, void *userData);
+static HANDLERS_ERROR_E getClickHandler_f(HANDLERS_S *obj, const char *handlerName, CLICK_HANDLER_F *out);
+static HANDLERS_ERROR_E getElementIndex_f(HANDLERS_S *obj, char *elementName, uint32_t *index);
+static HANDLERS_ERROR_E getSubstring_f   (HANDLERS_S *obj, const char *haystack, const char *needle, char *out, uint32_t *offset);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
+extern CLICK_HANDLERS_S gSingleInputClickHandlers[];
+extern uint32_t gNbSingleInputClickHandlers;
+
+extern CLICK_HANDLERS_S gMultiInputsClickHandlers[];
+extern uint32_t gNbMultiInputsClickHandlers;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                          FUNCTIONS                                           */
+/*                                      PUBLIC FUNCTIONS                                        */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-LISTENERS_ERROR_E setGraphicsListeners_f(LISTENERS_S *obj)
+HANDLERS_ERROR_E Handlers_Init(HANDLERS_S **obj, CONTEXT_S *ctx)
 {
-    assert(obj && obj->pData);
-    
-    LISTENERS_PDATA_S *pData        = (LISTENERS_PDATA_S*)(obj->pData);
-    GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
-    
-    graphicsInfos->graphicsParams.onGfxEventCb = onGfxEventCb;
-    graphicsInfos->graphicsParams.userData     = pData;
-    
-    return LISTENERS_ERROR_NONE;
+    assert(obj && (*obj = calloc(1, sizeof(HANDLERS_S))));
+
+    HANDLERS_PRIVATE_DATA_S *pData;
+    assert((pData = calloc(1, sizeof(HANDLERS_PRIVATE_DATA_S))));
+
+    (*obj)->getClickHandler = getClickHandler_f;
+    (*obj)->getElementIndex = getElementIndex_f;
+    (*obj)->getSubstring    = getSubstring_f;
+
+    pData->ctx = ctx;
+
+    pData->nbSingleInputClickHandlers = gNbSingleInputClickHandlers;
+    pData->singleInputClickHandlers   = gSingleInputClickHandlers;
+
+    pData->nbMultiInputsClickHandlers = gNbMultiInputsClickHandlers;
+    pData->multiInputsClickHandlers   = gMultiInputsClickHandlers;
+
+    (*obj)->pData = (void*)pData;
+
+    return HANDLERS_ERROR_NONE;
 }
 
 /*!
  *
  */
-LISTENERS_ERROR_E unsetGraphicsListeners_f(LISTENERS_S *obj)
+HANDLERS_ERROR_E Handlers_UnInit(HANDLERS_S **obj)
 {
-    assert(obj && obj->pData);
-    
-    LISTENERS_PDATA_S *pData        = (LISTENERS_PDATA_S*)(obj->pData);
-    GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
-    
-    graphicsInfos->graphicsParams.onGfxEventCb = NULL;
-    graphicsInfos->graphicsParams.userData     = NULL;
-    
-    return LISTENERS_ERROR_NONE;
+    assert(obj && *obj && (*obj)->pData);
+
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)((*obj)->pData);
+
+    pData->ctx                      = NULL;
+    pData->singleInputClickHandlers = NULL;
+    pData->multiInputsClickHandlers = NULL;
+
+    free((*obj)->pData);
+    (*obj)->pData = NULL;
+
+    free(*obj);
+    *obj = NULL;
+
+    return HANDLERS_ERROR_NONE;
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          CALLBACKS                                           */
+/*                                     PRIVATE FUNCTIONS                                        */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static void onGfxEventCb(GFX_EVENT_S *gfxEvent, void *userData)
+static HANDLERS_ERROR_E getClickHandler_f(HANDLERS_S *obj, const char *handlerName, CLICK_HANDLER_F *out)
 {
-    assert(gfxEvent && userData);
-    
-    LISTENERS_PDATA_S *pData = (LISTENERS_PDATA_S*)userData;
-    
-    switch (gfxEvent->type) {
-        case GFX_EVENT_TYPE_QUIT:
-        case GFX_EVENT_TYPE_ESC:
-            pData->ctx->modules.graphicsObj->quit(pData->ctx->modules.graphicsObj);
-            break;
-            
-        case GFX_EVENT_TYPE_FOCUS:
-            break;
-            
-        case GFX_EVENT_TYPE_CLICK:
-        case GFX_EVENT_TYPE_ENTER:
-            pData->controlObj->handleClick(pData->controlObj, gfxEvent);
-            break;
-            
-        default:
-            ;
+    assert(obj && obj->pData && handlerName && out);
+
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+
+    uint32_t i = 0;
+    while ((i < pData->nbSingleInputClickHandlers)
+            && pData->singleInputClickHandlers[i].name
+            && (strcmp(pData->singleInputClickHandlers[i].name, handlerName) != 0)) {
+        i++;
     }
+
+    if (pData->singleInputClickHandlers[i].name) {
+        *out = pData->singleInputClickHandlers[i].fct;
+    }
+
+    return HANDLERS_ERROR_NONE;
+}
+
+/*!
+ *
+ */
+static HANDLERS_ERROR_E getElementIndex_f(HANDLERS_S *obj, char *elementName, uint32_t *index)
+{
+    assert(obj && obj->pData && elementName && index);
+
+    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
+    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
+    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
+
+    for (*index = 0; *index < nbGfxElements; (*index)++) {
+        if (strcmp(gfxElements[*index]->name, elementName) == 0) {
+            break;
+        }
+    }
+
+    if (*index >= nbGfxElements) {
+        Loge("Element \"%s\" not found", elementName);
+        return HANDLERS_ERROR_PARAMS;
+    }
+
+    return HANDLERS_ERROR_NONE;
+}
+
+/*!
+ *
+ */
+HANDLERS_ERROR_E getSubstring_f(HANDLERS_S *obj, const char *haystack, const char *needle, char *out, uint32_t *offset)
+{
+    assert(obj && obj->pData);
+
+    (void)obj;
+
+    if (!haystack || !needle || !out || !offset) {
+        Loge("Bad params");
+        return HANDLERS_ERROR_PARAMS;
+    }
+
+    char *result = strstr(haystack + *offset, needle);
+    if (!result) {
+        return HANDLERS_ERROR_PARAMS;
+    }
+
+    int32_t len = strlen(haystack + *offset) - strlen(result);
+    if (len > 0) {
+        strncpy(out, haystack + *offset, len);
+    }
+
+    *offset += len + 1;
+
+    return HANDLERS_ERROR_NONE;
 }

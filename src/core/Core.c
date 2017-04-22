@@ -436,7 +436,7 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
             (void)pData->controlObj->setElementGetters(pData->controlObj, (*gfxElements)[index]->pData, &getters);
             
             (void)pData->controlObj->setClickHandlers(pData->controlObj, (*gfxElements)[index]->pData,
-	                                            (CONTROL_HANDLERS_S*)xmlGraphics->elements[index].clickHandlers,
+	                                            (HANDLERS_ID_S*)xmlGraphics->elements[index].clickHandlers,
 	                                            xmlGraphics->elements[index].nbClickHandlers, index);
             
             if (graphicsObj->pushElement(graphicsObj, (*gfxElements)[index]) != GRAPHICS_ERROR_NONE) {

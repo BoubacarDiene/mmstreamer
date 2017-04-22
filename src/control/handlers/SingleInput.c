@@ -36,7 +36,7 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "CONTROL-SINGLEINPUT"
+#define TAG "HANDLERS-SINGLEINPUT"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -46,49 +46,45 @@
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void changeLanguage  (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void closeApplication(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void changeLanguage  (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void hideElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void showElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void hideElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void showElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void hideGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void showGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void hideGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void showGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void setFocus(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void setFocus(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void saveVideoElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void takeScreenshot  (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void saveVideoElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void takeScreenshot  (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void setClickable   (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void setNotClickable(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void setClickable   (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void setNotClickable(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void stopGraphics (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void startGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void stopGraphics (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void startGraphics(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void stopVideo (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void startVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void stopVideo (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void stopServer (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void startServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void stopServer (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void startServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void suspendServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void resumeServer (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void suspendServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void resumeServer (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void stopCient  (CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void stopCient  (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static void startClient(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void multiInputs(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-
-extern CONTROL_ERROR_E callMultiInputsHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
-extern CONTROL_ERROR_E getSubstring          (CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset);
+static void multiInputs(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-CONTROL_CLICK_HANDLERS_S gSingleInputClickHandlers[] = {
+CLICK_HANDLERS_S gSingleInputClickHandlers[] = {
 	{ "closeApplication",           NULL,             closeApplication },
 	{ "changeLanguage",             NULL,             changeLanguage   },
 	{ "hideElement",                NULL,             hideElement      },
@@ -123,16 +119,18 @@ uint32_t gNbSingleInputClickHandlers = (uint32_t)(sizeof(gSingleInputClickHandle
 /*!
  *
  */
-static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void closeApplication(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     (void)handlerData;
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
-    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
-    INPUT_S *input          = &ctx->input;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
+    INPUT_S *input                 = &ctx->input;
 
     switch (input->keepAliveMethod) {
         case KEEP_ALIVE_EVENTS_BASED:
@@ -155,12 +153,14 @@ static void closeApplication(CONTEXT_S *ctx, char *gfxElementName, void *gfxElem
 /*!
  *
  */
-static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void changeLanguage(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
-    
+
+    HANDLERS_PRIVATE_DATA_S *pData      = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                      = pData->ctx;
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
     GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos     = &ctx->params.graphicsInfos;
@@ -208,9 +208,9 @@ static void changeLanguage(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
 /*!
  *
  */
-static void hideElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void hideElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -219,7 +219,9 @@ static void hideElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
         return;
     }
 
-    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
 
     (void)graphicsObj->setVisible(graphicsObj, handlerData, 0);
 }
@@ -227,9 +229,9 @@ static void hideElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
 /*!
  *
  */
-static void showElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void showElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -238,7 +240,9 @@ static void showElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
         return;
     }
 
-    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
 
     (void)graphicsObj->setVisible(graphicsObj, handlerData, 1);
 }
@@ -246,9 +250,9 @@ static void showElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
 /*!
  *
  */
-static void hideGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void hideGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -257,6 +261,8 @@ static void hideGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
         return;
     }
 
+    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pData->ctx;
     GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
     uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
@@ -275,9 +281,9 @@ static void hideGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
 /*!
  *
  */
-static void showGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void showGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -286,6 +292,8 @@ static void showGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
         return;
     }
 
+    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pData->ctx;
     GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
     uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
@@ -304,9 +312,9 @@ static void showGroup(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
 /*!
  *
  */
-static void setFocus(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void setFocus(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -315,7 +323,9 @@ static void setFocus(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData,
         return;
     }
 
-    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
 
     (void)graphicsObj->setFocus(graphicsObj, handlerData);
 }
@@ -323,9 +333,9 @@ static void setFocus(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData,
 /*!
  *
  */
-static void saveVideoElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void saveVideoElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -334,6 +344,8 @@ static void saveVideoElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElem
         return;
     }
 
+    HANDLERS_PRIVATE_DATA_S *pData      = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                      = pData->ctx;
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
     GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
     INPUT_S *input                      = &ctx->input;
@@ -358,9 +370,9 @@ static void saveVideoElement(CONTEXT_S *ctx, char *gfxElementName, void *gfxElem
 /*!
  *
  */
-static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void takeScreenshot(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -369,6 +381,8 @@ static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
         return;
     }
 
+    HANDLERS_PRIVATE_DATA_S *pData      = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                      = pData->ctx;
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
     GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
     INPUT_S *input                      = &ctx->input;
@@ -407,9 +421,9 @@ static void takeScreenshot(CONTEXT_S *ctx, char *gfxElementName, void *gfxElemen
 /*!
  *
  */
-static void setClickable(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void setClickable(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -418,7 +432,9 @@ static void setClickable(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementD
         return;
     }
 
-    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
 
     (void)graphicsObj->setClickable(graphicsObj, handlerData, 1);
 }
@@ -426,9 +442,9 @@ static void setClickable(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementD
 /*!
  *
  */
-static void setNotClickable(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void setNotClickable(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -437,7 +453,9 @@ static void setNotClickable(CONTEXT_S *ctx, char *gfxElementName, void *gfxEleme
         return;
     }
 
-    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
 
     (void)graphicsObj->setClickable(graphicsObj, handlerData, 0);
 }
@@ -445,15 +463,17 @@ static void setNotClickable(CONTEXT_S *ctx, char *gfxElementName, void *gfxEleme
 /*!
  *
  */
-static void stopGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void stopGraphics(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     (void)handlerData;
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
-    GRAPHICS_S *graphicsObj = ctx->modules.graphicsObj;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
 
     (void)graphicsObj->destroyDrawer(graphicsObj);
 }
@@ -461,14 +481,16 @@ static void stopGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementD
 /*!
  *
  */
-static void startGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void startGraphics(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     (void)handlerData;
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
+    HANDLERS_PRIVATE_DATA_S *pData    = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                    = pData->ctx;
     GRAPHICS_S *graphicsObj           = ctx->modules.graphicsObj;
     GRAPHICS_PARAMS_S *graphicsParams = &ctx->params.graphicsInfos.graphicsParams;
 
@@ -483,9 +505,9 @@ static void startGraphics(CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
 /*!
  *
  */
-static void stopVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void stopVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -494,11 +516,13 @@ static void stopVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
         return;
     }
 
-    VIDEO_S *videoObj             = ctx->modules.videoObj;
-    VIDEOS_INFOS_S *videosInfos   = &ctx->params.videosInfos;
-    VIDEO_DEVICE_S **videoDevices = videosInfos->devices;
-    uint8_t nbDevices             = videosInfos->nbDevices;
-    VIDEO_DEVICE_S *videoDevice   = NULL;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    VIDEO_S *videoObj              = ctx->modules.videoObj;
+    VIDEOS_INFOS_S *videosInfos    = &ctx->params.videosInfos;
+    VIDEO_DEVICE_S **videoDevices  = videosInfos->devices;
+    uint8_t nbDevices              = videosInfos->nbDevices;
+    VIDEO_DEVICE_S *videoDevice    = NULL;
 
     uint8_t nbVideoListeners           = 0;
     VIDEO_LISTENER_S  **videoListeners = NULL;
@@ -526,9 +550,9 @@ static void stopVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
 /*!
  *
  */
-static void startVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -537,14 +561,16 @@ static void startVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDat
         return;
     }
 
-    VIDEO_S *videoObj             = ctx->modules.videoObj;
-    VIDEOS_INFOS_S *videosInfos   = &ctx->params.videosInfos;
-    VIDEO_DEVICE_S **videoDevices = videosInfos->devices;
-    uint8_t nbDevices             = videosInfos->nbDevices;
-    VIDEO_DEVICE_S *videoDevice   = NULL;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    VIDEO_S *videoObj              = ctx->modules.videoObj;
+    VIDEOS_INFOS_S *videosInfos    = &ctx->params.videosInfos;
+    VIDEO_DEVICE_S **videoDevices  = videosInfos->devices;
+    uint8_t nbDevices              = videosInfos->nbDevices;
+    VIDEO_DEVICE_S *videoDevice    = NULL;
 
-    size_t maxBufferSize          = -1;
-    VIDEO_RESOLUTION_S resolution = { 0 };
+    size_t maxBufferSize           = -1;
+    VIDEO_RESOLUTION_S resolution  = { 0 };
 
     uint8_t nbVideoListeners           = 0;
     VIDEO_LISTENER_S  **videoListeners = NULL;
@@ -581,9 +607,9 @@ static void startVideo(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDat
 /*!
  *
  */
-static void stopServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void stopServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -592,8 +618,10 @@ static void stopServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDat
         return;
     }
 
-    SERVER_S *serverObj           = ctx->modules.serverObj;
-    SERVERS_INFOS_S *serversInfos = &ctx->params.serversInfos;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    SERVER_S *serverObj            = ctx->modules.serverObj;
+    SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
@@ -607,9 +635,9 @@ static void stopServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDat
 /*!
  *
  */
-static void startServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void startServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -618,8 +646,10 @@ static void startServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
         return;
     }
 
-    SERVER_S *serverObj           = ctx->modules.serverObj;
-    SERVERS_INFOS_S *serversInfos = &ctx->params.serversInfos;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    SERVER_S *serverObj            = ctx->modules.serverObj;
+    SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
@@ -633,9 +663,9 @@ static void startServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
 /*!
  *
  */
-static void suspendServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void suspendServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -644,8 +674,10 @@ static void suspendServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
         return;
     }
 
-    SERVER_S *serverObj           = ctx->modules.serverObj;
-    SERVERS_INFOS_S *serversInfos = &ctx->params.serversInfos;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    SERVER_S *serverObj            = ctx->modules.serverObj;
+    SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
@@ -659,9 +691,9 @@ static void suspendServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElement
 /*!
  *
  */
-static void resumeServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void resumeServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -669,9 +701,11 @@ static void resumeServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementD
         Loge("Handler data is expected");
         return;
     }
-    
-    SERVER_S *serverObj           = ctx->modules.serverObj;
-    SERVERS_INFOS_S *serversInfos = &ctx->params.serversInfos;
+
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    SERVER_S *serverObj            = ctx->modules.serverObj;
+    SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
@@ -685,9 +719,9 @@ static void resumeServer(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementD
 /*!
  *
  */
-static void stopCient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void stopCient(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -696,8 +730,10 @@ static void stopCient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
         return;
     }
 
-    CLIENT_S *clientObj           = ctx->modules.clientObj;
-    CLIENTS_INFOS_S *clientsInfos = &ctx->params.clientsInfos;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    CLIENT_S *clientObj            = ctx->modules.clientObj;
+    CLIENTS_INFOS_S *clientsInfos  = &ctx->params.clientsInfos;
 
     uint32_t index;
     for (index = 0; index < clientsInfos->nbClients; index++) {
@@ -711,9 +747,9 @@ static void stopCient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData
 /*!
  *
  */
-static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void startClient(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -722,8 +758,10 @@ static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
         return;
     }
 
-    CLIENT_S *clientObj           = ctx->modules.clientObj;
-    CLIENTS_INFOS_S *clientsInfos = &ctx->params.clientsInfos;
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+    CLIENT_S *clientObj            = ctx->modules.clientObj;
+    CLIENTS_INFOS_S *clientsInfos  = &ctx->params.clientsInfos;
 
     uint32_t index;
     for (index = 0; index < clientsInfos->nbClients; index++) {
@@ -737,9 +775,9 @@ static void startClient(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
 /*!
  *
  */
-static void multiInputs(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData)
+static void multiInputs(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(ctx && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementName && gfxElementData);
 
     Logd("Handling click on element \"%s\"", gfxElementName);
 
@@ -748,20 +786,40 @@ static void multiInputs(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementDa
         return;
     }
 
+    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                 = pData->ctx;
+
     uint32_t offset                  = 0;
     char functionName[MAX_NAME_SIZE] = { 0 };
     char targetName[MAX_NAME_SIZE]   = { 0 };
 
-    if (getSubstring(ctx, handlerData, ";", functionName, &offset) != CONTROL_ERROR_NONE) {
+    if (obj->getSubstring(obj, handlerData, ";", functionName, &offset) != HANDLERS_ERROR_NONE) {
         Loge("Bad format. Expected: customFunctionName;targetName;param1;param2;...");
         return;
     }
 
-    if (getSubstring(ctx, handlerData, ";", targetName, &offset) != CONTROL_ERROR_NONE) {
+    if (obj->getSubstring(obj, handlerData, ";", targetName, &offset) != HANDLERS_ERROR_NONE) {
         strncpy(targetName, handlerData + offset, sizeof(targetName));
     }
 
     Logd("Function : \"%s\" / Target : \"%s\"", functionName, targetName);
 
-    (void)callMultiInputsHandler(ctx, functionName, targetName, handlerData + offset);
+    uint32_t index;
+    for (index = 0; index < pData->nbMultiInputsClickHandlers; index++) {
+        if (strcmp(pData->multiInputsClickHandlers[index].name, functionName) == 0) {
+            break;
+        }
+    }
+
+    if (index >= pData->nbMultiInputsClickHandlers) {
+        Loge("Method \"%s\" not found", functionName);
+        return;
+    }
+
+    if (!pData->multiInputsClickHandlers[index].fct) {
+        Loge("Method \"%s\" not defined", functionName);
+        return;
+    }
+
+    pData->multiInputsClickHandlers[index].fct(obj, targetName, NULL, handlerData + offset);
 }

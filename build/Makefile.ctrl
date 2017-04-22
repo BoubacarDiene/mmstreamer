@@ -60,16 +60,19 @@ HEADERS := -I${OUT_BUILD_INC}          \
 CFLAGS  += ${HEADERS}
 
 # Files
+HANDLERS              := control/Handlers
+HANDLERS_SRC          := control/handlers/Handlers
 SINGLE_INPUT_HANDLERS := control/handlers/SingleInput
-MULTI_INPUTS_HANDERS  := control/handlers/MultiInputs
+MULTI_INPUTS_HANDLERS := control/handlers/MultiInputs
 CONTROL               := control/Control
 
 CORE_COMMON := core/Common
 
 # Objects
 OBJS := ${OUT_BUILD_SRC}/${SINGLE_INPUT_HANDLERS}.o \
-	${OUT_BUILD_SRC}/${MULTI_INPUTS_HANDERS}.o  \
-	${OUT_BUILD_SRC}/${CONTROL}.o
+        ${OUT_BUILD_SRC}/${MULTI_INPUTS_HANDLERS}.o \
+        ${OUT_BUILD_SRC}/${HANDLERS_SRC}.o          \
+        ${OUT_BUILD_SRC}/${CONTROL}.o
 	
 #################################################################
 #                               Build                           #
@@ -127,10 +130,12 @@ prepare-control-sources:
 
 	${CP} ${INC}/${CORE_COMMON}.h ${OUT_BUILD_CORE_H}/.
 
-	${CP} ${INC}/${CONTROL}.h ${OUT_BUILD_CONTROL_H}/.
+	${CP} ${INC}/${HANDLERS}.h ${OUT_BUILD_CONTROL_H}/.
+	${CP} ${INC}/${CONTROL}.h  ${OUT_BUILD_CONTROL_H}/.
 	
+	${CP} ${SRC}/${HANDLERS_SRC}.c          ${OUT_BUILD_HANDLERS_C}/.
 	${CP} ${SRC}/${SINGLE_INPUT_HANDLERS}.c ${OUT_BUILD_HANDLERS_C}/.
-	${CP} ${SRC}/${MULTI_INPUTS_HANDERS}.c  ${OUT_BUILD_HANDLERS_C}/.
+	${CP} ${SRC}/${MULTI_INPUTS_HANDLERS}.c ${OUT_BUILD_HANDLERS_C}/.
 	${CP} ${SRC}/${CONTROL}.c               ${OUT_BUILD_CONTROL_C}/.
 
 #################################################################

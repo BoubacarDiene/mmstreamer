@@ -44,35 +44,33 @@
 
 typedef struct CONTROL_PRIVATE_DATA_S {
     CONTEXT_S   *ctx;
+    HANDLERS_S  *handlersObj;
 } CONTROL_PRIVATE_DATA_S;
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-extern CONTROL_CLICK_HANDLERS_S gSingleInputClickHandlers[];
-extern uint32_t gNbSingleInputClickHandlers;
-
 /* -------------------------------------------------------------------------------------------- */
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-CONTROL_ERROR_E initElementData_f  (CONTROL_S *obj, void **data);
-CONTROL_ERROR_E uninitElementData_f(CONTROL_S *obj, void **data);
+static CONTROL_ERROR_E initElementData_f  (CONTROL_S *obj, void **data);
+static CONTROL_ERROR_E uninitElementData_f(CONTROL_S *obj, void **data);
 
-CONTROL_ERROR_E setElementGetters_f  (CONTROL_S *obj, void *data, CONTROL_GETTERS_S *getters);
-CONTROL_ERROR_E unsetElementGetters_f(CONTROL_S *obj, void *data);
+static CONTROL_ERROR_E setElementGetters_f  (CONTROL_S *obj, void *data, CONTROL_GETTERS_S *getters);
+static CONTROL_ERROR_E unsetElementGetters_f(CONTROL_S *obj, void *data);
 
-CONTROL_ERROR_E setElementTextIds_f  (CONTROL_S *obj, void *data, CONTROL_TEXT_IDS_S *textIds);
-CONTROL_ERROR_E unsetElementTextIds_f(CONTROL_S *obj, void *data);
+static CONTROL_ERROR_E setElementTextIds_f  (CONTROL_S *obj, void *data, CONTROL_TEXT_IDS_S *textIds);
+static CONTROL_ERROR_E unsetElementTextIds_f(CONTROL_S *obj, void *data);
 
-CONTROL_ERROR_E setElementImageIds_f  (CONTROL_S *obj, void *data, CONTROL_IMAGE_IDS_S *imageIds);
-CONTROL_ERROR_E unsetElementImageIds_f(CONTROL_S *obj, void *data);
+static CONTROL_ERROR_E setElementImageIds_f  (CONTROL_S *obj, void *data, CONTROL_IMAGE_IDS_S *imageIds);
+static CONTROL_ERROR_E unsetElementImageIds_f(CONTROL_S *obj, void *data);
 
-CONTROL_ERROR_E setClickHandlers_f  (CONTROL_S *obj, void *data, CONTROL_HANDLERS_S *handlers, uint32_t nbHandlers, uint32_t index);
-CONTROL_ERROR_E unsetClickHandlers_f(CONTROL_S *obj, void *data);
+static CONTROL_ERROR_E setClickHandlers_f  (CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index);
+static CONTROL_ERROR_E unsetClickHandlers_f(CONTROL_S *obj, void *data);
 
-CONTROL_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent);
+static CONTROL_ERROR_E handleClick_f(CONTROL_S *obj, GFX_EVENT_S *gfxEvent);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                      PUBLIC FUNCTIONS                                        */
@@ -87,6 +85,10 @@ CONTROL_ERROR_E Control_Init(CONTROL_S **obj, CONTEXT_S *ctx)
 
     CONTROL_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(CONTROL_PRIVATE_DATA_S))));
+
+    if (Handlers_Init(&pData->handlersObj, ctx) != HANDLERS_ERROR_NONE) {
+        goto exit;
+    }
 
     (*obj)->initElementData      = initElementData_f;
     (*obj)->uninitElementData    = uninitElementData_f;
@@ -110,6 +112,15 @@ CONTROL_ERROR_E Control_Init(CONTROL_S **obj, CONTEXT_S *ctx)
     (*obj)->pData = (void*)pData;
 
     return CONTROL_ERROR_NONE;
+
+exit:
+    free(pData);
+    pData = NULL;
+
+    free(*obj);
+    *obj = NULL;
+
+    return CONTROL_ERROR_INIT;
 }
 
 /*!
@@ -120,6 +131,8 @@ CONTROL_ERROR_E Control_UnInit(CONTROL_S **obj)
     assert(obj && *obj && (*obj)->pData);
 
     CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)((*obj)->pData);
+
+    (void)Handlers_UnInit(&pData->handlersObj);
 
     pData->ctx = NULL;
 
@@ -254,10 +267,11 @@ CONTROL_ERROR_E unsetElementImageIds_f(CONTROL_S *obj, void *data)
 /*!
  *
  */
-CONTROL_ERROR_E setClickHandlers_f(CONTROL_S *obj, void *data, CONTROL_HANDLERS_S *handlers, uint32_t nbHandlers, uint32_t index)
+CONTROL_ERROR_E setClickHandlers_f(CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index)
 {
-    assert(obj && data);
+    assert(obj && obj->pData && data);
 
+    CONTROL_PRIVATE_DATA_S *pData       = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
 
     elementData->index           = index;
@@ -267,23 +281,14 @@ CONTROL_ERROR_E setClickHandlers_f(CONTROL_S *obj, void *data, CONTROL_HANDLERS_
         return CONTROL_ERROR_PARAMS;
     }
 
-    assert((elementData->clickHandlers = calloc(1, nbHandlers * sizeof(CONTROL_CLICK_HANDLERS_S))));
+    assert((elementData->clickHandlers = calloc(1, nbHandlers * sizeof(CLICK_HANDLERS_S))));
 
-    uint32_t i, j;
+    uint32_t i;
     for (i = 0; i < nbHandlers; i++) {
         (elementData->clickHandlers[i]).name = strdup((handlers[i]).name);
         (elementData->clickHandlers[i]).data = strdup((handlers[i]).data);
 
-        j = 0;
-        while ((j < gNbSingleInputClickHandlers)
-                && gSingleInputClickHandlers[j].name
-                && (strcmp(gSingleInputClickHandlers[j].name, (handlers[i]).name) != 0)) {
-            j++;
-        }
-
-        if (gSingleInputClickHandlers[j].name) {
-            (elementData->clickHandlers[i]).fct = gSingleInputClickHandlers[j].fct;
-        }
+        (void)pData->handlersObj->getClickHandler(pData->handlersObj, (handlers[i]).name, &(elementData->clickHandlers[i]).fct);
     }
 
     return CONTROL_ERROR_NONE;
@@ -319,11 +324,13 @@ CONTROL_ERROR_E unsetClickHandlers_f(CONTROL_S *obj, void *data)
 /*!
  *
  */
-CONTROL_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent)
+CONTROL_ERROR_E handleClick_f(CONTROL_S *obj, GFX_EVENT_S *gfxEvent)
 {
-    assert(ctx && gfxEvent);
+    assert(obj && obj->pData && gfxEvent);
 
+    CONTROL_PRIVATE_DATA_S *pData       = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxEvent->gfxElementPData;
+    CONTEXT_S *ctx                      = pData->ctx;
 
     if (!elementData) {
         return CONTROL_ERROR_PARAMS;
@@ -333,7 +340,8 @@ CONTROL_ERROR_E handleClick_f(CONTEXT_S *ctx, GFX_EVENT_S *gfxEvent)
     for (i = 0; i < elementData->nbClickHandlers; i++) {
         if ((elementData->clickHandlers[i]).fct) {
             Logd("Calling click handler : %s", (elementData->clickHandlers[i]).name);
-            (elementData->clickHandlers[i]).fct(ctx, gfxEvent->gfxElementName, elementData, (elementData->clickHandlers[i]).data);
+            (elementData->clickHandlers[i]).fct(pData->handlersObj, gfxEvent->gfxElementName,
+                                                elementData, (elementData->clickHandlers[i]).data);
         }
     }
 

@@ -83,21 +83,22 @@ GRAPHICS_LOADER := core/loaders/GraphicsLoader
 SERVERS_LOADER  := core/loaders/ServersLoader
 VIDEOS_LOADER   := core/loaders/VideosLoader
 
-CONTROL := control/Control
+CONTROL  := control/Control
+HANDLERS := control/Handlers
 
 # Objects
 OBJS := ${OUT_BUILD_SRC}/${VIDEO_CONFIG}.o       \
         ${OUT_BUILD_SRC}/${CLIENTS_LISTENERS}.o  \
-	${OUT_BUILD_SRC}/${GRAPHICS_LISTENERS}.o \
-	${OUT_BUILD_SRC}/${SERVERS_LISTENERS}.o  \
-	${OUT_BUILD_SRC}/${VIDEOS_LISTENERS}.o   \
+        ${OUT_BUILD_SRC}/${GRAPHICS_LISTENERS}.o \
+        ${OUT_BUILD_SRC}/${SERVERS_LISTENERS}.o  \
+        ${OUT_BUILD_SRC}/${VIDEOS_LISTENERS}.o   \
         ${OUT_BUILD_SRC}/${ROOT_LISTENERS}.o     \
-	${OUT_BUILD_SRC}/${CLIENTS_LOADER}.o     \
-	${OUT_BUILD_SRC}/${GRAPHICS_LOADER}.o    \
-	${OUT_BUILD_SRC}/${SERVERS_LOADER}.o     \
-	${OUT_BUILD_SRC}/${VIDEOS_LOADER}.o      \
-	${OUT_BUILD_SRC}/${ROOT_LOADER}.o        \
-	${OUT_BUILD_SRC}/${CORE}.o
+        ${OUT_BUILD_SRC}/${CLIENTS_LOADER}.o     \
+        ${OUT_BUILD_SRC}/${GRAPHICS_LOADER}.o    \
+        ${OUT_BUILD_SRC}/${SERVERS_LOADER}.o     \
+        ${OUT_BUILD_SRC}/${VIDEOS_LOADER}.o      \
+        ${OUT_BUILD_SRC}/${ROOT_LOADER}.o        \
+        ${OUT_BUILD_SRC}/${CORE}.o
 	
 #################################################################
 #                               Build                           #
@@ -159,7 +160,8 @@ prepare-core-sources:
 	${CP} ${INC}/${PARSER}.h ${OUT_BUILD_UTILS_H}/.
 	${CP} ${INC}/${LOG}.h    ${OUT_BUILD_UTILS_H}/.
 
-	${CP} ${INC}/${CONTROL}.h ${OUT_BUILD_CONTROL_H}/.
+	${CP} ${INC}/${HANDLERS}.h ${OUT_BUILD_CONTROL_H}/.
+	${CP} ${INC}/${CONTROL}.h  ${OUT_BUILD_CONTROL_H}/.
 	
 	${CP} ${INC}/${LISTENERS}.h   ${OUT_BUILD_CORE_H}/.
 	${CP} ${INC}/${LOADERS}.h     ${OUT_BUILD_CORE_H}/.

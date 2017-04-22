@@ -36,7 +36,7 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "CONTROL-MULTIINPUTS"
+#define TAG "HANDLERS-MULTIINPUTS"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -46,116 +46,22 @@
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-CONTROL_ERROR_E callMultiInputsHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData);
-CONTROL_ERROR_E getSubstring          (CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset);
-
-static CONTROL_ERROR_E getElementIndex(CONTEXT_S *ctx, char *elementName, uint32_t *index);
-
-static void updateText (CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData);
-static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData);
-static void updateNav  (CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData);
+static void updateText (HANDLERS_S *obj, char *targetName, void *pData, char *handlerData);
+static void updateImage(HANDLERS_S *obj, char *targetName, void *pData, char *handlerData);
+static void updateNav  (HANDLERS_S *obj, char *targetName, void *pData, char *handlerData);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-CONTROL_CLICK_HANDLERS_S gMultiInputsClickHandlers[] = {
-	{ "updateText",              NULL,             updateText  },
-	{ "updateImage",             NULL,             updateImage },
-	{ "updateNav",               NULL,             updateNav   },
-	{ NULL,                      NULL,             NULL        }
+CLICK_HANDLERS_S gMultiInputsClickHandlers[] = {
+	{ "updateText",                 NULL,             updateText       },
+	{ "updateImage",                NULL,             updateImage      },
+	{ "updateNav",                  NULL,             updateNav        },
+	{ NULL,                         NULL,             NULL             }
 };
 
 uint32_t gNbMultiInputsClickHandlers = (uint32_t)(sizeof(gMultiInputsClickHandlers) / sizeof(gMultiInputsClickHandlers[0]));
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
-/* -------------------------------------------------------------------------------------------- */
-
-/*!
- *
- */
-CONTROL_ERROR_E callMultiInputsHandler(CONTEXT_S *ctx, char *functionName, char *targetName, char *handlerData)
-{
-    assert(functionName && targetName);
-
-    uint32_t index;
-    for (index = 0; index < gNbMultiInputsClickHandlers; index++) {
-        if (strcmp(gMultiInputsClickHandlers[index].name, functionName) == 0) {
-            break;
-        }
-    }
-
-    if (index >= gNbMultiInputsClickHandlers) {
-        Loge("Method \"%s\" not found", functionName);
-        return CONTROL_ERROR_PARAMS;
-    }
-
-    if (!gMultiInputsClickHandlers[index].fct) {
-        Loge("Method \"%s\" not defined", functionName);
-        return CONTROL_ERROR_PARAMS;
-    }
-
-    gMultiInputsClickHandlers[index].fct(ctx, targetName, NULL, handlerData);
-
-    return CONTROL_ERROR_NONE;
-}
-
-/*!
- *
- */
-CONTROL_ERROR_E getSubstring(CONTEXT_S *ctx, const char *haystack, const char *needle, char *out, uint32_t *offset)
-{
-    (void)ctx;
-
-    if (!haystack || !needle || !out || !offset) {
-        Loge("Bad params");
-        return CONTROL_ERROR_PARAMS;
-    }
-
-    char *result = strstr(haystack + *offset, needle);
-    if (!result) {
-        return CONTROL_ERROR_PARAMS;
-    }
-
-    int32_t len = strlen(haystack + *offset) - strlen(result);
-    if (len > 0) {
-        strncpy(out, haystack + *offset, len);
-    }
-
-    *offset += len + 1;
-
-    return CONTROL_ERROR_NONE;
-}
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
-/* -------------------------------------------------------------------------------------------- */
-
-/*!
- *
- */
-static CONTROL_ERROR_E getElementIndex(CONTEXT_S *ctx, char *elementName, uint32_t *index)
-{
-    assert(ctx && elementName && index);
-
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
-    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
-    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
-
-    for (*index = 0; *index < nbGfxElements; (*index)++) {
-        if (strcmp(gfxElements[*index]->name, elementName) == 0) {
-            break;
-        }
-    }
-
-    if (*index >= nbGfxElements) {
-        Loge("Element \"%s\" not found", elementName);
-        return CONTROL_ERROR_PARAMS;
-    }
-
-    return CONTROL_ERROR_NONE;
-}
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                        CLICK HANDLERS                                        */
@@ -164,9 +70,9 @@ static CONTROL_ERROR_E getElementIndex(CONTEXT_S *ctx, char *elementName, uint32
 /*!
  *
  */
-static void updateText(CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData)
+static void updateText(HANDLERS_S *obj, char *targetName, void *pData, char *handlerData)
 {
-    assert(ctx && targetName);
+    assert(obj && obj->pData && targetName);
 
     (void)pData;
 
@@ -176,10 +82,12 @@ static void updateText(CONTEXT_S *ctx, char *targetName, void *pData, char *hand
     }
 
     uint32_t index;
-    if (getElementIndex(ctx, targetName, &index) != CONTROL_ERROR_NONE) {
+    if (obj->getElementIndex(obj, targetName, &index) != HANDLERS_ERROR_NONE) {
         return;
     }
 
+    HANDLERS_PRIVATE_DATA_S *pvData     = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                      = pvData->ctx;
     GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos     = &ctx->params.graphicsInfos;
     GFX_ELEMENT_S *gfxElement           = graphicsInfos->gfxElements[index];
@@ -204,9 +112,9 @@ static void updateText(CONTEXT_S *ctx, char *targetName, void *pData, char *hand
 /*!
  *
  */
-static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData)
+static void updateImage(HANDLERS_S *obj, char *targetName, void *pData, char *handlerData)
 {
-    assert(ctx && targetName);
+    assert(obj && obj->pData && targetName);
 
     if (!handlerData) {
         Loge("Handler data is expected");
@@ -214,10 +122,12 @@ static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *han
     }
 
     uint32_t index;
-    if (getElementIndex(ctx, targetName, &index) != CONTROL_ERROR_NONE) {
+    if (obj->getElementIndex(obj, targetName, &index) != HANDLERS_ERROR_NONE) {
         return;
     }
 
+    HANDLERS_PRIVATE_DATA_S *pvData     = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                      = pvData->ctx;
     GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos     = &ctx->params.graphicsInfos;
     GFX_ELEMENT_S *gfxElement           = graphicsInfos->gfxElements[index];
@@ -244,9 +154,9 @@ static void updateImage(CONTEXT_S *ctx, char *targetName, void *pData, char *han
 /*!
  *
  */
-static void updateNav(CONTEXT_S *ctx, char *targetName, void *pData, char *handlerData)
+static void updateNav(HANDLERS_S *obj, char *targetName, void *pData, char *handlerData)
 {
-    assert(ctx && targetName);
+    assert(obj && obj->pData && targetName);
 
     if (!handlerData) {
         Loge("Handler data is expected");
@@ -254,10 +164,12 @@ static void updateNav(CONTEXT_S *ctx, char *targetName, void *pData, char *handl
     }
 
     uint32_t index;
-    if (getElementIndex(ctx, targetName, &index) != CONTROL_ERROR_NONE) {
+    if (obj->getElementIndex(obj, targetName, &index) != HANDLERS_ERROR_NONE) {
         return;
     }
 
+    HANDLERS_PRIVATE_DATA_S *pvData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pvData->ctx;
     GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
     GFX_ELEMENT_S *gfxElement       = graphicsInfos->gfxElements[index];
@@ -265,22 +177,22 @@ static void updateNav(CONTEXT_S *ctx, char *targetName, void *pData, char *handl
     GFX_NAV_S nav   = { 0 };
     uint32_t offset = 0;
 
-    if (getSubstring(ctx, handlerData, ";", nav.left, &offset) != CONTROL_ERROR_NONE) {
+    if (obj->getSubstring(obj, handlerData, ";", nav.left, &offset) != HANDLERS_ERROR_NONE) {
         Loge("Bad format. Expected: <left>;<up>;<right>;<down>");
         return;
     }
 
-    if (getSubstring(ctx, handlerData, ";", nav.up, &offset) != CONTROL_ERROR_NONE) {
+    if (obj->getSubstring(obj, handlerData, ";", nav.up, &offset) != HANDLERS_ERROR_NONE) {
         Loge("Bad format. Expected: <left>;<up>;<right>;<down>");
         return;
     }
 
-    if (getSubstring(ctx, handlerData, ";", nav.right, &offset) != CONTROL_ERROR_NONE) {
+    if (obj->getSubstring(obj, handlerData, ";", nav.right, &offset) != HANDLERS_ERROR_NONE) {
         Loge("Bad format. Expected: <left>;<up>;<right>;<down>");
         return;
     }
 
-    if (getSubstring(ctx, handlerData, ";", nav.down, &offset) != CONTROL_ERROR_NONE) {
+    if (obj->getSubstring(obj, handlerData, ";", nav.down, &offset) != HANDLERS_ERROR_NONE) {
         strncpy(nav.down, handlerData + offset, sizeof(nav.down));
     }
 
