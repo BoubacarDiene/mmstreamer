@@ -1060,7 +1060,7 @@ static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, KEEP_ALIVE_METHOD_E method, ui
             break;
             
         default:
-            Loge("Error occurred while handling events");
+            Loge("Unknown keepAlive method");
             ret = CORE_ERROR_KEEP_ALIVE;
     }
     
@@ -1104,9 +1104,9 @@ static void getColor_f(void *userData, int32_t colorId, GFX_COLOR_S *colorOut)
     XML_COMMON_S *common = (XML_COMMON_S*)userData;
     
     colorOut->red   = common->xmlColors.colors[colorId].red;
-	colorOut->green = common->xmlColors.colors[colorId].green;
-	colorOut->blue  = common->xmlColors.colors[colorId].blue;
-	colorOut->alpha = common->xmlColors.colors[colorId].alpha;
+    colorOut->green = common->xmlColors.colors[colorId].green;
+    colorOut->blue  = common->xmlColors.colors[colorId].blue;
+    colorOut->alpha = common->xmlColors.colors[colorId].alpha;
 }
 
 /*!
