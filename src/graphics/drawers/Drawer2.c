@@ -269,8 +269,7 @@ static DRAWER_ERROR_E initScreen_f(DRAWER_S *obj, GFX_SCREEN_S *screenParams)
         }
         
         Logd("Loading icon : \"%s\"", screenParams->icon.path);
-        //pData->image = IMG_LOAD(screenParams->icon.path);
-        pData->image = SDL_LoadBMP(screenParams->icon.path);
+        pData->image = IMG_Load(screenParams->icon.path);
 
         if (!pData->image) {
             Loge("Failed to load image \"%s\"", screenParams->icon.path);
@@ -468,8 +467,7 @@ static DRAWER_ERROR_E drawImage_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_IMAGE_S *
         return DRAWER_ERROR_LOCK;
     }
     
-    //pData->image = IMG_LOAD(image->path);
-    pData->image = SDL_LoadBMP(image->path);
+    pData->image = IMG_Load(image->path);
     
     if (!pData->image) {
         Loge("Failed to load image \"%s\"", image->path);
