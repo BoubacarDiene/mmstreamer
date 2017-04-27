@@ -32,8 +32,8 @@ include build/Makefile.inc
 #################################################################
 
 # Libraries
-CLIENT_LIB_NAME := libnet-client-${CLIENT_LIB_VERSION}
-SERVER_LIB_NAME := libnet-server-${SERVER_LIB_VERSION}
+CLIENT_LIB_NAME := lib${PROJECT_NAME}-network-client-${CLIENT_LIB_VERSION}
+SERVER_LIB_NAME := lib${PROJECT_NAME}-network-server-${SERVER_LIB_VERSION}
 
 # Path
 OUT_BUILD_DIR  := ${OUT_BUILD}/net

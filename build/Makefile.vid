@@ -31,7 +31,7 @@ include build/Makefile.inc
 #################################################################
 
 # Library
-VIDEO_LIB_NAME := libvideo-${VIDEO_LIB_VERSION}
+VIDEO_LIB_NAME := lib${PROJECT_NAME}-video-${VIDEO_LIB_VERSION}
 
 # Path
 OUT_BUILD_DIR  := ${OUT_BUILD}/video
