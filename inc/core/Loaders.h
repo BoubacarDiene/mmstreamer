@@ -59,6 +59,9 @@ typedef struct XML_IMAGES_S        XML_IMAGES_S;
 typedef struct XML_STRING_S        XML_STRING_S;
 typedef struct XML_STRINGS_S       XML_STRINGS_S;
 
+typedef struct XML_CAPABILITY_S    XML_CAPABILITY_S;
+typedef struct XML_CONFIG_S        XML_CONFIG_S;
+
 typedef struct XML_VIDEO_S         XML_VIDEO_S;
 typedef struct XML_VIDEOS_S        XML_VIDEOS_S;
 
@@ -145,6 +148,21 @@ struct XML_STRINGS_S {
     XML_STRING_S *strings;
 };
 
+struct XML_CAPABILITY_S {
+    char     *item;
+};
+
+struct XML_CONFIG_S {
+    uint8_t          nbItems;
+    XML_CAPABILITY_S *capabilities;
+
+    char             *bufferType;
+    char             *pixelFormat;
+    char             *colorspace;
+    char             *memory;
+    char             *awaitMode;
+};
+
 struct XML_VIDEO_S {
     uint8_t  priority;
     uint32_t configChoice;
@@ -164,10 +182,13 @@ struct XML_VIDEO_S {
 };
 
 struct XML_VIDEOS_S {
-    uint8_t     nbVideos;
-    XML_VIDEO_S *videos;
-    
-    void        *reserved;
+    uint8_t      nbVideos;
+    XML_VIDEO_S  *videos;
+
+    uint8_t      nbConfigs;
+    XML_CONFIG_S *configs;
+
+    void         *reserved;
 };
 
 struct XML_COMMON_S {

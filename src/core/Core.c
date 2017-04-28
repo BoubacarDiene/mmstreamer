@@ -581,9 +581,16 @@ static CORE_ERROR_E loadVideosParams_f(CORE_S *obj)
     for (index = 0; index < *nbDevices; index++) {
         assert(((*videoDevices)[index] = calloc(1, sizeof(VIDEO_DEVICE_S))));
 
+        if (xmlVideos->videos[index].configChoice >= xmlVideos->nbConfigs) {
+            Loge("Bad video config choice - Choice : %u / Max : %u", xmlVideos->videos[index].configChoice, xmlVideos->nbConfigs - 1);
+            goto badConfig_exit;
+        }
+
+        VIDEO_CONFIG_CHOICE_S *configChoice = (VIDEO_CONFIG_CHOICE_S*)&xmlVideos->configs[xmlVideos->videos[index].configChoice];
+
         if (pData->configsObj->getVideoConfig(pData->configsObj,
                                                 &videoConfig,
-                                                xmlVideos->videos[index].configChoice) != CONFIGS_ERROR_NONE) {
+                                                configChoice) != CONFIGS_ERROR_NONE) {
             Loge("getVideoConfig() failed");
             goto badConfig_exit;
         }

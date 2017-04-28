@@ -44,20 +44,122 @@
 /*                                           TYPEDEF                                            */
 /* -------------------------------------------------------------------------------------------- */
 
+typedef struct CONFIGS_VIDEO_CAPABILITY_S {
+    char     *str;
+    uint32_t value;
+} CONFIGS_VIDEO_CAPABILITY_S;
+
+typedef struct CONFIGS_VIDEO_BUFFER_TYPE_S {
+    char               *str;
+    enum v4l2_buf_type value;
+} CONFIGS_VIDEO_BUFFER_TYPE_S;
+
+typedef struct CONFIGS_VIDEO_PIXEL_FORMAT_S {
+    char     *str;
+    uint32_t value;
+} CONFIGS_VIDEO_PIXEL_FORMAT_S;
+
+typedef struct CONFIGS_VIDEO_COLORSPACE_S {
+    char                 *str;
+    enum v4l2_colorspace value;
+} CONFIGS_VIDEO_COLORSPACE_S;
+
+typedef struct CONFIGS_VIDEO_MEMORY_S {
+    char             *str;
+    enum v4l2_memory value;
+} CONFIGS_VIDEO_MEMORY_S;
+
+typedef struct CONFIGS_VIDEO_AWAIT_MODE_S {
+    char               *str;
+    VIDEO_AWAIT_MODE_E value;
+} CONFIGS_VIDEO_AWAIT_MODE_S;
+
 typedef struct CONFIGS_PRIVATE_DATA_S {
-    VIDEO_CONFIG_S **videoConfigs;
-    uint32_t       nbVideoConfigs;
+    uint32_t                     nbVideoCaps;
+    CONFIGS_VIDEO_CAPABILITY_S   *videoCaps;
+
+    uint32_t                     nbVideoBufferTypes;
+    CONFIGS_VIDEO_BUFFER_TYPE_S  *videoBufferTypes;
+
+    uint32_t                     nbVideoPixelFormats;
+    CONFIGS_VIDEO_PIXEL_FORMAT_S *videoPixelFormats;
+
+    uint32_t                     nbVideoColorspaces;
+    CONFIGS_VIDEO_COLORSPACE_S   *videoColorspaces;
+
+    uint32_t                     nbVideoMemories;
+    CONFIGS_VIDEO_MEMORY_S       *videoMemories;
+
+    uint32_t                     nbVideoAwaitModes;
+    CONFIGS_VIDEO_AWAIT_MODE_S   *videoAwaitModes;
 } CONFIGS_PRIVATE_DATA_S;
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
+CONFIGS_VIDEO_CAPABILITY_S gVideoCaps[] = {
+	{ "V4L2_CAP_VIDEO_CAPTURE",             V4L2_CAP_VIDEO_CAPTURE },
+	{ "V4L2_CAP_STREAMING",                 V4L2_CAP_STREAMING     },
+	{ NULL,                                 V4L2_CAP_VIDEO_CAPTURE }
+};
+
+uint32_t gNbVideoCaps = (uint32_t)(sizeof(gVideoCaps) / sizeof(gVideoCaps[0]));
+
+/* -------------------------------------------------------------------------------------------- */
+
+CONFIGS_VIDEO_BUFFER_TYPE_S gVideoBufferTypes[] = {
+	{ "V4L2_BUF_TYPE_VIDEO_CAPTURE",        V4L2_BUF_TYPE_VIDEO_CAPTURE },
+	{ NULL,                                 V4L2_BUF_TYPE_VIDEO_CAPTURE }
+};
+
+uint32_t gNbVideoBufferTypes = (uint32_t)(sizeof(gVideoBufferTypes) / sizeof(gVideoBufferTypes[0]));
+
+/* -------------------------------------------------------------------------------------------- */
+
+CONFIGS_VIDEO_PIXEL_FORMAT_S gVideoPixelFormats[] = {
+	{ "V4L2_PIX_FMT_MJPEG",                 V4L2_PIX_FMT_MJPEG },
+	{ "V4L2_PIX_FMT_YVYU",                  V4L2_PIX_FMT_YVYU  },
+	{ NULL,                                 V4L2_PIX_FMT_MJPEG }
+};
+
+uint32_t gNbVideoPixelFormats = (uint32_t)(sizeof(gVideoPixelFormats) / sizeof(gVideoPixelFormats[0]));
+
+/* -------------------------------------------------------------------------------------------- */
+
+CONFIGS_VIDEO_COLORSPACE_S gVideoColorspaces[] = {
+	{ "V4L2_COLORSPACE_JPEG",               V4L2_COLORSPACE_JPEG      },
+	{ "V4L2_COLORSPACE_SMPTE170M",          V4L2_COLORSPACE_SMPTE170M },
+	{ NULL,                                 V4L2_COLORSPACE_JPEG      }
+};
+
+uint32_t gNbVideoColorspaces = (uint32_t)(sizeof(gVideoColorspaces) / sizeof(gVideoColorspaces[0]));
+
+/* -------------------------------------------------------------------------------------------- */
+
+CONFIGS_VIDEO_MEMORY_S gVideoMemories[] = {
+	{ "V4L2_MEMORY_MMAP",                   V4L2_MEMORY_MMAP    },
+	{ "V4L2_MEMORY_USERPTR",                V4L2_MEMORY_USERPTR },
+	{ NULL,                                 V4L2_MEMORY_MMAP    }
+};
+
+uint32_t gNbVideoMemories = (uint32_t)(sizeof(gVideoMemories) / sizeof(gVideoMemories[0]));
+
+/* -------------------------------------------------------------------------------------------- */
+
+CONFIGS_VIDEO_AWAIT_MODE_S gVideoAwaitModes[] = {
+	{ "VIDEO_AWAIT_MODE_BLOCKING",          VIDEO_AWAIT_MODE_BLOCKING     },
+	{ "VIDEO_AWAIT_MODE_NON_BLOCKING",      VIDEO_AWAIT_MODE_NON_BLOCKING },
+	{ NULL,                                 VIDEO_AWAIT_MODE_BLOCKING     }
+};
+
+uint32_t gNbVideoAwaitModes = (uint32_t)(sizeof(gVideoAwaitModes) / sizeof(gVideoAwaitModes[0]));
+
 /* -------------------------------------------------------------------------------------------- */
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-static CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice);
+static CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, VIDEO_CONFIG_CHOICE_S *configChoice);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                      PUBLIC FUNCTIONS                                        */
@@ -73,46 +175,25 @@ CONFIGS_ERROR_E Configs_Init(CONFIGS_S **obj)
     CONFIGS_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(CONFIGS_PRIVATE_DATA_S))));
 
-    pData->nbVideoConfigs = 4;
-    assert((pData->videoConfigs = calloc(pData->nbVideoConfigs, sizeof(VIDEO_CONFIG_S*))));
-
-    // Choice 0
-    assert((pData->videoConfigs[0] = calloc(1, sizeof(VIDEO_CONFIG_S))));
-	pData->videoConfigs[0]->caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING;
-	pData->videoConfigs[0]->type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	pData->videoConfigs[0]->pixelformat = V4L2_PIX_FMT_MJPEG;
-	pData->videoConfigs[0]->colorspace  = V4L2_COLORSPACE_JPEG;
-	pData->videoConfigs[0]->memory      = V4L2_MEMORY_MMAP;
-	pData->videoConfigs[0]->awaitMode   = VIDEO_AWAIT_MODE_BLOCKING;
-
-    // Choice 1
-    assert((pData->videoConfigs[1] = calloc(1, sizeof(VIDEO_CONFIG_S))));
-	pData->videoConfigs[1]->caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING;
-	pData->videoConfigs[1]->type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	pData->videoConfigs[1]->pixelformat = V4L2_PIX_FMT_MJPEG;
-	pData->videoConfigs[1]->colorspace  = V4L2_COLORSPACE_JPEG;
-	pData->videoConfigs[1]->memory      = V4L2_MEMORY_USERPTR;
-	pData->videoConfigs[1]->awaitMode   = VIDEO_AWAIT_MODE_BLOCKING;
-
-    // Choice 2
-    assert((pData->videoConfigs[2] = calloc(1, sizeof(VIDEO_CONFIG_S))));
-	pData->videoConfigs[2]->caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING;
-	pData->videoConfigs[2]->type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	pData->videoConfigs[2]->pixelformat = V4L2_PIX_FMT_YVYU;
-	pData->videoConfigs[2]->colorspace  = V4L2_COLORSPACE_SMPTE170M;
-	pData->videoConfigs[2]->memory      = V4L2_MEMORY_MMAP;
-	pData->videoConfigs[2]->awaitMode   = VIDEO_AWAIT_MODE_BLOCKING;
-
-    // Choice 3
-    assert((pData->videoConfigs[3] = calloc(1, sizeof(VIDEO_CONFIG_S))));
-	pData->videoConfigs[3]->caps        = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING;
-	pData->videoConfigs[3]->type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	pData->videoConfigs[3]->pixelformat = V4L2_PIX_FMT_YVYU;
-	pData->videoConfigs[3]->colorspace  = V4L2_COLORSPACE_SMPTE170M;
-	pData->videoConfigs[3]->memory      = V4L2_MEMORY_USERPTR;
-	pData->videoConfigs[3]->awaitMode   = VIDEO_AWAIT_MODE_BLOCKING;
-
     (*obj)->getVideoConfig = getVideoConfig_f;
+
+    pData->nbVideoCaps         = gNbVideoCaps;
+    pData->videoCaps           = gVideoCaps;
+
+    pData->nbVideoBufferTypes  = gNbVideoBufferTypes;
+    pData->videoBufferTypes    = gVideoBufferTypes;
+
+    pData->nbVideoPixelFormats = gNbVideoPixelFormats;
+    pData->videoPixelFormats   = gVideoPixelFormats;
+
+    pData->nbVideoColorspaces  = gNbVideoColorspaces;
+    pData->videoColorspaces    = gVideoColorspaces;
+
+    pData->nbVideoMemories     = gNbVideoMemories;
+    pData->videoMemories       = gVideoMemories;
+
+    pData->nbVideoAwaitModes   = gNbVideoAwaitModes;
+    pData->videoAwaitModes     = gVideoAwaitModes;
 
     (*obj)->pData = (void*)pData;
 
@@ -128,14 +209,12 @@ CONFIGS_ERROR_E Configs_UnInit(CONFIGS_S **obj)
 
     CONFIGS_PRIVATE_DATA_S *pData = (CONFIGS_PRIVATE_DATA_S*)((*obj)->pData);
 
-    uint32_t i;
-    for (i = 0; i < pData->nbVideoConfigs; i++) {
-        free(pData->videoConfigs[i]);
-        pData->videoConfigs[i] = NULL;
-    }
-
-    free(pData->videoConfigs);
-    pData->videoConfigs = NULL;
+    pData->videoCaps         = NULL;
+    pData->videoBufferTypes  = NULL;
+    pData->videoPixelFormats = NULL;
+    pData->videoColorspaces  = NULL;
+    pData->videoMemories     = NULL;
+    pData->videoAwaitModes   = NULL;
 
     free((*obj)->pData);
     (*obj)->pData = NULL;
@@ -150,23 +229,110 @@ CONFIGS_ERROR_E Configs_UnInit(CONFIGS_S **obj)
 /*                                     PRIVATE FUNCTIONS                                        */
 /* -------------------------------------------------------------------------------------------- */
 
-static CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice)
+static CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, VIDEO_CONFIG_CHOICE_S *configChoice)
 {
-    assert(obj && config && obj->pData);
+    assert(obj && obj->pData && config && configChoice);
 
     CONFIGS_PRIVATE_DATA_S *pData = (CONFIGS_PRIVATE_DATA_S*)(obj->pData);
 
-    if (configChoice >= pData->nbVideoConfigs) {
-        Loge("Bad choice %u / Nb video configs : %u", configChoice, pData->nbVideoConfigs);
+    uint32_t i, j;
+
+    /* Capabilities */
+    if ((configChoice->nbItems == 0) || !configChoice->capabilities) {
+        Loge("No video capability specified");
         return CONFIGS_ERROR_PARAMS;
     }
 
-    config->caps        = pData->videoConfigs[configChoice]->caps;
-    config->type        = pData->videoConfigs[configChoice]->type;
-    config->pixelformat = pData->videoConfigs[configChoice]->pixelformat;
-    config->colorspace  = pData->videoConfigs[configChoice]->colorspace;
-    config->memory      = pData->videoConfigs[configChoice]->memory;
-    config->awaitMode   = pData->videoConfigs[configChoice]->awaitMode;
+    for (i = 0; i < configChoice->nbItems; i++) {
+        j = 0;
+        while ((j < pData->nbVideoCaps)
+                && pData->videoCaps[j].str
+                && (strcmp(pData->videoCaps[j].str, configChoice->capabilities[i].item) != 0)) {
+            j++;
+        }
+
+        if (!pData->videoCaps[j].str) {
+            Loge("Video capability \"%s\" not handled", configChoice->capabilities[i].item);
+            return CONFIGS_ERROR_PARAMS;
+        }
+        
+        config->caps |= pData->videoCaps[j].value;
+    }
+
+    /* Buffer type */
+    j = 0;
+    while ((j < pData->nbVideoBufferTypes)
+            && pData->videoBufferTypes[j].str
+            && (strcmp(pData->videoBufferTypes[j].str, configChoice->bufferType) != 0)) {
+        j++;
+    }
+    
+    if (!pData->videoBufferTypes[j].str) {
+        Loge("Video bufferType \"%s\" not handled", configChoice->bufferType);
+        return CONFIGS_ERROR_PARAMS;
+    }
+    
+    config->type = pData->videoBufferTypes[j].value;
+
+    /* Pixel format */
+    j = 0;
+    while ((j < pData->nbVideoPixelFormats)
+            && pData->videoPixelFormats[j].str
+            && (strcmp(pData->videoPixelFormats[j].str, configChoice->pixelFormat) != 0)) {
+        j++;
+    }
+    
+    if (!pData->videoPixelFormats[j].str) {
+        Loge("Video pixelFormat \"%s\" not handled", configChoice->pixelFormat);
+        return CONFIGS_ERROR_PARAMS;
+    }
+    
+    config->pixelformat = pData->videoPixelFormats[j].value;
+
+    /* Colorspace */
+    j = 0;
+    while ((j < pData->nbVideoColorspaces)
+            && pData->videoColorspaces[j].str
+            && (strcmp(pData->videoColorspaces[j].str, configChoice->colorspace) != 0)) {
+        j++;
+    }
+    
+    if (!pData->videoColorspaces[j].str) {
+        Loge("Video colorspace \"%s\" not handled", configChoice->colorspace);
+        return CONFIGS_ERROR_PARAMS;
+    }
+    
+    config->colorspace  = pData->videoColorspaces[j].value;
+
+    /* Memory */
+    j = 0;
+    while ((j < pData->nbVideoMemories)
+            && pData->videoMemories[j].str
+            && (strcmp(pData->videoMemories[j].str, configChoice->memory) != 0)) {
+        j++;
+    }
+    
+    if (!pData->videoMemories[j].str) {
+        Loge("Video memory \"%s\" not handled", configChoice->memory);
+        return CONFIGS_ERROR_PARAMS;
+    }
+    
+    config->memory = pData->videoMemories[j].value;
+
+    /* Await mode */
+    j = 0;
+    while ((j < pData->nbVideoAwaitModes)
+            && pData->videoAwaitModes[j].str
+            && (strcmp(pData->videoAwaitModes[j].str, configChoice->awaitMode) != 0)) {
+        j++;
+    }
+    
+    if (!pData->videoAwaitModes[j].str) {
+        Loge("Video awaitMode \"%s\" not handled", configChoice->awaitMode);
+        return CONFIGS_ERROR_PARAMS;
+    }
+    
+    config->awaitMode = pData->videoAwaitModes[j].value;
 
     return CONFIGS_ERROR_NONE;
 }

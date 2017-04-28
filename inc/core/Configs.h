@@ -45,18 +45,35 @@ extern "C" {
 /*                                           TYPEDEFS                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum CONFIGS_ERROR_E  CONFIGS_ERROR_E;
+typedef enum CONFIGS_ERROR_E         CONFIGS_ERROR_E;
 
-typedef struct VIDEO_CONFIG_S VIDEO_CONFIG_S;
-typedef struct CONFIGS_S      CONFIGS_S;
+typedef struct VIDEO_CAPABILITY_S    VIDEO_CAPABILITY_S;
+typedef struct VIDEO_CONFIG_CHOICE_S VIDEO_CONFIG_CHOICE_S;
+typedef struct VIDEO_CONFIG_S        VIDEO_CONFIG_S;
+typedef struct CONFIGS_S             CONFIGS_S;
 
-typedef CONFIGS_ERROR_E (*CONFIGS_GET_VIDEO_CONFIG_F)(CONFIGS_S *obj, VIDEO_CONFIG_S *config, uint32_t configChoice);
+typedef CONFIGS_ERROR_E (*CONFIGS_GET_VIDEO_CONFIG_F)(CONFIGS_S *obj, VIDEO_CONFIG_S *config, VIDEO_CONFIG_CHOICE_S *configChoice);
 
 enum CONFIGS_ERROR_E {
     CONFIGS_ERROR_NONE,
     CONFIGS_ERROR_INIT,
     CONFIGS_ERROR_UNINIT,
     CONFIGS_ERROR_PARAMS
+};
+
+struct VIDEO_CAPABILITY_S {
+    char *item;
+};
+
+struct VIDEO_CONFIG_CHOICE_S {
+    uint8_t            nbItems;
+    VIDEO_CAPABILITY_S *capabilities;
+
+    char               *bufferType;
+    char               *pixelFormat;
+    char               *colorspace;
+    char               *memory;
+    char               *awaitMode;
 };
 
 struct VIDEO_CONFIG_S {

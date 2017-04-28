@@ -25,11 +25,7 @@
                        2 <=> Highest
 
       - configChoice : Config from which retrieve v4l2 parameters
-                       (Cf. core/configs/VideoConfig.c to add more configs)
-                       0 <=> MJPEG (MMAP)
-                       1 <=> MJPEG (USERPTR)
-                       2 <=> YVYU  (MMAP)
-                       3 <=> YVYU  (USERPTR)
+                       (Cf. <Configs> tag below to add more configs)
 
       - gfxDest      : Name of graphics element where captured video frames are drawn.
                        Attention ! Make sure that element is defined in Graphics.xml
@@ -73,6 +69,84 @@
     <Buffer nbBuffers="4" desiredFps="25" />
 
   </Video>
+
+  <!--
+    Video configuration choices
+
+    - Capabilities : List of v4l2 capabilities the selected video device has to support.
+                     See <linux/videodev2.h> for more details about v4l2 capabilities (Macros whose name
+                     starts with "V4L2_CAP_")
+
+    - BufferType   : Possible values are listed in "v4l2_buf_type" enum (Cf. <linux/videodev2.h>)
+
+    - PixelFormat  : See macros whose name starts with "V4L2_PIX_FMT_" in <linux/videodev2.h>
+
+    - Colorspace   : Possible values are listed in "v4l2_colorspace" enum (Cf. <linux/videodev2.h>)
+
+    - Memory       : "V4L2_MEMORY_MMAP" or "V4L2_MEMORY_USERPTR" (From "v4l2_memory" enum in <linux/videodev2.h>)
+
+    - AwaitMode    : It determines how "Videos" module waits for data to be available on video device before
+                     dequeuing buffer :
+                     "VIDEO_AWAIT_MODE_BLOCKING"     => Waiting indefinitely until data are available for reading
+                     "VIDEO_AWAIT_MODE_NON_BLOCKING" => Checking regularly (currently every 2s) if data are available
+
+    Note : Only the following 4 configs are tested for now!! 
+  -->
+  <Configs>
+
+    <!-- Choice 0 : MJPEG - MMAP -->
+    <Config>
+      <Capabilities>
+        <Item      value="V4L2_CAP_VIDEO_CAPTURE" />
+        <Item      value="V4L2_CAP_STREAMING" />
+      </Capabilities>
+      <BufferType  value="V4L2_BUF_TYPE_VIDEO_CAPTURE" />
+      <PixelFormat value="V4L2_PIX_FMT_MJPEG" />
+      <Colorspace  value="V4L2_COLORSPACE_JPEG" />
+      <Memory      value="V4L2_MEMORY_MMAP" />
+      <AwaitMode   value="VIDEO_AWAIT_MODE_BLOCKING" />
+    </Config>
+
+    <!-- Choice 1 : MJPEG - USERPTR -->
+    <Config>
+      <Capabilities>
+        <Item      value="V4L2_CAP_VIDEO_CAPTURE" />
+        <Item      value="V4L2_CAP_STREAMING" />
+      </Capabilities>
+      <BufferType  value="V4L2_BUF_TYPE_VIDEO_CAPTURE" />
+      <PixelFormat value="V4L2_PIX_FMT_MJPEG" />
+      <Colorspace  value="V4L2_COLORSPACE_JPEG" />
+      <Memory      value="V4L2_MEMORY_USERPTR" />
+      <AwaitMode   value="VIDEO_AWAIT_MODE_BLOCKING" />
+    </Config>
+
+    <!-- Choice 2 : YVYU - MMAP -->
+    <Config>
+      <Capabilities>
+        <Item      value="V4L2_CAP_VIDEO_CAPTURE" />
+        <Item      value="V4L2_CAP_STREAMING" />
+      </Capabilities>
+      <BufferType  value="V4L2_BUF_TYPE_VIDEO_CAPTURE" />
+      <PixelFormat value="V4L2_PIX_FMT_YVYU" />
+      <Colorspace  value="V4L2_COLORSPACE_SMPTE170M" />
+      <Memory      value="V4L2_MEMORY_MMAP" />
+      <AwaitMode   value="VIDEO_AWAIT_MODE_BLOCKING" />
+    </Config>
+
+    <!-- Choice 3 : YVYU - USERPTR -->
+    <Config>
+      <Capabilities>
+        <Item      value="V4L2_CAP_VIDEO_CAPTURE" />
+        <Item      value="V4L2_CAP_STREAMING" />
+      </Capabilities>
+      <BufferType  value="V4L2_BUF_TYPE_VIDEO_CAPTURE" />
+      <PixelFormat value="V4L2_PIX_FMT_YVYU" />
+      <Colorspace  value="V4L2_COLORSPACE_SMPTE170M" />
+      <Memory      value="V4L2_MEMORY_USERPTR" />
+      <AwaitMode   value="VIDEO_AWAIT_MODE_BLOCKING" />
+    </Config>
+
+  </Configs>
 
 </Videos>
 

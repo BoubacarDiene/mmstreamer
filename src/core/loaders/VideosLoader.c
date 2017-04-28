@@ -58,6 +58,19 @@ static void onDeviceCb (void *userData, const char **attrs);
 static void onOutputCb (void *userData, const char **attrs);
 static void onBufferCb (void *userData, const char **attrs);
 
+static void onConfigStartCb(void *userData, const char **attrs);
+static void onConfigEndCb  (void *userData);
+
+static void onCapabilitiesStartCb(void *userData, const char **attrs);
+static void onCapabilitiesEndCb  (void *userData);
+
+static void onItemCb       (void *userData, const char **attrs);
+static void onBufferTypeCb (void *userData, const char **attrs);
+static void onPixelFormatCb(void *userData, const char **attrs);
+static void onColorspaceCb (void *userData, const char **attrs);
+static void onMemoryCb     (void *userData, const char **attrs);
+static void onAwaitModeCb  (void *userData, const char **attrs);
+
 static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 
 /* -------------------------------------------------------------------------------------------- */
@@ -83,12 +96,20 @@ LOADERS_ERROR_E loadVideosXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xm
     Logd("Parsing file : \"%s/%s\"", input->xmlRootDir, input->videosXml);
     
     PARSER_TAGS_HANDLER_S tagsHandlers[] = {
-    	{ XML_TAG_VIDEO,    onVideoStartCb,   onVideoEndCb,   NULL },
-    	{ XML_TAG_GENERAL,  onGeneralCb,      NULL,           NULL },
-    	{ XML_TAG_DEVICE,   onDeviceCb,       NULL,           NULL },
-    	{ XML_TAG_OUTPUT,   onOutputCb,       NULL,           NULL },
-    	{ XML_TAG_BUFFER,   onBufferCb,       NULL,           NULL },
-    	{ NULL,             NULL,             NULL,           NULL }
+    	{ XML_TAG_VIDEO,          onVideoStartCb,          onVideoEndCb,         NULL },
+    	{ XML_TAG_GENERAL,        onGeneralCb,             NULL,                 NULL },
+    	{ XML_TAG_DEVICE,         onDeviceCb,              NULL,                 NULL },
+    	{ XML_TAG_OUTPUT,         onOutputCb,              NULL,                 NULL },
+    	{ XML_TAG_BUFFER,         onBufferCb,              NULL,                 NULL },
+    	{ XML_TAG_CONFIG,         onConfigStartCb,         onConfigEndCb,        NULL },
+    	{ XML_TAG_CAPABILITIES,   onCapabilitiesStartCb,   onCapabilitiesEndCb,  NULL },
+    	{ XML_TAG_ITEM,           onItemCb,                NULL,                 NULL },
+    	{ XML_TAG_BUFFER_TYPE,    onBufferTypeCb,          NULL,                 NULL },
+    	{ XML_TAG_PIXEL_FORMAT,   onPixelFormatCb,         NULL,                 NULL },
+    	{ XML_TAG_COLORSPACE,     onColorspaceCb,          NULL,                 NULL },
+    	{ XML_TAG_MEMORY,         onMemoryCb,              NULL,                 NULL },
+    	{ XML_TAG_AWAIT_MODE,     onAwaitModeCb,           NULL,                 NULL },
+    	{ NULL,                   NULL,                    NULL,                 NULL }
     };
     
     PARSER_PARAMS_S parserParams;
@@ -114,11 +135,12 @@ LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos)
 {
     assert(obj && xmlVideos);
     
-    uint8_t index;
+    uint8_t i, j;
     XML_VIDEO_S *video;
+    XML_CONFIG_S *config;
     
-    for (index = 0; index < xmlVideos->nbVideos; index++) {
-        video = &xmlVideos->videos[index];
+    for (i = 0; i < xmlVideos->nbVideos; i++) {
+        video = &xmlVideos->videos[i];
         if (video->graphicsDest) {
             free(video->graphicsDest);
             video->graphicsDest = NULL;
@@ -137,6 +159,42 @@ LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos)
         if (video->deviceName) {
             free(video->deviceName);
             video->deviceName = NULL;
+        }
+    }
+    
+    for (i = 0; i < xmlVideos->nbConfigs; i++) {
+        config = &xmlVideos->configs[i];
+        for (j = 0; j < config->nbItems; j++) {
+            if (config->capabilities[j].item) {
+                free(config->capabilities[j].item);
+                config->capabilities[j].item = NULL;
+            }
+        }
+        config->capabilities = NULL;
+
+        if (config->bufferType) {
+            free(config->bufferType);
+            config->bufferType = NULL;
+        }
+    
+        if (config->pixelFormat) {
+            free(config->pixelFormat);
+            config->pixelFormat = NULL;
+        }
+    
+        if (config->colorspace) {
+            free(config->colorspace);
+            config->colorspace = NULL;
+        }
+    
+        if (config->memory) {
+            free(config->memory);
+            config->memory = NULL;
+        }
+    
+        if (config->awaitMode) {
+            free(config->awaitMode);
+            config->awaitMode = NULL;
         }
     }
     
@@ -366,6 +424,282 @@ static void onBufferCb(void *userData, const char **attrs)
     if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
     	Loge("Failed to retrieve attributes in \"Buffer\" tag");
     }
+}
+
+/*!
+ *
+ */
+static void onConfigStartCb(void *userData, const char **attrs)
+{
+    assert(userData);
+    
+    (void)attrs;
+    
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    
+    Logd("Adding config %u", (xmlVideos->nbConfigs + 1));
+    
+    xmlVideos->configs = realloc(xmlVideos->configs, (xmlVideos->nbConfigs + 1) * sizeof(XML_CONFIG_S));
+    assert(xmlVideos->configs);
+    
+    memset(&xmlVideos->configs[xmlVideos->nbConfigs], '\0', sizeof(XML_CONFIG_S));
+}
+
+/*!
+ *
+ */
+static void onConfigEndCb(void *userData)
+{
+    assert(userData);
+    
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+
+    xmlVideos->nbConfigs++;
+    
+    Logd("Config %u added", xmlVideos->nbConfigs);
+}
+
+/*!
+ *
+ */
+static void onCapabilitiesStartCb(void *userData, const char **attrs)
+{
+    assert(userData);
+    
+    (void)attrs;
+
+    Logd("Start parsing capabilities");
+}
+
+/*!
+ *
+ */
+static void onCapabilitiesEndCb(void *userData)
+{
+    assert(userData);
+
+    Logd("End parsing capabilities");
+}
+
+/*!
+ *
+ */
+static void onItemCb(void *userData, const char **attrs)
+{
+    assert(userData);
+    
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
+    PARSER_S *parserObj     = ctx->modules.parserObj;
+
+    Logd("Adding item %u", (config->nbItems + 1));
+    
+    config->capabilities = realloc(config->capabilities, (config->nbItems + 1) * sizeof(XML_CAPABILITY_S));
+    assert(config->capabilities);
+    
+    memset(&config->capabilities[config->nbItems], '\0', sizeof(XML_CAPABILITY_S));
+
+    XML_CAPABILITY_S *capability = &config->capabilities[config->nbItems];
+
+    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    	{
+    	    .attrName          = XML_ATTR_VALUE,
+    	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
+    	    .attrValue.vector  = (void**)&capability->item,
+    	    .attrGetter.vector = parserObj->getString
+        },
+    	{
+    	    NULL,
+    	    PARSER_ATTR_TYPE_NONE,
+    	    NULL,
+    	    NULL
+        }
+    };
+    
+    ++config->nbItems;
+    
+    if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
+    	Loge("Failed to retrieve attributes in \"Item\" tag");
+    	return;
+    }
+    
+    Logd("Video capability : \"%s\"", capability->item);
+}
+
+/*!
+ *
+ */
+static void onBufferTypeCb(void *userData, const char **attrs)
+{
+    assert(userData);
+    
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
+    PARSER_S *parserObj     = ctx->modules.parserObj;
+
+    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    	{
+    	    .attrName          = XML_ATTR_VALUE,
+    	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
+    	    .attrValue.vector  = (void**)&config->bufferType,
+    	    .attrGetter.vector = parserObj->getString
+        },
+    	{
+    	    NULL,
+    	    PARSER_ATTR_TYPE_NONE,
+    	    NULL,
+    	    NULL
+        }
+    };
+    
+    if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
+    	Loge("Failed to retrieve attributes in \"BufferType\" tag");
+    	return;
+    }
+    
+    Logd("Video bufferType : \"%s\"", config->bufferType);
+}
+
+/*!
+ *
+ */
+static void onPixelFormatCb(void *userData, const char **attrs)
+{
+    assert(userData);
+    
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
+    PARSER_S *parserObj     = ctx->modules.parserObj;
+
+    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    	{
+    	    .attrName          = XML_ATTR_VALUE,
+    	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
+    	    .attrValue.vector  = (void**)&config->pixelFormat,
+    	    .attrGetter.vector = parserObj->getString
+        },
+    	{
+    	    NULL,
+    	    PARSER_ATTR_TYPE_NONE,
+    	    NULL,
+    	    NULL
+        }
+    };
+    
+    if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
+    	Loge("Failed to retrieve attributes in \"PixelFormat\" tag");
+    	return;
+    }
+    
+    Logd("Video pixelFormat : \"%s\"", config->pixelFormat);
+}
+
+/*!
+ *
+ */
+static void onColorspaceCb(void *userData, const char **attrs)
+{
+    assert(userData);
+    
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
+    PARSER_S *parserObj     = ctx->modules.parserObj;
+
+    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    	{
+    	    .attrName          = XML_ATTR_VALUE,
+    	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
+    	    .attrValue.vector  = (void**)&config->colorspace,
+    	    .attrGetter.vector = parserObj->getString
+        },
+    	{
+    	    NULL,
+    	    PARSER_ATTR_TYPE_NONE,
+    	    NULL,
+    	    NULL
+        }
+    };
+    
+    if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
+    	Loge("Failed to retrieve attributes in \"Colorspace\" tag");
+    	return;
+    }
+    
+    Logd("Video colorspace : \"%s\"", config->colorspace);
+}
+
+/*!
+ *
+ */
+static void onMemoryCb(void *userData, const char **attrs)
+{
+    assert(userData);
+    
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
+    PARSER_S *parserObj     = ctx->modules.parserObj;
+
+    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    	{
+    	    .attrName          = XML_ATTR_VALUE,
+    	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
+    	    .attrValue.vector  = (void**)&config->memory,
+    	    .attrGetter.vector = parserObj->getString
+        },
+    	{
+    	    NULL,
+    	    PARSER_ATTR_TYPE_NONE,
+    	    NULL,
+    	    NULL
+        }
+    };
+    
+    if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
+    	Loge("Failed to retrieve attributes in \"Memory\" tag");
+    	return;
+    }
+    
+    Logd("Video memory : \"%s\"", config->memory);
+}
+
+/*!
+ *
+ */
+static void onAwaitModeCb(void *userData, const char **attrs)
+{
+    assert(userData);
+    
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
+    PARSER_S *parserObj     = ctx->modules.parserObj;
+
+    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    	{
+    	    .attrName          = XML_ATTR_VALUE,
+    	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
+    	    .attrValue.vector  = (void**)&config->awaitMode,
+    	    .attrGetter.vector = parserObj->getString
+        },
+    	{
+    	    NULL,
+    	    PARSER_ATTR_TYPE_NONE,
+    	    NULL,
+    	    NULL
+        }
+    };
+    
+    if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
+    	Loge("Failed to retrieve attributes in \"AwaitMode\" tag");
+    	return;
+    }
+    
+    Logd("Video awaitMode : \"%s\"", config->awaitMode);
 }
 
 /*!
