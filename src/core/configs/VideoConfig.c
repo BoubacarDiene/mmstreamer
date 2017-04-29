@@ -74,26 +74,6 @@ typedef struct CONFIGS_VIDEO_AWAIT_MODE_S {
     VIDEO_AWAIT_MODE_E value;
 } CONFIGS_VIDEO_AWAIT_MODE_S;
 
-typedef struct CONFIGS_PRIVATE_DATA_S {
-    uint32_t                     nbVideoCaps;
-    CONFIGS_VIDEO_CAPABILITY_S   *videoCaps;
-
-    uint32_t                     nbVideoBufferTypes;
-    CONFIGS_VIDEO_BUFFER_TYPE_S  *videoBufferTypes;
-
-    uint32_t                     nbVideoPixelFormats;
-    CONFIGS_VIDEO_PIXEL_FORMAT_S *videoPixelFormats;
-
-    uint32_t                     nbVideoColorspaces;
-    CONFIGS_VIDEO_COLORSPACE_S   *videoColorspaces;
-
-    uint32_t                     nbVideoMemories;
-    CONFIGS_VIDEO_MEMORY_S       *videoMemories;
-
-    uint32_t                     nbVideoAwaitModes;
-    CONFIGS_VIDEO_AWAIT_MODE_S   *videoAwaitModes;
-} CONFIGS_PRIVATE_DATA_S;
-
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
@@ -159,81 +139,15 @@ uint32_t gNbVideoAwaitModes = (uint32_t)(sizeof(gVideoAwaitModes) / sizeof(gVide
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-static CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, VIDEO_CONFIG_CHOICE_S *configChoice);
+CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, VIDEO_CONFIG_CHOICE_S *configChoice);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                      PUBLIC FUNCTIONS                                        */
 /* -------------------------------------------------------------------------------------------- */
 
-/*!
- *
- */
-CONFIGS_ERROR_E Configs_Init(CONFIGS_S **obj)
+CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, VIDEO_CONFIG_CHOICE_S *configChoice)
 {
-    assert(obj && (*obj = calloc(1, sizeof(CONFIGS_S))));
-
-    CONFIGS_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(CONFIGS_PRIVATE_DATA_S))));
-
-    (*obj)->getVideoConfig = getVideoConfig_f;
-
-    pData->nbVideoCaps         = gNbVideoCaps;
-    pData->videoCaps           = gVideoCaps;
-
-    pData->nbVideoBufferTypes  = gNbVideoBufferTypes;
-    pData->videoBufferTypes    = gVideoBufferTypes;
-
-    pData->nbVideoPixelFormats = gNbVideoPixelFormats;
-    pData->videoPixelFormats   = gVideoPixelFormats;
-
-    pData->nbVideoColorspaces  = gNbVideoColorspaces;
-    pData->videoColorspaces    = gVideoColorspaces;
-
-    pData->nbVideoMemories     = gNbVideoMemories;
-    pData->videoMemories       = gVideoMemories;
-
-    pData->nbVideoAwaitModes   = gNbVideoAwaitModes;
-    pData->videoAwaitModes     = gVideoAwaitModes;
-
-    (*obj)->pData = (void*)pData;
-
-    return CONFIGS_ERROR_NONE;
-}
-
-/*!
- *
- */
-CONFIGS_ERROR_E Configs_UnInit(CONFIGS_S **obj)
-{
-    assert(obj && *obj && (*obj)->pData);
-
-    CONFIGS_PRIVATE_DATA_S *pData = (CONFIGS_PRIVATE_DATA_S*)((*obj)->pData);
-
-    pData->videoCaps         = NULL;
-    pData->videoBufferTypes  = NULL;
-    pData->videoPixelFormats = NULL;
-    pData->videoColorspaces  = NULL;
-    pData->videoMemories     = NULL;
-    pData->videoAwaitModes   = NULL;
-
-    free((*obj)->pData);
-    (*obj)->pData = NULL;
-
-    free(*obj);
-    *obj = NULL;
-
-    return CONFIGS_ERROR_NONE;
-}
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
-/* -------------------------------------------------------------------------------------------- */
-
-static CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, VIDEO_CONFIG_CHOICE_S *configChoice)
-{
-    assert(obj && obj->pData && config && configChoice);
-
-    CONFIGS_PRIVATE_DATA_S *pData = (CONFIGS_PRIVATE_DATA_S*)(obj->pData);
+    assert(obj && config && configChoice);
 
     uint32_t i, j;
 
@@ -245,94 +159,94 @@ static CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, 
 
     for (i = 0; i < configChoice->nbItems; i++) {
         j = 0;
-        while ((j < pData->nbVideoCaps)
-                && pData->videoCaps[j].str
-                && (strcmp(pData->videoCaps[j].str, configChoice->capabilities[i].item) != 0)) {
+        while ((j < gNbVideoCaps)
+                && gVideoCaps[j].str
+                && (strcmp(gVideoCaps[j].str, configChoice->capabilities[i].item) != 0)) {
             j++;
         }
 
-        if (!pData->videoCaps[j].str) {
+        if (!gVideoCaps[j].str) {
             Loge("Video capability \"%s\" not handled", configChoice->capabilities[i].item);
             return CONFIGS_ERROR_PARAMS;
         }
         
-        config->caps |= pData->videoCaps[j].value;
+        config->caps |= gVideoCaps[j].value;
     }
 
     /* Buffer type */
     j = 0;
-    while ((j < pData->nbVideoBufferTypes)
-            && pData->videoBufferTypes[j].str
-            && (strcmp(pData->videoBufferTypes[j].str, configChoice->bufferType) != 0)) {
+    while ((j < gNbVideoBufferTypes)
+            && gVideoBufferTypes[j].str
+            && (strcmp(gVideoBufferTypes[j].str, configChoice->bufferType) != 0)) {
         j++;
     }
     
-    if (!pData->videoBufferTypes[j].str) {
+    if (!gVideoBufferTypes[j].str) {
         Loge("Video bufferType \"%s\" not handled", configChoice->bufferType);
         return CONFIGS_ERROR_PARAMS;
     }
     
-    config->type = pData->videoBufferTypes[j].value;
+    config->type = gVideoBufferTypes[j].value;
 
     /* Pixel format */
     j = 0;
-    while ((j < pData->nbVideoPixelFormats)
-            && pData->videoPixelFormats[j].str
-            && (strcmp(pData->videoPixelFormats[j].str, configChoice->pixelFormat) != 0)) {
+    while ((j < gNbVideoPixelFormats)
+            && gVideoPixelFormats[j].str
+            && (strcmp(gVideoPixelFormats[j].str, configChoice->pixelFormat) != 0)) {
         j++;
     }
     
-    if (!pData->videoPixelFormats[j].str) {
+    if (!gVideoPixelFormats[j].str) {
         Loge("Video pixelFormat \"%s\" not handled", configChoice->pixelFormat);
         return CONFIGS_ERROR_PARAMS;
     }
     
-    config->pixelformat = pData->videoPixelFormats[j].value;
+    config->pixelformat = gVideoPixelFormats[j].value;
 
     /* Colorspace */
     j = 0;
-    while ((j < pData->nbVideoColorspaces)
-            && pData->videoColorspaces[j].str
-            && (strcmp(pData->videoColorspaces[j].str, configChoice->colorspace) != 0)) {
+    while ((j < gNbVideoColorspaces)
+            && gVideoColorspaces[j].str
+            && (strcmp(gVideoColorspaces[j].str, configChoice->colorspace) != 0)) {
         j++;
     }
     
-    if (!pData->videoColorspaces[j].str) {
+    if (!gVideoColorspaces[j].str) {
         Loge("Video colorspace \"%s\" not handled", configChoice->colorspace);
         return CONFIGS_ERROR_PARAMS;
     }
     
-    config->colorspace  = pData->videoColorspaces[j].value;
+    config->colorspace  = gVideoColorspaces[j].value;
 
     /* Memory */
     j = 0;
-    while ((j < pData->nbVideoMemories)
-            && pData->videoMemories[j].str
-            && (strcmp(pData->videoMemories[j].str, configChoice->memory) != 0)) {
+    while ((j < gNbVideoMemories)
+            && gVideoMemories[j].str
+            && (strcmp(gVideoMemories[j].str, configChoice->memory) != 0)) {
         j++;
     }
     
-    if (!pData->videoMemories[j].str) {
+    if (!gVideoMemories[j].str) {
         Loge("Video memory \"%s\" not handled", configChoice->memory);
         return CONFIGS_ERROR_PARAMS;
     }
     
-    config->memory = pData->videoMemories[j].value;
+    config->memory = gVideoMemories[j].value;
 
     /* Await mode */
     j = 0;
-    while ((j < pData->nbVideoAwaitModes)
-            && pData->videoAwaitModes[j].str
-            && (strcmp(pData->videoAwaitModes[j].str, configChoice->awaitMode) != 0)) {
+    while ((j < gNbVideoAwaitModes)
+            && gVideoAwaitModes[j].str
+            && (strcmp(gVideoAwaitModes[j].str, configChoice->awaitMode) != 0)) {
         j++;
     }
     
-    if (!pData->videoAwaitModes[j].str) {
+    if (!gVideoAwaitModes[j].str) {
         Loge("Video awaitMode \"%s\" not handled", configChoice->awaitMode);
         return CONFIGS_ERROR_PARAMS;
     }
     
-    config->awaitMode = pData->videoAwaitModes[j].value;
+    config->awaitMode = gVideoAwaitModes[j].value;
 
     return CONFIGS_ERROR_NONE;
 }

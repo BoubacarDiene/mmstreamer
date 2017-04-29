@@ -65,10 +65,11 @@ CFLAGS  += ${HEADERS}
 LISTENERS   := core/Listeners
 LOADERS     := core/Loaders
 CORE        := core/Core
-CONFIGS     := core/Configs
+CONFIGS_H   := core/Configs
 CORE_COMMON := core/Common
 XML_DEFINES := core/XmlDefines
 
+CONFIGS_C    := core/configs/Configs
 VIDEO_CONFIG := core/configs/VideoConfig
 
 ROOT_LISTENERS     := core/listeners/Listeners
@@ -88,6 +89,7 @@ HANDLERS := control/Handlers
 
 # Objects
 OBJS := ${OUT_BUILD_SRC}/${VIDEO_CONFIG}.o       \
+        ${OUT_BUILD_SRC}/${CONFIGS_C}.o          \
         ${OUT_BUILD_SRC}/${CLIENTS_LISTENERS}.o  \
         ${OUT_BUILD_SRC}/${GRAPHICS_LISTENERS}.o \
         ${OUT_BUILD_SRC}/${SERVERS_LISTENERS}.o  \
@@ -166,10 +168,11 @@ prepare-core-sources:
 	${CP} ${INC}/${LISTENERS}.h   ${OUT_BUILD_CORE_H}/.
 	${CP} ${INC}/${LOADERS}.h     ${OUT_BUILD_CORE_H}/.
 	${CP} ${INC}/${CORE}.h        ${OUT_BUILD_CORE_H}/.
-	${CP} ${INC}/${CONFIGS}.h     ${OUT_BUILD_CORE_H}/.
+	${CP} ${INC}/${CONFIGS_H}.h   ${OUT_BUILD_CORE_H}/.
 	${CP} ${INC}/${CORE_COMMON}.h ${OUT_BUILD_CORE_H}/.
 	${CP} ${INC}/${XML_DEFINES}.h ${OUT_BUILD_CORE_H}/.
 	
+	${CP} ${SRC}/${CONFIGS_C}.c    ${OUT_BUILD_CORE_CONFIGS_C}/.
 	${CP} ${SRC}/${VIDEO_CONFIG}.c ${OUT_BUILD_CORE_CONFIGS_C}/.
 
 	${CP} ${SRC}/${ROOT_LISTENERS}.c     ${OUT_BUILD_CORE_LISTENERS_C}/.
