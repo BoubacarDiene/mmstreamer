@@ -78,6 +78,11 @@ typedef enum PRIORITY_E {
     PRIORITY_HIGHEST
 } PRIORITY_E;
 
+typedef enum PIPE_E {
+    PIPE_READ,
+    PIPE_WRITE,
+    PIPE_COUNT
+} PIPE_E;
 
 typedef struct BUFFER_S {
     void    *data;

@@ -535,6 +535,7 @@ static VIDEO_ERROR_E stopDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     /* Stop tasks */
     ctx->quit = 1;
 
+    (void)ctx->v4l2->stopAwaitingData(ctx->v4l2);
     sem_post(&ctx->notificationSem);
 
     (void)ctx->videoTask->stop(ctx->videoTask, &ctx->framesHandlerParams);

@@ -70,7 +70,8 @@ typedef V4L2_ERROR_E (*V4L2_RELEASE_BUFFERS_F)(V4L2_S *obj);
 typedef V4L2_ERROR_E (*V4L2_START_CAPTURE_F)(V4L2_S *obj);
 typedef V4L2_ERROR_E (*V4L2_STOP_CAPTURE_F )(V4L2_S *obj);
 
-typedef V4L2_ERROR_E (*V4L2_AWAIT_DATA_F)(V4L2_S *obj, int32_t timeout_ms);
+typedef V4L2_ERROR_E (*V4L2_AWAIT_DATA_F        )(V4L2_S *obj, int32_t timeout_ms);
+typedef V4L2_ERROR_E (*V4L2_STOP_AWAITING_DATA_F)(V4L2_S *obj);
 
 typedef V4L2_ERROR_E (*V4L2_QUEUE_BUFFER_F  )(V4L2_S *obj, uint32_t index);
 typedef V4L2_ERROR_E (*V4L2_DEQUEUE_BUFFER_F)(V4L2_S *obj);
@@ -120,7 +121,8 @@ struct V4L2_MAPPING_BUFFER_S {
 
 struct V4L2_S {
     char                      path[MAX_PATH_SIZE];
-    int                       fd;
+    int32_t                   deviceFd;
+    int32_t                   quitFd[PIPE_COUNT];
 
     struct v4l2_capability    caps;
     struct v4l2_format        format;
@@ -145,6 +147,7 @@ struct V4L2_S {
     V4L2_STOP_CAPTURE_F       stopCapture;
     
     V4L2_AWAIT_DATA_F         awaitData;
+    V4L2_STOP_AWAITING_DATA_F stopAwaitingData;
     
     V4L2_QUEUE_BUFFER_F       queueBuffer;
     V4L2_DEQUEUE_BUFFER_F     dequeueBuffer;

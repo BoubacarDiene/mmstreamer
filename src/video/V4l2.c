@@ -68,7 +68,8 @@ static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj);
 static V4L2_ERROR_E startCapture_f(V4L2_S *obj);
 static V4L2_ERROR_E stopCapture_f (V4L2_S *obj);
 
-static V4L2_ERROR_E awaitData_f(V4L2_S *obj, int32_t timeout_ms);
+static V4L2_ERROR_E awaitData_f       (V4L2_S *obj, int32_t timeout_ms);
+static V4L2_ERROR_E stopAwaitingData_f(V4L2_S *obj);
 
 static V4L2_ERROR_E queueBuffer_f  (V4L2_S *obj, uint32_t index);
 static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj);
@@ -90,8 +91,8 @@ V4L2_ERROR_E V4l2_Init(V4L2_S **obj)
 {
     assert(obj && (*obj = calloc(1, sizeof(V4L2_S))));
     
-    (*obj)->fd  = -1;
-    (*obj)->map = NULL;
+    (*obj)->deviceFd  = -1;
+    (*obj)->map       = NULL;
     
     (*obj)->openDevice       = openDevice_f;
     (*obj)->closeDevice      = closeDevice_f;
@@ -107,6 +108,7 @@ V4L2_ERROR_E V4l2_Init(V4L2_S **obj)
     (*obj)->stopCapture      = stopCapture_f;
     
     (*obj)->awaitData        = awaitData_f;
+    (*obj)->stopAwaitingData = stopAwaitingData_f;
     
     (*obj)->queueBuffer      = queueBuffer_f;
     (*obj)->dequeueBuffer    = dequeueBuffer_f;
@@ -155,13 +157,19 @@ static V4L2_ERROR_E openDevice_f(V4L2_S *obj, V4L2_OPEN_DEVICE_PARAMS_S *params)
         goto exit;
     }
     
-    if ((obj->fd = open(params->path, O_RDWR)) < 0) {
-        Loge("Failed to open \"%s\"", params->path);
+    if (pipe(obj->quitFd) < 0) {
+        Loge("Failed to create pipe - %s", strerror(errno));
+        ret = V4L2_ERROR_IO;
+        goto pipe_exit;
+    }
+    
+    if ((obj->deviceFd = open(params->path, O_RDWR)) < 0) {
+        Loge("Failed to open \"%s\" - %s", params->path, strerror(errno));
         ret = V4L2_ERROR_IO;
         goto open_exit;
     }
     
-    if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_QUERYCAP, &obj->caps)) != V4L2_ERROR_NONE) {
+    if ((ret = v4l2Ioctl_f(obj->deviceFd, VIDIOC_QUERYCAP, &obj->caps)) != V4L2_ERROR_NONE) {
         Loge("Failed to query capabilities");
         goto caps_exit;
     }
@@ -173,14 +181,20 @@ static V4L2_ERROR_E openDevice_f(V4L2_S *obj, V4L2_OPEN_DEVICE_PARAMS_S *params)
     }
     
     strncpy(obj->path, params->path, sizeof(obj->path));
-    
+
     return ret;
 
 caps_exit:
-    close(obj->fd);
-    obj->fd = -1;
+    close(obj->deviceFd);
+    obj->deviceFd = -1;
 
 open_exit:
+    close(obj->quitFd[PIPE_READ]);
+    obj->quitFd[PIPE_READ] = -1;
+    close(obj->quitFd[PIPE_WRITE]);
+    obj->quitFd[PIPE_WRITE] = -1;
+
+pipe_exit:
 exit:
     return ret;
 }
@@ -196,11 +210,16 @@ static V4L2_ERROR_E closeDevice_f(V4L2_S *obj)
 {
     assert(obj);
     
-    if (obj->fd != -1) {
-        close(obj->fd);
-        obj->fd = -1;
+    if (obj->deviceFd != -1) {
+        close(obj->deviceFd);
+        obj->deviceFd = -1;
     }
-    
+
+    if (obj->quitFd[PIPE_READ] != -1) {
+        close(obj->quitFd[PIPE_READ]);
+        close(obj->quitFd[PIPE_WRITE]);
+    }
+
     return V4L2_ERROR_NONE;
 }
 
@@ -214,13 +233,13 @@ static V4L2_ERROR_E closeDevice_f(V4L2_S *obj)
  */
 static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_S *params)
 {
-    assert(obj && (obj->fd != -1) && params);
+    assert(obj && (obj->deviceFd != -1) && params);
     
     V4L2_ERROR_E ret = V4L2_ERROR_NONE;
 
     /* Set format */
     obj->format.type = params->type;
-    if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_G_FMT, &obj->format)) != V4L2_ERROR_NONE) {
+    if ((ret = v4l2Ioctl_f(obj->deviceFd, VIDIOC_G_FMT, &obj->format)) != V4L2_ERROR_NONE) {
         Loge("Failed to get video format");
         goto exit;
     }
@@ -230,7 +249,7 @@ static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_
     obj->format.fmt.pix.pixelformat = params->pixelformat;
     obj->format.fmt.pix.colorspace  = params->colorspace;
 
-    if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_S_FMT, &obj->format)) != V4L2_ERROR_NONE) {
+    if ((ret = v4l2Ioctl_f(obj->deviceFd, VIDIOC_S_FMT, &obj->format)) != V4L2_ERROR_NONE) {
         Loge("Failed to set video format");
         goto exit;
     }
@@ -239,7 +258,7 @@ static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_
     struct v4l2_streamparm streamparm;
     memset(&streamparm, '\0', sizeof(struct v4l2_streamparm));
     streamparm.type = params->type;
-    if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_G_PARM, &streamparm)) != V4L2_ERROR_NONE) {
+    if ((ret = v4l2Ioctl_f(obj->deviceFd, VIDIOC_G_PARM, &streamparm)) != V4L2_ERROR_NONE) {
         Loge("Failed to get current framerate");
         goto exit;
     }
@@ -251,13 +270,13 @@ static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_
         streamparm.parm.capture.timeperframe.denominator = params->desiredFps;
 
         /* Set fps */
-        if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_S_PARM, &streamparm)) != V4L2_ERROR_NONE) {
+        if ((ret = v4l2Ioctl_f(obj->deviceFd, VIDIOC_S_PARM, &streamparm)) != V4L2_ERROR_NONE) {
             Loge("Failed to change framerate");
             goto exit;
         }
 
         /* Check new fps */
-        if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_G_PARM, &streamparm)) != V4L2_ERROR_NONE) {
+        if ((ret = v4l2Ioctl_f(obj->deviceFd, VIDIOC_G_PARM, &streamparm)) != V4L2_ERROR_NONE) {
              goto exit;
         }
 
@@ -282,7 +301,7 @@ exit:
  */
 static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *cropRectInOut)
 {
-    assert(obj && (obj->fd != -1) && cropRectInOut);
+    assert(obj && (obj->deviceFd != -1) && cropRectInOut);
     
     V4L2_ERROR_E ret = V4L2_ERROR_NONE;
 
@@ -293,7 +312,7 @@ static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *crop
         .target = V4L2_SEL_TGT_CROP_DEFAULT,
     };
 
-    if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_G_SELECTION, &sel)) != V4L2_ERROR_NONE) {
+    if ((ret = v4l2Ioctl_f(obj->deviceFd, VIDIOC_G_SELECTION, &sel)) != V4L2_ERROR_NONE) {
         Loge("Failed to get V4L2_SEL_TGT_CROP_DEFAUL");
         return ret;
     }
@@ -335,7 +354,7 @@ static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *crop
     sel.r      = r;
     sel.target = V4L2_SEL_TGT_CROP_ACTIVE;
 
-    if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_S_SELECTION, &sel)) != V4L2_ERROR_NONE) {
+    if ((ret = v4l2Ioctl_f(obj->deviceFd, VIDIOC_S_SELECTION, &sel)) != V4L2_ERROR_NONE) {
         Loge("Failed to set V4L2_SEL_TGT_CROP_ACTIVE");
         return ret;
     }
@@ -360,7 +379,7 @@ static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *crop
  */
 static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *composeRectInOut)
 {
-    assert(obj && (obj->fd != -1) && composeRectInOut);
+    assert(obj && (obj->deviceFd != -1) && composeRectInOut);
     
     V4L2_ERROR_E ret = V4L2_ERROR_NONE;
 
@@ -371,7 +390,7 @@ static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *com
         .target = V4L2_SEL_TGT_COMPOSE_DEFAULT,
     };
 
-    if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_G_SELECTION, &sel)) != V4L2_ERROR_NONE) {
+    if ((ret = v4l2Ioctl_f(obj->deviceFd, VIDIOC_G_SELECTION, &sel)) != V4L2_ERROR_NONE) {
         Loge("Failed to get V4L2_SEL_TGT_COMPOSE_DEFAULT)");
         return ret;
     }
@@ -414,7 +433,7 @@ static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *com
     sel.target = V4L2_SEL_TGT_COMPOSE_ACTIVE;
     sel.flags  = V4L2_SEL_FLAG_LE;
 
-    if ((ret = v4l2Ioctl_f(obj->fd, VIDIOC_S_SELECTION, &sel)) != V4L2_ERROR_NONE) {
+    if ((ret = v4l2Ioctl_f(obj->deviceFd, VIDIOC_S_SELECTION, &sel)) != V4L2_ERROR_NONE) {
         Loge("Failed to set V4L2_SEL_TGT_COMPOSE_ACTIVE");
         return ret;
     }
@@ -439,7 +458,7 @@ static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *com
  */
 static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S *params)
 {
-    assert(obj && (obj->fd != -1) && params);
+    assert(obj && (obj->deviceFd != -1) && params);
     
     V4L2_ERROR_E ret = V4L2_ERROR_NONE;
     
@@ -455,7 +474,7 @@ static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S 
     req.type   = obj->format.type;
     req.memory = obj->memory;
 
-    if (v4l2Ioctl_f(obj->fd, VIDIOC_REQBUFS, &req) != V4L2_ERROR_NONE) {
+    if (v4l2Ioctl_f(obj->deviceFd, VIDIOC_REQBUFS, &req) != V4L2_ERROR_NONE) {
         Loge("Failed to request buffers");
         return V4L2_ERROR_IO;
     }
@@ -477,7 +496,7 @@ static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S 
         buf.memory = req.memory;
         buf.index  = i;
 
-        if (v4l2Ioctl_f(obj->fd, VIDIOC_QUERYBUF, &buf) != V4L2_ERROR_NONE) {
+        if (v4l2Ioctl_f(obj->deviceFd, VIDIOC_QUERYBUF, &buf) != V4L2_ERROR_NONE) {
             Loge("Failed to query buffer");
             ret = V4L2_ERROR_IO;
             goto exit;
@@ -493,7 +512,7 @@ static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S 
                                           buf.length,
                                           PROT_READ | PROT_WRITE,
                                           MAP_SHARED,
-                                          obj->fd, buf.m.offset);
+                                          obj->deviceFd, buf.m.offset);
 
                 if (obj->map[i].start == MAP_FAILED) {
                     Loge("mmap() failed");
@@ -532,7 +551,7 @@ exit:
  */
 static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj)
 {
-    assert(obj && (obj->fd != -1));
+    assert(obj && (obj->deviceFd != -1));
     
     uint32_t i;
     struct v4l2_requestbuffers req;
@@ -568,7 +587,7 @@ static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj)
     req.type = obj->format.type;
     req.memory = obj->memory;
     
-    if (v4l2Ioctl_f(obj->fd, VIDIOC_REQBUFS, &req) != V4L2_ERROR_NONE) {
+    if (v4l2Ioctl_f(obj->deviceFd, VIDIOC_REQBUFS, &req) != V4L2_ERROR_NONE) {
         Loge("Failed to release buffers");
     }
     
@@ -584,9 +603,9 @@ static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj)
  */
 static V4L2_ERROR_E startCapture_f(V4L2_S *obj)
 {
-    assert(obj && (obj->fd != -1));
+    assert(obj && (obj->deviceFd != -1));
     
-    if (v4l2Ioctl_f(obj->fd, VIDIOC_STREAMON, &obj->format.type) != V4L2_ERROR_NONE) {
+    if (v4l2Ioctl_f(obj->deviceFd, VIDIOC_STREAMON, &obj->format.type) != V4L2_ERROR_NONE) {
         Loge("Failed to start stream");
         return V4L2_ERROR_CAPTURE;
     }
@@ -603,9 +622,9 @@ static V4L2_ERROR_E startCapture_f(V4L2_S *obj)
  */
 static V4L2_ERROR_E stopCapture_f(V4L2_S *obj)
 {
-    assert(obj && (obj->fd != -1));
+    assert(obj && (obj->deviceFd != -1));
     
-    if (v4l2Ioctl_f(obj->fd, VIDIOC_STREAMOFF, &obj->format.type) != V4L2_ERROR_NONE) {
+    if (v4l2Ioctl_f(obj->deviceFd, VIDIOC_STREAMOFF, &obj->format.type) != V4L2_ERROR_NONE) {
         Loge("Failed to stop stream");
         return V4L2_ERROR_CAPTURE;
     }
@@ -623,15 +642,19 @@ static V4L2_ERROR_E stopCapture_f(V4L2_S *obj)
  */
 static V4L2_ERROR_E awaitData_f(V4L2_S *obj, int32_t timeout_ms)
 {
-    assert(obj && (obj->fd != -1));
+    assert(obj && (obj->deviceFd != -1));
     
-    int select_retval;
+    int32_t selectRetval;
+    int32_t selectMaxFd;
     fd_set fds;
     struct timeval *tv = NULL;
     V4L2_ERROR_E ret   = V4L2_ERROR_NONE;
 
     FD_ZERO(&fds);
-    FD_SET(obj->fd, &fds);
+    FD_SET(obj->deviceFd, &fds);
+    FD_SET(obj->quitFd[PIPE_READ], &fds);
+
+    selectMaxFd = (obj->deviceFd > obj->quitFd[PIPE_READ] ? obj->deviceFd : obj->quitFd[PIPE_READ]);
 
     if (timeout_ms > 0) {
         assert((tv = calloc(1, sizeof(struct timeval))));
@@ -639,18 +662,18 @@ static V4L2_ERROR_E awaitData_f(V4L2_S *obj, int32_t timeout_ms)
         tv->tv_usec = timeout_ms * 1000;
     }
 
-    select_retval = select(obj->fd + 1, &fds, NULL, NULL, tv);
+    selectRetval = select(selectMaxFd + 1, &fds, NULL, NULL, tv);
     
     if (tv) {
         free(tv);
         tv = NULL;
     }
 
-    if (select_retval == -1) { /* Interrupted */
+    if (selectRetval == -1) { /* Interrupted */
         goto exit;
     }
 
-    if (select_retval == 0) { /* Timeout */
+    if (selectRetval == 0) { /* Timeout */
         ret = V4L2_ERROR_TIMEOUT;
         goto exit;
     }
@@ -659,6 +682,25 @@ static V4L2_ERROR_E awaitData_f(V4L2_S *obj, int32_t timeout_ms)
     
 exit:
     return ret;
+}
+
+/*!
+ * \fn        static V4L2_ERROR_E stopAwaitingData_f(V4L2_S *obj)
+ * \brief     Avoid deadlock in awaitData()
+ * \param[in] obj
+ * \return    V4L2_ERROR_NONE on success
+ *            V4L2_ERROR_IO on error
+ */
+static V4L2_ERROR_E stopAwaitingData_f(V4L2_S *obj)
+{
+    assert(obj && (obj->quitFd[PIPE_WRITE] != -1));
+
+    if (write(obj->quitFd[PIPE_WRITE], "\n", 1) < 0) {
+        Loge("Writing to pipe failed - %s", strerror(errno));
+        return V4L2_ERROR_IO;
+    }
+
+    return V4L2_ERROR_NONE;
 }
 
 /*!
@@ -671,7 +713,7 @@ exit:
  */
 static V4L2_ERROR_E queueBuffer_f(V4L2_S *obj, uint32_t index)
 {
-    assert(obj && (obj->fd != -1));
+    assert(obj && (obj->deviceFd != -1));
     
     struct v4l2_buffer buffer;
     
@@ -686,7 +728,7 @@ static V4L2_ERROR_E queueBuffer_f(V4L2_S *obj, uint32_t index)
         buffer.length    = obj->map[index].length;
     }
 
-    return v4l2Ioctl_f(obj->fd, VIDIOC_QBUF, &buffer);
+    return v4l2Ioctl_f(obj->deviceFd, VIDIOC_QBUF, &buffer);
 }
 
 /*!
@@ -698,7 +740,7 @@ static V4L2_ERROR_E queueBuffer_f(V4L2_S *obj, uint32_t index)
  */
 static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj)
 {
-    assert(obj && (obj->fd != -1));
+    assert(obj && (obj->deviceFd != -1));
     
     struct v4l2_buffer buffer;
     uint32_t i;
@@ -708,7 +750,7 @@ static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj)
     buffer.type   = obj->format.type;
     buffer.memory = obj->memory;
 
-    if (v4l2Ioctl_f(obj->fd, VIDIOC_DQBUF, &buffer) != V4L2_ERROR_NONE) {
+    if (v4l2Ioctl_f(obj->deviceFd, VIDIOC_DQBUF, &buffer) != V4L2_ERROR_NONE) {
         Loge("Failed to dequeue buffer");
         return V4L2_ERROR_IO;
     }
