@@ -820,12 +820,11 @@ static void framesHandlerFct_f(TASK_PARAMS_S *params)
         ctx->v4l2->queueBuffer(ctx->v4l2, i);
 
         /* Await data */
-        do {
+        while (!ctx->quit) {
             if (ctx->v4l2->awaitData(ctx->v4l2, timeout_ms) == V4L2_ERROR_NONE) {
                 break;
             }
         }
-        while (!ctx->quit);
 
         if (ctx->quit) {
             break;
