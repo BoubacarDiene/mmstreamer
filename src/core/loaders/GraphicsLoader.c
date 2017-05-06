@@ -105,7 +105,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
     
     xmlGraphics->reserved = ctx;
     
-    Logd("Parsing file : \"%s/%s\"", input->xmlRootDir, input->graphicsXml);
+    Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->graphicsXml);
     
     PARSER_TAGS_HANDLER_S gfxTagsHandlers[] = {
         { XML_TAG_COMMON,      onCommonCb,             NULL,                NULL },
@@ -130,7 +130,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
     };
     
     PARSER_PARAMS_S gfxParserParams;
-    snprintf(gfxParserParams.path, sizeof(gfxParserParams.path), "%s/%s", input->xmlRootDir, input->graphicsXml);
+    snprintf(gfxParserParams.path, sizeof(gfxParserParams.path), "%s/%s", input->resRootDir, input->graphicsXml);
     gfxParserParams.encoding     = PARSER_ENCODING_UTF_8;
     gfxParserParams.tagsHandlers = gfxTagsHandlers;
     gfxParserParams.onErrorCb    = onErrorCb;
@@ -143,7 +143,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
     }
     
     if (xmlGraphics->common.colorsXmlFile) {
-        Logd("Parsing file : \"%s/%s\"", input->xmlRootDir, xmlGraphics->common.colorsXmlFile);
+        Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlGraphics->common.colorsXmlFile);
         
         PARSER_TAGS_HANDLER_S colorsTagsHandlers[] = {
         	{ XML_TAG_COLOR,  onColorCb,  NULL,  NULL },
@@ -151,7 +151,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
         };
         
         PARSER_PARAMS_S colorsParserParams;
-        snprintf(colorsParserParams.path, sizeof(colorsParserParams.path), "%s/%s", input->xmlRootDir, xmlGraphics->common.colorsXmlFile);
+        snprintf(colorsParserParams.path, sizeof(colorsParserParams.path), "%s/%s", input->resRootDir, xmlGraphics->common.colorsXmlFile);
         colorsParserParams.encoding     = PARSER_ENCODING_UTF_8;
         colorsParserParams.tagsHandlers = colorsTagsHandlers;
         colorsParserParams.onErrorCb    = onErrorCb;
@@ -165,7 +165,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
     }
     
     if (xmlGraphics->common.imagesXmlFile) {
-        Logd("Parsing file : \"%s/%s\"", input->xmlRootDir, xmlGraphics->common.imagesXmlFile);
+        Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlGraphics->common.imagesXmlFile);
         
         PARSER_TAGS_HANDLER_S imagesTagsHandlers[] = {
         	{ XML_TAG_IMAGE,  onImageCb,  NULL,  NULL },
@@ -173,7 +173,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
         };
         
         PARSER_PARAMS_S imagesParserParams;
-        snprintf(imagesParserParams.path, sizeof(imagesParserParams.path), "%s/%s", input->xmlRootDir, xmlGraphics->common.imagesXmlFile);
+        snprintf(imagesParserParams.path, sizeof(imagesParserParams.path), "%s/%s", input->resRootDir, xmlGraphics->common.imagesXmlFile);
         imagesParserParams.encoding     = PARSER_ENCODING_UTF_8;
         imagesParserParams.tagsHandlers = imagesTagsHandlers;
         imagesParserParams.onErrorCb    = onErrorCb;
@@ -187,7 +187,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
     }
     
     if (xmlGraphics->common.fontsXmlFile) {
-        Logd("Parsing file : \"%s/%s\"", input->xmlRootDir, xmlGraphics->common.fontsXmlFile);
+        Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlGraphics->common.fontsXmlFile);
         
         PARSER_TAGS_HANDLER_S fontsTagsHandlers[] = {
         	{ XML_TAG_FONT,  onFontCb,  NULL,  NULL },
@@ -195,7 +195,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
         };
         
         PARSER_PARAMS_S fontsParserParams;
-        snprintf(fontsParserParams.path, sizeof(fontsParserParams.path), "%s/%s", input->xmlRootDir, xmlGraphics->common.fontsXmlFile);
+        snprintf(fontsParserParams.path, sizeof(fontsParserParams.path), "%s/%s", input->resRootDir, xmlGraphics->common.fontsXmlFile);
         fontsParserParams.encoding     = PARSER_ENCODING_UTF_8;
         fontsParserParams.tagsHandlers = fontsTagsHandlers;
         fontsParserParams.onErrorCb    = onErrorCb;
@@ -209,7 +209,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
     }
     
     if (xmlGraphics->common.stringsXmlFile) {
-        Logd("Parsing file : \"%s/%s\"", input->xmlRootDir, xmlGraphics->common.stringsXmlFile);
+        Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlGraphics->common.stringsXmlFile);
         
         PARSER_TAGS_HANDLER_S stringsTagsHandlers[] = {
         	{ XML_TAG_STR_GROUP,  onStrGroupStartCb,  onStrGroupEndCb,  NULL },
@@ -218,7 +218,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
         };
         
         PARSER_PARAMS_S stringsParserParams;
-        snprintf(stringsParserParams.path, sizeof(stringsParserParams.path), "%s/%s", input->xmlRootDir, xmlGraphics->common.stringsXmlFile);
+        snprintf(stringsParserParams.path, sizeof(stringsParserParams.path), "%s/%s", input->resRootDir, xmlGraphics->common.stringsXmlFile);
         stringsParserParams.encoding     = PARSER_ENCODING_UTF_8;
         stringsParserParams.tagsHandlers = stringsTagsHandlers;
         stringsParserParams.onErrorCb    = onErrorCb;
@@ -1294,12 +1294,12 @@ static void onImageCb(void *userData, const char **attrs)
     
     if (image->file) {
         char *temp   = strdup(image->file);
-        uint32_t len = (strlen(temp) + strlen(input->xmlRootDir) + 2) * sizeof(char);
+        uint32_t len = (strlen(temp) + strlen(input->resRootDir) + 2) * sizeof(char);
         
         assert((image->file = realloc(image->file, len)));
         memset(image->file, '\0', len);
         
-        snprintf(image->file, len, "%s/%s", input->xmlRootDir, temp);
+        snprintf(image->file, len, "%s/%s", input->resRootDir, temp);
         
         free(temp);
         temp = NULL;
@@ -1356,12 +1356,12 @@ static void onFontCb(void *userData, const char **attrs)
     
     if (font->file) {
         char *temp   = strdup(font->file);
-        uint32_t len = (strlen(temp) + strlen(input->xmlRootDir) + 2) * sizeof(char);
+        uint32_t len = (strlen(temp) + strlen(input->resRootDir) + 2) * sizeof(char);
         
         assert((font->file = realloc(font->file, len)));
         memset(font->file, '\0', len);
         
-        snprintf(font->file, len, "%s/%s", input->xmlRootDir, temp);
+        snprintf(font->file, len, "%s/%s", input->resRootDir, temp);
         
         free(temp);
         temp = NULL;

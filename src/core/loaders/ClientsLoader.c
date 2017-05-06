@@ -79,7 +79,7 @@ LOADERS_ERROR_E loadClientsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_CLIENTS_S *
     
     xmlClients->reserved = ctx;
     
-    Logd("Parsing file : \"%s/%s\"", input->xmlRootDir, input->clientsXml);
+    Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->clientsXml);
     
     PARSER_TAGS_HANDLER_S tagsHandlers[] = {
     	{ XML_TAG_CLIENT,   onClientStartCb,  onClientEndCb,  NULL },
@@ -90,7 +90,7 @@ LOADERS_ERROR_E loadClientsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_CLIENTS_S *
     };
     
     PARSER_PARAMS_S parserParams;
-    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->xmlRootDir, input->clientsXml);
+    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->resRootDir, input->clientsXml);
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
     parserParams.onErrorCb    = onErrorCb;

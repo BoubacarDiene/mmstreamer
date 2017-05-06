@@ -93,7 +93,7 @@ LOADERS_ERROR_E loadVideosXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xm
     
     xmlVideos->reserved = ctx;
     
-    Logd("Parsing file : \"%s/%s\"", input->xmlRootDir, input->videosXml);
+    Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->videosXml);
     
     PARSER_TAGS_HANDLER_S tagsHandlers[] = {
     	{ XML_TAG_VIDEO,          onVideoStartCb,          onVideoEndCb,         NULL },
@@ -113,7 +113,7 @@ LOADERS_ERROR_E loadVideosXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xm
     };
     
     PARSER_PARAMS_S parserParams;
-    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->xmlRootDir, input->videosXml);
+    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->resRootDir, input->videosXml);
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
     parserParams.onErrorCb    = onErrorCb;

@@ -86,7 +86,7 @@ extern "C" {
 /* -------------------------------------------------------------------------------------------- */
 
 #define XML_ATTR_APP_DATA_DIR            "appDataDir"
-#define XML_ATTR_XML_ROOT_DIR            "xmlRootDir"
+#define XML_ATTR_RES_ROOT_DIR            "resRootDir"
 #define XML_ATTR_KEEP_ALIVE_METHOD       "keepAliveMethod"
 #define XML_ATTR_TIMEOUT_S               "timeout_s"
 #define XML_ATTR_ENABLE                  "enable"

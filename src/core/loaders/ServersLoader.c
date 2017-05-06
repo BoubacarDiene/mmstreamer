@@ -79,7 +79,7 @@ LOADERS_ERROR_E loadServersXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *
     
     xmlServers->reserved = ctx;
     
-    Logd("Parsing file : \"%s/%s\"", input->xmlRootDir, input->serversXml);
+    Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->serversXml);
     
     PARSER_TAGS_HANDLER_S tagsHandlers[] = {
     	{ XML_TAG_SERVER,   onServerStartCb,  onServerEndCb,  NULL },
@@ -90,7 +90,7 @@ LOADERS_ERROR_E loadServersXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *
     };
     
     PARSER_PARAMS_S parserParams;
-    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->xmlRootDir, input->serversXml);
+    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->resRootDir, input->serversXml);
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
     parserParams.onErrorCb    = onErrorCb;

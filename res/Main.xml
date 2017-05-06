@@ -19,7 +19,9 @@
 
     - appDataDir      : Files created at runtime are stored in this directory (screenshots, ...)
 
-    - xmlRootDir      : Concatenated to xmlFile to get the real path to config files
+    - resRootDir      : Relative or absolute path to directory containing resources files (xml,
+                        images, fonts, ...). It is concatenated to filenames specified in other xml
+                        files (Graphics.xml, ...) to get the real path to resources.
 
     - keepAliveMethod : Method to use to keep app running
                         0 => Events_based    : Can be used when keyEvents are handled by graphics module
@@ -31,7 +33,10 @@
                                                Note: Attribute timeout_s="<value in seconds>" is ignored if
                                                method is not Timer_based.
   -->
-  <General appDataDir="/tmp/mmstreamer" xmlRootDir="./out/mmstreamer/res/" keepAliveMethod="0" timeout_s="10" />
+  <General appDataDir="/tmp/mmstreamer"
+           resRootDir="./out/mmstreamer/res/"
+           keepAliveMethod="0"
+           timeout_s="10" />
 
   <!--
     Modules

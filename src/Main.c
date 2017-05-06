@@ -37,7 +37,7 @@
 #include "core/XmlDefines.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/*                                           DEFINE                                             */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -411,6 +411,16 @@ videoInit_exit:
 
 graphicsInit_exit:
 parserParse_exit:
+    if (input->appDataDir) {
+        free(input->appDataDir);
+        input->appDataDir = NULL;
+    }
+
+    if (input->resRootDir) {
+        free(input->resRootDir);
+        input->resRootDir = NULL;
+    }
+
     if (input->clientsXml) {
         free(input->clientsXml);
         input->clientsXml = NULL;
@@ -466,9 +476,9 @@ static void onGeneralCb(void *userData, const char **attrs)
     	    .attrGetter.vector = parserObj->getString
         },
     	{
-    	    .attrName          = XML_ATTR_XML_ROOT_DIR,
+    	    .attrName          = XML_ATTR_RES_ROOT_DIR,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&input->xmlRootDir,
+    	    .attrValue.vector  = (void**)&input->resRootDir,
     	    .attrGetter.vector = parserObj->getString
         },
     	{

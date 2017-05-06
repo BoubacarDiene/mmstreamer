@@ -129,7 +129,7 @@ struct MODULES_S {
 
 struct INPUT_S {
     char       *appDataDir;
-    char       *xmlRootDir;
+    char       *resRootDir;
     
     uint8_t    keepAliveMethod;
     uint32_t   timeout_s;
