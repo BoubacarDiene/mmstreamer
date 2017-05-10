@@ -317,7 +317,9 @@ static LIST_ERROR_E lock_f(LIST_S *obj)
     if (pData && (pthread_mutex_lock(&pData->lock) != 0)) {
         return LIST_ERROR_LOCK;
     }
-    
+
+    pData->current = NULL;
+
     return LIST_ERROR_NONE;
 }
 
