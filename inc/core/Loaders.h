@@ -105,11 +105,10 @@ enum LOADERS_ERROR_E {
 };
 
 struct XML_COLOR_S {
-    uint32_t id;
-    uint8_t  red;
-    uint8_t  green;
-    uint8_t  blue;
-    uint8_t  alpha;
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+    uint8_t alpha;
 };
 
 struct XML_COLORS_S {
@@ -118,8 +117,7 @@ struct XML_COLORS_S {
 };
 
 struct XML_FONT_S {
-    uint32_t id;
-    char     *file;
+    char *file;
 };
 
 struct XML_FONTS_S {
@@ -128,9 +126,8 @@ struct XML_FONTS_S {
 };
 
 struct XML_IMAGE_S {
-    uint32_t id;
-    char     *file;
-    uint8_t  format;
+    char    *file;
+    uint8_t format;
 };
 
 struct XML_IMAGES_S {
@@ -139,8 +136,7 @@ struct XML_IMAGES_S {
 };
 
 struct XML_STRING_S {
-    uint32_t id;
-    char     *str;
+    char *str;
 };
 
 struct XML_STRINGS_S {

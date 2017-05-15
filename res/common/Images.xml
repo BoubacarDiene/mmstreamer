@@ -10,13 +10,11 @@
 <Images>
 
   <!--
-    MANDATORY : Increment id by '1' starting from 0
-
     format : 0 <=> BMP
              1 <=> PNG
              2 <=> JPEG
   -->
-  <Image id="0"  file="images/icon.bmp" format="0" />
+  <Image file="images/icon.bmp" format="0" /><!-- id=0 -->
 
 </Images>
 

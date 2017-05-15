@@ -9,23 +9,22 @@
 
 <Strings>
 
-  <!--
-    MANDATORY : Increment id by '1' starting from 0
-  -->
+  <!-- English -->
   <StrGroup language="en">
-    <String id="0"  str="Close" />
-    <String id="1"  str="Translate" />
-    <String id="2"  str="Show" />
-    <String id="3"  str="Text4En" />
-    <String id="4"  str="mmstreamer project" />
+    <String str="Close"              /><!-- id=0 -->
+    <String str="Translate"          /><!-- id=1 -->
+    <String str="Show"               /><!-- id=2 -->
+    <String str="Text4En"            /><!-- id=3 -->
+    <String str="mmstreamer project" /><!-- id=4 -->
   </StrGroup>
 
+  <!-- French -->
   <StrGroup language="fr">
-    <String id="0"  str="Fermer" />
-    <String id="1"  str="Traduire" />
-    <String id="2"  str="Montrer" />
-    <String id="3"  str="Text4Fr" />
-    <String id="4"  str="Projet mmstreamer" />
+    <String str="Fermer"            /><!-- id=0 -->
+    <String str="Traduire"          /><!-- id=1 -->
+    <String str="Montrer"           /><!-- id=2 -->
+    <String str="Text4Fr"           /><!-- id=3 -->
+    <String str="Projet mmstreamer" /><!-- id=4 -->
   </StrGroup>
 
 </Strings>

@@ -1196,12 +1196,6 @@ static void onColorCb(void *userData, const char **attrs)
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
-    	    .attrName          = XML_ATTR_ID,
-    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&color->id,
-    	    .attrGetter.scalar = parserObj->getUint32
-        },
-    	{
     	    .attrName          = XML_ATTR_RED,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&color->red,
@@ -1262,12 +1256,6 @@ static void onImageCb(void *userData, const char **attrs)
     memset(image, '\0', sizeof(XML_IMAGE_S));
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
-    	{
-    	    .attrName          = XML_ATTR_ID,
-    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&image->id,
-    	    .attrGetter.scalar = parserObj->getUint32
-        },
     	{
     	    .attrName          = XML_ATTR_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -1330,12 +1318,6 @@ static void onFontCb(void *userData, const char **attrs)
     memset(font, '\0', sizeof(XML_FONT_S));
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
-    	{
-    	    .attrName          = XML_ATTR_ID,
-    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&font->id,
-    	    .attrGetter.scalar = parserObj->getUint32
-        },
     	{
     	    .attrName          = XML_ATTR_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -1434,12 +1416,6 @@ static void onStringCb(void *userData, const char **attrs)
     memset(&(*strings)[*nbStrings], '\0', sizeof(XML_STRING_S));
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
-    	{
-    	    .attrName          = XML_ATTR_ID,
-    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&(*strings)[*nbStrings].id,
-    	    .attrGetter.scalar = parserObj->getUint32
-        },
     	{
     	    .attrName          = XML_ATTR_STR,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
