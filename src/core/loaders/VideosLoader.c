@@ -53,10 +53,11 @@ LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos);
 static void onVideoStartCb(void *userData, const char **attrs);
 static void onVideoEndCb  (void *userData);
 
-static void onGeneralCb(void *userData, const char **attrs);
-static void onDeviceCb (void *userData, const char **attrs);
-static void onOutputCb (void *userData, const char **attrs);
-static void onBufferCb (void *userData, const char **attrs);
+static void onGeneralCb      (void *userData, const char **attrs);
+static void onDeviceCb       (void *userData, const char **attrs);
+static void onCroppingAreaCb (void *userData, const char **attrs);
+static void onComposingAreaCb(void *userData, const char **attrs);
+static void onBufferCb       (void *userData, const char **attrs);
 
 static void onConfigStartCb(void *userData, const char **attrs);
 static void onConfigEndCb  (void *userData);
@@ -96,20 +97,21 @@ LOADERS_ERROR_E loadVideosXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xm
     Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->videosXml);
     
     PARSER_TAGS_HANDLER_S tagsHandlers[] = {
-    	{ XML_TAG_VIDEO,          onVideoStartCb,          onVideoEndCb,         NULL },
-    	{ XML_TAG_GENERAL,        onGeneralCb,             NULL,                 NULL },
-    	{ XML_TAG_DEVICE,         onDeviceCb,              NULL,                 NULL },
-    	{ XML_TAG_OUTPUT,         onOutputCb,              NULL,                 NULL },
-    	{ XML_TAG_BUFFER,         onBufferCb,              NULL,                 NULL },
-    	{ XML_TAG_CONFIG,         onConfigStartCb,         onConfigEndCb,        NULL },
-    	{ XML_TAG_CAPABILITIES,   onCapabilitiesStartCb,   onCapabilitiesEndCb,  NULL },
-    	{ XML_TAG_ITEM,           onItemCb,                NULL,                 NULL },
-    	{ XML_TAG_BUFFER_TYPE,    onBufferTypeCb,          NULL,                 NULL },
-    	{ XML_TAG_PIXEL_FORMAT,   onPixelFormatCb,         NULL,                 NULL },
-    	{ XML_TAG_COLORSPACE,     onColorspaceCb,          NULL,                 NULL },
-    	{ XML_TAG_MEMORY,         onMemoryCb,              NULL,                 NULL },
-    	{ XML_TAG_AWAIT_MODE,     onAwaitModeCb,           NULL,                 NULL },
-    	{ NULL,                   NULL,                    NULL,                 NULL }
+    	{ XML_TAG_VIDEO,            onVideoStartCb,          onVideoEndCb,         NULL },
+    	{ XML_TAG_GENERAL,          onGeneralCb,             NULL,                 NULL },
+    	{ XML_TAG_DEVICE,           onDeviceCb,              NULL,                 NULL },
+    	{ XML_TAG_CROPPING_AREA,    onCroppingAreaCb,        NULL,                 NULL },
+    	{ XML_TAG_COMPOSING_AREA,   onComposingAreaCb,       NULL,                 NULL },
+    	{ XML_TAG_BUFFER,           onBufferCb,              NULL,                 NULL },
+    	{ XML_TAG_CONFIG,           onConfigStartCb,         onConfigEndCb,        NULL },
+    	{ XML_TAG_CAPABILITIES,     onCapabilitiesStartCb,   onCapabilitiesEndCb,  NULL },
+    	{ XML_TAG_ITEM,             onItemCb,                NULL,                 NULL },
+    	{ XML_TAG_BUFFER_TYPE,      onBufferTypeCb,          NULL,                 NULL },
+    	{ XML_TAG_PIXEL_FORMAT,     onPixelFormatCb,         NULL,                 NULL },
+    	{ XML_TAG_COLORSPACE,       onColorspaceCb,          NULL,                 NULL },
+    	{ XML_TAG_MEMORY,           onMemoryCb,              NULL,                 NULL },
+    	{ XML_TAG_AWAIT_MODE,       onAwaitModeCb,           NULL,                 NULL },
+    	{ NULL,                     NULL,                    NULL,                 NULL }
     };
     
     PARSER_PARAMS_S parserParams;
@@ -328,14 +330,14 @@ static void onDeviceCb(void *userData, const char **attrs)
     	{
     	    .attrName          = XML_ATTR_WIDTH,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&video->deviceWidth,
-    	    .attrGetter.scalar = parserObj->getUint16
+    	    .attrValue.scalar  = (void*)&video->deviceArea.width,
+    	    .attrGetter.scalar = parserObj->getUint32
         },
     	{
     	    .attrName          = XML_ATTR_HEIGHT,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&video->deviceHeight,
-    	    .attrGetter.scalar = parserObj->getUint16
+    	    .attrValue.scalar  = (void*)&video->deviceArea.height,
+    	    .attrGetter.scalar = parserObj->getUint32
         },
     	{
     	    NULL,
@@ -353,27 +355,39 @@ static void onDeviceCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onOutputCb(void *userData, const char **attrs)
+static void onCroppingAreaCb(void *userData, const char **attrs)
 {
     assert(userData);
-    
+
     XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
     XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
     CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
     PARSER_S *parserObj     = ctx->modules.parserObj;
-    
+
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    	{
+    	    .attrName          = XML_ATTR_LEFT,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&video->croppingArea.left,
+    	    .attrGetter.scalar = parserObj->getUint32
+        },
+    	{
+    	    .attrName          = XML_ATTR_TOP,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&video->croppingArea.top,
+    	    .attrGetter.scalar = parserObj->getUint32
+        },
     	{
     	    .attrName          = XML_ATTR_WIDTH,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&video->outputWidth,
-    	    .attrGetter.scalar = parserObj->getUint16
+    	    .attrValue.scalar  = (void*)&video->croppingArea.width,
+    	    .attrGetter.scalar = parserObj->getUint32
         },
     	{
     	    .attrName          = XML_ATTR_HEIGHT,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&video->outputHeight,
-    	    .attrGetter.scalar = parserObj->getUint16
+    	    .attrValue.scalar  = (void*)&video->croppingArea.height,
+    	    .attrGetter.scalar = parserObj->getUint32
         },
     	{
     	    NULL,
@@ -382,7 +396,57 @@ static void onOutputCb(void *userData, const char **attrs)
     	    NULL
         }
     };
-    
+
+    if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
+    	Loge("Failed to retrieve attributes in \"Output\" tag");
+    }
+}
+
+/*!
+ *
+ */
+static void onComposingAreaCb(void *userData, const char **attrs)
+{
+    assert(userData);
+
+    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
+    PARSER_S *parserObj     = ctx->modules.parserObj;
+
+    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    	{
+    	    .attrName          = XML_ATTR_LEFT,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&video->composingArea.left,
+    	    .attrGetter.scalar = parserObj->getUint32
+        },
+    	{
+    	    .attrName          = XML_ATTR_TOP,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&video->composingArea.top,
+    	    .attrGetter.scalar = parserObj->getUint32
+        },
+    	{
+    	    .attrName          = XML_ATTR_WIDTH,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&video->composingArea.width,
+    	    .attrGetter.scalar = parserObj->getUint32
+        },
+    	{
+    	    .attrName          = XML_ATTR_HEIGHT,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&video->composingArea.height,
+    	    .attrGetter.scalar = parserObj->getUint32
+        },
+    	{
+    	    NULL,
+    	    PARSER_ATTR_TYPE_NONE,
+    	    NULL,
+    	    NULL
+        }
+    };
+
     if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
     	Loge("Failed to retrieve attributes in \"Output\" tag");
     }

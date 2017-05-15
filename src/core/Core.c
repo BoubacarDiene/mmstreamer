@@ -611,11 +611,17 @@ static CORE_ERROR_E loadVideosParams_f(CORE_S *obj)
         videoDevice->videoParams.desiredFps  = xmlVideos->videos[index].desiredFps;
         videoDevice->videoParams.count       = xmlVideos->videos[index].nbBuffers;
 
-        videoDevice->videoParams.captureResolution.width  = xmlVideos->videos[index].deviceWidth;
-        videoDevice->videoParams.captureResolution.height = xmlVideos->videos[index].deviceHeight;
+        memcpy(&videoDevice->videoParams.captureArea,
+                    &xmlVideos->videos[index].deviceArea,
+                    sizeof(videoDevice->videoParams.captureArea));
 
-        videoDevice->videoParams.outputResolution.width   = xmlVideos->videos[index].outputWidth;
-        videoDevice->videoParams.outputResolution.height  = xmlVideos->videos[index].outputHeight;
+        memcpy(&videoDevice->videoParams.croppingArea,
+                    &xmlVideos->videos[index].croppingArea,
+                    sizeof(videoDevice->videoParams.croppingArea));
+
+        memcpy(&videoDevice->videoParams.composingArea,
+                    &xmlVideos->videos[index].composingArea,
+                    sizeof(videoDevice->videoParams.composingArea));
 
         videoDevice->graphicsDest  = xmlVideos->videos[index].graphicsDest ? strdup(xmlVideos->videos[index].graphicsDest) : NULL;
         videoDevice->graphicsIndex = -1;

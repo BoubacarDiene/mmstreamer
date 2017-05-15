@@ -187,7 +187,7 @@ int main(int argc, char **argv)
 
     uint8_t videoIndex;
 
-    VIDEO_RESOLUTION_S resolution = { 0 };
+    VIDEO_AREA_S videoArea        = { 0 };
     VIDEOS_INFOS_S *videosInfos   = NULL;
     VIDEO_DEVICE_S **videoDevices = NULL;
     VIDEO_DEVICE_S *videoDevice   = NULL;
@@ -214,8 +214,8 @@ int main(int argc, char **argv)
                     goto startDeviceCapture_exit;
                 }
 
-                (void)modules->videoObj->getFinalResolution(modules->videoObj, &videoDevice->videoParams, &resolution);
-                Logd("Device \"%s\" : width = %u - height = %u", videoDevice->videoParams.name, resolution.width, resolution.height);
+                (void)modules->videoObj->getFinalVideoArea(modules->videoObj, &videoDevice->videoParams, &videoArea);
+                Logd("Device \"%s\" : width = %u - height = %u", videoDevice->videoParams.name, videoArea.width, videoArea.height);
             }
         }
     }

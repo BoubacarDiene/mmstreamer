@@ -62,6 +62,7 @@ typedef struct XML_STRINGS_S       XML_STRINGS_S;
 typedef struct XML_CAPABILITY_S    XML_CAPABILITY_S;
 typedef struct XML_CONFIG_S        XML_CONFIG_S;
 
+typedef struct XML_VIDEO_AREA_S    XML_VIDEO_AREA_S;
 typedef struct XML_VIDEO_S         XML_VIDEO_S;
 typedef struct XML_VIDEOS_S        XML_VIDEOS_S;
 
@@ -163,22 +164,28 @@ struct XML_CONFIG_S {
     char             *awaitMode;
 };
 
-struct XML_VIDEO_S {
-    uint8_t  priority;
-    uint32_t configChoice;
-    char     *graphicsDest;
-    char     *serverDest;
+struct XML_VIDEO_AREA_S {
+    uint32_t left;
+    uint32_t top;
+    uint32_t width;
+    uint32_t height;
+};
 
-    char     *deviceName;
-    char     *deviceSrc;
-    uint16_t deviceWidth;
-    uint16_t deviceHeight;
+struct XML_VIDEO_S {
+    uint8_t          priority;
+    uint32_t         configChoice;
+    char             *graphicsDest;
+    char             *serverDest;
+
+    char             *deviceName;
+    char             *deviceSrc;
+
+    XML_VIDEO_AREA_S deviceArea;
+    XML_VIDEO_AREA_S croppingArea;
+    XML_VIDEO_AREA_S composingArea;
     
-    uint16_t outputWidth;
-    uint16_t outputHeight;
-    
-    uint8_t  nbBuffers;
-    uint8_t  desiredFps;
+    uint8_t          nbBuffers;
+    uint8_t          desiredFps;
 };
 
 struct XML_VIDEOS_S {
@@ -360,7 +367,7 @@ struct LOADERS_S {
     LOADERS_LOAD_CLIENTS_XML_F    loadClientsXml;
     LOADERS_UNLOAD_CLIENTS_XML_F  unloadClientsXml;
     
-    void                         *pData;
+    void                          *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */

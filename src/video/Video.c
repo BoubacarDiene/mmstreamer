@@ -54,31 +54,31 @@
 /* -------------------------------------------------------------------------------------------- */
 
 typedef struct VIDEO_CONTEXT_S {
-    volatile uint8_t   quit;
+    volatile uint8_t  quit;
 
-    LIST_S             *listenersList;
-    TASK_S             *videoTask;
+    LIST_S            *listenersList;
+    TASK_S            *videoTask;
 
-    pthread_mutex_t    framesHandlerLock;
-    TASK_PARAMS_S      framesHandlerParams;
+    pthread_mutex_t   framesHandlerLock;
+    TASK_PARAMS_S     framesHandlerParams;
 
-    sem_t              notificationSem;
-    pthread_mutex_t    notificationLock;
-    TASK_PARAMS_S      notificationParams;
+    sem_t             notificationSem;
+    pthread_mutex_t   notificationLock;
+    TASK_PARAMS_S     notificationParams;
 
-    pthread_mutex_t    bufferLock;
+    pthread_mutex_t   bufferLock;
 
-    VIDEO_PARAMS_S     params;
+    VIDEO_PARAMS_S    params;
 
-    volatile uint64_t  nbFramesLost;
+    volatile uint64_t nbFramesLost;
 
-    V4L2_S             *v4l2;
+    V4L2_S            *v4l2;
 
-    VIDEO_RESOLUTION_S finalResolution;
+    VIDEO_AREA_S      finalVideoArea;
 } VIDEO_CONTEXT_S;
 
 typedef struct VIDEO_PRIVATE_DATA_S {
-    LIST_S             *videosList;
+    LIST_S            *videosList;
 } VIDEO_PRIVATE_DATA_S;
 
 /* -------------------------------------------------------------------------------------------- */
@@ -92,8 +92,8 @@ typedef struct VIDEO_PRIVATE_DATA_S {
 static VIDEO_ERROR_E registerListener_f  (VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_LISTENER_S *listener);
 static VIDEO_ERROR_E unregisterListener_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_LISTENER_S *listener);
 
-static VIDEO_ERROR_E getFinalResolution_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_RESOLUTION_S *resolution);
-static VIDEO_ERROR_E getMaxBufferSize_f  (VIDEO_S *obj, VIDEO_PARAMS_S *params, size_t *size);
+static VIDEO_ERROR_E getFinalVideoArea_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_AREA_S *videoArea);
+static VIDEO_ERROR_E getMaxBufferSize_f (VIDEO_S *obj, VIDEO_PARAMS_S *params, size_t *size);
 
 static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params);
 static VIDEO_ERROR_E stopDeviceCapture_f (VIDEO_S *obj, VIDEO_PARAMS_S *params);
@@ -142,7 +142,7 @@ VIDEO_ERROR_E Video_Init(VIDEO_S **obj)
 
     (*obj)->registerListener   = registerListener_f;
     (*obj)->unregisterListener = unregisterListener_f;
-    (*obj)->getFinalResolution = getFinalResolution_f;
+    (*obj)->getFinalVideoArea  = getFinalVideoArea_f;
     (*obj)->getMaxBufferSize   = getMaxBufferSize_f;
     (*obj)->startDeviceCapture = startDeviceCapture_f;
     (*obj)->stopDeviceCapture  = stopDeviceCapture_f;
@@ -283,9 +283,9 @@ exit:
 /*!
  *
  */
-static VIDEO_ERROR_E getFinalResolution_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_RESOLUTION_S *resolution)
+static VIDEO_ERROR_E getFinalVideoArea_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_AREA_S *videoArea)
 {
-    assert(obj && obj->pData && params && resolution);
+    assert(obj && obj->pData && params && videoArea);
 
     VIDEO_CONTEXT_S *ctx = NULL;
     VIDEO_ERROR_E ret    = VIDEO_ERROR_NONE;
@@ -295,7 +295,7 @@ static VIDEO_ERROR_E getFinalResolution_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, 
         goto exit;
     }
 
-    memcpy(resolution, &ctx->finalResolution, sizeof(VIDEO_RESOLUTION_S));
+    memcpy(videoArea, &ctx->finalVideoArea, sizeof(VIDEO_AREA_S));
 
     ret = VIDEO_ERROR_NONE;
 
@@ -380,8 +380,8 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     configureDeviceParams.type        = params->type;
     configureDeviceParams.pixelformat = params->pixelformat;
     configureDeviceParams.colorspace  = params->colorspace;
-    configureDeviceParams.width       = params->captureResolution.width;
-    configureDeviceParams.height      = params->captureResolution.height;
+    configureDeviceParams.width       = params->captureArea.width;
+    configureDeviceParams.height      = params->captureArea.height;
     configureDeviceParams.desiredFps  = params->desiredFps;
 
     if (ctx->v4l2->configureDevice(ctx->v4l2, &configureDeviceParams) != V4L2_ERROR_NONE) {
@@ -389,51 +389,41 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
         goto configure_exit;
     }
 
-    ctx->finalResolution.width  = ctx->v4l2->format.fmt.pix.width;
-    ctx->finalResolution.height = ctx->v4l2->format.fmt.pix.height;
-        
-    if ((params->captureResolution.width != params->outputResolution.width)
-        || (params->captureResolution.height != params->outputResolution.height)) {
+    ctx->finalVideoArea.width  = ctx->v4l2->format.fmt.pix.width;
+    ctx->finalVideoArea.height = ctx->v4l2->format.fmt.pix.height;
 
-        uint8_t selectionApiSupported = 0;
+    uint8_t selectionApiSupported       = 0;
+    V4L2_SELECTION_PARAMS_S cropRect    = { 0 };
+    V4L2_SELECTION_PARAMS_S composeRect = { 0 };
 
-        V4L2_SELECTION_PARAMS_S cropRect;
-        cropRect.left   = 0;
-        cropRect.top    = 0;
-        cropRect.width  = params->captureResolution.width;
-        cropRect.height = params->captureResolution.height;
+    memcpy(&cropRect, &params->croppingArea, sizeof(V4L2_SELECTION_PARAMS_S));
 
-        if (ctx->v4l2->setCroppingArea(ctx->v4l2, &cropRect) == V4L2_ERROR_NONE) {
-            V4L2_SELECTION_PARAMS_S composeRect;
-            composeRect.left   = 0;
-            composeRect.top    = 0;
-            composeRect.width  = params->outputResolution.width;
-            composeRect.height = params->outputResolution.height;
+    if (ctx->v4l2->setCroppingArea(ctx->v4l2, &cropRect) == V4L2_ERROR_NONE) {
+        memcpy(&composeRect, &params->composingArea, sizeof(V4L2_SELECTION_PARAMS_S));
 
-            if (ctx->v4l2->setComposingArea(ctx->v4l2, &composeRect) != V4L2_ERROR_NONE) {
-                Loge("Failed to set composing area");
-            }
-            else {
-                ctx->finalResolution.width  = composeRect.width;
-                ctx->finalResolution.height = composeRect.height;
-
-                selectionApiSupported = 1;
-            }
+        if (ctx->v4l2->setComposingArea(ctx->v4l2, &composeRect) != V4L2_ERROR_NONE) {
+            Loge("Failed to set composing area");
         }
         else {
-            Loge("Failed to set cropping area");
+            ctx->finalVideoArea.width  = composeRect.width;
+            ctx->finalVideoArea.height = composeRect.height;
+
+            selectionApiSupported = 1;
         }
+    }
+    else {
+        Loge("Failed to set cropping area");
+    }
 
-        if (!selectionApiSupported) {
-            Logw("V4L2 selection API is not supported by your driver");
+    if (!selectionApiSupported) {
+        Logw("V4L2 selection API is not supported by your driver");
 
-            configureDeviceParams.width  = params->outputResolution.width;
-            configureDeviceParams.height = params->outputResolution.height;
+        configureDeviceParams.width  = params->composingArea.width;
+        configureDeviceParams.height = params->composingArea.height;
 
-            if (ctx->v4l2->configureDevice(ctx->v4l2, &configureDeviceParams) == V4L2_ERROR_NONE) {
-                ctx->finalResolution.width  = ctx->v4l2->format.fmt.pix.width;
-                ctx->finalResolution.height = ctx->v4l2->format.fmt.pix.height;
-            }
+        if (ctx->v4l2->configureDevice(ctx->v4l2, &configureDeviceParams) == V4L2_ERROR_NONE) {
+            ctx->finalVideoArea.width  = ctx->v4l2->format.fmt.pix.width;
+            ctx->finalVideoArea.height = ctx->v4l2->format.fmt.pix.height;
         }
     }
 

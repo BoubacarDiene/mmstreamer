@@ -570,7 +570,7 @@ static void startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementDa
     VIDEO_DEVICE_S *videoDevice    = NULL;
 
     size_t maxBufferSize           = -1;
-    VIDEO_RESOLUTION_S resolution  = { 0 };
+    VIDEO_AREA_S videoArea         = { 0 };
 
     uint8_t nbVideoListeners           = 0;
     VIDEO_LISTENER_S  **videoListeners = NULL;
@@ -587,9 +587,9 @@ static void startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementDa
             }
 
             (void)videoObj->getMaxBufferSize(videoObj, &videoDevice->videoParams, &maxBufferSize);
-            (void)videoObj->getFinalResolution(videoObj, &videoDevice->videoParams, &resolution);
+            (void)videoObj->getFinalVideoArea(videoObj, &videoDevice->videoParams, &videoArea);
 
-            Logd("maxBufferSize = %lu bytes / width = %u - height = %u", maxBufferSize, resolution.width, resolution.height);
+            Logd("maxBufferSize = %lu bytes / width = %u - height = %u", maxBufferSize, videoArea.width, videoArea.height);
 
             nbVideoListeners = videoDevice->nbVideoListeners;
             videoListeners   = videoDevice->videoListeners;

@@ -50,7 +50,7 @@ typedef enum   VIDEO_ERROR_E      VIDEO_ERROR_E;
 typedef enum   VIDEO_AWAIT_MODE_E VIDEO_AWAIT_MODE_E;
 
 typedef struct VIDEO_LISTENER_S   VIDEO_LISTENER_S;
-typedef struct VIDEO_RESOLUTION_S VIDEO_RESOLUTION_S;
+typedef struct VIDEO_AREA_S       VIDEO_AREA_S;
 typedef struct VIDEO_BUFFER_S     VIDEO_BUFFER_S;
 typedef struct VIDEO_PARAMS_S     VIDEO_PARAMS_S;
 typedef struct VIDEO_S            VIDEO_S;
@@ -60,8 +60,8 @@ typedef void (*ON_VIDEO_BUFFER_AVAILABLE_CB)(VIDEO_BUFFER_S *videoBuffer, void *
 typedef VIDEO_ERROR_E (*VIDEO_REGISTER_LISTENER_F  )(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_LISTENER_S *listener);
 typedef VIDEO_ERROR_E (*VIDEO_UNREGISTER_LISTENER_F)(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_LISTENER_S *listener);
 
-typedef VIDEO_ERROR_E (*VIDEO_GET_FINAL_RESOLUTION_F)(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_RESOLUTION_S *resolution);
-typedef VIDEO_ERROR_E (*VIDEO_GET_MAX_BUFFER_SIZE_F)(VIDEO_S *obj, VIDEO_PARAMS_S *params, size_t *size);
+typedef VIDEO_ERROR_E (*VIDEO_GET_FINAL_VIDEO_AREA_F)(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_AREA_S *videoArea);
+typedef VIDEO_ERROR_E (*VIDEO_GET_MAX_BUFFER_SIZE_F )(VIDEO_S *obj, VIDEO_PARAMS_S *params, size_t *size);
 
 typedef VIDEO_ERROR_E (*VIDEO_START_DEVICE_CAPTURE_F)(VIDEO_S *obj, VIDEO_PARAMS_S *params);
 typedef VIDEO_ERROR_E (*VIDEO_STOP_DEVICE_CAPTURE_F )(VIDEO_S *obj, VIDEO_PARAMS_S *params);
@@ -89,7 +89,9 @@ struct VIDEO_LISTENER_S {
     void                         *userData;
 };
 
-struct VIDEO_RESOLUTION_S {
+struct VIDEO_AREA_S {
+    uint32_t left;
+    uint32_t top;
     uint32_t width;
     uint32_t height;
 };
@@ -116,8 +118,9 @@ struct VIDEO_PARAMS_S {
     PRIORITY_E           priority;
     uint32_t             desiredFps;
     
-    VIDEO_RESOLUTION_S   captureResolution;
-    VIDEO_RESOLUTION_S   outputResolution;
+    VIDEO_AREA_S         captureArea;
+    VIDEO_AREA_S         croppingArea;
+    VIDEO_AREA_S         composingArea;
     
     /* Request buffers */
     uint32_t             count;
@@ -131,7 +134,7 @@ struct VIDEO_S {
     VIDEO_REGISTER_LISTENER_F    registerListener;
     VIDEO_UNREGISTER_LISTENER_F  unregisterListener;
     
-    VIDEO_GET_FINAL_RESOLUTION_F getFinalResolution;
+    VIDEO_GET_FINAL_VIDEO_AREA_F getFinalVideoArea;
     VIDEO_GET_MAX_BUFFER_SIZE_F  getMaxBufferSize;
     
     VIDEO_START_DEVICE_CAPTURE_F startDeviceCapture;

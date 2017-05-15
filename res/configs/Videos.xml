@@ -51,11 +51,22 @@
     <Device name="camera0" src="/dev/video0" width="640" height="480" />
 
     <!--
-      Output
+      Cropping area : Part of video frame to display
 
-        - width / height : Captured video signal is rendered in a surface having these dimensions
+        - left / top : Starting point from the top-left corner
+
+        - width / height : Area dimensions
     -->
-    <Output width="640" height="480" />
+    <CroppingArea left="0" top="0" width="640" height="480" />
+
+    <!--
+      Composing area : Area where "cropping area" is scaled to
+
+        - left / top : Starting point from the top-left corner
+
+        - width / height : Area dimensions
+    -->
+    <ComposingArea left="0" top="0" width="640" height="480" />
 
     <!--
       Buffer
