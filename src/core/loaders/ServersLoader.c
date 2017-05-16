@@ -74,12 +74,12 @@ LOADERS_ERROR_E loadServersXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *
 {
     assert(obj && ctx && xmlServers);
     
-    PARSER_S *parserObj  = ctx->modules.parserObj;
+    PARSER_S *parserObj  = ctx->parserObj;
     INPUT_S *input       = &ctx->input;
     
     xmlServers->reserved = ctx;
     
-    Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->serversXml);
+    Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->serversConfig.xml);
     
     PARSER_TAGS_HANDLER_S tagsHandlers[] = {
     	{ XML_TAG_SERVER,   onServerStartCb,  onServerEndCb,  NULL },
@@ -90,7 +90,7 @@ LOADERS_ERROR_E loadServersXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *
     };
     
     PARSER_PARAMS_S parserParams;
-    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->resRootDir, input->serversXml);
+    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->resRootDir, input->serversConfig.xml);
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
     parserParams.onErrorCb    = onErrorCb;
@@ -195,7 +195,7 @@ static void onGeneralCb(void *userData, const char **attrs)
     XML_SERVERS_S *xmlServers = (XML_SERVERS_S*)userData;
     XML_SERVER_S *server      = &xmlServers->servers[xmlServers->nbServers];
     CONTEXT_S *ctx            = (CONTEXT_S*)xmlServers->reserved;
-    PARSER_S *parserObj       = ctx->modules.parserObj;
+    PARSER_S *parserObj       = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -275,7 +275,7 @@ static void onInetCb(void *userData, const char **attrs)
     XML_SERVERS_S *xmlServers = (XML_SERVERS_S*)userData;
     XML_SERVER_S *server      = &xmlServers->servers[xmlServers->nbServers];
     CONTEXT_S *ctx            = (CONTEXT_S*)xmlServers->reserved;
-    PARSER_S *parserObj       = ctx->modules.parserObj;
+    PARSER_S *parserObj       = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -319,7 +319,7 @@ static void onUnixCb(void *userData, const char **attrs)
     XML_SERVERS_S *xmlServers = (XML_SERVERS_S*)userData;
     XML_SERVER_S *server      = &xmlServers->servers[xmlServers->nbServers];
     CONTEXT_S *ctx            = (CONTEXT_S*)xmlServers->reserved;
-    PARSER_S *parserObj       = ctx->modules.parserObj;
+    PARSER_S *parserObj       = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{

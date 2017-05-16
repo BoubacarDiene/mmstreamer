@@ -89,12 +89,12 @@ LOADERS_ERROR_E loadVideosXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xm
 {
     assert(obj && ctx && xmlVideos);
     
-    PARSER_S *parserObj = ctx->modules.parserObj;
+    PARSER_S *parserObj = ctx->parserObj;
     INPUT_S *input      = &ctx->input;
     
     xmlVideos->reserved = ctx;
     
-    Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->videosXml);
+    Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->videosConfig.xml);
     
     PARSER_TAGS_HANDLER_S tagsHandlers[] = {
     	{ XML_TAG_VIDEO,            onVideoStartCb,          onVideoEndCb,         NULL },
@@ -115,7 +115,7 @@ LOADERS_ERROR_E loadVideosXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xm
     };
     
     PARSER_PARAMS_S parserParams;
-    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->resRootDir, input->videosXml);
+    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->resRootDir, input->videosConfig.xml);
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
     parserParams.onErrorCb    = onErrorCb;
@@ -252,7 +252,7 @@ static void onGeneralCb(void *userData, const char **attrs)
     XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
     XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
     CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->modules.parserObj;
+    PARSER_S *parserObj     = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -312,7 +312,7 @@ static void onDeviceCb(void *userData, const char **attrs)
     XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
     XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
     CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->modules.parserObj;
+    PARSER_S *parserObj     = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -362,7 +362,7 @@ static void onCroppingAreaCb(void *userData, const char **attrs)
     XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
     XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
     CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->modules.parserObj;
+    PARSER_S *parserObj     = ctx->parserObj;
 
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -412,7 +412,7 @@ static void onComposingAreaCb(void *userData, const char **attrs)
     XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
     XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
     CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->modules.parserObj;
+    PARSER_S *parserObj     = ctx->parserObj;
 
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -462,7 +462,7 @@ static void onBufferCb(void *userData, const char **attrs)
     XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
     XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
     CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->modules.parserObj;
+    PARSER_S *parserObj     = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -555,7 +555,7 @@ static void onItemCb(void *userData, const char **attrs)
     XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
     XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
     CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->modules.parserObj;
+    PARSER_S *parserObj     = ctx->parserObj;
 
     Logd("Adding item %u", (config->nbItems + 1));
     
@@ -601,7 +601,7 @@ static void onBufferTypeCb(void *userData, const char **attrs)
     XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
     XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
     CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->modules.parserObj;
+    PARSER_S *parserObj     = ctx->parserObj;
 
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -636,7 +636,7 @@ static void onPixelFormatCb(void *userData, const char **attrs)
     XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
     XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
     CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->modules.parserObj;
+    PARSER_S *parserObj     = ctx->parserObj;
 
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -671,7 +671,7 @@ static void onColorspaceCb(void *userData, const char **attrs)
     XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
     XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
     CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->modules.parserObj;
+    PARSER_S *parserObj     = ctx->parserObj;
 
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -706,7 +706,7 @@ static void onMemoryCb(void *userData, const char **attrs)
     XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
     XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
     CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->modules.parserObj;
+    PARSER_S *parserObj     = ctx->parserObj;
 
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -741,7 +741,7 @@ static void onAwaitModeCb(void *userData, const char **attrs)
     XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
     XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
     CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->modules.parserObj;
+    PARSER_S *parserObj     = ctx->parserObj;
 
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{

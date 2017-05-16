@@ -68,11 +68,14 @@ LISTENERS_ERROR_E setServersListeners_f(LISTENERS_S *obj)
     
     LISTENERS_PDATA_S *pData      = (LISTENERS_PDATA_S*)(obj->pData);
     SERVERS_INFOS_S *serversInfos = &pData->ctx->params.serversInfos;
+    SERVER_PARAMS_S *serverParams = NULL;
     
     uint8_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
-        serversInfos->serverParams[index]->onClientStateChangedCb = onClientStateChangedCb;
-        serversInfos->serverParams[index]->userData               = pData;
+        serverParams = &(serversInfos->serverInfos[index])->serverParams;
+
+        serverParams->onClientStateChangedCb = onClientStateChangedCb;
+        serverParams->userData               = pData;
     }
     
     return LISTENERS_ERROR_NONE;
@@ -87,10 +90,12 @@ LISTENERS_ERROR_E unsetServersListeners_f(LISTENERS_S *obj)
     
     LISTENERS_PDATA_S *pData      = (LISTENERS_PDATA_S*)(obj->pData);
     SERVERS_INFOS_S *serversInfos = &pData->ctx->params.serversInfos;
+    SERVER_PARAMS_S *serverParams = NULL;
     
     uint8_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
-        serversInfos->serverParams[index]->userData = NULL;
+        serverParams           = &(serversInfos->serverInfos[index])->serverParams;
+        serverParams->userData = NULL;
     }
     
     return LISTENERS_ERROR_NONE;

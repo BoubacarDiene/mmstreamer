@@ -73,8 +73,8 @@ typedef CONTROL_ERROR_E (*CONTROL_UNSET_ELEMENT_TEXT_IDS_F)(CONTROL_S *obj, void
 typedef CONTROL_ERROR_E (*CONTROL_SET_ELEMENT_IMAGE_IDS_F  )(CONTROL_S *obj, void *data, CONTROL_IMAGE_IDS_S *imageIds);
 typedef CONTROL_ERROR_E (*CONTROL_UNSET_ELEMENT_IMAGE_IDS_F)(CONTROL_S *obj, void *data);
 
-typedef CONTROL_ERROR_E (*CONTROL_SET_CLICK_HANDLERS_F  )(CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index);
-typedef CONTROL_ERROR_E (*CONTROL_UNSET_CLICK_HANDLERS_F)(CONTROL_S *obj, void *data);
+typedef CONTROL_ERROR_E (*CONTROL_SET_COMMAND_HANDLERS_F  )(CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index);
+typedef CONTROL_ERROR_E (*CONTROL_UNSET_COMMAND_HANDLERS_F)(CONTROL_S *obj, void *data);
 
 typedef CONTROL_ERROR_E (*CONTROL_HANDLE_CLICK_F)(CONTROL_S *obj, GFX_EVENT_S *gfxEvent);
 
@@ -114,8 +114,8 @@ struct CONTROL_ELEMENT_DATA_S {
         CONTROL_IMAGE_IDS_S image;
     } ids;
 
-    uint32_t                nbClickHandlers;
-    CLICK_HANDLERS_S        *clickHandlers;
+    uint32_t                nbCommandHandlers;
+    COMMAND_HANDLERS_S      *commandHandlers;
 
     CONTROL_GETTERS_S       getters;
 };
@@ -133,8 +133,8 @@ struct CONTROL_S {
     CONTROL_SET_ELEMENT_IMAGE_IDS_F   setElementImageIds;
     CONTROL_UNSET_ELEMENT_IMAGE_IDS_F unsetElementImageIds;
 
-    CONTROL_SET_CLICK_HANDLERS_F      setClickHandlers;
-    CONTROL_UNSET_CLICK_HANDLERS_F    unsetClickHandlers;
+    CONTROL_SET_COMMAND_HANDLERS_F    setCommandHandlers;
+    CONTROL_UNSET_COMMAND_HANDLERS_F  unsetCommandHandlers;
 
     CONTROL_HANDLE_CLICK_F            handleClick;
 

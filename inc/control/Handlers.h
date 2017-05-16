@@ -41,20 +41,46 @@ extern "C" {
 /*                                           DEFINE                                             */
 /* -------------------------------------------------------------------------------------------- */
 
+#define HANDLERS_COMMAND_CLOSE_APPLICATION  "closeApplication"
+#define HANDLERS_COMMAND_CHANGE_LANGUAGE    "changeLanguage"
+#define HANDLERS_COMMAND_SAVE_VIDEO_ELEMENT "saveVideoElement"
+#define HANDLERS_COMMAND_TAKE_SCREENSHOT    "takeScreenshot"
+#define HANDLERS_COMMAND_HIDE_ELEMENT       "hideElement"
+#define HANDLERS_COMMAND_SHOW_ELEMENT       "showElement"
+#define HANDLERS_COMMAND_SET_FOCUS          "setFocus"
+#define HANDLERS_COMMAND_HIDE_GROUP         "hideGroup"
+#define HANDLERS_COMMAND_SHOW_GROUP         "showGroup"
+#define HANDLERS_COMMAND_SET_CLICKABLE      "setClickable"
+#define HANDLERS_COMMAND_SET_NOT_CLICKABLE  "setNotClickable"
+#define HANDLERS_COMMAND_STOP_GRAPHICS      "stopGraphics"
+#define HANDLERS_COMMAND_START_GRAPHICS     "startGraphics"
+#define HANDLERS_COMMAND_STOP_VIDEO         "stopVideo"
+#define HANDLERS_COMMAND_START_VIDEO        "startVideo"
+#define HANDLERS_COMMAND_STOP_SERVER        "stopServer"
+#define HANDLERS_COMMAND_START_SERVER       "startServer"
+#define HANDLERS_COMMAND_SUSPEND_SERVER     "suspendServer"
+#define HANDLERS_COMMAND_RESUME_SERVER      "resumeServer"
+#define HANDLERS_COMMAND_STOP_CLIENT        "stopClient"
+#define HANDLERS_COMMAND_START_CLIENT       "startClient"
+#define HANDLERS_COMMAND_MULTI_INPUTS       "multiInputs"
+#define HANDLERS_COMMAND_UPDATE_TEXT        "updateText"
+#define HANDLERS_COMMAND_UPDATE_IMAGE       "updateImage"
+#define HANDLERS_COMMAND_UPDATE_NAV         "updateNav"
+
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEFS                                           */
 /* -------------------------------------------------------------------------------------------- */
 
 typedef enum   HANDLERS_ERROR_E        HANDLERS_ERROR_E;
 
-typedef struct CLICK_HANDLERS_S        CLICK_HANDLERS_S;
+typedef struct COMMAND_HANDLERS_S      COMMAND_HANDLERS_S;
 typedef struct HANDLERS_ID_S           HANDLERS_ID_S;
 typedef struct HANDLERS_PRIVATE_DATA_S HANDLERS_PRIVATE_DATA_S;
 typedef struct HANDLERS_S              HANDLERS_S;
 
-typedef void (*CLICK_HANDLER_F)(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+typedef HANDLERS_ERROR_E (*COMMAND_HANDLER_F)(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-typedef HANDLERS_ERROR_E (*HANDLERS_GET_CLICK_HANDLER_F)(HANDLERS_S *obj, const char *handlerName, CLICK_HANDLER_F *out);
+typedef HANDLERS_ERROR_E (*HANDLERS_GET_COMMAND_HANDLER_F)(HANDLERS_S *obj, const char *handlerName, COMMAND_HANDLER_F *out);
 typedef HANDLERS_ERROR_E (*HANDLERS_GET_ELEMENT_INDEX_F)(HANDLERS_S *obj, char *elementName, uint32_t *index);
 typedef HANDLERS_ERROR_E (*HANDLERS_GET_SUBSTRING_F    )(HANDLERS_S *obj, const char *haystack, const char *needle, char *out, uint32_t *offset);
 
@@ -62,13 +88,16 @@ enum HANDLERS_ERROR_E {
     HANDLERS_ERROR_NONE,
     HANDLERS_ERROR_INIT,
     HANDLERS_ERROR_UNINIT,
-    HANDLERS_ERROR_PARAMS
+    HANDLERS_ERROR_PARAMS,
+    HANDLERS_ERROR_STATE,
+    HANDLERS_ERROR_COMMAND,
+    HANDLERS_ERROR_IO
 };
 
-struct CLICK_HANDLERS_S {
-    char            *name;
-    char            *data;
-    CLICK_HANDLER_F fct;
+struct COMMAND_HANDLERS_S {
+    char              *name;
+    char              *data;
+    COMMAND_HANDLER_F fct;
 };
 
 struct HANDLERS_ID_S {
@@ -77,21 +106,21 @@ struct HANDLERS_ID_S {
 };
 
 struct HANDLERS_PRIVATE_DATA_S {
-    CONTEXT_S        *ctx;
+    CONTEXT_S          *ctx;
 
-    uint32_t         nbSingleInputClickHandlers;
-    CLICK_HANDLERS_S *singleInputClickHandlers;
+    uint32_t           nbSingleInputHandlers;
+    COMMAND_HANDLERS_S *singleInputHandlers;
 
-    uint32_t         nbMultiInputsClickHandlers;
-    CLICK_HANDLERS_S *multiInputsClickHandlers;
+    uint32_t           nbMultiInputsHandlers;
+    COMMAND_HANDLERS_S *multiInputsHandlers;
 };
 
 struct HANDLERS_S {
-    HANDLERS_GET_CLICK_HANDLER_F getClickHandler;
-    HANDLERS_GET_ELEMENT_INDEX_F getElementIndex;
-    HANDLERS_GET_SUBSTRING_F     getSubstring;
+    HANDLERS_GET_COMMAND_HANDLER_F getCommandHandler;
+    HANDLERS_GET_ELEMENT_INDEX_F   getElementIndex;
+    HANDLERS_GET_SUBSTRING_F       getSubstring;
 
-    void                         *pData;
+    void                           *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */

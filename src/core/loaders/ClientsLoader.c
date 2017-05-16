@@ -74,12 +74,12 @@ LOADERS_ERROR_E loadClientsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_CLIENTS_S *
 {
     assert(obj && ctx && xmlClients);
     
-    PARSER_S *parserObj  = ctx->modules.parserObj;
-    INPUT_S *input       = &ctx->input;
+    PARSER_S *parserObj = ctx->parserObj;
+    INPUT_S *input      = &ctx->input;
     
     xmlClients->reserved = ctx;
     
-    Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->clientsXml);
+    Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->clientsConfig.xml);
     
     PARSER_TAGS_HANDLER_S tagsHandlers[] = {
     	{ XML_TAG_CLIENT,   onClientStartCb,  onClientEndCb,  NULL },
@@ -90,7 +90,7 @@ LOADERS_ERROR_E loadClientsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_CLIENTS_S *
     };
     
     PARSER_PARAMS_S parserParams;
-    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->resRootDir, input->clientsXml);
+    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->resRootDir, input->clientsConfig.xml);
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
     parserParams.onErrorCb    = onErrorCb;
@@ -199,7 +199,7 @@ static void onGeneralCb(void *userData, const char **attrs)
     XML_CLIENTS_S *xmlClients = (XML_CLIENTS_S*)userData;
     XML_CLIENT_S *client      = &xmlClients->clients[xmlClients->nbClients];
     CONTEXT_S *ctx            = (CONTEXT_S*)xmlClients->reserved;
-    PARSER_S *parserObj       = ctx->modules.parserObj;
+    PARSER_S *parserObj       = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -277,7 +277,7 @@ static void onInetCb(void *userData, const char **attrs)
     XML_CLIENTS_S *xmlClients = (XML_CLIENTS_S*)userData;
     XML_CLIENT_S *client      = &xmlClients->clients[xmlClients->nbClients];
     CONTEXT_S *ctx            = (CONTEXT_S*)xmlClients->reserved;
-    PARSER_S *parserObj       = ctx->modules.parserObj;
+    PARSER_S *parserObj       = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -321,7 +321,7 @@ static void onUnixCb(void *userData, const char **attrs)
     XML_CLIENTS_S *xmlClients = (XML_CLIENTS_S*)userData;
     XML_CLIENT_S *client      = &xmlClients->clients[xmlClients->nbClients];
     CONTEXT_S *ctx            = (CONTEXT_S*)xmlClients->reserved;
-    PARSER_S *parserObj       = ctx->modules.parserObj;
+    PARSER_S *parserObj       = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{

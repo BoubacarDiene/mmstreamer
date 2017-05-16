@@ -29,6 +29,8 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
+#include <pthread.h>
+
 #include "utils/Log.h"
 #include "utils/List.h"
 
@@ -49,6 +51,8 @@
 
 typedef struct GRAPHICS_PRIVATE_DATA_S {
     volatile uint8_t   quit;
+
+    pthread_mutex_t    lock;
     
     GRAPHICS_PARAMS_S  params;
     FBDEV_INFOS_S      fbInfos;
@@ -121,7 +125,12 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     
     GRAPHICS_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(GRAPHICS_PRIVATE_DATA_S))));
-    
+
+    if (pthread_mutex_init(&pData->lock, NULL) != 0) {
+        Loge("pthread_mutex_init() failed");
+        goto lockExit;
+    }
+
     LIST_PARAMS_S listParams;
     memset(&listParams, '\0', sizeof(LIST_PARAMS_S));
     listParams.compareCb = compareCb;
@@ -129,7 +138,7 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     listParams.browseCb  = browseCb;
     
     if (List_Init(&pData->gfxElementsList, &listParams) != LIST_ERROR_NONE) {
-        goto exit;
+        goto listExit;
     }
     
     if (FbDev_Init(&pData->fbDevObj) != FBDEV_ERROR_NONE) {
@@ -168,13 +177,16 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
 fbDevExit:
     (void)List_UnInit(&pData->gfxElementsList);
 
-exit:
+listExit:
+    (void)pthread_mutex_destroy(&pData->lock);
+
+lockExit:
     free(pData);
     pData = NULL;
     
     free(*obj);
     *obj = NULL;
-    
+
     return GRAPHICS_ERROR_INIT;
 }
 
@@ -189,7 +201,9 @@ GRAPHICS_ERROR_E Graphics_UnInit(GRAPHICS_S **obj)
 
     (void)FbDev_UnInit(&pData->fbDevObj);
     (void)List_UnInit(&pData->gfxElementsList);
-    
+
+    (void)pthread_mutex_destroy(&pData->lock);
+
     free((*obj)->pData);
     (*obj)->pData = NULL;
     
@@ -209,9 +223,19 @@ GRAPHICS_ERROR_E Graphics_UnInit(GRAPHICS_S **obj)
 static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *params)
 {
     assert(obj && obj->pData && params);
-    
+
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
+        return GRAPHICS_ERROR_LOCK;
+    }
+
+    if (pData->drawerObj) {
+        Loge("Drawer already initialized");
+        goto drawerInitExit;
+    }
+
     memcpy(&pData->params.screenParams, &params->screenParams, sizeof(GFX_SCREEN_S));
     memcpy(&pData->params.colorOnFocus, &params->colorOnFocus, sizeof(GFX_COLOR_S));
     memcpy(&pData->params.colorOnBlur,  &params->colorOnBlur, sizeof(GFX_COLOR_S));
@@ -222,7 +246,7 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
     
     if (Drawer_Init(&pData->drawerObj) != DRAWER_ERROR_NONE) {
         Loge("Failed to init drawer");
-        return GRAPHICS_ERROR_DRAWER;
+        goto drawerInitExit;
     }
 
     uint8_t opened = 0;
@@ -238,7 +262,7 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
             || (pData->fbInfos.height < params->screenParams.rect.h)) {
             Loge("Invalid resolution - Max values : width = %u / height = %u",
                     pData->fbInfos.width, pData->fbInfos.height);
-            goto exit;
+            goto fbDevExit;
         }
 
         if (pData->fbInfos.depth != (uint32_t)params->screenParams.bitsPerPixel) {
@@ -250,7 +274,9 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
         Loge("Failed to init screen");
         goto initScreenExit;
     }
-    
+
+    (void)pthread_mutex_unlock(&pData->lock);
+
     return GRAPHICS_ERROR_NONE;
 
 initScreenExit:
@@ -258,11 +284,14 @@ initScreenExit:
         (void)pData->fbDevObj->restore(pData->fbDevObj);
     }
 
-exit:
+fbDevExit:
     if (opened) {
         (void)pData->fbDevObj->close(pData->fbDevObj);
     }
     (void)Drawer_UnInit(&pData->drawerObj);
+
+drawerInitExit:
+    (void)pthread_mutex_unlock(&pData->lock);
 
     return GRAPHICS_ERROR_DRAWER;
 }
@@ -275,6 +304,18 @@ static GRAPHICS_ERROR_E destroyDrawer_f(GRAPHICS_S *obj)
     assert(obj && obj->pData);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
+        return GRAPHICS_ERROR_LOCK;
+    }
+
+    if (!pData->drawerObj) {
+        Loge("Drawer not initialized yet");
+        ret = GRAPHICS_ERROR_DRAWER;
+        goto exit;
+    }
     
     pData->params.userData = NULL;
     
@@ -291,8 +332,13 @@ static GRAPHICS_ERROR_E destroyDrawer_f(GRAPHICS_S *obj)
     }
 
     (void)Drawer_UnInit(&pData->drawerObj);
-    
-    return GRAPHICS_ERROR_NONE;
+
+    (void)pthread_mutex_unlock(&pData->lock);
+
+exit:
+    (void)pthread_mutex_unlock(&pData->lock);
+
+    return ret;
 }
 
 /*!
@@ -301,8 +347,17 @@ static GRAPHICS_ERROR_E destroyDrawer_f(GRAPHICS_S *obj)
 static GRAPHICS_ERROR_E createElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S **newGfxElement)
 {
     assert(obj && obj->pData && newGfxElement);
+
+    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
+        return GRAPHICS_ERROR_LOCK;
+    }
     
     assert((*newGfxElement = calloc(1, sizeof(GFX_ELEMENT_S))));
+
+    (void)pthread_mutex_unlock(&pData->lock);
     
     return GRAPHICS_ERROR_NONE;
 }
@@ -313,18 +368,28 @@ static GRAPHICS_ERROR_E createElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S **newGfxE
 static GRAPHICS_ERROR_E pushElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement)
 {
     assert(obj && obj->pData && gfxElement);
-    
+
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
+        return GRAPHICS_ERROR_LOCK;
+    }
     
     if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
-        return GRAPHICS_ERROR_LOCK;
+        ret = GRAPHICS_ERROR_LOCK;
+        goto exit;
     }
     
     pData->gfxElementsList->add(pData->gfxElementsList, (void*)gfxElement);
     
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
-    
-    return GRAPHICS_ERROR_NONE;
+
+exit:
+    (void)pthread_mutex_unlock(&pData->lock);
+
+    return ret;
 }
 
 /*!
@@ -335,16 +400,26 @@ static GRAPHICS_ERROR_E removeElement_f(GRAPHICS_S *obj, char *gfxElementName)
     assert(obj && obj->pData && gfxElementName);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
+        return GRAPHICS_ERROR_LOCK;
+    }
     
     if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
-        return GRAPHICS_ERROR_LOCK;
+        ret = GRAPHICS_ERROR_LOCK;
+        goto exit;
     }
     
     pData->gfxElementsList->remove(pData->gfxElementsList, (void*)gfxElementName);
     
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
-    
-    return GRAPHICS_ERROR_NONE;
+
+exit:
+    (void)pthread_mutex_unlock(&pData->lock);
+
+    return ret;
 }
 
 /*!
@@ -355,16 +430,26 @@ static GRAPHICS_ERROR_E removeAll_f(GRAPHICS_S *obj)
     assert(obj && obj->pData);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
+        return GRAPHICS_ERROR_LOCK;
+    }
     
     if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
-        return GRAPHICS_ERROR_LOCK;
+        ret = GRAPHICS_ERROR_LOCK;
+        goto exit;
     }
     
     pData->gfxElementsList->removeAll(pData->gfxElementsList);
     
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+
+exit:
+    (void)pthread_mutex_unlock(&pData->lock);
     
-    return GRAPHICS_ERROR_NONE;
+    return ret;
 }
 
 /*!
@@ -375,13 +460,19 @@ static GRAPHICS_ERROR_E setVisible_f(GRAPHICS_S *obj, char *gfxElementName, uint
     assert(obj && obj->pData && gfxElementName);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    
-    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
     
+    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+        ret = GRAPHICS_ERROR_LOCK;
+        goto lockExit;
+    }
+    
     GFX_ELEMENT_S *gfxElement = NULL;
-    GRAPHICS_ERROR_E      ret = GRAPHICS_ERROR_NONE;
     
     if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->focusedElement;
@@ -392,32 +483,33 @@ static GRAPHICS_ERROR_E setVisible_f(GRAPHICS_S *obj, char *gfxElementName, uint
     else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
     }
-    else if (getElement_f(obj, gfxElementName, &gfxElement) != GRAPHICS_ERROR_NONE) {
-        goto exit;
+    else if ((ret = getElement_f(obj, gfxElementName, &gfxElement)) != GRAPHICS_ERROR_NONE) {
+        goto elementExit;
     }
     
     if (gfxElement->isVisible == isVisible) {
         Logd("Same visibility => not changed");
-        ret = GRAPHICS_ERROR_NONE;
-        goto exit;
+        goto elementExit;
     }
     
     gfxElement->isVisible      = isVisible;
     gfxElement->surfaceUpdated = 0;
  
-    if (updateGroup_f(obj, gfxElement->groupName, NULL) != GRAPHICS_ERROR_NONE) {
+    if ((ret = updateGroup_f(obj, gfxElement->groupName, NULL)) != GRAPHICS_ERROR_NONE) {
         Loge("Failed to update group : \"%s\"", gfxElement->groupName);
         gfxElement->isVisible = !isVisible;
-        ret = GRAPHICS_ERROR_DRAWER;
     }
 
     if (!gfxElement->isVisible && gfxElement->hasFocus) {
         Logw("Invisible element \"%s\" still has focus - Please, call setFocus on a visible element", gfxElement->name);
     }
 
-exit:    
+elementExit:    
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
-    
+
+lockExit:
+    (void)pthread_mutex_unlock(&pData->lock);
+
     return ret;
 }
 
@@ -429,17 +521,23 @@ static GRAPHICS_ERROR_E setFocus_f(GRAPHICS_S *obj, char *gfxElementName)
     assert(obj && obj->pData && gfxElementName);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    
-    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
     
-    GRAPHICS_ERROR_E      ret = GRAPHICS_ERROR_NONE;
+    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+        ret = GRAPHICS_ERROR_LOCK;
+        goto lockExit;
+    }
+    
     GFX_ELEMENT_S *gfxElement = NULL;
     
     if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
         Logd("\"%s\" already has focus", gfxElementName);
-        goto exit;
+        goto elementExit;
     }
     else if (pData->videoElement && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->videoElement;
@@ -447,29 +545,31 @@ static GRAPHICS_ERROR_E setFocus_f(GRAPHICS_S *obj, char *gfxElementName)
     else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
     }
-    else if (getElement_f(obj, gfxElementName, &gfxElement) != GRAPHICS_ERROR_NONE) {
-        goto exit;
+    else if ((ret = getElement_f(obj, gfxElementName, &gfxElement)) != GRAPHICS_ERROR_NONE) {
+        goto elementExit;
     }
     
     if (!gfxElement->isFocusable) {
         Logw("\"%s\" is not focusable", gfxElementName);
-        goto exit;
+        goto elementExit;
     }
     
     if (!gfxElement->isVisible) {
         Logw("\"%s\" is not visible", gfxElementName);
-        goto exit;
+        goto elementExit;
     }
     
     gfxElement->hasFocus = 1;
         
-    if (updateElement_f(obj, gfxElement) != GRAPHICS_ERROR_NONE) {
+    if ((ret = updateElement_f(obj, gfxElement)) != GRAPHICS_ERROR_NONE) {
         Loge("Failed to update element : \"%s\"", gfxElementName);
-        ret = GRAPHICS_ERROR_DRAWER;
     }
 
-exit: 
+elementExit: 
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+
+lockExit:
+    (void)pthread_mutex_unlock(&pData->lock);
     
     return ret;
 }
@@ -482,13 +582,19 @@ static GRAPHICS_ERROR_E setClickable_f(GRAPHICS_S *obj, char *gfxElementName, ui
     assert(obj && obj->pData && gfxElementName);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    
-    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
     
+    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+        ret = GRAPHICS_ERROR_LOCK;
+        goto lockExit;
+    }
+    
     GFX_ELEMENT_S *gfxElement = NULL;
-    GRAPHICS_ERROR_E      ret = GRAPHICS_ERROR_NONE;
     
     if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->focusedElement;
@@ -499,20 +605,22 @@ static GRAPHICS_ERROR_E setClickable_f(GRAPHICS_S *obj, char *gfxElementName, ui
     else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
     }
-    else if (getElement_f(obj, gfxElementName, &gfxElement) != GRAPHICS_ERROR_NONE) {
-        goto exit;
+    else if ((ret = getElement_f(obj, gfxElementName, &gfxElement)) != GRAPHICS_ERROR_NONE) {
+        goto elementExit;
     }
     
     if (gfxElement->isClickable == isClickable) {
         Logd("Same value => not changed");
-        ret = GRAPHICS_ERROR_NONE;
-        goto exit;
+        goto elementExit;
     }
     
     gfxElement->isClickable = isClickable;
 
-exit:
+elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+
+lockExit:
+    (void)pthread_mutex_unlock(&pData->lock);
     
     return ret;
 }
@@ -525,13 +633,19 @@ static GRAPHICS_ERROR_E setNav_f(GRAPHICS_S *obj, char *gfxElementName, GFX_NAV_
     assert(obj && obj->pData && gfxElementName && nav);
 
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
 
+    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+        ret = GRAPHICS_ERROR_LOCK;
+        goto lockExit;
+    }
+
     GFX_ELEMENT_S *gfxElement = NULL;
-    GRAPHICS_ERROR_E ret      = GRAPHICS_ERROR_NONE;
 
     if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->focusedElement;
@@ -542,14 +656,17 @@ static GRAPHICS_ERROR_E setNav_f(GRAPHICS_S *obj, char *gfxElementName, GFX_NAV_
     else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
     }
-    else if (getElement_f(obj, gfxElementName, &gfxElement) != GRAPHICS_ERROR_NONE) {
-        goto exit;
+    else if ((ret = getElement_f(obj, gfxElementName, &gfxElement)) != GRAPHICS_ERROR_NONE) {
+        goto elementExit;
     }
 
     memcpy(&gfxElement->nav, nav, sizeof(GFX_NAV_S));
 
-exit:
+elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+
+lockExit:
+    (void)pthread_mutex_unlock(&pData->lock);
 
     return ret;
 }
@@ -562,16 +679,23 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
     assert(obj && obj->pData && gfxElementName && data);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    
-    if (!pData->drawerObj) {
-        return GRAPHICS_ERROR_DRAWER;
-    }
-    
-    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
     
-    GRAPHICS_ERROR_E ret      = GRAPHICS_ERROR_NONE;
+    if (!pData->drawerObj) {
+        ret = GRAPHICS_ERROR_DRAWER;
+        goto lockExit;
+    }
+    
+    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+        ret = GRAPHICS_ERROR_LOCK;
+        goto lockExit;
+    }
+
     GFX_ELEMENT_S *gfxElement = NULL;
     
     if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
@@ -583,8 +707,8 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
     else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
     }
-    else if (getElement_f(obj, gfxElementName, &gfxElement) != GRAPHICS_ERROR_NONE) {
-        goto exit;
+    else if ((ret = getElement_f(obj, gfxElementName, &gfxElement)) != GRAPHICS_ERROR_NONE) {
+        goto elementExit;
     }
         
     switch (gfxElement->type) {
@@ -614,29 +738,30 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
             if (pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect, &pData->params.colorOnReset) != DRAWER_ERROR_NONE) {
                 Loge("Failed to set background color of element \"%s\"", gfxElement->name);
                 ret = GRAPHICS_ERROR_DRAWER;
-                goto exit;
+                goto elementExit;
             }
             memcpy(&gfxElement->data.text, (GFX_TEXT_S*)data, sizeof(GFX_TEXT_S));
             break;
                 
         default:
             ret = GRAPHICS_ERROR_DRAWER;
-            goto exit;
+            goto elementExit;
     }
     
     if (gfxElement->redrawGroup) {
-        if (updateGroup_f(obj, gfxElement->groupName, NULL) != GRAPHICS_ERROR_NONE) {
+        if ((ret = updateGroup_f(obj, gfxElement->groupName, NULL)) != GRAPHICS_ERROR_NONE) {
             Loge("Failed to update group : \"%s\"", gfxElement->groupName);
-            ret = GRAPHICS_ERROR_DRAWER;
         }
     }
-    else if (updateElement_f(obj, gfxElement) != GRAPHICS_ERROR_NONE) {
+    else if ((ret = updateElement_f(obj, gfxElement)) != GRAPHICS_ERROR_NONE) {
         Loge("Failed to update element : \"%s\"", gfxElementName);
-        ret = GRAPHICS_ERROR_DRAWER;
     }
     
-exit:
+elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+
+lockExit:
+    (void)pthread_mutex_unlock(&pData->lock);
     
     return ret;
 }
@@ -649,18 +774,24 @@ static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_
     assert(obj && obj->pData && inOut);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_PARAMS;
 
-    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
 
-    GRAPHICS_ERROR_E ret = GRAPHICS_ERROR_PARAMS;
+    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+        ret = GRAPHICS_ERROR_LOCK;
+        goto lockExit;
+    }
+
     BUFFER_S videoBuffer = { 0 };
 
     if (!buffer) {
         if (!pData->videoElement) {
             Loge("No video frame to save");
-            goto exit;
+            goto elementExit;
         }
         Logd("Creating screenshot from the last drawn video frame");
         videoBuffer.data   = pData->videoElement->data.buffer.data;
@@ -673,13 +804,16 @@ static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_
     
     if (pData->drawerObj->saveBuffer(pData->drawerObj, &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
         ret = GRAPHICS_ERROR_DRAWER;
-        goto exit;
+        goto elementExit;
     }
 
     ret = GRAPHICS_ERROR_NONE;
 
-exit:
+elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+
+lockExit:
+    (void)pthread_mutex_unlock(&pData->lock);
 
     return ret;
 }
@@ -692,12 +826,18 @@ static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName
     assert(obj && obj->pData && gfxElementName && inOut);
 
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_PARAMS;
 
-    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
 
-    GRAPHICS_ERROR_E ret = GRAPHICS_ERROR_PARAMS;
+    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+        ret = GRAPHICS_ERROR_LOCK;
+        goto lockExit;
+    }
+
     BUFFER_S videoBuffer = { 0 };
 
     if (!pData->videoElement && (strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE) == 0)) {
@@ -709,17 +849,17 @@ static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName
 
         if (getElement_f(obj, gfxElementName, &gfxElement) != GRAPHICS_ERROR_NONE) {
             Loge("Element \"%s\" not found", gfxElementName);
-            goto exit;
+            goto elementExit;
         }
 
         if (gfxElement->type != GFX_ELEMENT_TYPE_VIDEO) {
             Loge("\"%s\" is not a video element", gfxElementName);
-            goto exit;
+            goto elementExit;
         }
 
         if (!gfxElement->data.buffer.data || (gfxElement->data.buffer.length == 0)) {
             Logw("No video frame to save");
-            goto exit;
+            goto elementExit;
         }
 
         videoBuffer.data   = gfxElement->data.buffer.data;
@@ -728,13 +868,16 @@ static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName
 
     if (pData->drawerObj->saveBuffer(pData->drawerObj, &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
         ret = GRAPHICS_ERROR_DRAWER;
-        goto exit;
+        goto elementExit;
     }
 
     ret = GRAPHICS_ERROR_NONE;
 
-exit:
+elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
+
+lockExit:
+    (void)pthread_mutex_unlock(&pData->lock);
 
     return ret;
 }
@@ -747,12 +890,20 @@ static GRAPHICS_ERROR_E takeScreenshot_f(GRAPHICS_S *obj, GFX_IMAGE_S *inOut)
     assert(obj && obj->pData && inOut);
 
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pData->drawerObj->saveScreen(pData->drawerObj, inOut) != DRAWER_ERROR_NONE) {
-        return GRAPHICS_ERROR_DRAWER;
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
+        return GRAPHICS_ERROR_LOCK;
     }
 
-    return GRAPHICS_ERROR_NONE;
+    if (pData->drawerObj->saveScreen(pData->drawerObj, inOut) != DRAWER_ERROR_NONE) {
+        ret = GRAPHICS_ERROR_DRAWER;
+    }
+
+    (void)pthread_mutex_unlock(&pData->lock);
+
+    return ret;
 }
 
 /*!
@@ -763,12 +914,17 @@ static GRAPHICS_ERROR_E drawAllElements_f(GRAPHICS_S *obj)
     assert(obj && obj->pData);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    
-    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
     
-    GRAPHICS_ERROR_E ret = GRAPHICS_ERROR_NONE;
+    if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
+        ret = GRAPHICS_ERROR_LOCK;
+        goto lockExit;
+    }
     
     if (pData->gfxElementsList->browseElements(pData->gfxElementsList, obj) != LIST_ERROR_NONE) {
         Loge("Failed to browse elements' list");
@@ -776,7 +932,10 @@ static GRAPHICS_ERROR_E drawAllElements_f(GRAPHICS_S *obj)
     }
     
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
-    
+
+lockExit:
+    (void)pthread_mutex_unlock(&pData->lock);
+
     return ret;
 }
 
@@ -790,11 +949,11 @@ static GRAPHICS_ERROR_E simulateGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEven
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
 
     if (pData->quit) {
-        Logw("Too late! Stopping graphics module");
+        Logw("Too late! Graphics module is sstopped or being stopped");
         return GRAPHICS_ERROR_NONE;
     }
 
-    return handleGfxEvent_f(obj, gfxEvent);;
+    return handleGfxEvent_f(obj, gfxEvent);
 }
 
 /*!
@@ -812,7 +971,7 @@ static GRAPHICS_ERROR_E handleGfxEvents_f(GRAPHICS_S *obj)
 
     GFX_EVENT_S evt;
 
-    while (!pData->quit) {
+    while (!pData->quit && pData->drawerObj) {
         if (pData->drawerObj->getEvent(pData->drawerObj, &evt) != DRAWER_ERROR_NONE) {
             continue;
         }
@@ -832,9 +991,18 @@ static GRAPHICS_ERROR_E handleGfxEvents_f(GRAPHICS_S *obj)
 static GRAPHICS_ERROR_E quit_f(GRAPHICS_S *obj)
 {
     assert(obj && obj->pData);
+
+    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
+        return GRAPHICS_ERROR_LOCK;
+    }
     
-    ((GRAPHICS_PRIVATE_DATA_S*)(obj->pData))->quit = 1;
-    
+    pData->quit = 1;
+
+    (void)pthread_mutex_unlock(&pData->lock);
+
     return GRAPHICS_ERROR_NONE;
 }
 

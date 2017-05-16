@@ -46,31 +46,31 @@
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-static void updateText (HANDLERS_S *obj, char *targetName, void *pData, char *handlerData);
-static void updateImage(HANDLERS_S *obj, char *targetName, void *pData, char *handlerData);
-static void updateNav  (HANDLERS_S *obj, char *targetName, void *pData, char *handlerData);
+static HANDLERS_ERROR_E updateText (HANDLERS_S *obj, char *targetName, void *pData, char *handlerData);
+static HANDLERS_ERROR_E updateImage(HANDLERS_S *obj, char *targetName, void *pData, char *handlerData);
+static HANDLERS_ERROR_E updateNav  (HANDLERS_S *obj, char *targetName, void *pData, char *handlerData);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-CLICK_HANDLERS_S gMultiInputsClickHandlers[] = {
-	{ "updateText",                 NULL,             updateText       },
-	{ "updateImage",                NULL,             updateImage      },
-	{ "updateNav",                  NULL,             updateNav        },
-	{ NULL,                         NULL,             NULL             }
+COMMAND_HANDLERS_S gMultiInputsHandlers[] = {
+	{ HANDLERS_COMMAND_UPDATE_TEXT,                 NULL,               updateText  },
+	{ HANDLERS_COMMAND_UPDATE_IMAGE,                NULL,               updateImage },
+	{ HANDLERS_COMMAND_UPDATE_NAV,                  NULL,               updateNav   },
+	{ NULL,                                         NULL,               NULL        }
 };
 
-uint32_t gNbMultiInputsClickHandlers = (uint32_t)(sizeof(gMultiInputsClickHandlers) / sizeof(gMultiInputsClickHandlers[0]));
+uint32_t gNbMultiInputsHandlers = (uint32_t)(sizeof(gMultiInputsHandlers) / sizeof(gMultiInputsHandlers[0]));
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                        CLICK HANDLERS                                        */
+/*                                       COMMAND HANDLERS                                       */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static void updateText(HANDLERS_S *obj, char *targetName, void *pData, char *handlerData)
+static HANDLERS_ERROR_E updateText(HANDLERS_S *obj, char *targetName, void *pData, char *handlerData)
 {
     assert(obj && obj->pData && targetName);
 
@@ -78,18 +78,26 @@ static void updateText(HANDLERS_S *obj, char *targetName, void *pData, char *han
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    HANDLERS_PRIVATE_DATA_S *pvData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pvData->ctx;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
+
+    HANDLERS_ERROR_E ret = HANDLERS_ERROR_NONE;
 
     uint32_t index;
-    if (obj->getElementIndex(obj, targetName, &index) != HANDLERS_ERROR_NONE) {
-        return;
+    if ((ret = obj->getElementIndex(obj, targetName, &index)) != HANDLERS_ERROR_NONE) {
+        return ret;
     }
 
-    HANDLERS_PRIVATE_DATA_S *pvData     = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                      = pvData->ctx;
     GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos     = &ctx->params.graphicsInfos;
     GFX_ELEMENT_S *gfxElement           = graphicsInfos->gfxElements[index];
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElement->pData;
 
@@ -106,30 +114,45 @@ static void updateText(HANDLERS_S *obj, char *targetName, void *pData, char *han
 
     elementData->getters.getColor(elementData->getters.userData, colorId, &text.color);
 
-    (void)graphicsObj->setData(graphicsObj, gfxElement->name, (void*)&text);
+    if (graphicsObj->setData(graphicsObj, gfxElement->name, (void*)&text) != GRAPHICS_ERROR_NONE) {
+        Loge("setData( failed for element \"%s\"", gfxElement->name);
+        ret = HANDLERS_ERROR_COMMAND;
+    }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void updateImage(HANDLERS_S *obj, char *targetName, void *pData, char *handlerData)
+static HANDLERS_ERROR_E updateImage(HANDLERS_S *obj, char *targetName, void *pData, char *handlerData)
 {
     assert(obj && obj->pData && targetName);
 
+    (void)pData;
+
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    HANDLERS_PRIVATE_DATA_S *pvData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pvData->ctx;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
+
+    HANDLERS_ERROR_E ret = HANDLERS_ERROR_NONE;
 
     uint32_t index;
-    if (obj->getElementIndex(obj, targetName, &index) != HANDLERS_ERROR_NONE) {
-        return;
+    if ((ret = obj->getElementIndex(obj, targetName, &index)) != HANDLERS_ERROR_NONE) {
+        return ret;
     }
 
-    HANDLERS_PRIVATE_DATA_S *pvData     = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                      = pvData->ctx;
     GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos     = &ctx->params.graphicsInfos;
     GFX_ELEMENT_S *gfxElement           = graphicsInfos->gfxElements[index];
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElement->pData;
 
@@ -148,48 +171,63 @@ static void updateImage(HANDLERS_S *obj, char *targetName, void *pData, char *ha
         elementData->getters.getColor(elementData->getters.userData, hiddenColorId, &hiddenColor);
     }
 
-    (void)graphicsObj->setData(graphicsObj, gfxElement->name, (void*)&image);
+    if (graphicsObj->setData(graphicsObj, gfxElement->name, (void*)&image) != GRAPHICS_ERROR_NONE) {
+        Loge("setData( failed for element \"%s\"", gfxElement->name);
+        ret = HANDLERS_ERROR_COMMAND;
+    }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void updateNav(HANDLERS_S *obj, char *targetName, void *pData, char *handlerData)
+static HANDLERS_ERROR_E updateNav(HANDLERS_S *obj, char *targetName, void *pData, char *handlerData)
 {
     assert(obj && obj->pData && targetName);
 
+    (void)pData;
+
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
-    }
-
-    uint32_t index;
-    if (obj->getElementIndex(obj, targetName, &index) != HANDLERS_ERROR_NONE) {
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
 
     HANDLERS_PRIVATE_DATA_S *pvData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                  = pvData->ctx;
-    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
-    GFX_ELEMENT_S *gfxElement       = graphicsInfos->gfxElements[index];
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
+
+    HANDLERS_ERROR_E ret = HANDLERS_ERROR_NONE;
+
+    uint32_t index;
+    if ((ret = obj->getElementIndex(obj, targetName, &index)) != HANDLERS_ERROR_NONE) {
+        return ret;
+    }
+
+    GRAPHICS_S *graphicsObj   = ctx->modules.graphicsObj;
+    GFX_ELEMENT_S *gfxElement = graphicsInfos->gfxElements[index];
 
     GFX_NAV_S nav   = { 0 };
     uint32_t offset = 0;
 
-    if (obj->getSubstring(obj, handlerData, ";", nav.left, &offset) != HANDLERS_ERROR_NONE) {
+    if ((ret = obj->getSubstring(obj, handlerData, ";", nav.left, &offset)) != HANDLERS_ERROR_NONE) {
         Loge("Bad format. Expected: <left>;<up>;<right>;<down>");
-        return;
+        return ret;
     }
 
-    if (obj->getSubstring(obj, handlerData, ";", nav.up, &offset) != HANDLERS_ERROR_NONE) {
+    if ((ret = obj->getSubstring(obj, handlerData, ";", nav.up, &offset)) != HANDLERS_ERROR_NONE) {
         Loge("Bad format. Expected: <left>;<up>;<right>;<down>");
-        return;
+        return ret;
     }
 
-    if (obj->getSubstring(obj, handlerData, ";", nav.right, &offset) != HANDLERS_ERROR_NONE) {
+    if ((ret = obj->getSubstring(obj, handlerData, ";", nav.right, &offset)) != HANDLERS_ERROR_NONE) {
         Loge("Bad format. Expected: <left>;<up>;<right>;<down>");
-        return;
+        return ret;
     }
 
     if (obj->getSubstring(obj, handlerData, ";", nav.down, &offset) != HANDLERS_ERROR_NONE) {
@@ -198,5 +236,10 @@ static void updateNav(HANDLERS_S *obj, char *targetName, void *pData, char *hand
 
     Logd("Updating nav of element \"%s\" / Params : %s | %s | %s | %s", gfxElement->name, nav.left, nav.up, nav.right, nav.down);
 
-    (void)graphicsObj->setNav(graphicsObj, gfxElement->name, &nav);
+    if (graphicsObj->setNav(graphicsObj, gfxElement->name, &nav) != GRAPHICS_ERROR_NONE) {
+        Loge("setNav( failed for element \"%s\"", gfxElement->name);
+        ret = HANDLERS_ERROR_COMMAND;
+    }
+
+    return ret;
 }

@@ -67,8 +67,8 @@ static CONTROL_ERROR_E unsetElementTextIds_f(CONTROL_S *obj, void *data);
 static CONTROL_ERROR_E setElementImageIds_f  (CONTROL_S *obj, void *data, CONTROL_IMAGE_IDS_S *imageIds);
 static CONTROL_ERROR_E unsetElementImageIds_f(CONTROL_S *obj, void *data);
 
-static CONTROL_ERROR_E setClickHandlers_f  (CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index);
-static CONTROL_ERROR_E unsetClickHandlers_f(CONTROL_S *obj, void *data);
+static CONTROL_ERROR_E setCommandHandlers_f  (CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index);
+static CONTROL_ERROR_E unsetCommandHandlers_f(CONTROL_S *obj, void *data);
 
 static CONTROL_ERROR_E handleClick_f(CONTROL_S *obj, GFX_EVENT_S *gfxEvent);
 
@@ -102,8 +102,8 @@ CONTROL_ERROR_E Control_Init(CONTROL_S **obj, CONTEXT_S *ctx)
     (*obj)->setElementImageIds   = setElementImageIds_f;
     (*obj)->unsetElementImageIds = unsetElementImageIds_f;
 
-    (*obj)->setClickHandlers     = setClickHandlers_f;
-    (*obj)->unsetClickHandlers   = unsetClickHandlers_f;
+    (*obj)->setCommandHandlers   = setCommandHandlers_f;
+    (*obj)->unsetCommandHandlers = unsetCommandHandlers_f;
 
     (*obj)->handleClick          = handleClick_f;
 
@@ -267,28 +267,31 @@ CONTROL_ERROR_E unsetElementImageIds_f(CONTROL_S *obj, void *data)
 /*!
  *
  */
-CONTROL_ERROR_E setClickHandlers_f(CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index)
+CONTROL_ERROR_E setCommandHandlers_f(CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index)
 {
     assert(obj && obj->pData && data);
 
     CONTROL_PRIVATE_DATA_S *pData       = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
 
-    elementData->index           = index;
-    elementData->nbClickHandlers = nbHandlers;
+    elementData->index             = index;
+    elementData->nbCommandHandlers = nbHandlers;
 
     if (!handlers || (nbHandlers == 0)) {
         return CONTROL_ERROR_PARAMS;
     }
 
-    assert((elementData->clickHandlers = calloc(1, nbHandlers * sizeof(CLICK_HANDLERS_S))));
+    assert((elementData->commandHandlers = calloc(1, nbHandlers * sizeof(COMMAND_HANDLERS_S))));
 
     uint32_t i;
     for (i = 0; i < nbHandlers; i++) {
-        (elementData->clickHandlers[i]).name = strdup((handlers[i]).name);
-        (elementData->clickHandlers[i]).data = strdup((handlers[i]).data);
+        (elementData->commandHandlers[i]).name = strdup((handlers[i]).name);
+        (elementData->commandHandlers[i]).data = strdup((handlers[i]).data);
 
-        (void)pData->handlersObj->getClickHandler(pData->handlersObj, (handlers[i]).name, &(elementData->clickHandlers[i]).fct);
+        (void)pData->handlersObj->getCommandHandler(
+                                                    pData->handlersObj,
+                                                    (handlers[i]).name, &(elementData->commandHandlers[i]).fct
+                                                   );
     }
 
     return CONTROL_ERROR_NONE;
@@ -297,26 +300,26 @@ CONTROL_ERROR_E setClickHandlers_f(CONTROL_S *obj, void *data, HANDLERS_ID_S *ha
 /*!
  *
  */
-CONTROL_ERROR_E unsetClickHandlers_f(CONTROL_S *obj, void *data)
+CONTROL_ERROR_E unsetCommandHandlers_f(CONTROL_S *obj, void *data)
 {
     assert(obj && data);
 
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
 
     uint32_t i;
-    for (i = 0; i < elementData->nbClickHandlers; i++) {
-        if ((elementData->clickHandlers[i]).name) {
-            free((elementData->clickHandlers[i]).name);
-            (elementData->clickHandlers[i]).name = NULL;
+    for (i = 0; i < elementData->nbCommandHandlers; i++) {
+        if ((elementData->commandHandlers[i]).name) {
+            free((elementData->commandHandlers[i]).name);
+            (elementData->commandHandlers[i]).name = NULL;
         }
-        if ((elementData->clickHandlers[i]).data) {
-            free((elementData->clickHandlers[i]).data);
-            (elementData->clickHandlers[i]).data = NULL;
+        if ((elementData->commandHandlers[i]).data) {
+            free((elementData->commandHandlers[i]).data);
+            (elementData->commandHandlers[i]).data = NULL;
         }
-        (elementData->clickHandlers[i]).fct = NULL;
+        (elementData->commandHandlers[i]).fct = NULL;
     }
 
-    elementData->clickHandlers = NULL;
+    elementData->commandHandlers = NULL;
 
     return CONTROL_ERROR_NONE;
 }
@@ -337,11 +340,11 @@ CONTROL_ERROR_E handleClick_f(CONTROL_S *obj, GFX_EVENT_S *gfxEvent)
     }
 
     uint32_t i;
-    for (i = 0; i < elementData->nbClickHandlers; i++) {
-        if ((elementData->clickHandlers[i]).fct) {
-            Logd("Calling click handler : %s", (elementData->clickHandlers[i]).name);
-            (elementData->clickHandlers[i]).fct(pData->handlersObj, gfxEvent->gfxElementName,
-                                                elementData, (elementData->clickHandlers[i]).data);
+    for (i = 0; i < elementData->nbCommandHandlers; i++) {
+        if ((elementData->commandHandlers[i]).fct) {
+            Logd("Calling command handler : %s", (elementData->commandHandlers[i]).name);
+            (void)(elementData->commandHandlers[i]).fct(pData->handlersObj, gfxEvent->gfxElementName,
+                                                elementData, (elementData->commandHandlers[i]).data);
         }
     }
 

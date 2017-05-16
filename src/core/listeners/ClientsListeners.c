@@ -70,17 +70,20 @@ LISTENERS_ERROR_E setClientsListeners_f(LISTENERS_S *obj)
     LISTENERS_PDATA_S *pData = (LISTENERS_PDATA_S*)(obj->pData);
     INPUT_S *input           = &pData->ctx->input;
     
-    if (!input->graphicsEnabled && !input->serversEnabled) {
-        Logw("At least server or graphics module must be enabled");
+    if (!input->graphicsConfig.enable && !input->serversConfig.enable) {
+        Logw("At least servers or graphics module must be enabled");
     }
     else {
         CLIENTS_INFOS_S *clientsInfos = &pData->ctx->params.clientsInfos;
+        CLIENT_PARAMS_S *clientParams = NULL;
         uint8_t index;
         
         for (index = 0; index < clientsInfos->nbClients; index++) {
-            clientsInfos->clientParams[index]->onDataReceivedCb = onClientDataCb;
-            clientsInfos->clientParams[index]->onLinkBrokenCb   = onClientLinkCb;
-            clientsInfos->clientParams[index]->userData         = pData;
+            clientParams = &(clientsInfos->clientInfos[index])->clientParams;
+
+            clientParams->onDataReceivedCb = onClientDataCb;
+            clientParams->onLinkBrokenCb   = onClientLinkCb;
+            clientParams->userData         = pData;
         }
     }
     
@@ -94,11 +97,12 @@ LISTENERS_ERROR_E unsetClientsListeners_f(LISTENERS_S *obj)
 {
     assert(obj && obj->pData);
     
-    LISTENERS_PDATA_S *pData = (LISTENERS_PDATA_S*)(obj->pData);
+    LISTENERS_PDATA_S *pData      = (LISTENERS_PDATA_S*)(obj->pData);
+    CLIENTS_INFOS_S *clientsInfos = &pData->ctx->params.clientsInfos;
     
     uint8_t index;
-    for (index = 0; index < pData->ctx->params.clientsInfos.nbClients; index++) {
-        pData->ctx->params.clientsInfos.clientParams[index]->userData = NULL;
+    for (index = 0; index < clientsInfos->nbClients; index++) {
+        (clientsInfos->clientInfos[index])->clientParams.userData = NULL;
     }
     
     return LISTENERS_ERROR_NONE;
@@ -115,71 +119,79 @@ static void onClientDataCb(CLIENT_PARAMS_S *params, BUFFER_S *buffer, void *user
 {
     assert(params && buffer && userData);
     
-    LISTENERS_PDATA_S *pData      = (LISTENERS_PDATA_S*)userData;
-    INPUT_S *input                = &pData->ctx->input;
-    GRAPHICS_S *graphicsObj       = pData->ctx->modules.graphicsObj;
-    SERVER_S *serverObj           = pData->ctx->modules.serverObj;
-    CLIENTS_INFOS_S *clientsInfos = &pData->ctx->params.clientsInfos;
-    
-    char **graphicsDest           = clientsInfos->graphicsDest;
-    int8_t *graphicsIndex         = clientsInfos->graphicsIndex;
-    
-    char **serverDest             = clientsInfos->serverDest;
-    int8_t *serverIndex           = clientsInfos->serverIndex;
+    LISTENERS_PDATA_S *pData        = (LISTENERS_PDATA_S*)userData;
+    INPUT_S *input                  = &pData->ctx->input;
+    GRAPHICS_S *graphicsObj         = pData->ctx->modules.graphicsObj;
+    SERVER_S *serverObj             = pData->ctx->modules.serverObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
+    SERVERS_INFOS_S *serversInfos   = &pData->ctx->params.serversInfos;
+    SERVER_INFOS_S *serverInfos     = NULL;
+    CLIENTS_INFOS_S *clientsInfos   = &pData->ctx->params.clientsInfos;
+    CLIENT_INFOS_S *clientInfos     = NULL;
     
     uint8_t i, j;
     for (i = 0; i < clientsInfos->nbClients; i++) {
-        if (strcmp(params->name, clientsInfos->clientParams[i]->name) == 0) {
+        clientInfos = clientsInfos->clientInfos[i];
+
+        if (strcmp(params->name, clientInfos->clientParams.name) == 0) {
             Logd("Client \"%s\" found at index \"%u\"", params->name, i);
             break;
         }
     }
-    
+
+    if (i == clientsInfos->nbClients) {
+        Loge("Client \"%s\" not found", params->name);
+        return;
+    }
+
     pData->buffer.data   = buffer->data;
     pData->buffer.length = buffer->length;
-    
-    if (input->graphicsEnabled && graphicsObj && graphicsDest[i]) {
-        GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
-            
-        if (graphicsIndex[i] == -1) {
+
+    if (graphicsObj && clientInfos->graphicsDest) {
+        if (clientInfos->graphicsIndex == -1) {
             for (j = 0; j < graphicsInfos->nbGfxElements; j++) {
-                if (strcmp(graphicsInfos->gfxElements[j]->name, graphicsDest[i]) == 0) {
-                    Logd("Element \"%s\" found at index \"%u\"", graphicsDest[i], j);
+                if (strcmp(graphicsInfos->gfxElements[j]->name, clientInfos->graphicsDest) == 0) {
+                    Logd("Element \"%s\" found at index \"%u\"", clientInfos->graphicsDest, j);
                     break;
                 }
             }
             if (j < graphicsInfos->nbGfxElements) {
-                graphicsIndex[i] = j;
+                clientInfos->graphicsIndex = j;
             }
             else {
-                Loge("Element \"%s\" does not exist", graphicsDest[i]);
+                Loge("Element \"%s\" does not exist", clientInfos->graphicsDest);
             }
         }
         
-        if (graphicsIndex[i] != -1) {
-            graphicsObj->setData(graphicsObj, graphicsDest[i], &pData->buffer);
+        if ((graphicsInfos->state == MODULE_STATE_STARTED) && (clientInfos->graphicsIndex != -1)) {
+            graphicsObj->setData(graphicsObj, clientInfos->graphicsDest, &pData->buffer);
         }
     }
     
-    if (input->serversEnabled && serverObj && serverDest) {
-        SERVERS_INFOS_S *serversInfos = &pData->ctx->params.serversInfos;
-        if (serverIndex[i] == -1) {
+    if (serverObj && clientInfos->serverDest) {
+        if (clientInfos->serverIndex == -1) {
             for (j = 0; j < serversInfos->nbServers; j++) {
-                if (strcmp(serversInfos->serverParams[j]->name, serverDest[i]) == 0) {
-                    Logd("Server \"%s\" found at index \"%u\"", serverDest[i], j);
+                serverInfos = serversInfos->serverInfos[j];
+
+                if (strcmp(serverInfos->serverParams.name, clientInfos->serverDest) == 0) {
+                    Logd("Server \"%s\" found at index \"%u\"", clientInfos->serverDest, j);
                     break;
                 }
             }
-            if (j < serversInfos->nbServers) {
-                serverIndex[i] = j;
+
+            if (j == serversInfos->nbServers) {
+                Loge("Server \"%s\" does not exist", clientInfos->serverDest);
+                return;
             }
-            else {
-                Loge("Server \"%s\" does not exist", serverDest[i]);
-            }
+
+            clientInfos->serverIndex = j;
+        }
+        else {
+            serverInfos = serversInfos->serverInfos[clientInfos->serverIndex];
         }
         
-        if (serverIndex[i] != -1) {
-            serverObj->sendData(serverObj, serversInfos->serverParams[serverIndex[i]], &pData->buffer);
+        if (serverInfos->state == MODULE_STATE_STARTED) {
+            serverObj->sendData(serverObj, &serverInfos->serverParams, &pData->buffer);
         }
     }
 }

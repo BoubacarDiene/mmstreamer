@@ -100,12 +100,12 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
 {
     assert(obj && ctx && xmlGraphics);
     
-    PARSER_S *parserObj   = ctx->modules.parserObj;
-    INPUT_S *input        = &ctx->input;
+    PARSER_S *parserObj = ctx->parserObj;
+    INPUT_S *input      = &ctx->input;
     
     xmlGraphics->reserved = ctx;
     
-    Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->graphicsXml);
+    Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->graphicsConfig.xml);
     
     PARSER_TAGS_HANDLER_S gfxTagsHandlers[] = {
         { XML_TAG_COMMON,      onCommonCb,             NULL,                NULL },
@@ -130,7 +130,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
     };
     
     PARSER_PARAMS_S gfxParserParams;
-    snprintf(gfxParserParams.path, sizeof(gfxParserParams.path), "%s/%s", input->resRootDir, input->graphicsXml);
+    snprintf(gfxParserParams.path, sizeof(gfxParserParams.path), "%s/%s", input->resRootDir, input->graphicsConfig.xml);
     gfxParserParams.encoding     = PARSER_ENCODING_UTF_8;
     gfxParserParams.tagsHandlers = gfxTagsHandlers;
     gfxParserParams.onErrorCb    = onErrorCb;
@@ -413,7 +413,7 @@ static void onCommonCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -444,7 +444,7 @@ static void onColorsCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -475,7 +475,7 @@ static void onImagesCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -506,7 +506,7 @@ static void onFontsCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -537,7 +537,7 @@ static void onStringsCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -569,7 +569,7 @@ static void onScreenCb(void *userData, const char **attrs)
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     XML_SCREEN_S *screen        = &xmlGraphics->screen;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -643,7 +643,7 @@ static void onBackgroundCb(void *userData, const char **attrs)
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     XML_SCREEN_S *screen        = &xmlGraphics->screen;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -693,7 +693,7 @@ static void onIconCb(void *userData, const char **attrs)
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     XML_SCREEN_S *screen        = &xmlGraphics->screen;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -730,7 +730,7 @@ static void onElementStartCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     Logd("Adding element %u", (xmlGraphics->nbElements + 1));
     
@@ -826,7 +826,7 @@ static void onElementConfigCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     XML_ELEMENT_S *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
@@ -876,7 +876,7 @@ static void onElementTextCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     XML_ELEMENT_S *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
     
     assert((element->text = calloc(1, sizeof(XML_ELEMENT_TEXT_S))));
@@ -928,7 +928,7 @@ static void onElementNavCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     XML_ELEMENT_S *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
     
     assert((element->nav = calloc(1, sizeof(XML_ELEMENT_NAV_S))));
@@ -980,7 +980,7 @@ static void onElementImageCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     XML_ELEMENT_S *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
     
     assert((element->image = calloc(1, sizeof(XML_ELEMENT_IMAGE_S))));
@@ -1043,7 +1043,7 @@ static void onElementHandlerCb(void *userData, const char **attrs)
 
     XML_GRAPHICS_S *xmlGraphics  = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx               = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj          = ctx->modules.parserObj;
+    PARSER_S *parserObj          = ctx->parserObj;
     XML_ELEMENT_S *element       = &xmlGraphics->elements[xmlGraphics->nbElements];
 
     element->clickHandlers = realloc(element->clickHandlers, (element->nbClickHandlers + 1) * sizeof(XML_ELEMENT_CLICK_S));
@@ -1090,7 +1090,7 @@ static void onFocusCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -1121,7 +1121,7 @@ static void onBlurCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -1152,7 +1152,7 @@ static void onResetCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
@@ -1183,7 +1183,7 @@ static void onColorCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     XML_COLORS_S *xmlColors     = &xmlGraphics->common.xmlColors;
     
     Logd("Adding color %u", (xmlColors->nbColors + 1));
@@ -1244,7 +1244,7 @@ static void onImageCb(void *userData, const char **attrs)
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
     INPUT_S *input              = &ctx->input;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     XML_IMAGES_S *xmlImages     = &xmlGraphics->common.xmlImages;
     
     Logd("Adding image %u", (xmlImages->nbImages + 1));
@@ -1306,7 +1306,7 @@ static void onFontCb(void *userData, const char **attrs)
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
     INPUT_S *input              = &ctx->input;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     XML_FONTS_S *xmlFonts       = &xmlGraphics->common.xmlFonts;
     
     Logd("Adding font %u", (xmlFonts->nbFonts + 1));
@@ -1363,7 +1363,7 @@ static void onStrGroupStartCb(void *userData, const char **attrs)
     XML_STRINGS_S **xmlStrings  = (XML_STRINGS_S**)&xmlGraphics->common.xmlStrings;
     uint32_t nbXmlStrings       = xmlGraphics->common.nbLanguages;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     
     Logd("Adding strGroup %u", (nbXmlStrings + 1));
     
@@ -1401,7 +1401,7 @@ static void onStringCb(void *userData, const char **attrs)
     
     XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
     CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->modules.parserObj;
+    PARSER_S *parserObj         = ctx->parserObj;
     uint32_t nbXmlStrings       = xmlGraphics->common.nbLanguages;
     XML_STRINGS_S *xmlStrings   = xmlGraphics->common.xmlStrings;
     

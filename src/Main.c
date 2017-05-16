@@ -97,13 +97,13 @@ int main(int argc, char **argv)
     CONTEXT_S *mCtx;
     assert((mCtx = calloc(1, sizeof(CONTEXT_S))));
     
-    PARAMS_S  *params  = &mCtx->params;
+    PARAMS_S *params   = &mCtx->params;
     MODULES_S *modules = &mCtx->modules;
-    INPUT_S   *input   = &mCtx->input;
+    INPUT_S *input     = &mCtx->input;
     
-    if (Parser_Init(&modules->parserObj) != PARSER_ERROR_NONE) {
+    if (Parser_Init(&mCtx->parserObj) != PARSER_ERROR_NONE) {
         Loge("Parser_Init() failed");
-        goto parserInit_exit;
+        goto parserInitExit;
     }
     
     Logd("Parsing main config file : \"%s\"", mainXml);
@@ -124,64 +124,71 @@ int main(int argc, char **argv)
     parserParams.onErrorCb    = onErrorCb;
     parserParams.userData     = mCtx;
     
-    if (modules->parserObj->parse(modules->parserObj, &parserParams) != PARSER_ERROR_NONE) {
+    if (mCtx->parserObj->parse(mCtx->parserObj, &parserParams) != PARSER_ERROR_NONE) {
         Loge("Failed to parse main config file");
-        goto parserParse_exit;
+        goto parserParseExit;
     }
     
     Logd("Initializing modules");
     
-    if (input->graphicsEnabled && (Graphics_Init(&modules->graphicsObj) != GRAPHICS_ERROR_NONE)) {
+    if (input->graphicsConfig.enable
+        && (Graphics_Init(&modules->graphicsObj) != GRAPHICS_ERROR_NONE)) {
         Loge("Graphics_Init() failed");
-        goto graphicsInit_exit;
+        goto graphicsInitExit;
     }
     
-    if (input->videosEnabled && (Video_Init(&modules->videoObj) != VIDEO_ERROR_NONE)) {
+    if (input->videosConfig.enable
+        && (Video_Init(&modules->videoObj) != VIDEO_ERROR_NONE)) {
         Loge("Video_Init() failed");
-        goto videoInit_exit;
+        goto videoInitExit;
     }
     
-    if (input->serversEnabled && (Server_Init(&modules->serverObj) != SERVER_ERROR_NONE)) {
+    if (input->serversConfig.enable
+        && (Server_Init(&modules->serverObj) != SERVER_ERROR_NONE)) {
         Loge("Server_Init() failed");
-        goto serverInit_exit;
+        goto serverInitExit;
     }
     
-    if (input->clientsEnabled && (Client_Init(&modules->clientObj) != CLIENT_ERROR_NONE)) {
+    if (input->clientsConfig.enable
+        && (Client_Init(&modules->clientObj) != CLIENT_ERROR_NONE)) {
         Loge("Client_Init() failed");
-        goto clientInit_exit;
+        goto clientInitExit;
     }
     
     CORE_S *coreObj = NULL;
     if (Core_Init(&coreObj, mCtx) != CORE_ERROR_NONE) {
         Loge("Core_Init() failed");
-        goto coreInit_exit;
+        goto coreInitExit;
     }
     
     Logd("Starting modules");
 
     uint32_t index;
+    GRAPHICS_INFOS_S *graphicsInfos = &params->graphicsInfos;
     
     if (modules->graphicsObj) {
         Logd("Loading graphics params");
         if (coreObj->loadGraphicsParams(coreObj) != CORE_ERROR_NONE) {
             Loge("Failed to load graphics params");
-            goto loadGraphicsParams_exit;
+            goto loadGraphicsParamsExit;
         }
 
-        GRAPHICS_INFOS_S *graphicsInfos = &params->graphicsInfos;
+        graphicsInfos->state = MODULE_STATE_STOPPED;
 
-        if (input->autoStartGraphics) {
+        if (input->graphicsConfig.autoStart) {
             Logd("Creating graphics drawer");
             if (modules->graphicsObj->createDrawer(modules->graphicsObj, &graphicsInfos->graphicsParams) != GRAPHICS_ERROR_NONE) {
                 Loge("createDrawer() failed");
-                goto createDrawer_exit;
+                goto createDrawerExit;
             }
         
             Logd("Displaying %u graphics elements", graphicsInfos->nbGfxElements);
             if (modules->graphicsObj->drawAllElements(modules->graphicsObj) != GRAPHICS_ERROR_NONE) {
                 Loge("Failed to draw all elements");
-                goto destroyDrawer_exit;
+                goto destroyDrawerExit;
             }
+
+            graphicsInfos->state = MODULE_STATE_STARTED;
         }
     }
 
@@ -197,45 +204,51 @@ int main(int argc, char **argv)
         Logd("Loading video params");
         if (coreObj->loadVideosParams(coreObj) != CORE_ERROR_NONE) {
             Loge("Failed to load videos params");
-            goto loadVideosParams_exit;
+            goto loadVideosParamsExit;
         }
-        
-        if (input->autoStartVideos) {
+
+        if (input->videosConfig.autoStart) {
             videosInfos  = &params->videosInfos;
             videoDevices = videosInfos->devices;
             nbDevices    = videosInfos->nbDevices;
 
             for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
-                videoDevice = videoDevices[videoIndex];
+                videoDevice        = videoDevices[videoIndex];
+                videoDevice->state = MODULE_STATE_STOPPED;
 
                 Logd("Starting video capture on device \"%s\"", videoDevice->videoParams.name);
                 if (modules->videoObj->startDeviceCapture(modules->videoObj, &videoDevice->videoParams) != VIDEO_ERROR_NONE) {
                     Loge("startDeviceCapture() failed");
-                    goto startDeviceCapture_exit;
+                    goto startDeviceCaptureExit;
                 }
 
                 (void)modules->videoObj->getFinalVideoArea(modules->videoObj, &videoDevice->videoParams, &videoArea);
                 Logd("Device \"%s\" : width = %u - height = %u", videoDevice->videoParams.name, videoArea.width, videoArea.height);
+
+                videoDevice->state = MODULE_STATE_STARTED;
             }
         }
     }
 
     size_t maxBufferSize          = -1;
     uint8_t nbServers             = 0;
+    SERVER_INFOS_S *serverInfos   = NULL;
     SERVER_PARAMS_S *serverParams = NULL;
 
     if (modules->serverObj) {
         Logd("Loading servers params");
         if (coreObj->loadServersParams(coreObj) != CORE_ERROR_NONE) {
             Loge("Failed to load servers params");
-            goto loadServersParams_exit;
+            goto loadServersParamsExit;
         }
 
         nbServers = params->serversInfos.nbServers;
         Logd("Starting %u servers", nbServers);
 
         for (index = 0; index < nbServers; index++) {
-            serverParams = params->serversInfos.serverParams[index];
+            serverInfos        = params->serversInfos.serverInfos[index];
+            serverParams       = &serverInfos->serverParams;
+            serverInfos->state = MODULE_STATE_STOPPED;
 
             if (serverParams->maxBufferSize == (size_t)-1) {
                 maxBufferSize = -1;
@@ -253,34 +266,42 @@ int main(int argc, char **argv)
                 Logd("Server \"%s\"'s buffer size set to %lu bytes", serverParams->name, serverParams->maxBufferSize);
             }
 
-            if (input->autoStartServers
-                && modules->serverObj->start(modules->serverObj, serverParams) != SERVER_ERROR_NONE) {
-                Loge("Failed to start server %s", serverParams->name);
-                goto stopServers_exit;
+            if (input->serversConfig.autoStart) {
+                if (modules->serverObj->start(modules->serverObj, serverParams) != SERVER_ERROR_NONE) {
+                    Loge("Failed to start server %s", serverParams->name);
+                    goto stopServersExit;
+                }
+                serverInfos->state = MODULE_STATE_STARTED;
             }
         }
     }
 
     uint8_t nbClients             = 0;
+    CLIENT_INFOS_S *clientInfos   = NULL;
     CLIENT_PARAMS_S *clientParams = NULL;
 
     if (modules->clientObj) {
         Logd("Loading clients params");
         if (coreObj->loadClientsParams(coreObj) != CORE_ERROR_NONE) {
             Loge("Failed to load clients params");
-            goto loadClientsParams_exit;
+            goto loadClientsParamsExit;
         }
-        
-        if (input->autoStartClients) {
+
+        if (input->clientsConfig.autoStart) {
             nbClients = params->clientsInfos.nbClients;
             Logd("Starting %u clients", nbClients);
 
             for (index = 0; index < nbClients; index++) {
-                clientParams = params->clientsInfos.clientParams[index];
+                clientInfos        = params->clientsInfos.clientInfos[index];
+                clientParams       = &clientInfos->clientParams;
+                clientInfos->state = MODULE_STATE_STOPPED;
 
                 if (modules->clientObj->start(modules->clientObj, clientParams) != CLIENT_ERROR_NONE) {
                     Loge("Failed to start client %s", clientParams->name);
-                    //goto stopClients_exit;
+                    //goto stopClientsExit;
+                }
+                else {
+                    clientInfos->state = MODULE_STATE_STARTED;
                 }
             }
         }
@@ -289,7 +310,7 @@ int main(int argc, char **argv)
     uint8_t nbVideoListeners           = 0;
     VIDEO_LISTENER_S  **videoListeners = NULL;
 
-    if (modules->videoObj && input->autoStartVideos) {
+    if (modules->videoObj && input->videosConfig.autoStart) {
         for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
             videoDevice      = videoDevices[videoIndex];
             nbVideoListeners = videoDevice->nbVideoListeners;
@@ -301,7 +322,7 @@ int main(int argc, char **argv)
                                                         &videoDevice->videoParams,
                                                         videoListeners[index]) != VIDEO_ERROR_NONE) {
                     Loge("Failed to register listener \"%s\"", (videoListeners[index])->name);
-                    goto registerVideoListeners_exit;
+                    goto registerVideoListenersExit;
                 }
             }
         }
@@ -314,103 +335,134 @@ int main(int argc, char **argv)
         Logd("Stopping app");
         ret = EXIT_SUCCESS;
     }
-    
-registerVideoListeners_exit:
-    if (modules->videoObj && input->autoStartVideos) {
+
+registerVideoListenersExit:
+    if (modules->videoObj) {
+        Logd("Unregistering video listeners");
         for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
             videoDevice      = videoDevices[videoIndex];
             nbVideoListeners = videoDevice->nbVideoListeners;
             videoListeners   = videoDevice->videoListeners;
 
-            Logd("Unregistering %u video listeners on device \"%s\"", nbVideoListeners, videoDevice->videoParams.name);
-            for (index = 0; index < nbVideoListeners; index++) {
-                (void)modules->videoObj->unregisterListener(modules->videoObj, &videoDevice->videoParams, videoListeners[index]);
+            Logd("State of \"%s\" at exit : %u", videoDevice->videoParams.name, videoDevice->state);
+
+            if (videoDevice->state == MODULE_STATE_STARTED) {
+                Logd("Unregistering %u video listeners on device \"%s\"", nbVideoListeners, videoDevice->videoParams.name);
+                for (index = 0; index < nbVideoListeners; index++) {
+                    (void)modules->videoObj->unregisterListener(modules->videoObj, &videoDevice->videoParams, videoListeners[index]);
+                }
             }
         }
     }
-    
-//stopClients_exit:
+
+//stopClientsExit:
     if (modules->clientObj) {
-        Logd("Unloading clients params");
-        if (input->autoStartClients) {
-            for (index = 0; index < nbClients; index++) {
-                clientParams = params->clientsInfos.clientParams[index];
+        for (index = 0; index < nbClients; index++) {
+            clientInfos  = params->clientsInfos.clientInfos[index];
+            clientParams = &clientInfos->clientParams;
+
+            Logd("State of \"%s\" at exit : %u", clientParams->name, clientInfos->state);
+
+            if (clientInfos->state == MODULE_STATE_STARTED) {
+                Logd("Stopping client \"%s\"", clientParams->name);
                 (void)modules->clientObj->stop(modules->clientObj, clientParams);
             }
+
+            clientInfos->state = MODULE_STATE_STOPPED;
         }
+
+        Logd("Unloading clients params");
         (void)coreObj->unloadClientsParams(coreObj);
     }
 
-loadClientsParams_exit:
-stopServers_exit:
+loadClientsParamsExit:
+stopServersExit:
     if (modules->serverObj) {
-        Logd("Unloading servers params");
-        if (input->autoStartServers) {
-            for (index = 0; index < nbServers; index++) {
-                serverParams = params->serversInfos.serverParams[index];
+        for (index = 0; index < nbServers; index++) {
+            serverInfos  = params->serversInfos.serverInfos[index];
+            serverParams = &serverInfos->serverParams;
+
+            Logd("State of \"%s\" at exit : %u", serverParams->name, serverInfos->state);
+
+            if (serverInfos->state == MODULE_STATE_STARTED) {
+                Logd("Stopping server \"%s\"", serverParams->name);
                 (void)modules->serverObj->stop(modules->serverObj, serverParams);
             }
+
+            serverInfos->state = MODULE_STATE_STOPPED;
         }
+
+        Logd("Unloading servers params");
         (void)coreObj->unloadServersParams(coreObj);
     }
 
-loadServersParams_exit:
-startDeviceCapture_exit:
+loadServersParamsExit:
+startDeviceCaptureExit:
     if (modules->videoObj) {
-        if (input->autoStartVideos) {
-            for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
-                videoDevice = videoDevices[videoIndex];
+        for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
+            videoDevice = videoDevices[videoIndex];
+
+            Logd("State of \"%s\" at exit : %u", videoDevice->videoParams.name, videoDevice->state);
+
+            if (videoDevice->state == MODULE_STATE_STARTED) {
                 Logd("Stopping video capture on device \"%s\"", videoDevice->videoParams.name);
                 (void)modules->videoObj->stopDeviceCapture(modules->videoObj, &videoDevice->videoParams);
             }
+
+            videoDevice->state = MODULE_STATE_STOPPED;
         }
+
         Logd("Unloading videos params");
         (void)coreObj->unloadVideosParams(coreObj);
     }
 
-loadVideosParams_exit:
-destroyDrawer_exit:
-    if (modules->graphicsObj && input->autoStartGraphics) {
-        Logd("Destroying elements and drawer");
-        (void)modules->graphicsObj->destroyDrawer(modules->graphicsObj);
+loadVideosParamsExit:
+destroyDrawerExit:
+    if (modules->graphicsObj) {
+        Logd("Destroying elements and drawer - state of graphics module at exit : %u", graphicsInfos->state);
+        if (graphicsInfos->state == MODULE_STATE_STARTED) {
+            (void)modules->graphicsObj->destroyDrawer(modules->graphicsObj);
+        }
+
+        graphicsInfos->state = MODULE_STATE_STOPPED;
     }
 
-createDrawer_exit:
+createDrawerExit:
     if (modules->graphicsObj) {
         Logd("Unloading graphics params");
         (void)coreObj->unloadGraphicsParams(coreObj);
     }
 
-loadGraphicsParams_exit:
+loadGraphicsParamsExit:
     Logd("Uninitializing coreObj");
     (void)Core_UnInit(&coreObj);
 
-coreInit_exit:
+coreInitExit:
     if (modules->clientObj) {
         Logd("Uninitializing clientObj");
         (void)Client_UnInit(&modules->clientObj);
     }
 
-clientInit_exit:
+clientInitExit:
     if (modules->serverObj) {
         Logd("Uninitializing serverObj");
         (void)Server_UnInit(&modules->serverObj);
     }
 
-serverInit_exit:
+serverInitExit:
     if (modules->videoObj) {
         Logd("Uninitializing videoObj");
         (void)Video_UnInit(&modules->videoObj);
     }
 
-videoInit_exit:
+videoInitExit:
     if (modules->graphicsObj) {
         Logd("Uninitializing graphicsObj");
         (void)Graphics_UnInit(&modules->graphicsObj);
     }
 
-graphicsInit_exit:
-parserParse_exit:
+graphicsInitExit:
+parserParseExit:
     if (input->appDataDir) {
         free(input->appDataDir);
         input->appDataDir = NULL;
@@ -421,32 +473,32 @@ parserParse_exit:
         input->resRootDir = NULL;
     }
 
-    if (input->clientsXml) {
-        free(input->clientsXml);
-        input->clientsXml = NULL;
+    if (input->clientsConfig.xml) {
+        free(input->clientsConfig.xml);
+        input->clientsConfig.xml = NULL;
     }
     
-    if (input->serversXml) {
-        free(input->serversXml);
-        input->serversXml = NULL;
+    if (input->serversConfig.xml) {
+        free(input->serversConfig.xml);
+        input->serversConfig.xml = NULL;
     }
     
-    if (input->videosXml) {
-        free(input->videosXml);
-        input->videosXml = NULL;
+    if (input->videosConfig.xml) {
+        free(input->videosConfig.xml);
+        input->videosConfig.xml = NULL;
     }
     
-    if (input->graphicsXml) {
-        free(input->graphicsXml);
-        input->graphicsXml = NULL;
+    if (input->graphicsConfig.xml) {
+        free(input->graphicsConfig.xml);
+        input->graphicsConfig.xml = NULL;
     }
     
-    if (modules->parserObj) {
+    if (mCtx->parserObj) {
         Logd("Uninitializing parser");
-        (void)Parser_UnInit(&modules->parserObj);
+        (void)Parser_UnInit(&mCtx->parserObj);
     }
 
-parserInit_exit:
+parserInitExit:
     free(mCtx);
     mCtx = NULL;
     
@@ -465,7 +517,7 @@ static void onGeneralCb(void *userData, const char **attrs)
     assert(userData);
 	
     CONTEXT_S *ctx      = (CONTEXT_S*)userData;
-    PARSER_S *parserObj = ctx->modules.parserObj;
+    PARSER_S *parserObj = ctx->parserObj;
     INPUT_S   *input    = &ctx->input;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
@@ -514,26 +566,26 @@ static void onGraphicsCb(void *userData, const char **attrs)
     assert(userData);
 
     CONTEXT_S *ctx      = (CONTEXT_S*)userData;
-    PARSER_S *parserObj = ctx->modules.parserObj;
+    PARSER_S *parserObj = ctx->parserObj;
     INPUT_S   *input    = &ctx->input;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_ENABLE,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&input->graphicsEnabled,
+    	    .attrValue.scalar  = (void*)&input->graphicsConfig.enable,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
     	    .attrName          = XML_ATTR_AUTO_START,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&input->autoStartGraphics,
+    	    .attrValue.scalar  = (void*)&input->graphicsConfig.autoStart,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
     	    .attrName          = XML_ATTR_XML_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&input->graphicsXml,
+    	    .attrValue.vector  = (void**)&input->graphicsConfig.xml,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
@@ -557,26 +609,26 @@ static void onVideosCb(void *userData, const char **attrs)
     assert(userData);
 
     CONTEXT_S *ctx      = (CONTEXT_S*)userData;
-    PARSER_S *parserObj = ctx->modules.parserObj;
+    PARSER_S *parserObj = ctx->parserObj;
     INPUT_S   *input    = &ctx->input;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_ENABLE,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&input->videosEnabled,
+    	    .attrValue.scalar  = (void*)&input->videosConfig.enable,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
     	    .attrName          = XML_ATTR_AUTO_START,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&input->autoStartVideos,
+    	    .attrValue.scalar  = (void*)&input->videosConfig.autoStart,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
     	    .attrName          = XML_ATTR_XML_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&input->videosXml,
+    	    .attrValue.vector  = (void**)&input->videosConfig.xml,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
@@ -600,26 +652,26 @@ static void onServersCb(void *userData, const char **attrs)
     assert(userData);
 
     CONTEXT_S *ctx      = (CONTEXT_S*)userData;
-    PARSER_S *parserObj = ctx->modules.parserObj;
+    PARSER_S *parserObj = ctx->parserObj;
     INPUT_S   *input    = &ctx->input;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_ENABLE,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&input->serversEnabled,
+    	    .attrValue.scalar  = (void*)&input->serversConfig.enable,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
     	    .attrName          = XML_ATTR_AUTO_START,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&input->autoStartServers,
+    	    .attrValue.scalar  = (void*)&input->serversConfig.autoStart,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
     	    .attrName          = XML_ATTR_XML_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&input->serversXml,
+    	    .attrValue.vector  = (void**)&input->serversConfig.xml,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
@@ -643,26 +695,26 @@ static void onClientsCb(void *userData, const char **attrs)
     assert(userData);
 
     CONTEXT_S *ctx      = (CONTEXT_S*)userData;
-    PARSER_S *parserObj = ctx->modules.parserObj;
+    PARSER_S *parserObj = ctx->parserObj;
     INPUT_S   *input    = &ctx->input;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_ENABLE,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&input->clientsEnabled,
+    	    .attrValue.scalar  = (void*)&input->clientsConfig.enable,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
     	    .attrName          = XML_ATTR_AUTO_START,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&input->autoStartClients,
+    	    .attrValue.scalar  = (void*)&input->clientsConfig.autoStart,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
     	    .attrName          = XML_ATTR_XML_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&input->clientsXml,
+    	    .attrValue.vector  = (void**)&input->clientsConfig.xml,
     	    .attrGetter.vector = parserObj->getString
         },
     	{

@@ -46,95 +46,102 @@
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-static void closeApplication(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void changeLanguage  (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E closeApplication(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E changeLanguage  (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void hideElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void showElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E hideElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E showElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void hideGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void showGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E hideGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E showGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void setFocus(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E setFocus(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void saveVideoElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void takeScreenshot  (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E saveVideoElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E takeScreenshot  (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void setClickable   (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void setNotClickable(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E setClickable   (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E setNotClickable(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void stopGraphics (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void startGraphics(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E stopGraphics (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E startGraphics(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void stopVideo (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E stopVideo (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void stopServer (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void startServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E stopServer (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E startServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void suspendServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void resumeServer (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E suspendServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E resumeServer (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void stopCient  (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static void startClient(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E stopCient  (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E startClient(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
-static void multiInputs(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+static HANDLERS_ERROR_E multiInputs(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-CLICK_HANDLERS_S gSingleInputClickHandlers[] = {
-	{ "closeApplication",           NULL,             closeApplication },
-	{ "changeLanguage",             NULL,             changeLanguage   },
-	{ "hideElement",                NULL,             hideElement      },
-	{ "showElement",                NULL,             showElement      },
-	{ "hideGroup",                  NULL,             hideGroup        },
-	{ "showGroup",                  NULL,             showGroup        },
-	{ "setFocus",                   NULL,             setFocus         },
-	{ "saveVideoElement",           NULL,             saveVideoElement },
-	{ "takeScreenshot",             NULL,             takeScreenshot   },
-	{ "setClickable",               NULL,             setClickable     },
-	{ "setNotClickable",            NULL,             setNotClickable  },
-	{ "stopGraphics",               NULL,             stopGraphics     },
-	{ "startGraphics",              NULL,             startGraphics    },
-	{ "stopVideo",                  NULL,             stopVideo        },
-	{ "startVideo",                 NULL,             startVideo       },
-	{ "stopServer",                 NULL,             stopServer       },
-	{ "startServer",                NULL,             startServer      },
-	{ "suspendServer",              NULL,             suspendServer    },
-	{ "resumeServer",               NULL,             resumeServer     },
-	{ "stopCient",                  NULL,             stopCient        },
-	{ "startClient",                NULL,             startClient      },
-	{ "multiInputs",                NULL,             multiInputs      },
-	{ NULL,                         NULL,             NULL             }
+COMMAND_HANDLERS_S gSingleInputHandlers[] = {
+	{ HANDLERS_COMMAND_CLOSE_APPLICATION,           NULL,             closeApplication },
+	{ HANDLERS_COMMAND_CHANGE_LANGUAGE,             NULL,             changeLanguage   },
+	{ HANDLERS_COMMAND_SAVE_VIDEO_ELEMENT,          NULL,             saveVideoElement },
+	{ HANDLERS_COMMAND_TAKE_SCREENSHOT,             NULL,             takeScreenshot   },
+	{ HANDLERS_COMMAND_HIDE_ELEMENT,                NULL,             hideElement      },
+	{ HANDLERS_COMMAND_SHOW_ELEMENT,                NULL,             showElement      },
+	{ HANDLERS_COMMAND_SET_FOCUS,                   NULL,             setFocus         },
+	{ HANDLERS_COMMAND_HIDE_GROUP,                  NULL,             hideGroup        },
+	{ HANDLERS_COMMAND_SHOW_GROUP,                  NULL,             showGroup        },
+	{ HANDLERS_COMMAND_SET_CLICKABLE,               NULL,             setClickable     },
+	{ HANDLERS_COMMAND_SET_NOT_CLICKABLE,           NULL,             setNotClickable  },
+	{ HANDLERS_COMMAND_STOP_GRAPHICS,               NULL,             stopGraphics     },
+	{ HANDLERS_COMMAND_START_GRAPHICS,              NULL,             startGraphics    },
+	{ HANDLERS_COMMAND_STOP_VIDEO,                  NULL,             stopVideo        },
+	{ HANDLERS_COMMAND_START_VIDEO,                 NULL,             startVideo       },
+	{ HANDLERS_COMMAND_STOP_SERVER,                 NULL,             stopServer       },
+	{ HANDLERS_COMMAND_START_SERVER,                NULL,             startServer      },
+	{ HANDLERS_COMMAND_SUSPEND_SERVER,              NULL,             suspendServer    },
+	{ HANDLERS_COMMAND_RESUME_SERVER,               NULL,             resumeServer     },
+	{ HANDLERS_COMMAND_STOP_CLIENT,                 NULL,             stopCient        },
+	{ HANDLERS_COMMAND_START_CLIENT,                NULL,             startClient      },
+
+	{ HANDLERS_COMMAND_MULTI_INPUTS,                NULL,             multiInputs      },
+	{ NULL,                                         NULL,             NULL             }
 };
 
-uint32_t gNbSingleInputClickHandlers = (uint32_t)(sizeof(gSingleInputClickHandlers) / sizeof(gSingleInputClickHandlers[0]));
+uint32_t gNbSingleInputHandlers = (uint32_t)(sizeof(gSingleInputHandlers) / sizeof(gSingleInputHandlers[0]));
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                        CLICK HANDLERS                                        */
+/*                                       COMMAND HANDLERS                                       */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static void closeApplication(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E closeApplication(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
+    (void)gfxElementName;
+    (void)gfxElementData;
     (void)handlerData;
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    Logd("Closing application");
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                 = pData->ctx;
     GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
     INPUT_S *input                 = &ctx->input;
+    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
 
     switch (input->keepAliveMethod) {
         case KEEP_ALIVE_EVENTS_BASED:
-            (void)graphicsObj->quit(graphicsObj);
+            if (graphicsObj && graphicsObj->quit(graphicsObj) != GRAPHICS_ERROR_NONE) {
+                Loge("Graphics quit() failed");
+                ret = HANDLERS_ERROR_COMMAND;
+            }
             break;
 
         case KEEP_ALIVE_SEMAPHORE_BASED:
@@ -148,16 +155,18 @@ static void closeApplication(HANDLERS_S *obj, char *gfxElementName, void *gfxEle
         default:
             ;
     }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void changeLanguage(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E changeLanguage(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData && gfxElementData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
 
     HANDLERS_PRIVATE_DATA_S *pData      = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                      = pData->ctx;
@@ -166,8 +175,14 @@ static void changeLanguage(HANDLERS_S *obj, char *gfxElementName, void *gfxEleme
     GRAPHICS_INFOS_S *graphicsInfos     = &ctx->params.graphicsInfos;
     uint32_t nbGfxElements              = graphicsInfos->nbGfxElements;
     GFX_ELEMENT_S **gfxElements         = graphicsInfos->gfxElements;
+    HANDLERS_ERROR_E ret                = HANDLERS_ERROR_NONE;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module is not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
     
-    char nextLanguage[MIN_STR_SIZE]     = { 0 };
+    char nextLanguage[MIN_STR_SIZE] = { 0 };
 
     if (!handlerData || (strlen(handlerData) == 0)) {
         elementData->getters.getLanguage(elementData->getters.userData, graphicsInfos->currentLanguage, nextLanguage);
@@ -178,7 +193,7 @@ static void changeLanguage(HANDLERS_S *obj, char *gfxElementName, void *gfxEleme
 
     if (strcmp(graphicsInfos->currentLanguage, nextLanguage) == 0) {
         Logw("\"%s\" is already the current language", nextLanguage);
-        return;
+        return ret;
     }
 
     Logd("Changing language from \"%s\" to \"%s\"", graphicsInfos->currentLanguage, nextLanguage);
@@ -198,68 +213,105 @@ static void changeLanguage(HANDLERS_S *obj, char *gfxElementName, void *gfxEleme
         memset(text.str, '\0', sizeof(text.str));
         elementData->getters.getString(elementData->getters.userData, data->ids.text.stringId, nextLanguage, text.str);
         
-        (void)graphicsObj->setData(graphicsObj, gfxElements[index]->name, (void*)&text);
+        if (graphicsObj->setData(graphicsObj, gfxElements[index]->name, (void*)&text) != GRAPHICS_ERROR_NONE) {
+            Loge("setData() failed for element \"%s\"", gfxElements[index]->name);
+            ret = HANDLERS_ERROR_COMMAND;
+            break;
+        }
     }
     
     memset(graphicsInfos->currentLanguage, '\0', MIN_STR_SIZE);
     strcpy(graphicsInfos->currentLanguage, nextLanguage);
+
+    return ret;
 }
 
 /*!
  *
  */
-static void hideElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E hideElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
-    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
+    Logd("Hiding element \"%s\"", handlerData);
 
-    (void)graphicsObj->setVisible(graphicsObj, handlerData, 0);
+    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pData->ctx;
+    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
+
+    if (graphicsObj->setVisible(graphicsObj, handlerData, 0) != GRAPHICS_ERROR_NONE) {
+        Loge("setVisible() failed for element \"%s\"", handlerData);
+        return HANDLERS_ERROR_COMMAND;
+    }
+
+    return HANDLERS_ERROR_NONE;
 }
 
 /*!
  *
  */
-static void showElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E showElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
-    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
+    Logd("Showing element \"%s\"", handlerData);
 
-    (void)graphicsObj->setVisible(graphicsObj, handlerData, 1);
+    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pData->ctx;
+    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
+
+    if (graphicsObj->setVisible(graphicsObj, handlerData, 1) != GRAPHICS_ERROR_NONE) {
+        Loge("setVisible() failed for element \"%s\"", handlerData);
+        return HANDLERS_ERROR_COMMAND;
+    }
+
+    return HANDLERS_ERROR_NONE;
 }
 
 /*!
  *
  */
-static void hideGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E hideGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    Logd("Hiding group \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                  = pData->ctx;
@@ -267,6 +319,12 @@ static void hideGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementDat
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
     uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
     GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
+    HANDLERS_ERROR_E ret            = HANDLERS_ERROR_NONE;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
     
     uint32_t index;
     for (index = 0; index < nbGfxElements; index++) {
@@ -274,23 +332,32 @@ static void hideGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementDat
             continue;
         }
 
-        (void)graphicsObj->setVisible(graphicsObj, gfxElements[index]->name, 0);
+        if (graphicsObj->setVisible(graphicsObj, gfxElements[index]->name, 0) != GRAPHICS_ERROR_NONE) {
+            Loge("setVisible() failed for element \"%s\"", gfxElements[index]->name);
+            ret = HANDLERS_ERROR_COMMAND;
+            break;
+        }
     }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void showGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E showGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    Logd("Showing group \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                  = pData->ctx;
@@ -298,6 +365,12 @@ static void showGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementDat
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
     uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
     GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
+    HANDLERS_ERROR_E ret            = HANDLERS_ERROR_NONE;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
 
     uint32_t index;
     for (index = 0; index < nbGfxElements; index++) {
@@ -305,50 +378,78 @@ static void showGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementDat
             continue;
         }
 
-        (void)graphicsObj->setVisible(graphicsObj, gfxElements[index]->name, 1);
+        if (graphicsObj->setVisible(graphicsObj, gfxElements[index]->name, 1) != GRAPHICS_ERROR_NONE) {
+            Loge("setVisible() failed for element \"%s\"", gfxElements[index]->name);
+            ret = HANDLERS_ERROR_COMMAND;
+            break;
+        }
     }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void setFocus(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E setFocus(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
-    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
+    Logd("Giving focus to element \"%s\"", handlerData);
 
-    (void)graphicsObj->setFocus(graphicsObj, handlerData);
+    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pData->ctx;
+    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
+
+    if (graphicsObj->setFocus(graphicsObj, handlerData) != GRAPHICS_ERROR_NONE) {
+        Loge("setFocus() failed for element \"%s\"", handlerData);
+        return HANDLERS_ERROR_COMMAND;
+    }
+
+    return HANDLERS_ERROR_NONE;
 }
 
 /*!
  *
  */
-static void saveVideoElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E saveVideoElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
 
-    HANDLERS_PRIVATE_DATA_S *pData      = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                      = pData->ctx;
-    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
-    GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
-    INPUT_S *input                      = &ctx->input;
+    Logd("Saving video element \"%s\"", handlerData);
+
+    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pData->ctx;
+    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    INPUT_S *input                  = &ctx->input;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
 
     GFX_IMAGE_S image;
     struct stat st;
@@ -357,35 +458,48 @@ static void saveVideoElement(HANDLERS_S *obj, char *gfxElementName, void *gfxEle
         Logd("Creating direcory : \"%s\"", input->appDataDir);
         if (mkdir(input->appDataDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
             Loge("%s", strerror(errno));
-            return;
+            return HANDLERS_ERROR_IO;
         }
     }
 
     sprintf(image.path, "%s/picture_%ld.bmp", input->appDataDir, time(NULL));
     image.format = GFX_IMAGE_FORMAT_BMP;
 
-    (void)graphicsObj->saveVideoElement(graphicsObj, handlerData, &image);
+    if (graphicsObj->saveVideoElement(graphicsObj, handlerData, &image) != GRAPHICS_ERROR_NONE) {
+        Loge("saveVideoElement() failed for element \"%s\"", handlerData);
+        return HANDLERS_ERROR_COMMAND;
+    }
+
+    return HANDLERS_ERROR_NONE;
 }
 
 /*!
  *
  */
-static void takeScreenshot(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E takeScreenshot(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
 
-    HANDLERS_PRIVATE_DATA_S *pData      = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                      = pData->ctx;
-    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
-    GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
-    INPUT_S *input                      = &ctx->input;
+    Logd("Taking screnshot - Image format : \"%s\"", handlerData);
+
+    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pData->ctx;
+    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    INPUT_S *input                  = &ctx->input;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
 
     int32_t imageFormat = atoi(handlerData);
     GFX_IMAGE_S image;
@@ -395,7 +509,7 @@ static void takeScreenshot(HANDLERS_S *obj, char *gfxElementName, void *gfxEleme
         Logd("Creating direcory : \"%s\"", input->appDataDir);
         if (mkdir(input->appDataDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
             Loge("%s", strerror(errno));
-            return;
+            return HANDLERS_ERROR_IO;
         }
     }
 
@@ -415,106 +529,174 @@ static void takeScreenshot(HANDLERS_S *obj, char *gfxElementName, void *gfxEleme
             image.format = GFX_IMAGE_FORMAT_BMP;
     }
 
-    (void)graphicsObj->takeScreenshot(graphicsObj, &image);
+    if (graphicsObj->takeScreenshot(graphicsObj, &image) != GRAPHICS_ERROR_NONE) {
+        Loge("takeScreenshot() failed for element \"%s\"", handlerData);
+        return HANDLERS_ERROR_COMMAND;
+    }
+
+    return HANDLERS_ERROR_NONE;
 }
 
 /*!
  *
  */
-static void setClickable(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E setClickable(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
-    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
+    Logd("Setting element \"%s\" as clickable", handlerData);
 
-    (void)graphicsObj->setClickable(graphicsObj, handlerData, 1);
+    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pData->ctx;
+    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
+
+    if (graphicsObj->setClickable(graphicsObj, handlerData, 1) != GRAPHICS_ERROR_NONE) {
+        Loge("setClickable() failed for element \"%s\"", handlerData);
+        return HANDLERS_ERROR_COMMAND;
+    }
+
+    return HANDLERS_ERROR_NONE;
 }
 
 /*!
  *
  */
-static void setNotClickable(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E setNotClickable(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
-    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
+    Logd("Setting element \"%s\" as not clickable", handlerData);
 
-    (void)graphicsObj->setClickable(graphicsObj, handlerData, 0);
+    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pData->ctx;
+    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
+
+    if (graphicsObj->setClickable(graphicsObj, handlerData, 0) != GRAPHICS_ERROR_NONE) {
+        Loge("setClickable() failed for element \"%s\"", handlerData);
+        return HANDLERS_ERROR_COMMAND;
+    }
+
+    return HANDLERS_ERROR_NONE;
 }
 
 /*!
  *
  */
-static void stopGraphics(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E stopGraphics(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
+    (void)gfxElementName;
+    (void)gfxElementData;
     (void)handlerData;
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    Logd("Stopping graphics module");
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
-    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
+    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                  = pData->ctx;
+    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
 
-    (void)graphicsObj->destroyDrawer(graphicsObj);
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
+
+    if (graphicsObj->destroyDrawer(graphicsObj) != GRAPHICS_ERROR_NONE) {
+        Loge("destroyDrawer() failed");
+        return HANDLERS_ERROR_COMMAND;
+    }
+
+    graphicsInfos->state = MODULE_STATE_STOPPED;
+
+    return HANDLERS_ERROR_NONE;
 }
 
 /*!
  *
  */
-static void startGraphics(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E startGraphics(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
+    (void)gfxElementName;
+    (void)gfxElementData;
     (void)handlerData;
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    Logd("Starting graphics module");
 
     HANDLERS_PRIVATE_DATA_S *pData    = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                    = pData->ctx;
     GRAPHICS_S *graphicsObj           = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos   = &ctx->params.graphicsInfos;
     GRAPHICS_PARAMS_S *graphicsParams = &ctx->params.graphicsInfos.graphicsParams;
+
+    if (graphicsInfos->state == MODULE_STATE_STARTED) {
+        Loge("Graphics module is already started");
+        return HANDLERS_ERROR_STATE;
+    }
 
     if (graphicsObj->createDrawer(graphicsObj, graphicsParams) != GRAPHICS_ERROR_NONE) {
         Loge("createDrawer() failed");
-        return;
+        return HANDLERS_ERROR_COMMAND;
     }
 
-    (void)graphicsObj->drawAllElements(graphicsObj);
+    /* Drawer is created so graphics module's state must be updated here so as to destroy
+     * drawer when stopping the module */
+    graphicsInfos->state = MODULE_STATE_STARTED;
+
+    if (graphicsObj->drawAllElements(graphicsObj) != GRAPHICS_ERROR_NONE) {
+        Loge("drawAllElements() failed");
+        return HANDLERS_ERROR_COMMAND;
+    }
+
+    return HANDLERS_ERROR_NONE;
 }
 
 /*!
  *
  */
-static void stopVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E stopVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    Logd("Stopping video \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                 = pData->ctx;
@@ -523,6 +705,7 @@ static void stopVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementDat
     VIDEO_DEVICE_S **videoDevices  = videosInfos->devices;
     uint8_t nbDevices              = videosInfos->nbDevices;
     VIDEO_DEVICE_S *videoDevice    = NULL;
+    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
 
     uint8_t nbVideoListeners           = 0;
     VIDEO_LISTENER_S  **videoListeners = NULL;
@@ -534,32 +717,52 @@ static void stopVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementDat
         if (strcmp(videoDevice->videoParams.name, handlerData) == 0) {
             Logd("Video device \"%s\" found", videoDevice->videoParams.name);
 
+            if (videoDevice->state != MODULE_STATE_STARTED) {
+                Logw("Video device \"%s\" is not started", videoDevice->videoParams.name);
+                break;
+            }
+
             nbVideoListeners = videoDevice->nbVideoListeners;
             videoListeners   = videoDevice->videoListeners;
 
             for (listenerIndex = 0; listenerIndex < nbVideoListeners; listenerIndex++) {
-                (void)videoObj->unregisterListener(videoObj, &videoDevice->videoParams, videoListeners[listenerIndex]);
+                if (videoObj->unregisterListener(videoObj, &videoDevice->videoParams, videoListeners[listenerIndex]) != VIDEO_ERROR_NONE) {
+                    Loge("unregisterListener() failed - \"%s\"", (videoListeners[listenerIndex])->name);
+                    ret = HANDLERS_ERROR_COMMAND;
+                }
             }
 
-            (void)videoObj->stopDeviceCapture(videoObj, &videoDevice->videoParams);
+            if (videoObj->stopDeviceCapture(videoObj, &videoDevice->videoParams) != VIDEO_ERROR_NONE) {
+                Loge("stopDeviceCapture() failed - \"%s\"", videoDevice->videoParams.name);
+                ret = HANDLERS_ERROR_COMMAND;
+            }
+
+            if (ret == HANDLERS_ERROR_NONE) {
+                videoDevice->state = MODULE_STATE_STOPPED;
+            }
             break;
         }
     }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    Logd("Starting video \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                 = pData->ctx;
@@ -568,6 +771,7 @@ static void startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementDa
     VIDEO_DEVICE_S **videoDevices  = videosInfos->devices;
     uint8_t nbDevices              = videosInfos->nbDevices;
     VIDEO_DEVICE_S *videoDevice    = NULL;
+    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
 
     size_t maxBufferSize           = -1;
     VIDEO_AREA_S videoArea         = { 0 };
@@ -582,9 +786,19 @@ static void startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementDa
         if (strcmp(videoDevice->videoParams.name, handlerData) == 0) {
             Logd("Video device \"%s\" found", videoDevice->videoParams.name);
 
-            if (videoObj->startDeviceCapture(videoObj, &videoDevice->videoParams) != VIDEO_ERROR_NONE) {
-                return;
+            if (videoDevice->state == MODULE_STATE_STARTED) {
+                Logw("Video device \"%s\" is already started", videoDevice->videoParams.name);
+                break;
             }
+
+            if (videoObj->startDeviceCapture(videoObj, &videoDevice->videoParams) != VIDEO_ERROR_NONE) {
+                Loge("startDeviceCapture() failed - \"%s\"", videoDevice->videoParams.name);
+                return HANDLERS_ERROR_COMMAND;
+            }
+
+            /* Capture is started so the state of this video device must be updated here so as to
+             * stop capture when stop is called */
+            videoDevice->state = MODULE_STATE_STARTED;
 
             (void)videoObj->getMaxBufferSize(videoObj, &videoDevice->videoParams, &maxBufferSize);
             (void)videoObj->getFinalVideoArea(videoObj, &videoDevice->videoParams, &videoArea);
@@ -597,194 +811,347 @@ static void startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementDa
             for (listenerIndex = 0; listenerIndex < nbVideoListeners; listenerIndex++) {
                 if (videoObj->registerListener(videoObj, &videoDevice->videoParams, videoListeners[listenerIndex]) != VIDEO_ERROR_NONE) {
                     Loge("Failed to register listener \"%s\"", (videoListeners[listenerIndex])->name);
+                    ret = HANDLERS_ERROR_COMMAND;
                 }
             }
             break;
         }
     }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void stopServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E stopServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    Logd("Starting server \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                 = pData->ctx;
     SERVER_S *serverObj            = ctx->modules.serverObj;
     SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
+    SERVER_INFOS_S *serverInfos    = NULL;
+    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
-        if (strcmp((serversInfos->serverParams[index])->name, handlerData) == 0) {
-            (void)serverObj->stop(serverObj, serversInfos->serverParams[index]);
+        serverInfos = serversInfos->serverInfos[index];
+
+        if (strcmp(serverInfos->serverParams.name, handlerData) == 0) {
+            Logd("Server \"%s\" found", serverInfos->serverParams.name);
+
+            if (serverInfos->state == MODULE_STATE_STOPPED) {
+                Logw("Server \"%s\" is not started", serverInfos->serverParams.name);
+                break;
+            }
+
+            if (serverObj->stop(serverObj, &serverInfos->serverParams) != SERVER_ERROR_NONE) {
+                Loge("Failed to stop server \"%s\"", serverInfos->serverParams.name);
+                ret = HANDLERS_ERROR_COMMAND;
+            }
+
+            if (ret == HANDLERS_ERROR_NONE) {
+                serverInfos->state = MODULE_STATE_STOPPED;
+            }
             break;
         }
     }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void startServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E startServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    Logd("Starting server \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                 = pData->ctx;
     SERVER_S *serverObj            = ctx->modules.serverObj;
     SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
+    SERVER_INFOS_S *serverInfos    = NULL;
+    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
-        if (strcmp((serversInfos->serverParams[index])->name, handlerData) == 0) {
-            (void)serverObj->start(serverObj, serversInfos->serverParams[index]);
+        serverInfos = serversInfos->serverInfos[index];
+
+        if (strcmp(serverInfos->serverParams.name, handlerData) == 0) {
+            Logd("Server \"%s\" found", serverInfos->serverParams.name);
+
+            if (serverInfos->state != MODULE_STATE_STOPPED) {
+                Logw("Server \"%s\" is already started", serverInfos->serverParams.name);
+                break;
+            }
+
+            if (serverObj->start(serverObj, &serverInfos->serverParams) != SERVER_ERROR_NONE) {
+                Loge("Failed to start server \"%s\"", serverInfos->serverParams.name);
+                ret = HANDLERS_ERROR_COMMAND;
+            }
+
+            if (ret == HANDLERS_ERROR_NONE) {
+                serverInfos->state = MODULE_STATE_STARTED;
+            }
             break;
         }
     }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void suspendServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E suspendServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    Logd("Suspending server \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                 = pData->ctx;
     SERVER_S *serverObj            = ctx->modules.serverObj;
     SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
+    SERVER_INFOS_S *serverInfos    = NULL;
+    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
-        if (strcmp((serversInfos->serverParams[index])->name, handlerData) == 0) {
-            (void)serverObj->suspendSender(serverObj, serversInfos->serverParams[index]);
+        serverInfos = serversInfos->serverInfos[index];
+
+        if (strcmp(serverInfos->serverParams.name, handlerData) == 0) {
+            Logd("Server \"%s\" found", serverInfos->serverParams.name);
+
+            if (serverInfos->state == MODULE_STATE_STOPPED) {
+                Logw("Server \"%s\" is currently stopped", serverInfos->serverParams.name);
+                break;
+            }
+
+            if (serverInfos->state == MODULE_STATE_SUSPENDED) {
+                Logw("Server \"%s\" is already suspended", serverInfos->serverParams.name);
+                break;
+            }
+
+            if (serverObj->suspendSender(serverObj, &serverInfos->serverParams) != SERVER_ERROR_NONE) {
+                Loge("Failed to suspend server \"%s\"", serverInfos->serverParams.name);
+                ret = HANDLERS_ERROR_COMMAND;
+            }
+
+            if (ret == HANDLERS_ERROR_NONE) {
+                serverInfos->state = MODULE_STATE_SUSPENDED;
+            }
             break;
         }
     }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void resumeServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E resumeServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    Logd("Resuming server \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                 = pData->ctx;
     SERVER_S *serverObj            = ctx->modules.serverObj;
     SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
+    SERVER_INFOS_S *serverInfos    = NULL;
+    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
-        if (strcmp((serversInfos->serverParams[index])->name, handlerData) == 0) {
-            (void)serverObj->resumeSender(serverObj, serversInfos->serverParams[index]);
+        serverInfos = serversInfos->serverInfos[index];
+
+        if (strcmp(serverInfos->serverParams.name, handlerData) == 0) {
+            Logd("Server \"%s\" found", serverInfos->serverParams.name);
+
+            if (serverInfos->state == MODULE_STATE_STOPPED) {
+                Logw("Server \"%s\" is currently stopped", serverInfos->serverParams.name);
+                break;
+            }
+
+            if (serverInfos->state != MODULE_STATE_SUSPENDED) {
+                Logw("Server \"%s\" was not suspended", serverInfos->serverParams.name);
+                break;
+            }
+
+            if (serverObj->resumeSender(serverObj, &serverInfos->serverParams) != SERVER_ERROR_NONE) {
+                Loge("Failed to resume server \"%s\"", serverInfos->serverParams.name);
+                ret = HANDLERS_ERROR_COMMAND;
+            }
+
+            if (ret == HANDLERS_ERROR_NONE) {
+                serverInfos->state = MODULE_STATE_STARTED;
+            }
             break;
         }
     }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void stopCient(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E stopCient(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    Logd("Stopping client \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                 = pData->ctx;
     CLIENT_S *clientObj            = ctx->modules.clientObj;
     CLIENTS_INFOS_S *clientsInfos  = &ctx->params.clientsInfos;
+    CLIENT_INFOS_S *clientInfos    = NULL;
+    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
 
     uint32_t index;
     for (index = 0; index < clientsInfos->nbClients; index++) {
-        if (strcmp((clientsInfos->clientParams[index])->name, handlerData) == 0) {
-            (void)clientObj->stop(clientObj, clientsInfos->clientParams[index]);
+        clientInfos = clientsInfos->clientInfos[index];
+
+        if (strcmp(clientInfos->clientParams.name, handlerData) == 0) {
+            Logd("Client \"%s\" found", clientInfos->clientParams.name);
+
+            if (clientInfos->state == MODULE_STATE_STOPPED) {
+                Logw("Client \"%s\" is already stopped", clientInfos->clientParams.name);
+                break;
+            }
+
+            if (clientObj->stop(clientObj, &clientInfos->clientParams) != CLIENT_ERROR_NONE) {
+                Loge("failed to stop client \"%s\"", clientInfos->clientParams.name);
+                ret = HANDLERS_ERROR_COMMAND;
+            }
+
+            if (ret == HANDLERS_ERROR_NONE) {
+                clientInfos->state = MODULE_STATE_STOPPED;
+            }
             break;
         }
     }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void startClient(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E startClient(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    Logd("Starting client \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                 = pData->ctx;
     CLIENT_S *clientObj            = ctx->modules.clientObj;
     CLIENTS_INFOS_S *clientsInfos  = &ctx->params.clientsInfos;
+    CLIENT_INFOS_S *clientInfos    = NULL;
+    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
 
     uint32_t index;
     for (index = 0; index < clientsInfos->nbClients; index++) {
-        if (strcmp((clientsInfos->clientParams[index])->name, handlerData) == 0) {
-            (void)clientObj->start(clientObj, clientsInfos->clientParams[index]);
+        clientInfos = clientsInfos->clientInfos[index];
+
+        if (strcmp(clientInfos->clientParams.name, handlerData) == 0) {
+            Logd("Client \"%s\" found", clientInfos->clientParams.name);
+
+            if (clientInfos->state != MODULE_STATE_STOPPED) {
+                Logw("Client \"%s\" is already started", clientInfos->clientParams.name);
+                break;
+            }
+            if (clientObj->start(clientObj, &clientInfos->clientParams) != CLIENT_ERROR_NONE) {
+                Loge("failed to start client \"%s\"", clientInfos->clientParams.name);
+                ret = HANDLERS_ERROR_COMMAND;
+            }
+
+            if (ret == HANDLERS_ERROR_NONE) {
+                clientInfos->state = MODULE_STATE_STARTED;
+            }
             break;
         }
     }
+
+    return ret;
 }
 
 /*!
  *
  */
-static void multiInputs(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static HANDLERS_ERROR_E multiInputs(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementName && gfxElementData);
+    assert(obj && obj->pData);
 
-    Logd("Handling click on element \"%s\"", gfxElementName);
+    (void)gfxElementName;
+    (void)gfxElementData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
+
+    Logd("Handling multi inputs request - data : \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx                 = pData->ctx;
@@ -795,7 +1162,7 @@ static void multiInputs(HANDLERS_S *obj, char *gfxElementName, void *gfxElementD
 
     if (obj->getSubstring(obj, handlerData, ";", functionName, &offset) != HANDLERS_ERROR_NONE) {
         Loge("Bad format. Expected: customFunctionName;targetName;param1;param2;...");
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
 
     if (obj->getSubstring(obj, handlerData, ";", targetName, &offset) != HANDLERS_ERROR_NONE) {
@@ -805,21 +1172,21 @@ static void multiInputs(HANDLERS_S *obj, char *gfxElementName, void *gfxElementD
     Logd("Function : \"%s\" / Target : \"%s\"", functionName, targetName);
 
     uint32_t index;
-    for (index = 0; index < pData->nbMultiInputsClickHandlers; index++) {
-        if (strcmp(pData->multiInputsClickHandlers[index].name, functionName) == 0) {
+    for (index = 0; index < pData->nbMultiInputsHandlers; index++) {
+        if (strcmp(pData->multiInputsHandlers[index].name, functionName) == 0) {
             break;
         }
     }
 
-    if (index >= pData->nbMultiInputsClickHandlers) {
+    if (index >= pData->nbMultiInputsHandlers) {
         Loge("Method \"%s\" not found", functionName);
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
 
-    if (!pData->multiInputsClickHandlers[index].fct) {
+    if (!pData->multiInputsHandlers[index].fct) {
         Loge("Method \"%s\" not defined", functionName);
-        return;
+        return HANDLERS_ERROR_PARAMS;
     }
 
-    pData->multiInputsClickHandlers[index].fct(obj, targetName, NULL, handlerData + offset);
+    return pData->multiInputsHandlers[index].fct(obj, targetName, NULL, handlerData + offset);
 }

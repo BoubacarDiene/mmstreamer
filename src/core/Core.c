@@ -435,7 +435,7 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
 	                
             (void)pData->controlObj->setElementGetters(pData->controlObj, (*gfxElements)[index]->pData, &getters);
             
-            (void)pData->controlObj->setClickHandlers(pData->controlObj, (*gfxElements)[index]->pData,
+            (void)pData->controlObj->setCommandHandlers(pData->controlObj, (*gfxElements)[index]->pData,
 	                                            (HANDLERS_ID_S*)xmlGraphics->elements[index].clickHandlers,
 	                                            xmlGraphics->elements[index].nbClickHandlers, index);
             
@@ -460,7 +460,7 @@ badConfig_exit:
         for (index = 0; index < *nbGfxElements; index++) {
             if ((*gfxElements)[index]) {
                 if ((*gfxElements)[index]->pData) {
-                    (void)pData->controlObj->unsetClickHandlers(pData->controlObj, (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetCommandHandlers(pData->controlObj, (*gfxElements)[index]->pData);
                     (void)pData->controlObj->unsetElementGetters(pData->controlObj, (*gfxElements)[index]->pData);
                     (void)pData->controlObj->unsetElementTextIds(pData->controlObj, (*gfxElements)[index]->pData);
                     (void)pData->controlObj->unsetElementImageIds(pData->controlObj, (*gfxElements)[index]->pData);
@@ -514,7 +514,7 @@ static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj)
         for (index = 0; index < nbGfxElements; index++) {
             if ((*gfxElements)[index]) {
                 if ((*gfxElements)[index]->pData) {
-                    (void)pData->controlObj->unsetClickHandlers(pData->controlObj, (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetCommandHandlers(pData->controlObj, (*gfxElements)[index]->pData);
                     (void)pData->controlObj->unsetElementGetters(pData->controlObj, (*gfxElements)[index]->pData);
                     (void)pData->controlObj->unsetElementTextIds(pData->controlObj, (*gfxElements)[index]->pData);
                     (void)pData->controlObj->unsetElementImageIds(pData->controlObj, (*gfxElements)[index]->pData);
@@ -717,54 +717,55 @@ static CORE_ERROR_E loadServersParams_f(CORE_S *obj)
         return CORE_ERROR_XML;
     }
     
-    XML_SERVERS_S *xmlServers       = &pData->xml.xmlServers;
-    SERVERS_INFOS_S *serversInfos   = &pData->ctx->params.serversInfos;
-    SERVER_PARAMS_S ***serverParams = &serversInfos->serverParams;
-    uint8_t *nbServers              = &serversInfos->nbServers;
+    XML_SERVERS_S *xmlServers     = &pData->xml.xmlServers;
+    SERVERS_INFOS_S *serversInfos = &pData->ctx->params.serversInfos;
+    SERVER_INFOS_S ***serverInfos = &serversInfos->serverInfos;
+    SERVER_PARAMS_S *serverParams = NULL;
+    uint8_t *nbServers            = &serversInfos->nbServers;
     
     *nbServers = xmlServers->nbServers;
     
     Logd("Setting servers params");
     
-    assert((*serverParams = (SERVER_PARAMS_S**)calloc(*nbServers, sizeof(SERVER_PARAMS_S*))));
+    assert((*serverInfos = (SERVER_INFOS_S**)calloc(*nbServers, sizeof(SERVER_INFOS_S*))));
     
     uint8_t index;
     for (index = 0; index < *nbServers; index++) {
-        assert(((*serverParams)[index] = calloc(1, sizeof(SERVER_PARAMS_S))));
+        assert(((*serverInfos)[index] = calloc(1, sizeof(SERVER_INFOS_S))));
+
+        serverParams = &((*serverInfos)[index])->serverParams;
+
+        strncpy(serverParams->name, xmlServers->servers[index].name, sizeof(serverParams->name));
         
-        strncpy((*serverParams)[index]->name,
-                xmlServers->servers[index].name,
-                sizeof((*serverParams)[index]->name));
+        serverParams->type          = xmlServers->servers[index].type;
+        serverParams->link          = xmlServers->servers[index].link;
+        serverParams->mode          = xmlServers->servers[index].mode;
+        serverParams->acceptMode    = xmlServers->servers[index].acceptMode;
+        serverParams->priority      = xmlServers->servers[index].priority;
+        serverParams->maxClients    = xmlServers->servers[index].maxClients;
+        serverParams->maxBufferSize = xmlServers->servers[index].maxBufferSize;
         
-        (*serverParams)[index]->type          = xmlServers->servers[index].type;
-        (*serverParams)[index]->link          = xmlServers->servers[index].link;
-        (*serverParams)[index]->mode          = xmlServers->servers[index].mode;
-        (*serverParams)[index]->acceptMode    = xmlServers->servers[index].acceptMode;
-        (*serverParams)[index]->priority      = xmlServers->servers[index].priority;
-        (*serverParams)[index]->maxClients    = xmlServers->servers[index].maxClients;
-        (*serverParams)[index]->maxBufferSize = xmlServers->servers[index].maxBufferSize;
-        
-        strncpy((*serverParams)[index]->mime, xmlServers->servers[index].mime, sizeof((*serverParams)[index]->mime));
+        strncpy(serverParams->mime, xmlServers->servers[index].mime, sizeof(serverParams->mime));
         
         if (xmlServers->servers[index].host
                 && xmlServers->servers[index].service
                 && xmlServers->servers[index].path) {
-            strncpy((*serverParams)[index]->recipient.server.host,
+            strncpy(serverParams->recipient.server.host,
                     xmlServers->servers[index].host,
-                    sizeof((*serverParams)[index]->recipient.server.host));
+                    sizeof(serverParams->recipient.server.host));
 
-            strncpy((*serverParams)[index]->recipient.server.service,
+            strncpy(serverParams->recipient.server.service,
                     xmlServers->servers[index].service,
-                    sizeof((*serverParams)[index]->recipient.server.service));
+                    sizeof(serverParams->recipient.server.service));
 
-            strncpy((*serverParams)[index]->recipient.server.path,
+            strncpy(serverParams->recipient.server.path,
                     xmlServers->servers[index].path,
-                    sizeof((*serverParams)[index]->recipient.server.path));
+                    sizeof(serverParams->recipient.server.path));
         }
         else if (xmlServers->servers[index].socketName) {
-            strncpy((*serverParams)[index]->recipient.serverSocketName,
+            strncpy(serverParams->recipient.serverSocketName,
                     xmlServers->servers[index].socketName,
-                    sizeof((*serverParams)[index]->recipient.serverSocketName));
+                    sizeof(serverParams->recipient.serverSocketName));
         }
         else {
             Loge("Bad server config. Neighteer socketName nor host/service/path specified");
@@ -783,15 +784,15 @@ static CORE_ERROR_E loadServersParams_f(CORE_S *obj)
     
 badConfig_exit:
     for (index = 0; index < *nbServers; index++) {
-        if ((*serverParams)[index]) {
-            free((*serverParams)[index]);
-            (*serverParams)[index] = NULL;
+        if ((*serverInfos)[index]) {
+            free((*serverInfos)[index]);
+            (*serverInfos)[index] = NULL;
         }
     }
     
-    if (*serverParams) {
-        free(*serverParams);
-        *serverParams = NULL;
+    if (*serverInfos) {
+        free(*serverInfos);
+        *serverInfos = NULL;
     }
     
     (void)pData->loadersObj->unloadServersXml(pData->loadersObj, xmlServers);
@@ -808,23 +809,23 @@ static CORE_ERROR_E unloadServersParams_f(CORE_S *obj)
     
     CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
     
-    SERVERS_INFOS_S *serversInfos    = &pData->ctx->params.serversInfos;
-    SERVER_PARAMS_S ***serverParams  = &serversInfos->serverParams;
-    uint8_t nbServers                = serversInfos->nbServers;
+    SERVERS_INFOS_S *serversInfos = &pData->ctx->params.serversInfos;
+    SERVER_INFOS_S ***serverInfos = &serversInfos->serverInfos;
+    uint8_t nbServers             = serversInfos->nbServers;
     
     (void)pData->listenersObj->unsetServersListeners(pData->listenersObj);
     
     uint8_t index;
     for (index = 0; index < nbServers; index++) {
-        if ((*serverParams)[index]) {
-            free((*serverParams)[index]);
-            (*serverParams)[index] = NULL;
+        if ((*serverInfos)[index]) {
+            free((*serverInfos)[index]);
+            (*serverInfos)[index] = NULL;
         }
     }
     
-    if (*serverParams) {
-        free(*serverParams);
-        *serverParams = NULL;
+    if (*serverInfos) {
+        free(*serverInfos);
+        *serverInfos = NULL;
     }
     
     (void)pData->loadersObj->unloadServersXml(pData->loadersObj, &pData->xml.xmlServers);
@@ -846,71 +847,60 @@ static CORE_ERROR_E loadClientsParams_f(CORE_S *obj)
         return CORE_ERROR_XML;
     }
     
-    XML_CLIENTS_S *xmlClients       = &pData->xml.xmlClients;
-    CLIENTS_INFOS_S *clientsInfos   = &pData->ctx->params.clientsInfos;
-    CLIENT_PARAMS_S ***clientParams = &clientsInfos->clientParams;
-    
-    char ***graphicsDest            = &clientsInfos->graphicsDest;
-    int8_t **graphicsIndex          = &clientsInfos->graphicsIndex;
-    
-    char ***serverDest              = &clientsInfos->serverDest;
-    int8_t **serverIndex            = &clientsInfos->serverIndex;
-    
-    uint8_t *nbClients              = &clientsInfos->nbClients;
+    XML_CLIENTS_S *xmlClients     = &pData->xml.xmlClients;
+    CLIENTS_INFOS_S *clientsInfos = &pData->ctx->params.clientsInfos;
+    CLIENT_INFOS_S ***clientInfos = &clientsInfos->clientInfos;
+    CLIENT_PARAMS_S *clientParams = NULL;
+    uint8_t *nbClients            = &clientsInfos->nbClients;
     
     *nbClients = xmlClients->nbClients;
     
     Logd("Setting clients params");
     
-    assert((*clientParams = (CLIENT_PARAMS_S**)calloc(*nbClients, sizeof(CLIENT_PARAMS_S*))));
-    assert((*graphicsDest = (char**)calloc(*nbClients, sizeof(char*))));
-    assert((*serverDest   = (char**)calloc(*nbClients, sizeof(char*))));
-    
-    assert((*graphicsIndex = (int8_t*)calloc(*nbClients, sizeof(int8_t))));
-    assert((*serverIndex   = (int8_t*)calloc(*nbClients, sizeof(int8_t))));
+    assert((*clientInfos = (CLIENT_INFOS_S**)calloc(*nbClients, sizeof(CLIENT_INFOS_S*))));
     
     uint8_t index;
     for (index = 0; index < *nbClients; index++) {
-        assert(((*clientParams)[index] = calloc(1, sizeof(CLIENT_PARAMS_S))));
+        assert(((*clientInfos)[index] = calloc(1, sizeof(CLIENT_INFOS_S))));
+
+        clientParams = &((*clientInfos)[index])->clientParams;
+
+        strncpy(clientParams->name, xmlClients->clients[index].name, sizeof(clientParams->name));
         
-        strncpy((*clientParams)[index]->name,
-                xmlClients->clients[index].name,
-                sizeof((*clientParams)[index]->name));
-        
-        (*clientParams)[index]->type     = xmlClients->clients[index].type;
-        (*clientParams)[index]->link     = xmlClients->clients[index].link;
-        (*clientParams)[index]->mode     = xmlClients->clients[index].mode;
-        (*clientParams)[index]->priority = xmlClients->clients[index].priority;
+        clientParams->type     = xmlClients->clients[index].type;
+        clientParams->link     = xmlClients->clients[index].link;
+        clientParams->mode     = xmlClients->clients[index].mode;
+        clientParams->priority = xmlClients->clients[index].priority;
         
         if (xmlClients->clients[index].graphicsDest) {
-            (*graphicsDest)[index]  = strdup(xmlClients->clients[index].graphicsDest);
-            (*graphicsIndex)[index] = -1;
+            ((*clientInfos)[index])->graphicsDest  = strdup(xmlClients->clients[index].graphicsDest);
+            ((*clientInfos)[index])->graphicsIndex = -1;
         }
         
         if (xmlClients->clients[index].serverDest) {
-            (*serverDest)[index]    = strdup(xmlClients->clients[index].serverDest);
-            (*serverIndex)[index]   = -1;
+            ((*clientInfos)[index])->serverDest  = strdup(xmlClients->clients[index].serverDest);
+            ((*clientInfos)[index])->serverIndex = -1;
         }
         
         if (xmlClients->clients[index].serverHost
                 && xmlClients->clients[index].serverService
                 && xmlClients->clients[index].serverPath) {
-            strncpy((*clientParams)[index]->recipient.server.host,
+            strncpy(clientParams->recipient.server.host,
                     xmlClients->clients[index].serverHost,
-                    sizeof((*clientParams)[index]->recipient.server.host));
+                    sizeof(clientParams->recipient.server.host));
 
-            strncpy((*clientParams)[index]->recipient.server.service,
+            strncpy(clientParams->recipient.server.service,
                     xmlClients->clients[index].serverService,
-                    sizeof((*clientParams)[index]->recipient.server.service));
+                    sizeof(clientParams->recipient.server.service));
 
-            strncpy((*clientParams)[index]->recipient.server.path,
+            strncpy(clientParams->recipient.server.path,
                     xmlClients->clients[index].serverPath,
-                    sizeof((*clientParams)[index]->recipient.server.path));
+                    sizeof(clientParams->recipient.server.path));
         }
         else if (xmlClients->clients[index].serverSocketName) {
-            strncpy((*clientParams)[index]->recipient.serverSocketName,
+            strncpy(clientParams->recipient.serverSocketName,
                     xmlClients->clients[index].serverSocketName,
-                    sizeof((*clientParams)[index]->recipient.serverSocketName));
+                    sizeof(clientParams->recipient.serverSocketName));
         }
         else {
             Loge("Bad client config. Neighteer socketName nor host/service/path specified");
@@ -929,45 +919,25 @@ static CORE_ERROR_E loadClientsParams_f(CORE_S *obj)
     
 badConfig_exit:
     for (index = 0; index < *nbClients; index++) {
-        if ((*clientParams)[index]) {
-            free((*clientParams)[index]);
-            (*clientParams)[index] = NULL;
+        if (((*clientInfos)[index])->graphicsDest) {
+            free(((*clientInfos)[index])->graphicsDest);
+            ((*clientInfos)[index])->graphicsDest = NULL;
         }
         
-        if ((*graphicsDest)[index]) {
-            free((*graphicsDest)[index]);
-            (*graphicsDest)[index] = NULL;
+        if (((*clientInfos)[index])->serverDest) {
+            free(((*clientInfos)[index])->serverDest);
+            ((*clientInfos)[index])->serverDest = NULL;
         }
-        
-        if ((*serverDest)[index]) {
-            free((*serverDest)[index]);
-            (*serverDest)[index] = NULL;
+
+        if ((*clientInfos)[index]) {
+            free((*clientInfos)[index]);
+            (*clientInfos)[index] = NULL;
         }
     }
     
-    if (*clientParams) {
-        free(*clientParams);
-        *clientParams = NULL;
-    }
-    
-    if (*graphicsDest) {
-        free(*graphicsDest);
-        *graphicsDest = NULL;
-    }
-    
-    if (*graphicsIndex) {
-        free(*graphicsIndex);
-        *graphicsIndex = NULL;
-    }
-    
-    if (*serverDest) {
-        free(*serverDest);
-        *serverDest = NULL;
-    }
-    
-    if (*serverIndex) {
-        free(*serverIndex);
-        *serverIndex = NULL;
+    if (*clientInfos) {
+        free(*clientInfos);
+        *clientInfos = NULL;
     }
     
     (void)pData->loadersObj->unloadClientsXml(pData->loadersObj, xmlClients);
@@ -984,53 +954,33 @@ static CORE_ERROR_E unloadClientsParams_f(CORE_S *obj)
     
     CORE_PRIVATE_DATA_S *pData  = (CORE_PRIVATE_DATA_S*)(obj->pData);
     
-    CLIENTS_INFOS_S *clientsInfos    = &pData->ctx->params.clientsInfos;
-    CLIENT_PARAMS_S ***clientParams  = &clientsInfos->clientParams;
-    uint8_t nbClients                = clientsInfos->nbClients;
+    CLIENTS_INFOS_S *clientsInfos = &pData->ctx->params.clientsInfos;
+    CLIENT_INFOS_S ***clientInfos = &clientsInfos->clientInfos;
+    uint8_t nbClients             = clientsInfos->nbClients;
     
     (void)pData->listenersObj->unsetClientsListeners(pData->listenersObj);
     
     uint8_t index;
     for (index = 0; index < nbClients; index++) {
-        if ((*clientParams)[index]) {
-            free((*clientParams)[index]);
-            (*clientParams)[index] = NULL;
+        if (((*clientInfos)[index])->graphicsDest) {
+            free(((*clientInfos)[index])->graphicsDest);
+            ((*clientInfos)[index])->graphicsDest = NULL;
         }
         
-        if (clientsInfos->graphicsDest[index]) {
-            free(clientsInfos->graphicsDest[index]);
-            clientsInfos->graphicsDest[index] = NULL;
+        if (((*clientInfos)[index])->serverDest) {
+            free(((*clientInfos)[index])->serverDest);
+            ((*clientInfos)[index])->serverDest = NULL;
         }
-        
-        if (clientsInfos->serverDest[index]) {
-            free(clientsInfos->serverDest[index]);
-            clientsInfos->serverDest[index] = NULL;
+
+        if ((*clientInfos)[index]) {
+            free((*clientInfos)[index]);
+            (*clientInfos)[index] = NULL;
         }
     }
     
-    if (*clientParams) {
-        free(*clientParams);
-        *clientParams = NULL;
-    }
-    
-    if (clientsInfos->graphicsDest) {
-        free(clientsInfos->graphicsDest);
-        clientsInfos->graphicsDest = NULL;
-    }
-    
-    if (clientsInfos->graphicsIndex) {
-        free(clientsInfos->graphicsIndex);
-        clientsInfos->graphicsIndex = NULL;
-    }
-    
-    if (clientsInfos->serverDest) {
-        free(clientsInfos->serverDest);
-        clientsInfos->serverDest = NULL;
-    }
-    
-    if (clientsInfos->serverIndex) {
-        free(clientsInfos->serverIndex);
-        clientsInfos->serverIndex = NULL;
+    if (*clientInfos) {
+        free(*clientInfos);
+        *clientInfos = NULL;
     }
     
     (void)pData->loadersObj->unloadClientsXml(pData->loadersObj, &pData->xml.xmlClients);

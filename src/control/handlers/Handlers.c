@@ -46,7 +46,7 @@
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-static HANDLERS_ERROR_E getClickHandler_f(HANDLERS_S *obj, const char *handlerName, CLICK_HANDLER_F *out);
+static HANDLERS_ERROR_E getCommandHandler_f(HANDLERS_S *obj, const char *handlerName, COMMAND_HANDLER_F *out);
 static HANDLERS_ERROR_E getElementIndex_f(HANDLERS_S *obj, char *elementName, uint32_t *index);
 static HANDLERS_ERROR_E getSubstring_f   (HANDLERS_S *obj, const char *haystack, const char *needle, char *out, uint32_t *offset);
 
@@ -54,11 +54,11 @@ static HANDLERS_ERROR_E getSubstring_f   (HANDLERS_S *obj, const char *haystack,
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-extern CLICK_HANDLERS_S gSingleInputClickHandlers[];
-extern uint32_t gNbSingleInputClickHandlers;
+extern COMMAND_HANDLERS_S gSingleInputHandlers[];
+extern uint32_t gNbSingleInputHandlers;
 
-extern CLICK_HANDLERS_S gMultiInputsClickHandlers[];
-extern uint32_t gNbMultiInputsClickHandlers;
+extern COMMAND_HANDLERS_S gMultiInputsHandlers[];
+extern uint32_t gNbMultiInputsHandlers;
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                      PUBLIC FUNCTIONS                                        */
@@ -74,17 +74,17 @@ HANDLERS_ERROR_E Handlers_Init(HANDLERS_S **obj, CONTEXT_S *ctx)
     HANDLERS_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(HANDLERS_PRIVATE_DATA_S))));
 
-    (*obj)->getClickHandler = getClickHandler_f;
-    (*obj)->getElementIndex = getElementIndex_f;
-    (*obj)->getSubstring    = getSubstring_f;
+    (*obj)->getCommandHandler = getCommandHandler_f;
+    (*obj)->getElementIndex   = getElementIndex_f;
+    (*obj)->getSubstring      = getSubstring_f;
 
     pData->ctx = ctx;
 
-    pData->nbSingleInputClickHandlers = gNbSingleInputClickHandlers;
-    pData->singleInputClickHandlers   = gSingleInputClickHandlers;
+    pData->nbSingleInputHandlers = gNbSingleInputHandlers;
+    pData->singleInputHandlers   = gSingleInputHandlers;
 
-    pData->nbMultiInputsClickHandlers = gNbMultiInputsClickHandlers;
-    pData->multiInputsClickHandlers   = gMultiInputsClickHandlers;
+    pData->nbMultiInputsHandlers = gNbMultiInputsHandlers;
+    pData->multiInputsHandlers   = gMultiInputsHandlers;
 
     (*obj)->pData = (void*)pData;
 
@@ -101,8 +101,8 @@ HANDLERS_ERROR_E Handlers_UnInit(HANDLERS_S **obj)
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)((*obj)->pData);
 
     pData->ctx                      = NULL;
-    pData->singleInputClickHandlers = NULL;
-    pData->multiInputsClickHandlers = NULL;
+    pData->singleInputHandlers = NULL;
+    pData->multiInputsHandlers = NULL;
 
     free((*obj)->pData);
     (*obj)->pData = NULL;
@@ -120,21 +120,21 @@ HANDLERS_ERROR_E Handlers_UnInit(HANDLERS_S **obj)
 /*!
  *
  */
-static HANDLERS_ERROR_E getClickHandler_f(HANDLERS_S *obj, const char *handlerName, CLICK_HANDLER_F *out)
+static HANDLERS_ERROR_E getCommandHandler_f(HANDLERS_S *obj, const char *handlerName, COMMAND_HANDLER_F *out)
 {
     assert(obj && obj->pData && handlerName && out);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
 
     uint32_t i = 0;
-    while ((i < pData->nbSingleInputClickHandlers)
-            && pData->singleInputClickHandlers[i].name
-            && (strcmp(pData->singleInputClickHandlers[i].name, handlerName) != 0)) {
+    while ((i < pData->nbSingleInputHandlers)
+            && pData->singleInputHandlers[i].name
+            && (strcmp(pData->singleInputHandlers[i].name, handlerName) != 0)) {
         i++;
     }
 
-    if (pData->singleInputClickHandlers[i].name) {
-        *out = pData->singleInputClickHandlers[i].fct;
+    if (pData->singleInputHandlers[i].name) {
+        *out = pData->singleInputHandlers[i].fct;
     }
 
     return HANDLERS_ERROR_NONE;

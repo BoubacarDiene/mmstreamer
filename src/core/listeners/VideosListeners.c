@@ -91,11 +91,11 @@ LISTENERS_ERROR_E setVideosListeners_f(LISTENERS_S *obj)
         nbVideoListeners = &videoDevice->nbVideoListeners;
         videoListeners   = &videoDevice->videoListeners;
 
-        if (input->graphicsEnabled && videoDevice->graphicsDest) {
+        if (input->graphicsConfig.enable && videoDevice->graphicsDest) {
             *nbVideoListeners = 1;
         }
     
-        if (input->serversEnabled && videoDevice->serverDest) {
+        if (input->serversConfig.enable && videoDevice->serverDest) {
             (*nbVideoListeners)++;
         }
     
@@ -112,7 +112,7 @@ LISTENERS_ERROR_E setVideosListeners_f(LISTENERS_S *obj)
 
             listenerIndex = 0;
 
-            if (input->graphicsEnabled && videoDevice->graphicsDest) {
+            if (input->graphicsConfig.enable && videoDevice->graphicsDest) {
                 assert(((*videoListeners)[listenerIndex] = calloc(1, sizeof(VIDEO_LISTENER_S))));
                 videoListener = (*videoListeners)[listenerIndex];
 
@@ -123,7 +123,7 @@ LISTENERS_ERROR_E setVideosListeners_f(LISTENERS_S *obj)
                 listenerIndex++;
             }
         
-            if (input->serversEnabled && videoDevice->serverDest) {
+            if (input->serversConfig.enable && videoDevice->serverDest) {
                 assert(((*videoListeners)[listenerIndex] = calloc(1, sizeof(VIDEO_LISTENER_S))));
                 videoListener = (*videoListeners)[listenerIndex];
 
@@ -196,15 +196,18 @@ static void onVideo4GfxCb(VIDEO_BUFFER_S *videoBuffer, void *userData)
     VIDEOS_LISTENERS_INTERNAL_PDATA_S *internalPdata = (VIDEOS_LISTENERS_INTERNAL_PDATA_S*)userData;
     LISTENERS_PDATA_S *listenersPdata                = (LISTENERS_PDATA_S*)internalPdata->listenersPdata;
     GRAPHICS_S *graphicsObj                          = listenersPdata->ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos                  = &listenersPdata->ctx->params.graphicsInfos;
     VIDEOS_INFOS_S *videosInfos                      = &listenersPdata->ctx->params.videosInfos;
     VIDEO_DEVICE_S *videoDevice                      = videosInfos->devices[internalPdata->videoIndex];
     
-    if (graphicsObj && videoDevice->graphicsDest) {
+    if (graphicsObj
+        && videoDevice->graphicsDest
+        && (graphicsInfos->state == MODULE_STATE_STARTED)) {
+
         listenersPdata->buffer.data   = videoBuffer->data;
         listenersPdata->buffer.length = videoBuffer->length;
         
         if (videoDevice->graphicsIndex == -1) {
-            GRAPHICS_INFOS_S *graphicsInfos = &listenersPdata->ctx->params.graphicsInfos;
             uint32_t index;
             for (index = 0; index < graphicsInfos->nbGfxElements; index++) {
                 if (strcmp(graphicsInfos->gfxElements[index]->name, videoDevice->graphicsDest) == 0) {
@@ -236,31 +239,39 @@ static void onVideo4ServerCb(VIDEO_BUFFER_S *videoBuffer, void *userData)
     LISTENERS_PDATA_S *listenersPdata                = (LISTENERS_PDATA_S*)internalPdata->listenersPdata;
     GRAPHICS_S *graphicsObj                          = listenersPdata->ctx->modules.graphicsObj;
     SERVER_S *serverObj                              = listenersPdata->ctx->modules.serverObj;
+    SERVERS_INFOS_S *serversInfos                    = &listenersPdata->ctx->params.serversInfos;
+    SERVER_INFOS_S *serverInfos                      = NULL;
     VIDEOS_INFOS_S *videosInfos                      = &listenersPdata->ctx->params.videosInfos;
     VIDEO_DEVICE_S *videoDevice                      = videosInfos->devices[internalPdata->videoIndex];
+
+    listenersPdata->buffer.data   = videoBuffer->data;
+    listenersPdata->buffer.length = videoBuffer->length;
     
     if (serverObj && videoDevice->serverDest) {
-        SERVERS_INFOS_S *serversInfos = &listenersPdata->ctx->params.serversInfos;
         if (videoDevice->serverIndex == -1) {
             uint8_t index;
             for (index = 0; index < serversInfos->nbServers; index++) {
-                if (strcmp(serversInfos->serverParams[index]->name, videoDevice->serverDest) == 0) {
+                serverInfos = serversInfos->serverInfos[index];
+
+                if (strcmp(serverInfos->serverParams.name, videoDevice->serverDest) == 0) {
                     Logd("Server \"%s\" found at index \"%u\"", videoDevice->serverDest, index);
                     break;
                 }
             }
-            if (index < serversInfos->nbServers) {
-                videoDevice->serverIndex = index;
-            }
-            else {
+
+            if (index == serversInfos->nbServers) {
                 Loge("Server \"%s\" does not exist", videoDevice->serverDest);
                 return;
             }
+
+            videoDevice->serverIndex = index;
         }
-         
-        listenersPdata->buffer.data   = videoBuffer->data;
-        listenersPdata->buffer.length = videoBuffer->length;
-            
-        (void)serverObj->sendData(serverObj, serversInfos->serverParams[videoDevice->serverIndex], &listenersPdata->buffer);
+        else {
+            serverInfos = serversInfos->serverInfos[videoDevice->serverIndex];
+        }
+
+        if (serverInfos->state == MODULE_STATE_STARTED) {
+            (void)serverObj->sendData(serverObj, &serverInfos->serverParams, &listenersPdata->buffer);
+        }
     }
 }
