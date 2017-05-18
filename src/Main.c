@@ -33,6 +33,8 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
+#include <sys/resource.h>
+
 #include "core/Core.h"
 #include "core/XmlDefines.h"
 
@@ -69,7 +71,7 @@ static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 
 static void usage(const char * const program)
 {
-    Loge("Usage: %s [-c <path to Main.xml>]", program);
+    Loge("Usage: %s [-c <path to Main.xml>][-p <niceness {-20 --> 19}>]", program);
 }
 
 /*!
@@ -77,13 +79,19 @@ static void usage(const char * const program)
  */
 int main(int argc, char **argv)
 {
-    int32_t opt   = -1;
-    char *mainXml = MAIN_XML_FILE;
+    int32_t ret      = EXIT_FAILURE;
+    int32_t opt      = -1;
+    int32_t niceness = 0;
+    char *mainXml    = MAIN_XML_FILE;
 
-    while ((opt = getopt(argc, argv, "c:")) != -1) {
+    while ((opt = getopt(argc, argv, "c:p:")) != -1) {
         switch (opt) {
             case 'c':
                 mainXml = optarg;
+                break;
+
+            case 'p':
+                niceness = atoi(optarg);
                 break;
 
             default:;
@@ -92,7 +100,10 @@ int main(int argc, char **argv)
         }
     }
 
-    int32_t ret = EXIT_FAILURE;
+    Logd("Setting niceness to \"%d\"", niceness);
+    if (setpriority(PRIO_PROCESS, getpid(), niceness) < 0) {
+        Loge("setpriority() failed - %s", strerror(errno));
+    }
 
     CONTEXT_S *mCtx;
     assert((mCtx = calloc(1, sizeof(CONTEXT_S))));
