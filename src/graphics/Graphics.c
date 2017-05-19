@@ -333,8 +333,6 @@ static GRAPHICS_ERROR_E destroyDrawer_f(GRAPHICS_S *obj)
 
     (void)Drawer_UnInit(&pData->drawerObj);
 
-    (void)pthread_mutex_unlock(&pData->lock);
-
 exit:
     (void)pthread_mutex_unlock(&pData->lock);
 
@@ -774,11 +772,16 @@ static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_
     assert(obj && obj->pData && inOut);
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_PARAMS;
+    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_DRAWER;
 
     if (pthread_mutex_lock(&pData->lock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
+    }
+
+    if (!pData->drawerObj) {
+        Loge("Drawer not initialized yet");
+        goto lockExit;
     }
 
     if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
@@ -791,6 +794,7 @@ static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_
     if (!buffer) {
         if (!pData->videoElement) {
             Loge("No video frame to save");
+            ret = GRAPHICS_ERROR_PARAMS;
             goto elementExit;
         }
         Logd("Creating screenshot from the last drawn video frame");
@@ -803,7 +807,6 @@ static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_
     }
     
     if (pData->drawerObj->saveBuffer(pData->drawerObj, &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
-        ret = GRAPHICS_ERROR_DRAWER;
         goto elementExit;
     }
 
@@ -831,6 +834,12 @@ static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName
     if (pthread_mutex_lock(&pData->lock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
+    }
+
+    if (!pData->drawerObj) {
+        Loge("Drawer not initialized yet");
+        ret = GRAPHICS_ERROR_LOCK;
+        goto lockExit;
     }
 
     if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
@@ -897,7 +906,8 @@ static GRAPHICS_ERROR_E takeScreenshot_f(GRAPHICS_S *obj, GFX_IMAGE_S *inOut)
         return GRAPHICS_ERROR_LOCK;
     }
 
-    if (pData->drawerObj->saveScreen(pData->drawerObj, inOut) != DRAWER_ERROR_NONE) {
+    if (!pData->drawerObj
+        || (pData->drawerObj->saveScreen(pData->drawerObj, inOut) != DRAWER_ERROR_NONE)) {
         ret = GRAPHICS_ERROR_DRAWER;
     }
 
@@ -966,6 +976,7 @@ static GRAPHICS_ERROR_E handleGfxEvents_f(GRAPHICS_S *obj)
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
 
     if (!pData->drawerObj) {
+        Loge("Drawer not initialized yet");
         return GRAPHICS_ERROR_DRAWER;
     }
 
@@ -1061,7 +1072,12 @@ static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxEleme
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E           ret = GRAPHICS_ERROR_NONE;
-        
+
+    if (!pData->drawerObj) {
+        Loge("Drawer not initialized yet");
+        return GRAPHICS_ERROR_DRAWER;
+    }
+
     if (!gfxElement->isVisible) {
         // Clear surface
         if (!gfxElement->surfaceUpdated
@@ -1140,7 +1156,12 @@ static GRAPHICS_ERROR_E drawElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement
     
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E           ret = GRAPHICS_ERROR_NONE;
-    
+
+    if (!pData->drawerObj) {
+        Loge("Drawer not initialized yet");
+        return GRAPHICS_ERROR_DRAWER;
+    }
+
     switch (gfxElement->type) {
         case GFX_ELEMENT_TYPE_VIDEO:
             if (pData->drawerObj->drawVideo(pData->drawerObj, &gfxElement->rect, &gfxElement->data.buffer) != DRAWER_ERROR_NONE) {

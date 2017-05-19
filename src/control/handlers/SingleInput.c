@@ -178,7 +178,7 @@ static HANDLERS_ERROR_E changeLanguage(HANDLERS_S *obj, char *gfxElementName, vo
     HANDLERS_ERROR_E ret                = HANDLERS_ERROR_NONE;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
-        Loge("Graphics module is not started - current state : %u", graphicsInfos->state);
+        Logw("Graphics module is not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
     
@@ -249,7 +249,7 @@ static HANDLERS_ERROR_E hideElement(HANDLERS_S *obj, char *gfxElementName, void 
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
-        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        Logw("Graphics module not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
 
@@ -284,7 +284,7 @@ static HANDLERS_ERROR_E showElement(HANDLERS_S *obj, char *gfxElementName, void 
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
-        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        Logw("Graphics module not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
 
@@ -322,7 +322,7 @@ static HANDLERS_ERROR_E hideGroup(HANDLERS_S *obj, char *gfxElementName, void *g
     HANDLERS_ERROR_E ret            = HANDLERS_ERROR_NONE;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
-        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        Logw("Graphics module not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
     
@@ -368,7 +368,7 @@ static HANDLERS_ERROR_E showGroup(HANDLERS_S *obj, char *gfxElementName, void *g
     HANDLERS_ERROR_E ret            = HANDLERS_ERROR_NONE;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
-        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        Logw("Graphics module not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
 
@@ -411,7 +411,7 @@ static HANDLERS_ERROR_E setFocus(HANDLERS_S *obj, char *gfxElementName, void *gf
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
-        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        Logw("Graphics module not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
 
@@ -447,7 +447,7 @@ static HANDLERS_ERROR_E saveVideoElement(HANDLERS_S *obj, char *gfxElementName, 
     INPUT_S *input                  = &ctx->input;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
-        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        Logw("Graphics module not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
 
@@ -497,7 +497,7 @@ static HANDLERS_ERROR_E takeScreenshot(HANDLERS_S *obj, char *gfxElementName, vo
     INPUT_S *input                  = &ctx->input;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
-        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        Logw("Graphics module not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
 
@@ -560,7 +560,7 @@ static HANDLERS_ERROR_E setClickable(HANDLERS_S *obj, char *gfxElementName, void
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
-        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        Logw("Graphics module not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
 
@@ -595,7 +595,7 @@ static HANDLERS_ERROR_E setNotClickable(HANDLERS_S *obj, char *gfxElementName, v
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
-        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        Logw("Graphics module not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
 
@@ -626,7 +626,7 @@ static HANDLERS_ERROR_E stopGraphics(HANDLERS_S *obj, char *gfxElementName, void
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
-        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        Logw("Graphics module not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
 
@@ -660,7 +660,7 @@ static HANDLERS_ERROR_E startGraphics(HANDLERS_S *obj, char *gfxElementName, voi
     GRAPHICS_PARAMS_S *graphicsParams = &ctx->params.graphicsInfos.graphicsParams;
 
     if (graphicsInfos->state == MODULE_STATE_STARTED) {
-        Loge("Graphics module is already started");
+        Logw("Graphics module is already started");
         return HANDLERS_ERROR_STATE;
     }
 

@@ -33,6 +33,7 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
+#include <getopt.h>
 #include <sys/resource.h>
 
 #include "core/Core.h"
@@ -48,6 +49,11 @@
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
 /* -------------------------------------------------------------------------------------------- */
+
+typedef struct OPTIONS_S {
+    char    *mainXml;
+    int32_t niceness;
+} OPTIONS_S;
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
@@ -65,43 +71,25 @@ static void onClientsCb (void *userData, const char **attrs);
 
 static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 
+static void usage       (const char * const program);
+static void parseOptions(int argc, char **argv, OPTIONS_S *out);
+
 /* -------------------------------------------------------------------------------------------- */
 /*                                           MAIN                                               */
 /* -------------------------------------------------------------------------------------------- */
-
-static void usage(const char * const program)
-{
-    Loge("Usage: %s [-c <path to Main.xml>][-p <niceness {-20 --> 19}>]", program);
-}
 
 /*!
  * main() function
  */
 int main(int argc, char **argv)
 {
-    int32_t ret      = EXIT_FAILURE;
-    int32_t opt      = -1;
-    int32_t niceness = 0;
-    char *mainXml    = MAIN_XML_FILE;
+    int32_t ret       = EXIT_FAILURE;
+    OPTIONS_S options = { .niceness = 0, .mainXml = MAIN_XML_FILE };
 
-    while ((opt = getopt(argc, argv, "c:p:")) != -1) {
-        switch (opt) {
-            case 'c':
-                mainXml = optarg;
-                break;
+    parseOptions(argc, argv, &options);
 
-            case 'p':
-                niceness = atoi(optarg);
-                break;
-
-            default:;
-                usage(argv[0]);
-                exit(EXIT_FAILURE);
-        }
-    }
-
-    Logd("Setting niceness to \"%d\"", niceness);
-    if (setpriority(PRIO_PROCESS, getpid(), niceness) < 0) {
+    Logd("Setting niceness to \"%d\"", options.niceness);
+    if (setpriority(PRIO_PROCESS, getpid(), options.niceness) < 0) {
         Loge("setpriority() failed - %s", strerror(errno));
     }
 
@@ -117,7 +105,7 @@ int main(int argc, char **argv)
         goto parserInitExit;
     }
     
-    Logd("Parsing main config file : \"%s\"", mainXml);
+    Logd("Parsing main config file : \"%s\"", options.mainXml);
     
     PARSER_TAGS_HANDLER_S tagsHandlers[] = {
     	{ XML_TAG_GENERAL,   onGeneralCb,   NULL,  NULL },
@@ -129,7 +117,7 @@ int main(int argc, char **argv)
     };
     
     PARSER_PARAMS_S parserParams;
-    strncpy(parserParams.path, mainXml, sizeof(parserParams.path));
+    strncpy(parserParams.path, options.mainXml, sizeof(parserParams.path));
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
     parserParams.onErrorCb    = onErrorCb;
@@ -192,14 +180,16 @@ int main(int argc, char **argv)
                 Loge("createDrawer() failed");
                 goto createDrawerExit;
             }
-        
+
+            /* Drawer is created so graphics module's state must be updated here so as to destroy
+             * drawer when stopping the module */
+            graphicsInfos->state = MODULE_STATE_STARTED;
+
             Logd("Displaying %u graphics elements", graphicsInfos->nbGfxElements);
             if (modules->graphicsObj->drawAllElements(modules->graphicsObj) != GRAPHICS_ERROR_NONE) {
                 Loge("Failed to draw all elements");
                 goto destroyDrawerExit;
             }
-
-            graphicsInfos->state = MODULE_STATE_STARTED;
         }
     }
 
@@ -749,4 +739,46 @@ static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr)
     (void)userData;
 
     Loge("Parsing error - errorCode = %d / errorStr = \"%s\"", errorCode, errorStr);
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/*                                              MISC                                            */
+/* -------------------------------------------------------------------------------------------- */
+
+static void usage(const char * const program)
+{
+    Loge("Usage: %s [-c <path to Main.xml>][-n <niceness {-20 --> 19}>]", program);
+}
+
+static void parseOptions(int argc, char **argv, OPTIONS_S *out)
+{
+    int opt, index;
+    static struct option long_options[] = {
+        { "config",    no_argument,  0,  0 },
+        { "niceness",  no_argument,  0,  0 },
+        { 0,           0,            0,  0 }
+    };
+
+    while (1) {
+        index = 0;
+        opt = getopt_long(argc, argv, "c:n:", long_options, &index);
+        if (opt == -1) {
+            Logd("No option is set");
+            break;
+        }
+
+        switch (opt) {
+            case 'c':
+                out->mainXml = optarg;
+                break;
+
+            case 'n':
+                out->niceness = atoi(optarg);
+                break;
+
+            default:;
+                usage(argv[0]);
+                exit(EXIT_FAILURE);
+        }
+    }
 }

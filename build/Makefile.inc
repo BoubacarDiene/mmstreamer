@@ -42,7 +42,7 @@ TASK   := utils/Task
 
 # Build
 DEBUG     := no
-LOG_LEVEL := 0
+LOG_LEVEL := 1
 OPTIONS   := -Wall -Wextra -Wno-missing-braces -Wno-unused-parameter -Wno-unused-variable
 
 ifeq (${DEBUG},no)
