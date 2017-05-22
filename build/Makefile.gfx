@@ -107,6 +107,7 @@ prepare-graphics-sources:
 	${CP} ${INC}/${COMMON}.h ${OUT_BUILD_UTILS_H}/.
 	${CP} ${INC}/${LIST}.h   ${OUT_BUILD_UTILS_H}/.
 	${CP} ${INC}/${LOG}.h    ${OUT_BUILD_UTILS_H}/.
+	${CP} ${INC}/${TASK}.h   ${OUT_BUILD_UTILS_H}/.
 	
 	${CP} ${INC}/${DRAWER}.h    ${OUT_BUILD_GRAPHICS_H}/.
 	${CP} ${INC}/${FBDEV}.h     ${OUT_BUILD_GRAPHICS_H}/.

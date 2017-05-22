@@ -39,7 +39,7 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "CORE"
+#define TAG "Core"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -276,7 +276,11 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
     Logd("Setting screen params");
     
     GFX_SCREEN_S *screenParams = &graphicsParams->screenParams;
-    
+
+    if (xmlGraphics->screen.name) {
+        strncpy(screenParams->name, xmlGraphics->screen.name, sizeof(screenParams->name));
+    }
+
     screenParams->rect.x = 0;
     screenParams->rect.y = 0;
     screenParams->rect.w = xmlGraphics->screen.width;
@@ -999,6 +1003,19 @@ static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, KEEP_ALIVE_METHOD_E method, ui
     CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
     CONTEXT_S *ctx             = pData->ctx;
     GRAPHICS_S *graphicsObj    = ctx->modules.graphicsObj;
+    CONTROL_S *controlObj      = pData->controlObj;
+
+    if (method == KEEP_ALIVE_SEMAPHORE_BASED) {
+        if (sem_init(&ctx->keepAliveSem, 0, 0) != 0) {
+            Loge("sem_init() failed");
+            return CORE_ERROR_KEEP_ALIVE;
+        }
+    }
+
+    if (controlObj->loadControllers(controlObj) != CONTROL_ERROR_NONE) {
+        Loge("loadControllers() failed");
+        goto exit;
+    }
 
     switch (method) {
         case KEEP_ALIVE_EVENTS_BASED:
@@ -1009,13 +1026,7 @@ static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, KEEP_ALIVE_METHOD_E method, ui
             break;
             
         case KEEP_ALIVE_SEMAPHORE_BASED:
-            if (sem_init(&ctx->keepAliveSem, 0, 0) != 0) {
-                Loge("sem_init() failed");
-                ret = CORE_ERROR_KEEP_ALIVE;
-                break;
-            }
             sem_wait(&ctx->keepAliveSem);
-            (void)sem_destroy(&ctx->keepAliveSem);
             break;
             
         case KEEP_ALIVE_TIMER_BASED:
@@ -1026,7 +1037,16 @@ static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, KEEP_ALIVE_METHOD_E method, ui
             Loge("Unknown keepAlive method");
             ret = CORE_ERROR_KEEP_ALIVE;
     }
-    
+
+    if (controlObj->unloadControllers(controlObj) != CONTROL_ERROR_NONE) {
+        Loge("unloadControllers() failed");
+    }
+
+exit:
+    if (method == KEEP_ALIVE_SEMAPHORE_BASED) {
+        (void)sem_destroy(&ctx->keepAliveSem);
+    }
+
     return ret;
 }
 

@@ -31,14 +31,15 @@
 
 #include <pthread.h>
 
+#include "utils/Log.h"
 #include "utils/List.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/*                                           DEFINE                                             */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "LIST"
+#define TAG "List"
     
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -88,8 +89,6 @@ LIST_ERROR_E List_Init(LIST_S **obj, LIST_PARAMS_S *params)
     
     assert((*obj = calloc(1, sizeof(LIST_S))));
     
-    memset(&(*obj)->params, '\0', sizeof(LIST_PARAMS_S));
-    
     (*obj)->params.compareCb = params->compareCb;
     (*obj)->params.releaseCb = params->releaseCb;
     (*obj)->params.browseCb  = params->browseCb;
@@ -98,6 +97,7 @@ LIST_ERROR_E List_Init(LIST_S **obj, LIST_PARAMS_S *params)
     assert((pData = calloc(1, sizeof(LIST_PRIVATE_DATA_S))));
     
     if (pthread_mutex_init(&pData->lock, NULL) != 0) {
+        Loge("pthread_mutex_init() failed");
         goto exit;
     }
     
@@ -135,6 +135,7 @@ LIST_ERROR_E List_UnInit(LIST_S **obj)
     LIST_PRIVATE_DATA_S *pData = (LIST_PRIVATE_DATA_S*)((*obj)->pData);
     
     if (pthread_mutex_destroy(&pData->lock) != 0) {
+        Loge("pthread_mutex_destroy() failed");
         ret = LIST_ERROR_UNINIT;
     }
     
@@ -315,6 +316,7 @@ static LIST_ERROR_E lock_f(LIST_S *obj)
     LIST_PRIVATE_DATA_S *pData = (LIST_PRIVATE_DATA_S*)obj->pData;
     
     if (pData && (pthread_mutex_lock(&pData->lock) != 0)) {
+        Loge("pthread_mutex_lock() failed");
         return LIST_ERROR_LOCK;
     }
 
@@ -333,6 +335,7 @@ static LIST_ERROR_E unlock_f(LIST_S *obj)
     LIST_PRIVATE_DATA_S *pData = (LIST_PRIVATE_DATA_S*)obj->pData;
     
     if (pData && (pthread_mutex_unlock(&pData->lock) != 0)) {
+        Loge("pthread_mutex_unlock() failed");
         return LIST_ERROR_LOCK;
     }
     

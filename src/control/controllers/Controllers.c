@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Configs.c
+* \file   Controllers.c
 * \brief  TODO
 * \author Boubacar DIENE
 */
@@ -29,30 +29,41 @@
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-#include "utils/Log.h"
-
-#include "core/Configs.h"
+#include "control/Controllers.h"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           DEFINE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "Configs"
+#define TAG "Controllers"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
 /* -------------------------------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-/* -------------------------------------------------------------------------------------------- */
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-extern CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, VIDEO_CONFIG_CHOICE_S *configChoice);
+extern CONTROLLERS_ERROR_E loadLibs_f  (CONTROLLERS_S *obj);
+extern CONTROLLERS_ERROR_E unloadLibs_f(CONTROLLERS_S *obj);
+
+extern CONTROLLERS_ERROR_E initCmdsTask_f  (CONTROLLERS_S *obj);
+extern CONTROLLERS_ERROR_E uninitCmdsTask_f(CONTROLLERS_S *obj);
+extern CONTROLLERS_ERROR_E startCmdsTask_f (CONTROLLERS_S *obj);
+extern CONTROLLERS_ERROR_E stopCmdsTask_f  (CONTROLLERS_S *obj);
+
+extern CONTROLLERS_ERROR_E initEvtsTask_f  (CONTROLLERS_S *obj);
+extern CONTROLLERS_ERROR_E uninitEvtsTask_f(CONTROLLERS_S *obj);
+extern CONTROLLERS_ERROR_E startEvtsTask_f (CONTROLLERS_S *obj);
+extern CONTROLLERS_ERROR_E stopEvtsTask_f  (CONTROLLERS_S *obj);
+
+extern CONTROLLERS_ERROR_E notify_f(CONTROLLERS_S *obj, CONTROLLER_EVENT_S *event);
+
+/* -------------------------------------------------------------------------------------------- */
+/*                                          VARIABLES                                           */
+/* -------------------------------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                      PUBLIC FUNCTIONS                                        */
@@ -61,24 +72,55 @@ extern CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, 
 /*!
  *
  */
-CONFIGS_ERROR_E Configs_Init(CONFIGS_S **obj)
+CONTROLLERS_ERROR_E Controllers_Init(CONTROLLERS_S **obj, CONTROLLERS_PARAMS_S *params)
 {
-    assert(obj && (*obj = calloc(1, sizeof(CONFIGS_S))));
+    assert(obj && params && (*obj = calloc(1, sizeof(CONTROLLERS_S))));
 
-    (*obj)->getVideoConfig = getVideoConfig_f;
+    CONTROLLERS_PRIVATE_DATA_S *pData;
+    assert((pData = calloc(1, sizeof(CONTROLLERS_PRIVATE_DATA_S))));
 
-    return CONFIGS_ERROR_NONE;
+    (*obj)->loadLibs       = loadLibs_f;
+    (*obj)->unloadLibs     = unloadLibs_f;
+
+    (*obj)->initCmdsTask   = initCmdsTask_f;
+    (*obj)->uninitCmdsTask = uninitCmdsTask_f;
+    (*obj)->startCmdsTask  = startCmdsTask_f;
+    (*obj)->stopCmdsTask   = stopCmdsTask_f;
+
+    (*obj)->initEvtsTask   = initEvtsTask_f;
+    (*obj)->uninitEvtsTask = uninitEvtsTask_f;
+    (*obj)->startEvtsTask  = startEvtsTask_f;
+    (*obj)->stopEvtsTask   = stopEvtsTask_f;
+
+    (*obj)->notify         = notify_f;
+
+    pData->params.ctx         = params->ctx;
+    pData->params.onCommandCb = params->onCommandCb;
+    pData->params.userData    = params->userData;
+
+    (*obj)->pData = (void*)pData;
+
+    return CONTROLLERS_ERROR_NONE;
 }
 
 /*!
  *
  */
-CONFIGS_ERROR_E Configs_UnInit(CONFIGS_S **obj)
+CONTROLLERS_ERROR_E Controllers_UnInit(CONTROLLERS_S **obj)
 {
-    assert(obj && *obj);
+    assert(obj && *obj && (*obj)->pData);
+
+    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)((*obj)->pData);
+
+    pData->params.ctx         = NULL;
+    pData->params.onCommandCb = NULL;
+    pData->params.userData    = NULL;
+
+    free((*obj)->pData);
+    (*obj)->pData = NULL;
 
     free(*obj);
     *obj = NULL;
 
-    return CONFIGS_ERROR_NONE;
+    return CONTROLLERS_ERROR_NONE;
 }

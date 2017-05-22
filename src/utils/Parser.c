@@ -39,7 +39,7 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "PARSER"
+#define TAG "Parser"
 
 #define ENCODING_US_ASCII   "US-ASCII"
 #define ENCODING_UTF_8      "UTF-8"

@@ -36,7 +36,7 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "HANDLERS"
+#define TAG "Handlers"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -46,7 +46,7 @@
 /*                                         PROTOTYPES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-static HANDLERS_ERROR_E getCommandHandler_f(HANDLERS_S *obj, const char *handlerName, COMMAND_HANDLER_F *out);
+static HANDLERS_ERROR_E getCommandHandler_f(HANDLERS_S *obj, const char *handlerName, HANDLERS_COMMAND_F *out);
 static HANDLERS_ERROR_E getElementIndex_f(HANDLERS_S *obj, char *elementName, uint32_t *index);
 static HANDLERS_ERROR_E getSubstring_f   (HANDLERS_S *obj, const char *haystack, const char *needle, char *out, uint32_t *offset);
 
@@ -54,10 +54,10 @@ static HANDLERS_ERROR_E getSubstring_f   (HANDLERS_S *obj, const char *haystack,
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-extern COMMAND_HANDLERS_S gSingleInputHandlers[];
+extern HANDLERS_COMMANDS_S gSingleInputHandlers[];
 extern uint32_t gNbSingleInputHandlers;
 
-extern COMMAND_HANDLERS_S gMultiInputsHandlers[];
+extern HANDLERS_COMMANDS_S gMultiInputsHandlers[];
 extern uint32_t gNbMultiInputsHandlers;
 
 /* -------------------------------------------------------------------------------------------- */
@@ -67,9 +67,9 @@ extern uint32_t gNbMultiInputsHandlers;
 /*!
  *
  */
-HANDLERS_ERROR_E Handlers_Init(HANDLERS_S **obj, CONTEXT_S *ctx)
+HANDLERS_ERROR_E Handlers_Init(HANDLERS_S **obj, HANDLERS_PARAMS_S *handlersParams)
 {
-    assert(obj && (*obj = calloc(1, sizeof(HANDLERS_S))));
+    assert(obj && handlersParams && (*obj = calloc(1, sizeof(HANDLERS_S))));
 
     HANDLERS_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(HANDLERS_PRIVATE_DATA_S))));
@@ -78,7 +78,9 @@ HANDLERS_ERROR_E Handlers_Init(HANDLERS_S **obj, CONTEXT_S *ctx)
     (*obj)->getElementIndex   = getElementIndex_f;
     (*obj)->getSubstring      = getSubstring_f;
 
-    pData->ctx = ctx;
+    pData->handlersParams.ctx                    = handlersParams->ctx;
+    pData->handlersParams.onModuleStateChangedCb = handlersParams->onModuleStateChangedCb;
+    pData->handlersParams.userData               = handlersParams->userData;
 
     pData->nbSingleInputHandlers = gNbSingleInputHandlers;
     pData->singleInputHandlers   = gSingleInputHandlers;
@@ -100,7 +102,10 @@ HANDLERS_ERROR_E Handlers_UnInit(HANDLERS_S **obj)
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)((*obj)->pData);
 
-    pData->ctx                      = NULL;
+    pData->handlersParams.ctx                    = NULL;
+    pData->handlersParams.onModuleStateChangedCb = NULL;
+    pData->handlersParams.userData               = NULL;
+
     pData->singleInputHandlers = NULL;
     pData->multiInputsHandlers = NULL;
 
@@ -120,7 +125,7 @@ HANDLERS_ERROR_E Handlers_UnInit(HANDLERS_S **obj)
 /*!
  *
  */
-static HANDLERS_ERROR_E getCommandHandler_f(HANDLERS_S *obj, const char *handlerName, COMMAND_HANDLER_F *out)
+static HANDLERS_ERROR_E getCommandHandler_f(HANDLERS_S *obj, const char *handlerName, HANDLERS_COMMAND_F *out)
 {
     assert(obj && obj->pData && handlerName && out);
 
@@ -130,13 +135,31 @@ static HANDLERS_ERROR_E getCommandHandler_f(HANDLERS_S *obj, const char *handler
     while ((i < pData->nbSingleInputHandlers)
             && pData->singleInputHandlers[i].name
             && (strcmp(pData->singleInputHandlers[i].name, handlerName) != 0)) {
-        i++;
+        ++i;
     }
 
     if (pData->singleInputHandlers[i].name) {
         *out = pData->singleInputHandlers[i].fct;
+        goto exit;
     }
 
+    i = 0;
+    while ((i < pData->nbMultiInputsHandlers)
+            && pData->multiInputsHandlers[i].name
+            && (strcmp(pData->multiInputsHandlers[i].name, handlerName) != 0)) {
+        ++i;
+    }
+
+    if (pData->multiInputsHandlers[i].name) {
+        *out = pData->multiInputsHandlers[i].fct;
+        goto exit;
+    }
+
+    Loge("\"%s\" not found", handlerName);
+
+    return HANDLERS_ERROR_PARAMS;
+
+exit:
     return HANDLERS_ERROR_NONE;
 }
 
@@ -148,7 +171,7 @@ static HANDLERS_ERROR_E getElementIndex_f(HANDLERS_S *obj, char *elementName, ui
     assert(obj && obj->pData && elementName && index);
 
     HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
+    GRAPHICS_INFOS_S *graphicsInfos = &pData->handlersParams.ctx->params.graphicsInfos;
     uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
     GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
 

@@ -36,7 +36,7 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "VIDEOS-LISTENERS"
+#define TAG "VideosListeners"
 
 #define VIDEO_LISTENER4GFX_NAME    "videoListener4Gfx"
 #define VIDEO_LISTENER4SERVER_NAME "videoListener4Server"

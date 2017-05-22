@@ -30,9 +30,11 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #include <pthread.h>
+#include <time.h>
 
 #include "utils/Log.h"
 #include "utils/List.h"
+#include "utils/Task.h"
 
 #include "graphics/FbDev.h"
 #include "graphics/Drawer.h"
@@ -43,28 +45,47 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "GRAPHICS"
+#define TAG "Graphics"
+
+#define SIMULATE_EVENT_TASK_NAME "simulateEvtTask"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
 /* -------------------------------------------------------------------------------------------- */
 
+typedef struct GRAPHICS_LIST_ELEMENT_S {
+    time_t           seconds;
+    GFX_EVENT_S      event;
+} GRAPHICS_LIST_ELEMENT_S;
+
+typedef struct GRAPHICS_TASK_S {
+    LIST_S           *list;
+
+    TASK_S           *task;
+    TASK_PARAMS_S    taskParams;
+
+    sem_t            sem;
+} GRAPHICS_TASK_S;
+
 typedef struct GRAPHICS_PRIVATE_DATA_S {
-    volatile uint8_t   quit;
+    volatile uint8_t  quit;
 
-    pthread_mutex_t    lock;
-    
-    GRAPHICS_PARAMS_S  params;
-    FBDEV_INFOS_S      fbInfos;
-    
-    LIST_S             *gfxElementsList;
-    
-    GFX_ELEMENT_S      *focusedElement;
-    GFX_ELEMENT_S      *lastDrawnElement;
-    GFX_ELEMENT_S      *videoElement;
+    pthread_mutex_t   gfxLock;
+    pthread_mutex_t   evtLock;
 
-    FBDEV_S            *fbDevObj;
-    DRAWER_S           *drawerObj;
+    GRAPHICS_PARAMS_S params;
+    FBDEV_INFOS_S     fbInfos;
+
+    LIST_S            *gfxElementsList;
+
+    GFX_ELEMENT_S     *focusedElement;
+    GFX_ELEMENT_S     *lastDrawnElement;
+    GFX_ELEMENT_S     *videoElement;
+
+    GRAPHICS_TASK_S   simulateEvtTask;
+
+    FBDEV_S           *fbDevObj;
+    DRAWER_S          *drawerObj;
 } GRAPHICS_PRIVATE_DATA_S;
 
 /* -------------------------------------------------------------------------------------------- */
@@ -108,9 +129,13 @@ static GRAPHICS_ERROR_E getElement_f       (GRAPHICS_S *obj, char *gfxElementNam
 static GRAPHICS_ERROR_E getClickedElement_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent);
 static GRAPHICS_ERROR_E handleGfxEvent_f   (GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent);
 
-static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData);
-static void    releaseCb(LIST_S *obj, void *element);
-static void    browseCb (LIST_S *obj, void *element, void *dataProvidedToBrowseFunction);
+static uint8_t compareElementsCb(LIST_S *obj, void *elementToCheck, void *userData);
+static void    releaseElementCb (LIST_S *obj, void *element);
+static void    browseElementsCb (LIST_S *obj, void *element, void *dataProvidedToBrowseFunction);
+
+static void    taskFct_f(TASK_PARAMS_S *params);
+static uint8_t compareEventsCb(LIST_S *obj, void *elementToCheck, void *userData);
+static void    releaseEventCb (LIST_S *obj, void *element);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                      PUBLIC FUNCTIONS                                        */
@@ -126,21 +151,64 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     GRAPHICS_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(GRAPHICS_PRIVATE_DATA_S))));
 
-    if (pthread_mutex_init(&pData->lock, NULL) != 0) {
+    if (pthread_mutex_init(&pData->gfxLock, NULL) != 0) {
         Loge("pthread_mutex_init() failed");
-        goto lockExit;
+        goto gfxLockExit;
     }
 
-    LIST_PARAMS_S listParams;
-    memset(&listParams, '\0', sizeof(LIST_PARAMS_S));
-    listParams.compareCb = compareCb;
-    listParams.releaseCb = releaseCb;
-    listParams.browseCb  = browseCb;
+    if (pthread_mutex_init(&pData->evtLock, NULL) != 0) {
+        Loge("pthread_mutex_init() failed");
+        goto evtLockExit;
+    }
+
+    GRAPHICS_TASK_S *simulateEvtTask = &pData->simulateEvtTask;
+
+    LIST_PARAMS_S elementsListParams = { 0 };
+    elementsListParams.compareCb = compareElementsCb;
+    elementsListParams.releaseCb = releaseElementCb;
+    elementsListParams.browseCb  = browseElementsCb;
     
-    if (List_Init(&pData->gfxElementsList, &listParams) != LIST_ERROR_NONE) {
+    if (List_Init(&pData->gfxElementsList, &elementsListParams) != LIST_ERROR_NONE) {
         goto listExit;
     }
-    
+
+    LIST_PARAMS_S eventsListParams = { 0 };
+    eventsListParams.compareCb = compareEventsCb;
+    eventsListParams.releaseCb = releaseEventCb;
+    eventsListParams.browseCb  = NULL;
+
+    if (List_Init(&simulateEvtTask->list, &eventsListParams) != LIST_ERROR_NONE) {
+        Loge("List_Init() failed");
+        goto simulateEvtListExit;
+    }
+
+    if (Task_Init(&simulateEvtTask->task) != TASK_ERROR_NONE) {
+        Loge("Task_Init() failed");
+        goto simulateEvtTaskExit;
+    }
+
+    if (sem_init(&simulateEvtTask->sem, 0, 0) != 0) {
+        Loge("sem_init() failed");
+        goto simulateEvtSemExit;
+    }
+
+    strcpy(simulateEvtTask->taskParams.name, SIMULATE_EVENT_TASK_NAME);
+    simulateEvtTask->taskParams.priority = PRIORITY_DEFAULT;
+    simulateEvtTask->taskParams.fct      = taskFct_f;
+    simulateEvtTask->taskParams.fctData  = *obj;
+    simulateEvtTask->taskParams.userData = NULL;
+    simulateEvtTask->taskParams.atExit   = NULL;
+
+    if (simulateEvtTask->task->create(simulateEvtTask->task, &simulateEvtTask->taskParams) != TASK_ERROR_NONE) {
+        Loge("Failed to create simulateEvt task");
+        goto simulateEvtTaskCreateExit;
+    }
+
+    if (simulateEvtTask->task->start(simulateEvtTask->task, &simulateEvtTask->taskParams) != TASK_ERROR_NONE) {
+        Loge("Failed to start simulateEvtTask");
+        goto simulateEvtTaskStart;
+    }
+
     if (FbDev_Init(&pData->fbDevObj) != FBDEV_ERROR_NONE) {
         goto fbDevExit;
     }
@@ -175,12 +243,30 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     return GRAPHICS_ERROR_NONE;
 
 fbDevExit:
+    (void)simulateEvtTask->task->stop(simulateEvtTask->task, &simulateEvtTask->taskParams);
+
+simulateEvtTaskStart:
+    (void)simulateEvtTask->task->destroy(simulateEvtTask->task, &simulateEvtTask->taskParams);
+
+simulateEvtTaskCreateExit:
+    (void)sem_destroy(&simulateEvtTask->sem);
+
+simulateEvtSemExit:
+    (void)Task_UnInit(&simulateEvtTask->task);
+
+simulateEvtTaskExit:
+    (void)List_UnInit(&simulateEvtTask->list);
+
+simulateEvtListExit:
     (void)List_UnInit(&pData->gfxElementsList);
 
 listExit:
-    (void)pthread_mutex_destroy(&pData->lock);
+    (void)pthread_mutex_destroy(&pData->evtLock);
 
-lockExit:
+evtLockExit:
+    (void)pthread_mutex_destroy(&pData->gfxLock);
+
+gfxLockExit:
     free(pData);
     pData = NULL;
     
@@ -197,12 +283,27 @@ GRAPHICS_ERROR_E Graphics_UnInit(GRAPHICS_S **obj)
 {
     assert(obj && *obj && (*obj)->pData);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)((*obj)->pData);
+    GRAPHICS_PRIVATE_DATA_S *pData   = (GRAPHICS_PRIVATE_DATA_S*)((*obj)->pData);
+    GRAPHICS_TASK_S *simulateEvtTask = &pData->simulateEvtTask;
 
     (void)FbDev_UnInit(&pData->fbDevObj);
+
+    sem_post(&simulateEvtTask->sem);
+
+    (void)simulateEvtTask->list->lock(simulateEvtTask->list);
+    (void)simulateEvtTask->list->removeAll(simulateEvtTask->list);
+    (void)simulateEvtTask->list->unlock(simulateEvtTask->list);
+
+    (void)simulateEvtTask->task->stop(simulateEvtTask->task, &simulateEvtTask->taskParams);
+    (void)simulateEvtTask->task->destroy(simulateEvtTask->task, &simulateEvtTask->taskParams);
+    (void)sem_destroy(&simulateEvtTask->sem);
+    (void)Task_UnInit(&simulateEvtTask->task);
+    (void)List_UnInit(&simulateEvtTask->list);
+
     (void)List_UnInit(&pData->gfxElementsList);
 
-    (void)pthread_mutex_destroy(&pData->lock);
+    (void)pthread_mutex_destroy(&pData->evtLock);
+    (void)pthread_mutex_destroy(&pData->gfxLock);
 
     free((*obj)->pData);
     (*obj)->pData = NULL;
@@ -226,7 +327,7 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
 
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -275,7 +376,7 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
         goto initScreenExit;
     }
 
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return GRAPHICS_ERROR_NONE;
 
@@ -291,7 +392,7 @@ fbDevExit:
     (void)Drawer_UnInit(&pData->drawerObj);
 
 drawerInitExit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return GRAPHICS_ERROR_DRAWER;
 }
@@ -306,7 +407,7 @@ static GRAPHICS_ERROR_E destroyDrawer_f(GRAPHICS_S *obj)
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -334,7 +435,7 @@ static GRAPHICS_ERROR_E destroyDrawer_f(GRAPHICS_S *obj)
     (void)Drawer_UnInit(&pData->drawerObj);
 
 exit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return ret;
 }
@@ -348,14 +449,14 @@ static GRAPHICS_ERROR_E createElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S **newGfxE
 
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
     
     assert((*newGfxElement = calloc(1, sizeof(GFX_ELEMENT_S))));
 
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
     
     return GRAPHICS_ERROR_NONE;
 }
@@ -370,7 +471,7 @@ static GRAPHICS_ERROR_E pushElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -385,7 +486,7 @@ static GRAPHICS_ERROR_E pushElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
 
 exit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return ret;
 }
@@ -400,7 +501,7 @@ static GRAPHICS_ERROR_E removeElement_f(GRAPHICS_S *obj, char *gfxElementName)
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -415,7 +516,7 @@ static GRAPHICS_ERROR_E removeElement_f(GRAPHICS_S *obj, char *gfxElementName)
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
 
 exit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return ret;
 }
@@ -430,7 +531,7 @@ static GRAPHICS_ERROR_E removeAll_f(GRAPHICS_S *obj)
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -445,7 +546,7 @@ static GRAPHICS_ERROR_E removeAll_f(GRAPHICS_S *obj)
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
 
 exit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
     
     return ret;
 }
@@ -460,7 +561,7 @@ static GRAPHICS_ERROR_E setVisible_f(GRAPHICS_S *obj, char *gfxElementName, uint
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -506,7 +607,7 @@ elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
 
 lockExit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return ret;
 }
@@ -521,7 +622,7 @@ static GRAPHICS_ERROR_E setFocus_f(GRAPHICS_S *obj, char *gfxElementName)
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -567,7 +668,7 @@ elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
 
 lockExit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
     
     return ret;
 }
@@ -582,7 +683,7 @@ static GRAPHICS_ERROR_E setClickable_f(GRAPHICS_S *obj, char *gfxElementName, ui
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -618,7 +719,7 @@ elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
 
 lockExit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
     
     return ret;
 }
@@ -633,7 +734,7 @@ static GRAPHICS_ERROR_E setNav_f(GRAPHICS_S *obj, char *gfxElementName, GFX_NAV_
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -664,7 +765,7 @@ elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
 
 lockExit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return ret;
 }
@@ -679,7 +780,7 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -759,7 +860,7 @@ elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
 
 lockExit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
     
     return ret;
 }
@@ -774,7 +875,7 @@ static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_DRAWER;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -816,7 +917,7 @@ elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
 
 lockExit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return ret;
 }
@@ -831,7 +932,7 @@ static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_PARAMS;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -886,7 +987,7 @@ elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
 
 lockExit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return ret;
 }
@@ -901,7 +1002,7 @@ static GRAPHICS_ERROR_E takeScreenshot_f(GRAPHICS_S *obj, GFX_IMAGE_S *inOut)
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -911,7 +1012,7 @@ static GRAPHICS_ERROR_E takeScreenshot_f(GRAPHICS_S *obj, GFX_IMAGE_S *inOut)
         ret = GRAPHICS_ERROR_DRAWER;
     }
 
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return ret;
 }
@@ -926,7 +1027,7 @@ static GRAPHICS_ERROR_E drawAllElements_f(GRAPHICS_S *obj)
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
     GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
@@ -944,7 +1045,7 @@ static GRAPHICS_ERROR_E drawAllElements_f(GRAPHICS_S *obj)
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
 
 lockExit:
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return ret;
 }
@@ -956,14 +1057,34 @@ static GRAPHICS_ERROR_E simulateGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEven
 {
     assert(obj && obj->pData && gfxEvent);
 
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    GRAPHICS_PRIVATE_DATA_S *pData   = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    GRAPHICS_TASK_S *simulateEvtTask = &pData->simulateEvtTask;
+    LIST_S *evtsList                 = simulateEvtTask->list;
+    GRAPHICS_LIST_ELEMENT_S *element = NULL;
 
     if (pData->quit) {
-        Logw("Too late! Graphics module is sstopped or being stopped");
+        Logw("Too late! Graphics module is stopped or being stopped");
         return GRAPHICS_ERROR_NONE;
     }
 
-    return handleGfxEvent_f(obj, gfxEvent);
+    if (evtsList->lock(evtsList) != LIST_ERROR_NONE) {
+        Loge("Failed to lock events list");
+        return GRAPHICS_ERROR_LOCK;
+    }
+
+    Logd("Adding gfx event - type : \"%u\"", gfxEvent->type);
+
+    assert((element = calloc(1, sizeof(GRAPHICS_LIST_ELEMENT_S))));
+    element->seconds = time(NULL);
+    memcpy(&element->event, gfxEvent, sizeof(GFX_EVENT_S));
+
+    (void)evtsList->add(evtsList, (void*)element);
+
+    (void)evtsList->unlock(evtsList);
+
+    sem_post(&simulateEvtTask->sem);
+
+    return GRAPHICS_ERROR_NONE;
 }
 
 /*!
@@ -1005,14 +1126,14 @@ static GRAPHICS_ERROR_E quit_f(GRAPHICS_S *obj)
 
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
 
-    if (pthread_mutex_lock(&pData->lock) != 0) {
+    if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
     
     pData->quit = 1;
 
-    (void)pthread_mutex_unlock(&pData->lock);
+    (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return GRAPHICS_ERROR_NONE;
 }
@@ -1306,6 +1427,11 @@ static GRAPHICS_ERROR_E handleGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
 
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
 
+    if (pthread_mutex_lock(&pData->evtLock) != 0) {
+        Loge("pthread_mutex_lock() failed");
+        return GRAPHICS_ERROR_LOCK;
+    }
+
     switch (gfxEvent->type) {
         case GFX_EVENT_TYPE_QUIT:
         case GFX_EVENT_TYPE_ESC:
@@ -1404,13 +1530,15 @@ static GRAPHICS_ERROR_E handleGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
         gfxEvent->gfxElementPData = NULL;
     }
 
+    (void)pthread_mutex_unlock(&pData->evtLock);
+
     return GRAPHICS_ERROR_NONE;
 }
 
 /*!
  *
  */
-static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData)
+static uint8_t compareElementsCb(LIST_S *obj, void *elementToCheck, void *userData)
 {
     assert(obj && elementToCheck && userData);
     
@@ -1423,7 +1551,7 @@ static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData)
 /*!
  *
  */
-static void releaseCb(LIST_S *obj, void *element)
+static void releaseElementCb(LIST_S *obj, void *element)
 {
     assert(obj && element);
     
@@ -1439,7 +1567,7 @@ static void releaseCb(LIST_S *obj, void *element)
 /*!
  *
  */
-static void browseCb(LIST_S *obj, void *element, void *dataProvidedToBrowseFunction)
+static void browseElementsCb(LIST_S *obj, void *element, void *dataProvidedToBrowseFunction)
 {
     assert(obj && element);
     
@@ -1449,4 +1577,71 @@ static void browseCb(LIST_S *obj, void *element, void *dataProvidedToBrowseFunct
     if (updateElement_f(gfxObj, gfxElement) != GRAPHICS_ERROR_NONE) {
         //Loge("Failed to update element : \"%s\"", gfxElement->name);
     }
+}
+
+static void taskFct_f(TASK_PARAMS_S *params)
+{
+    assert(params && params->fctData);
+
+    GRAPHICS_S *obj                  = (GRAPHICS_S*)(params->fctData);
+    GRAPHICS_PRIVATE_DATA_S *pData   = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    GRAPHICS_TASK_S *simulateEvtTask = &pData->simulateEvtTask;
+    LIST_S *evtsList                 = simulateEvtTask->list;
+    GRAPHICS_LIST_ELEMENT_S *element = NULL;
+
+    if (pData->quit) {
+        return;
+    }
+
+    sem_wait(&simulateEvtTask->sem);
+
+    if (pData->quit) {
+        return;
+    }
+
+    if (evtsList->lock(evtsList) != LIST_ERROR_NONE) {
+        Loge("Failed to lock gfx events list");
+        goto lockExit;
+    }
+
+    if (evtsList->getElement(evtsList, (void**)&element) != LIST_ERROR_NONE) {
+        Loge("Failed to retrieve element from gfx events list");
+        goto getElementExit;
+    }
+
+    (void)evtsList->unlock(evtsList);
+
+    (void)handleGfxEvent_f(obj, &element->event);
+
+    (void)evtsList->lock(evtsList);
+    (void)evtsList->remove(evtsList, (void*)&element->seconds);
+    (void)evtsList->unlock(evtsList);
+
+    return;
+
+getElementExit:
+    (void)evtsList->unlock(evtsList);
+
+lockExit:
+    sem_post(&simulateEvtTask->sem); // Force retry
+}
+
+static uint8_t compareEventsCb(LIST_S *obj, void *elementToCheck, void *userData)
+{
+    assert(obj && elementToCheck && userData);
+
+    GRAPHICS_LIST_ELEMENT_S *element = (GRAPHICS_LIST_ELEMENT_S*)elementToCheck;
+    time_t secondsOfElementToRemove  = *((time_t*)userData);
+
+    return (element->seconds == secondsOfElementToRemove);
+}
+
+static void releaseEventCb(LIST_S *obj, void *element)
+{
+    assert(obj && element);
+
+    GRAPHICS_LIST_ELEMENT_S *elementToRemove = (GRAPHICS_LIST_ELEMENT_S*)element;
+
+    free(elementToRemove);
+    elementToRemove = NULL;
 }

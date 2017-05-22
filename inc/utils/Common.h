@@ -51,7 +51,7 @@ extern "C" {
 
 #define TAG              "DEFAULT"
 
-#define MIN_STR_SIZE     8
+#define MIN_STR_SIZE     32
 #define MAX_STR_SIZE     512
 #define MAX_NAME_SIZE    128
 #define MAX_PATH_SIZE    256

@@ -36,20 +36,59 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "CONTROL"
+#define TAG "Control"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
 /* -------------------------------------------------------------------------------------------- */
 
+typedef struct CONTROL_COMMANDS_LIST_S {
+    CONTROLLER_COMMAND_E id;
+    char                 *str;
+} CONTROL_COMMANDS_LIST_S;
+
 typedef struct CONTROL_PRIVATE_DATA_S {
-    CONTEXT_S   *ctx;
-    HANDLERS_S  *handlersObj;
+    CONTEXT_S       *ctx;
+    
+    pthread_mutex_t lock;
+    
+    HANDLERS_S      *handlersObj;
+    CONTROLLERS_S   *controllersObj;
 } CONTROL_PRIVATE_DATA_S;
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
+
+static CONTROL_COMMANDS_LIST_S gCommandsList[] = {
+                                                    { CONTROLLER_COMMAND_CLOSE_APPLICATION,   HANDLERS_COMMAND_CLOSE_APPLICATION  },
+                                                    { CONTROLLER_COMMAND_CHANGE_LANGUAGE,     HANDLERS_COMMAND_CHANGE_LANGUAGE    },
+                                                    { CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT,  HANDLERS_COMMAND_SAVE_VIDEO_ELEMENT },
+                                                    { CONTROLLER_COMMAND_TAKE_SCREENSHOT,     HANDLERS_COMMAND_TAKE_SCREENSHOT    },
+                                                    { CONTROLLER_COMMAND_HIDE_ELEMENT,        HANDLERS_COMMAND_HIDE_ELEMENT       },
+                                                    { CONTROLLER_COMMAND_SHOW_ELEMENT,        HANDLERS_COMMAND_SHOW_ELEMENT       },
+                                                    { CONTROLLER_COMMAND_SET_FOCUS,           HANDLERS_COMMAND_SET_FOCUS          },
+                                                    { CONTROLLER_COMMAND_HIDE_GROUP,          HANDLERS_COMMAND_HIDE_GROUP         },
+                                                    { CONTROLLER_COMMAND_SHOW_GROUP,          HANDLERS_COMMAND_SHOW_GROUP         },
+                                                    { CONTROLLER_COMMAND_SET_CLICKABLE,       HANDLERS_COMMAND_SET_CLICKABLE      },
+                                                    { CONTROLLER_COMMAND_SET_NOT_CLICKABLE,   HANDLERS_COMMAND_SET_NOT_CLICKABLE  },
+                                                    { CONTROLLER_COMMAND_STOP_GRAPHICS,       HANDLERS_COMMAND_STOP_GRAPHICS      },
+                                                    { CONTROLLER_COMMAND_START_GRAPHICS,      HANDLERS_COMMAND_START_GRAPHICS     },
+                                                    { CONTROLLER_COMMAND_STOP_VIDEO,          HANDLERS_COMMAND_STOP_VIDEO         },
+                                                    { CONTROLLER_COMMAND_START_VIDEO,         HANDLERS_COMMAND_START_VIDEO        },
+                                                    { CONTROLLER_COMMAND_STOP_SERVER,         HANDLERS_COMMAND_STOP_SERVER        },
+                                                    { CONTROLLER_COMMAND_START_SERVER,        HANDLERS_COMMAND_START_SERVER       },
+                                                    { CONTROLLER_COMMAND_SUSPEND_SERVER,      HANDLERS_COMMAND_SUSPEND_SERVER     },
+                                                    { CONTROLLER_COMMAND_RESUME_SERVER,       HANDLERS_COMMAND_RESUME_SERVER      },
+                                                    { CONTROLLER_COMMAND_STOP_CLIENT,         HANDLERS_COMMAND_STOP_CLIENT        },
+                                                    { CONTROLLER_COMMAND_START_CLIENT,        HANDLERS_COMMAND_START_CLIENT       },
+                                                    { CONTROLLER_COMMAND_UPDATE_TEXT,         HANDLERS_COMMAND_UPDATE_TEXT        },
+                                                    { CONTROLLER_COMMAND_UPDATE_IMAGE,        HANDLERS_COMMAND_UPDATE_IMAGE       },
+                                                    { CONTROLLER_COMMAND_UPDATE_NAV,          HANDLERS_COMMAND_UPDATE_NAV         },
+                                                    { CONTROLLER_COMMAND_SEND_GFX_EVENT,      HANDLERS_COMMAND_SEND_GFX_EVENT     }
+                                                 };
+
+uint32_t gNbCommands = (uint32_t)(sizeof(gCommandsList) / sizeof(gCommandsList[0]));
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                         PROTOTYPES                                           */
@@ -70,7 +109,14 @@ static CONTROL_ERROR_E unsetElementImageIds_f(CONTROL_S *obj, void *data);
 static CONTROL_ERROR_E setCommandHandlers_f  (CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index);
 static CONTROL_ERROR_E unsetCommandHandlers_f(CONTROL_S *obj, void *data);
 
-static CONTROL_ERROR_E handleClick_f(CONTROL_S *obj, GFX_EVENT_S *gfxEvent);
+static CONTROL_ERROR_E loadControllers_f  (CONTROL_S *obj);
+static CONTROL_ERROR_E unloadControllers_f(CONTROL_S *obj);
+
+static CONTROL_ERROR_E handleClick_f  (CONTROL_S *obj, GFX_EVENT_S *gfxEvent);
+static CONTROL_ERROR_E handleCommand_f(CONTROL_S *obj, CONTROLLERS_COMMAND_S *command);
+
+static void onCommandCb           (void *userData, CONTROLLER_COMMAND_S *command);
+static void onModuleStateChangedCb(void *userData, char *name, MODULE_STATE_E state);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                      PUBLIC FUNCTIONS                                        */
@@ -86,8 +132,31 @@ CONTROL_ERROR_E Control_Init(CONTROL_S **obj, CONTEXT_S *ctx)
     CONTROL_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(CONTROL_PRIVATE_DATA_S))));
 
-    if (Handlers_Init(&pData->handlersObj, ctx) != HANDLERS_ERROR_NONE) {
-        goto exit;
+    if (pthread_mutex_init(&pData->lock, NULL) != 0) {
+        Loge("pthread_mutex_init() failed");
+        goto lockExit;
+    }
+
+    HANDLERS_PARAMS_S handlersParams = {
+                                            .ctx                    = ctx,
+                                            .onModuleStateChangedCb = onModuleStateChangedCb,
+                                            .userData               = *obj
+                                       };
+
+    if (Handlers_Init(&pData->handlersObj, &handlersParams) != HANDLERS_ERROR_NONE) {
+        Loge("Handlers_Init() failed");
+        goto HandlersInitExit;
+    }
+
+    CONTROLLERS_PARAMS_S params = {
+                                       .ctx         = ctx,
+                                       .onCommandCb = onCommandCb,
+                                       .userData    = *obj
+                                  };
+
+    if (Controllers_Init(&pData->controllersObj, &params) != CONTROLLERS_ERROR_NONE) {
+        Loge("Controllers_Init() failed");
+        goto ControllersInitExit;
     }
 
     (*obj)->initElementData      = initElementData_f;
@@ -105,7 +174,11 @@ CONTROL_ERROR_E Control_Init(CONTROL_S **obj, CONTEXT_S *ctx)
     (*obj)->setCommandHandlers   = setCommandHandlers_f;
     (*obj)->unsetCommandHandlers = unsetCommandHandlers_f;
 
+    (*obj)->loadControllers      = loadControllers_f;
+    (*obj)->unloadControllers    = unloadControllers_f;
+
     (*obj)->handleClick          = handleClick_f;
+    (*obj)->handleCommand        = handleCommand_f;
 
     pData->ctx = ctx;
 
@@ -113,7 +186,13 @@ CONTROL_ERROR_E Control_Init(CONTROL_S **obj, CONTEXT_S *ctx)
 
     return CONTROL_ERROR_NONE;
 
-exit:
+ControllersInitExit:
+    (void)Handlers_UnInit(&pData->handlersObj);
+
+HandlersInitExit:
+    (void)pthread_mutex_destroy(&pData->lock);
+
+lockExit:
     free(pData);
     pData = NULL;
 
@@ -132,7 +211,10 @@ CONTROL_ERROR_E Control_UnInit(CONTROL_S **obj)
 
     CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)((*obj)->pData);
 
+    (void)Controllers_UnInit(&pData->controllersObj);
     (void)Handlers_UnInit(&pData->handlersObj);
+
+    (void)pthread_mutex_destroy(&pData->lock);
 
     pData->ctx = NULL;
 
@@ -281,7 +363,7 @@ CONTROL_ERROR_E setCommandHandlers_f(CONTROL_S *obj, void *data, HANDLERS_ID_S *
         return CONTROL_ERROR_PARAMS;
     }
 
-    assert((elementData->commandHandlers = calloc(1, nbHandlers * sizeof(COMMAND_HANDLERS_S))));
+    assert((elementData->commandHandlers = calloc(1, nbHandlers * sizeof(HANDLERS_COMMANDS_S))));
 
     uint32_t i;
     for (i = 0; i < nbHandlers; i++) {
@@ -327,11 +409,103 @@ CONTROL_ERROR_E unsetCommandHandlers_f(CONTROL_S *obj, void *data)
 /*!
  *
  */
+static CONTROL_ERROR_E loadControllers_f(CONTROL_S *obj)
+{
+    assert(obj && obj->pData);
+
+    CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
+    CONTROLLERS_S *controllersObj = pData->controllersObj;
+
+     if (controllersObj->initCmdsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("initCmdsTask() failed");
+        return CONTROL_ERROR_UNKNOWN;
+    }
+
+    if (controllersObj->initEvtsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("initEvtsTask() failed");
+        goto initEvtsTaskExit;
+    }
+
+    if (controllersObj->loadLibs(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("loadLibs() failed");
+        goto loadLibsExit;
+    }
+
+    if (controllersObj->startCmdsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("startCmdsTask() failed");
+        goto startCmdsTaskExit;
+    }
+
+    if (controllersObj->startEvtsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("startEvtsTask() failed");
+        goto startEvtsTaskExit;
+    }
+
+    return CONTROL_ERROR_NONE;
+
+startEvtsTaskExit:
+    (void)controllersObj->stopCmdsTask(controllersObj);
+
+startCmdsTaskExit:
+    (void)controllersObj->unloadLibs(controllersObj);
+
+loadLibsExit:
+    (void)controllersObj->uninitEvtsTask(controllersObj);
+
+initEvtsTaskExit:
+    (void)controllersObj->uninitCmdsTask(controllersObj);
+
+    return CONTROL_ERROR_UNKNOWN;
+}
+
+/*!
+ *
+ */
+static CONTROL_ERROR_E unloadControllers_f(CONTROL_S *obj)
+{
+    assert(obj && obj->pData);
+
+    CONTROL_ERROR_E ret           = CONTROL_ERROR_NONE;
+    CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
+    CONTROLLERS_S *controllersObj = pData->controllersObj;
+
+    if (controllersObj->stopEvtsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("stopEvtsTask() failed");
+        ret = CONTROL_ERROR_UNKNOWN;
+    }
+
+    if (controllersObj->stopCmdsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("stopCmdsTask() failed");
+        ret = CONTROL_ERROR_UNKNOWN;
+    }
+
+    if (controllersObj->unloadLibs(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("unloadLibs() failed");
+        ret = CONTROL_ERROR_UNKNOWN;
+    }
+
+    if (controllersObj->uninitEvtsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("uninitEvtsTask() failed");
+        ret = CONTROL_ERROR_UNKNOWN;
+    }
+
+    if (controllersObj->uninitCmdsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("uninitCmdsTask() failed");
+        ret = CONTROL_ERROR_UNKNOWN;
+    }
+
+    return ret;
+}
+
+/*!
+ *
+ */
 CONTROL_ERROR_E handleClick_f(CONTROL_S *obj, GFX_EVENT_S *gfxEvent)
 {
     assert(obj && obj->pData && gfxEvent);
 
     CONTROL_PRIVATE_DATA_S *pData       = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
+    CONTROLLERS_S *controllersObj       = pData->controllersObj;
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxEvent->gfxElementPData;
     CONTEXT_S *ctx                      = pData->ctx;
 
@@ -339,14 +513,223 @@ CONTROL_ERROR_E handleClick_f(CONTROL_S *obj, GFX_EVENT_S *gfxEvent)
         return CONTROL_ERROR_PARAMS;
     }
 
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
+        return CONTROL_ERROR_LOCK;
+    }
+
     uint32_t i;
     for (i = 0; i < elementData->nbCommandHandlers; i++) {
         if ((elementData->commandHandlers[i]).fct) {
             Logd("Calling command handler : %s", (elementData->commandHandlers[i]).name);
             (void)(elementData->commandHandlers[i]).fct(pData->handlersObj, gfxEvent->gfxElementName,
-                                                elementData, (elementData->commandHandlers[i]).data);
+                                                        elementData, (elementData->commandHandlers[i]).data);
         }
     }
 
+    CONTROLLER_EVENT_S event = { 0 };
+    event.id = CONTROLLER_EVENT_CLICK;
+    strcpy(event.arg.click.elementName, gfxEvent->gfxElementName);
+
+    (void)controllersObj->notify(controllersObj, &event);
+
+    (void)pthread_mutex_unlock(&pData->lock);
+
     return CONTROL_ERROR_NONE;
+}
+
+/*!
+ *
+ */
+static CONTROL_ERROR_E handleCommand_f(CONTROL_S *obj, CONTROLLERS_COMMAND_S *command)
+{
+    assert(obj && obj->pData && command);
+
+    CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
+    HANDLERS_S *handlersObj       = pData->handlersObj;
+    HANDLERS_COMMAND_F handlerCmd = NULL;
+    CONTROL_ERROR_E ret           = CONTROL_ERROR_NONE;
+
+    if (pthread_mutex_lock(&pData->lock) != 0) {
+        Loge("pthread_mutex_lock() failed");
+        return CONTROL_ERROR_LOCK;
+    }
+
+    (void)handlersObj->getCommandHandler(handlersObj, command->handlerName, &handlerCmd);
+    if (handlerCmd
+        && (handlerCmd(handlersObj,
+                        command->gfxElementName,
+                        command->gfxElementData,
+                        command->handlerData) != HANDLERS_ERROR_NONE)) {
+        ret = CONTROL_ERROR_UNKNOWN;
+    }
+
+    (void)pthread_mutex_unlock(&pData->lock);
+
+    return ret;
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/*                                            CALLBACKS                                         */
+/* -------------------------------------------------------------------------------------------- */
+
+/*!
+ *
+ */
+static void onCommandCb(void *userData, CONTROLLER_COMMAND_S *command)
+{
+    assert(userData && command);
+
+    CONTROL_S *obj                  = (CONTROL_S*)userData;
+    CONTROL_PRIVATE_DATA_S *pData   = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
+    CONTROLLERS_S *controllersObj   = pData->controllersObj;
+    GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
+    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
+    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
+    CONTROLLERS_COMMAND_S cmd       = { 0 };
+    CONTROLLER_EVENT_S event        = { 0 };
+
+    char gfxElementName[MAX_NAME_SIZE] = { 0 };
+    char handlerName[MAX_NAME_SIZE]    = { 0 };
+    char handlerData[MIN_STR_SIZE]     = { 0 };
+
+    cmd.id = command->id;
+
+    /* handlerName */
+    uint32_t index;
+    if (gCommandsList[command->id].id == command->id) {
+        strcpy(handlerName, gCommandsList[command->id].str);
+    }
+    else {
+        for (index = 0; index < gNbCommands; ++index) {
+            if (gCommandsList[index].id != command->id) {
+                continue;
+            }
+            strcpy(handlerName, gCommandsList[index].str);
+            break;
+        }
+
+        if (index == gNbCommands) {
+            Loge("Command \"%u\" not found", command->id);
+            goto exit;
+        }
+    }
+
+    /* handlerData */
+    switch (command->id) {
+        case CONTROLLER_COMMAND_TAKE_SCREENSHOT:
+            sprintf(handlerData, "%u", command->data.screenshot.imageFormat);
+            break;
+
+        case CONTROLLER_COMMAND_CHANGE_LANGUAGE:
+            strcpy(gfxElementName, gfxElements[0]->name);
+            // No break
+        case CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT:
+        case CONTROLLER_COMMAND_HIDE_ELEMENT:
+        case CONTROLLER_COMMAND_SHOW_ELEMENT:
+        case CONTROLLER_COMMAND_SET_FOCUS:
+        case CONTROLLER_COMMAND_HIDE_GROUP:
+        case CONTROLLER_COMMAND_SHOW_GROUP:
+        case CONTROLLER_COMMAND_SET_CLICKABLE:
+        case CONTROLLER_COMMAND_SET_NOT_CLICKABLE:
+        case CONTROLLER_COMMAND_STOP_VIDEO:
+        case CONTROLLER_COMMAND_START_VIDEO:
+        case CONTROLLER_COMMAND_STOP_SERVER:
+        case CONTROLLER_COMMAND_START_SERVER:
+        case CONTROLLER_COMMAND_SUSPEND_SERVER:
+        case CONTROLLER_COMMAND_RESUME_SERVER:
+        case CONTROLLER_COMMAND_STOP_CLIENT:
+        case CONTROLLER_COMMAND_START_CLIENT:
+            strcpy(handlerData, command->data.common.name);
+            break;
+
+        case CONTROLLER_COMMAND_CLOSE_APPLICATION:
+        case CONTROLLER_COMMAND_STOP_GRAPHICS:
+        case CONTROLLER_COMMAND_START_GRAPHICS:
+            break;
+
+        case CONTROLLER_COMMAND_UPDATE_TEXT:
+            sprintf(handlerData, "%u;%u;%u;%u", command->data.text.stringId,
+                                                command->data.text.fontId,
+                                                command->data.text.fontSize,
+                                                command->data.text.colorId);
+            break;
+
+        case CONTROLLER_COMMAND_UPDATE_IMAGE:
+            sprintf(handlerData, "%u;%d", command->data.image.imageId,
+                                          command->data.image.hiddenColorId);
+            break;
+
+        case CONTROLLER_COMMAND_UPDATE_NAV:
+            sprintf(handlerData, "%s;%s;%s;%s", command->data.nav.left,
+                                                command->data.nav.up,
+                                                command->data.nav.right,
+                                                command->data.nav.down);
+            break;
+
+        case CONTROLLER_COMMAND_SEND_GFX_EVENT:
+            sprintf(handlerData, "%u;%u;%u", command->data.event.id,
+                                             command->data.event.point.x,
+                                             command->data.event.point.y);
+            break;
+
+        default:
+            ;
+    }
+
+    /* gfxElementName && gfxElementData */
+    if (strlen(gfxElementName) != 0) {
+        for (index = 0; index < nbGfxElements; ++index) {
+            if (strcmp(gfxElements[index]->name, gfxElementName) != 0) {
+                continue;
+            }
+
+            cmd.gfxElementName = gfxElementName;
+            cmd.gfxElementData = gfxElements[index]->pData;
+            break;
+        }
+    }
+
+    if (strlen(handlerName) != 0) {
+        cmd.handlerName = handlerName;
+    }
+
+    if (strlen(handlerData) != 0) {
+        cmd.handlerData = handlerData;
+    }
+
+    /* Call handler */
+    if (handleCommand_f((CONTROL_S*)userData, &cmd) == CONTROL_ERROR_NONE) {
+        event.arg.ack.done = 1;
+    }
+
+    cmd.gfxElementName = NULL;
+    cmd.gfxElementData = NULL;
+    cmd.gfxElementName = NULL;
+    cmd.gfxElementData = NULL;
+
+exit:
+    event.id         = CONTROLLER_EVENT_ACK,
+    event.arg.ack.id = command->id,
+
+    (void)controllersObj->notify(controllersObj, &event);
+}
+
+/*!
+ *
+ */
+static void onModuleStateChangedCb(void *userData, char *name, MODULE_STATE_E state)
+{
+    assert(userData && name);
+
+    CONTROL_S *obj                = (CONTROL_S*)userData;
+    CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
+    CONTROLLERS_S *controllersObj = pData->controllersObj;
+
+    CONTROLLER_EVENT_S event = { 0 };
+    event.id               = CONTROLLER_EVENT_STATE;
+    event.arg.module.state = state;
+    strcpy(event.arg.module.name, name);
+
+    (void)controllersObj->notify(controllersObj, &event);
 }

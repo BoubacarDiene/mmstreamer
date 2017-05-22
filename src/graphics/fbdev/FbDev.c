@@ -44,7 +44,7 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "FBDEV"
+#define TAG "FbDev"
 
 #define FBDEV_MAX_PATH_SIZE 16
 #define FBDEV_PATH_PREFIX   "/dev/"

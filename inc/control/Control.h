@@ -35,6 +35,7 @@ extern "C" {
 /*                                           INCLUDE                                            */
 /* -------------------------------------------------------------------------------------------- */
 
+#include "control/Controllers.h"
 #include "control/Handlers.h"
 
 /* -------------------------------------------------------------------------------------------- */
@@ -76,13 +77,19 @@ typedef CONTROL_ERROR_E (*CONTROL_UNSET_ELEMENT_IMAGE_IDS_F)(CONTROL_S *obj, voi
 typedef CONTROL_ERROR_E (*CONTROL_SET_COMMAND_HANDLERS_F  )(CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index);
 typedef CONTROL_ERROR_E (*CONTROL_UNSET_COMMAND_HANDLERS_F)(CONTROL_S *obj, void *data);
 
-typedef CONTROL_ERROR_E (*CONTROL_HANDLE_CLICK_F)(CONTROL_S *obj, GFX_EVENT_S *gfxEvent);
+typedef CONTROL_ERROR_E (*CONTROL_LOAD_CONTROLLERS_F  )(CONTROL_S *obj);
+typedef CONTROL_ERROR_E (*CONTROL_UNLOAD_CONTROLLERS_F)(CONTROL_S *obj);
+
+typedef CONTROL_ERROR_E (*CONTROL_HANDLE_CLICK_F  )(CONTROL_S *obj, GFX_EVENT_S *gfxEvent);
+typedef CONTROL_ERROR_E (*CONTROL_HANDLE_COMMAND_F)(CONTROL_S *obj, CONTROLLERS_COMMAND_S *command);
 
 enum CONTROL_ERROR_E {
     CONTROL_ERROR_NONE,
     CONTROL_ERROR_INIT,
     CONTROL_ERROR_UNINIT,
-    CONTROL_ERROR_PARAMS
+    CONTROL_ERROR_PARAMS,
+    CONTROL_ERROR_LOCK,
+    CONTROL_ERROR_UNKNOWN
 };
 
 struct CONTROL_GETTERS_S {
@@ -115,7 +122,7 @@ struct CONTROL_ELEMENT_DATA_S {
     } ids;
 
     uint32_t                nbCommandHandlers;
-    COMMAND_HANDLERS_S      *commandHandlers;
+    HANDLERS_COMMANDS_S     *commandHandlers;
 
     CONTROL_GETTERS_S       getters;
 };
@@ -136,7 +143,11 @@ struct CONTROL_S {
     CONTROL_SET_COMMAND_HANDLERS_F    setCommandHandlers;
     CONTROL_UNSET_COMMAND_HANDLERS_F  unsetCommandHandlers;
 
+    CONTROL_LOAD_CONTROLLERS_F        loadControllers;
+    CONTROL_UNLOAD_CONTROLLERS_F      unloadControllers;
+
     CONTROL_HANDLE_CLICK_F            handleClick;
+    CONTROL_HANDLE_COMMAND_F          handleCommand;
 
     void                              *pData;
 };

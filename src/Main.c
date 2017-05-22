@@ -34,7 +34,11 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #include <getopt.h>
+#ifdef _POSIX_PRIORITY_SCHEDULING
+#include <sched.h>
+#else
 #include <sys/resource.h>
+#endif
 
 #include "core/Core.h"
 #include "core/XmlDefines.h"
@@ -44,7 +48,14 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "MAIN"
+#define TAG "Main"
+
+#ifdef _POSIX_PRIORITY_SCHEDULING
+#define SCHED_POLICY SCHED_FIFO
+#else
+#define MIN_NICENESS PRIO_MIN
+#define MAX_NICENESS PRIO_MAX
+#endif
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -52,7 +63,7 @@
 
 typedef struct OPTIONS_S {
     char    *mainXml;
-    int32_t niceness;
+    int32_t priority;
 } OPTIONS_S;
 
 /* -------------------------------------------------------------------------------------------- */
@@ -64,15 +75,20 @@ typedef struct OPTIONS_S {
 /* -------------------------------------------------------------------------------------------- */
 
 static void onGeneralCb (void *userData, const char **attrs);
+static void onItemCb    (void *userData, const char **attrs);
 static void onGraphicsCb(void *userData, const char **attrs);
 static void onVideosCb  (void *userData, const char **attrs);
 static void onServersCb (void *userData, const char **attrs);
 static void onClientsCb (void *userData, const char **attrs);
 
+static void onControllersStartCb(void *userData, const char **attrs);
+static void onControllersEndCb  (void *userData);
+
 static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 
 static void usage       (const char * const program);
 static void parseOptions(int argc, char **argv, OPTIONS_S *out);
+static void setPriority (OPTIONS_S *in);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           MAIN                                               */
@@ -84,14 +100,13 @@ static void parseOptions(int argc, char **argv, OPTIONS_S *out);
 int main(int argc, char **argv)
 {
     int32_t ret       = EXIT_FAILURE;
-    OPTIONS_S options = { .niceness = 0, .mainXml = MAIN_XML_FILE };
+    OPTIONS_S options = {
+                            .mainXml  = MAIN_XML_FILE,
+                            .priority = 0
+                        };
 
     parseOptions(argc, argv, &options);
-
-    Logd("Setting niceness to \"%d\"", options.niceness);
-    if (setpriority(PRIO_PROCESS, getpid(), options.niceness) < 0) {
-        Loge("setpriority() failed - %s", strerror(errno));
-    }
+    setPriority(&options);
 
     CONTEXT_S *mCtx;
     assert((mCtx = calloc(1, sizeof(CONTEXT_S))));
@@ -108,12 +123,14 @@ int main(int argc, char **argv)
     Logd("Parsing main config file : \"%s\"", options.mainXml);
     
     PARSER_TAGS_HANDLER_S tagsHandlers[] = {
-    	{ XML_TAG_GENERAL,   onGeneralCb,   NULL,  NULL },
-    	{ XML_TAG_GRAPHICS,  onGraphicsCb,  NULL,  NULL },
-    	{ XML_TAG_VIDEOS,    onVideosCb,    NULL,  NULL },
-    	{ XML_TAG_SERVERS,   onServersCb,   NULL,  NULL },
-    	{ XML_TAG_CLIENTS,   onClientsCb,   NULL,  NULL },
-    	{ NULL,              NULL,          NULL,  NULL }
+    	{ XML_TAG_GENERAL,        onGeneralCb,             NULL,                 NULL },
+    	{ XML_TAG_CONTROLLERS,    onControllersStartCb,    onControllersEndCb,   NULL },
+    	{ XML_TAG_ITEM,           onItemCb,                NULL,                 NULL },
+    	{ XML_TAG_GRAPHICS,       onGraphicsCb,            NULL,                 NULL },
+    	{ XML_TAG_VIDEOS,         onVideosCb,              NULL,                 NULL },
+    	{ XML_TAG_SERVERS,        onServersCb,             NULL,                 NULL },
+    	{ XML_TAG_CLIENTS,        onClientsCb,             NULL,                 NULL },
+    	{ NULL,                   NULL,                    NULL,                 NULL }
     };
     
     PARSER_PARAMS_S parserParams;
@@ -474,6 +491,38 @@ parserParseExit:
         input->resRootDir = NULL;
     }
 
+    if (input->libRootDir) {
+        free(input->libRootDir);
+        input->libRootDir = NULL;
+    }
+
+    uint8_t count;
+    while (input->nbCtrlLibs > 0) {
+        count = input->nbCtrlLibs - 1;
+        if (input->ctrlLibs[count].name) {
+            free(input->ctrlLibs[count].name);
+            input->ctrlLibs[count].name = NULL;
+        }
+        if (input->ctrlLibs[count].initFn) {
+            free(input->ctrlLibs[count].initFn);
+            input->ctrlLibs[count].initFn = NULL;
+        }
+        if (input->ctrlLibs[count].uninitFn) {
+            free(input->ctrlLibs[count].uninitFn);
+            input->ctrlLibs[count].uninitFn = NULL;
+        }
+        if (input->ctrlLibs[count].notifyFn) {
+            free(input->ctrlLibs[count].notifyFn);
+            input->ctrlLibs[count].notifyFn = NULL;
+        }
+        --input->nbCtrlLibs;
+    }
+
+    if (input->ctrlLibs) {
+        free(input->ctrlLibs);
+        input->ctrlLibs = NULL;
+    }
+
     if (input->clientsConfig.xml) {
         free(input->clientsConfig.xml);
         input->clientsConfig.xml = NULL;
@@ -535,6 +584,12 @@ static void onGeneralCb(void *userData, const char **attrs)
     	    .attrGetter.vector = parserObj->getString
         },
     	{
+    	    .attrName          = XML_ATTR_LIB_ROOT_DIR,
+    	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
+    	    .attrValue.vector  = (void**)&input->libRootDir,
+    	    .attrGetter.vector = parserObj->getString
+        },
+    	{
     	    .attrName          = XML_ATTR_KEEP_ALIVE_METHOD,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void**)&input->keepAliveMethod,
@@ -557,6 +612,129 @@ static void onGeneralCb(void *userData, const char **attrs)
     if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
     	Loge("Failed to retrieve attributes in \"General\" tag");
     }
+}
+
+/*!
+ * Called when <Controllers> tag is found
+ */
+static void onControllersStartCb(void *userData, const char **attrs)
+{
+    assert(userData);
+
+    (void)attrs;
+
+    Logd("Start parsing Controllers");
+
+    CONTEXT_S *ctx      = (CONTEXT_S*)userData;
+    PARSER_S *parserObj = ctx->parserObj;
+    INPUT_S   *input    = &ctx->input;
+
+    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+        {
+            .attrName          = XML_ATTR_PRIORITY,
+            .attrType          = PARSER_ATTR_TYPE_SCALAR,
+            .attrValue.scalar  = (void*)&input->ctrlLibsPrio,
+            .attrGetter.scalar = parserObj->getUint8
+        },
+        {
+            NULL,
+            PARSER_ATTR_TYPE_NONE,
+            NULL,
+            NULL
+        }
+    };
+
+    if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
+        Logd("Failed to retrieve attributes in \"Controllers\" tag");
+    }
+
+    Logd("Control library - priority : \"%u\"", input->ctrlLibsPrio);
+}
+
+/*!
+ * Called when </Controllers> tag is found
+ */
+static void onControllersEndCb(void *userData)
+{
+    assert(userData);
+
+    Logd("End parsing Controllers");
+}
+
+/*!
+ * Called when <Item> tag is found in <Controllers> parent tag
+ */
+static void onItemCb(void *userData, const char **attrs)
+{
+    assert(userData);
+
+    CONTEXT_S *ctx      = (CONTEXT_S*)userData;
+    PARSER_S *parserObj = ctx->parserObj;
+    INPUT_S   *input    = &ctx->input;
+
+    Logd("Adding control library %u", (input->nbCtrlLibs + 1));
+
+    input->ctrlLibs = realloc(input->ctrlLibs, (input->nbCtrlLibs + 1) * sizeof(LIBRARY_S));
+    assert(input->ctrlLibs);
+
+    memset(&input->ctrlLibs[input->nbCtrlLibs], '\0', sizeof(LIBRARY_S));
+
+    LIBRARY_S *ctrlLib = &input->ctrlLibs[input->nbCtrlLibs];
+
+    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+        {
+            .attrName          = XML_ATTR_LIB_NAME,
+            .attrType          = PARSER_ATTR_TYPE_VECTOR,
+            .attrValue.vector  = (void**)&ctrlLib->name,
+            .attrGetter.vector = parserObj->getString
+        },
+        {
+            .attrName          = XML_ATTR_INIT_FN,
+            .attrType          = PARSER_ATTR_TYPE_VECTOR,
+            .attrValue.vector  = (void**)&ctrlLib->initFn,
+            .attrGetter.vector = parserObj->getString
+        },
+        {
+            .attrName          = XML_ATTR_UNINIT_FN,
+            .attrType          = PARSER_ATTR_TYPE_VECTOR,
+            .attrValue.vector  = (void**)&ctrlLib->uninitFn,
+            .attrGetter.vector = parserObj->getString
+        },
+        {
+            .attrName          = XML_ATTR_NOTIFY_FN,
+            .attrType          = PARSER_ATTR_TYPE_VECTOR,
+            .attrValue.vector  = (void**)&ctrlLib->notifyFn,
+            .attrGetter.vector = parserObj->getString
+        },
+        {
+            NULL,
+            PARSER_ATTR_TYPE_NONE,
+            NULL,
+            NULL
+        }
+    };
+
+    ++input->nbCtrlLibs;
+
+    if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
+        Logd("Failed to retrieve attributes in \"Item\" tag");
+    }
+
+    if (ctrlLib->name) {
+        char *temp   = strdup(ctrlLib->name);
+        uint32_t len = (strlen(temp) + strlen(input->libRootDir) + 2) * sizeof(char);
+
+        assert((ctrlLib->name = realloc(ctrlLib->name, len)));
+        memset(ctrlLib->name, '\0', len);
+
+        snprintf(ctrlLib->name, len, "%s/%s", input->libRootDir, temp);
+
+        free(temp);
+        temp = NULL;
+    }
+
+    Logd("Control library - name : \"%s\" / initFn : \"%s\" / uninitFn : \"%s\"",
+            ctrlLib->name, ctrlLib->initFn, ctrlLib->uninitFn);
 }
 
 /*!
@@ -747,33 +925,39 @@ static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr)
 
 static void usage(const char * const program)
 {
-    Loge("Usage: %s [-c <path to Main.xml>][-n <niceness {-20 --> 19}>]", program);
+#ifdef _POSIX_PRIORITY_SCHEDULING
+    Loge("Usage: %s [-f <path to Main.xml>][-p <priority {%d --> %d}>]",
+            program, sched_get_priority_min(SCHED_POLICY), sched_get_priority_max(SCHED_POLICY));
+#else
+    Loge("Usage: %s [-f <path to Main.xml>][-p <niceness {%d --> %d}>]",
+            program, MIN_NICENESS, MAX_NICENESS);
+#endif
 }
 
 static void parseOptions(int argc, char **argv, OPTIONS_S *out)
 {
     int opt, index;
     static struct option long_options[] = {
-        { "config",    no_argument,  0,  0 },
-        { "niceness",  no_argument,  0,  0 },
+        { "mainXml",   no_argument,  0,  0 },
+        { "priority",  no_argument,  0,  0 },
         { 0,           0,            0,  0 }
     };
 
     while (1) {
         index = 0;
-        opt = getopt_long(argc, argv, "c:n:", long_options, &index);
+        opt = getopt_long(argc, argv, "f:p:", long_options, &index);
         if (opt == -1) {
             Logd("No option is set");
             break;
         }
 
         switch (opt) {
-            case 'c':
+            case 'f':
                 out->mainXml = optarg;
                 break;
 
-            case 'n':
-                out->niceness = atoi(optarg);
+            case 'p':
+                out->priority = atoi(optarg);
                 break;
 
             default:;
@@ -781,4 +965,29 @@ static void parseOptions(int argc, char **argv, OPTIONS_S *out)
                 exit(EXIT_FAILURE);
         }
     }
+}
+
+static void setPriority(OPTIONS_S *in)
+{
+#ifdef _POSIX_PRIORITY_SCHEDULING
+    if ((in->priority < sched_get_priority_min(SCHED_POLICY))
+        || (in->priority > sched_get_priority_max(SCHED_POLICY))) {
+        return;
+    }
+
+    Logd("Setting priority to \"%d\" with policy \"%d\"", in->priority, SCHED_POLICY);
+    struct sched_param param = { .sched_priority = in->priority };
+    if (sched_setscheduler(getpid(), SCHED_POLICY, &param) < 0) {
+        Loge("sched_setscheduler() failed - %s", strerror(errno));
+    }
+#else
+    if ((in->priority < MIN_NICENESS) || (in->priority > MAX_NICENESS)) {
+        return;
+    }
+
+    Logd("Setting niceness to \"%d\"", in->priority);
+    if (setpriority(PRIO_PROCESS, getpid(), in->priority) < 0) {
+        Loge("setpriority() failed - %s", strerror(errno));
+    }
+#endif
 }

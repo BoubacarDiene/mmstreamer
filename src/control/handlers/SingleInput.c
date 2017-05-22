@@ -36,7 +36,7 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "HANDLERS-SINGLEINPUT"
+#define TAG "SingleInput"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -84,7 +84,7 @@ static HANDLERS_ERROR_E multiInputs(HANDLERS_S *obj, char *gfxElementName, void 
 /*                                          VARIABLES                                           */
 /* -------------------------------------------------------------------------------------------- */
 
-COMMAND_HANDLERS_S gSingleInputHandlers[] = {
+HANDLERS_COMMANDS_S gSingleInputHandlers[] = {
 	{ HANDLERS_COMMAND_CLOSE_APPLICATION,           NULL,             closeApplication },
 	{ HANDLERS_COMMAND_CHANGE_LANGUAGE,             NULL,             changeLanguage   },
 	{ HANDLERS_COMMAND_SAVE_VIDEO_ELEMENT,          NULL,             saveVideoElement },
@@ -131,7 +131,7 @@ static HANDLERS_ERROR_E closeApplication(HANDLERS_S *obj, char *gfxElementName, 
     Logd("Closing application");
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
+    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
     GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
     INPUT_S *input                 = &ctx->input;
     HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
@@ -169,7 +169,7 @@ static HANDLERS_ERROR_E changeLanguage(HANDLERS_S *obj, char *gfxElementName, vo
     (void)gfxElementName;
 
     HANDLERS_PRIVATE_DATA_S *pData      = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                      = pData->ctx;
+    CONTEXT_S *ctx                      = pData->handlersParams.ctx;
     CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
     GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos     = &ctx->params.graphicsInfos;
@@ -244,7 +244,7 @@ static HANDLERS_ERROR_E hideElement(HANDLERS_S *obj, char *gfxElementName, void 
     Logd("Hiding element \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->ctx;
+    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
     GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
 
@@ -279,7 +279,7 @@ static HANDLERS_ERROR_E showElement(HANDLERS_S *obj, char *gfxElementName, void 
     Logd("Showing element \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->ctx;
+    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
     GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
 
@@ -314,7 +314,7 @@ static HANDLERS_ERROR_E hideGroup(HANDLERS_S *obj, char *gfxElementName, void *g
     Logd("Hiding group \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->ctx;
+    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
     GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
     uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
@@ -360,7 +360,7 @@ static HANDLERS_ERROR_E showGroup(HANDLERS_S *obj, char *gfxElementName, void *g
     Logd("Showing group \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->ctx;
+    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
     GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
     uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
@@ -406,7 +406,7 @@ static HANDLERS_ERROR_E setFocus(HANDLERS_S *obj, char *gfxElementName, void *gf
     Logd("Giving focus to element \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->ctx;
+    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
     GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
 
@@ -441,7 +441,7 @@ static HANDLERS_ERROR_E saveVideoElement(HANDLERS_S *obj, char *gfxElementName, 
     Logd("Saving video element \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->ctx;
+    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
     GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
     INPUT_S *input                  = &ctx->input;
@@ -491,7 +491,7 @@ static HANDLERS_ERROR_E takeScreenshot(HANDLERS_S *obj, char *gfxElementName, vo
     Logd("Taking screnshot - Image format : \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->ctx;
+    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
     GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
     INPUT_S *input                  = &ctx->input;
@@ -501,7 +501,7 @@ static HANDLERS_ERROR_E takeScreenshot(HANDLERS_S *obj, char *gfxElementName, vo
         return HANDLERS_ERROR_STATE;
     }
 
-    int32_t imageFormat = atoi(handlerData);
+    uint32_t imageFormat = (uint32_t)atoi(handlerData);
     GFX_IMAGE_S image;
     struct stat st;
 
@@ -555,7 +555,7 @@ static HANDLERS_ERROR_E setClickable(HANDLERS_S *obj, char *gfxElementName, void
     Logd("Setting element \"%s\" as clickable", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->ctx;
+    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
     GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
 
@@ -590,7 +590,7 @@ static HANDLERS_ERROR_E setNotClickable(HANDLERS_S *obj, char *gfxElementName, v
     Logd("Setting element \"%s\" as not clickable", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->ctx;
+    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
     GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
 
@@ -620,10 +620,11 @@ static HANDLERS_ERROR_E stopGraphics(HANDLERS_S *obj, char *gfxElementName, void
 
     Logd("Stopping graphics module");
 
-    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->ctx;
-    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    HANDLERS_PRIVATE_DATA_S *pData    = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    CONTEXT_S *ctx                    = pData->handlersParams.ctx;
+    GRAPHICS_S *graphicsObj           = ctx->modules.graphicsObj;
+    GRAPHICS_INFOS_S *graphicsInfos   = &ctx->params.graphicsInfos;
+    GRAPHICS_PARAMS_S *graphicsParams = &ctx->params.graphicsInfos.graphicsParams;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
         Logw("Graphics module not started - current state : %u", graphicsInfos->state);
@@ -636,6 +637,13 @@ static HANDLERS_ERROR_E stopGraphics(HANDLERS_S *obj, char *gfxElementName, void
     }
 
     graphicsInfos->state = MODULE_STATE_STOPPED;
+
+    HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
+    void *userData                         = pData->handlersParams.userData;
+
+    if (cb) {
+        cb(userData, graphicsParams->screenParams.name, graphicsInfos->state);
+    }
 
     return HANDLERS_ERROR_NONE;
 }
@@ -654,10 +662,11 @@ static HANDLERS_ERROR_E startGraphics(HANDLERS_S *obj, char *gfxElementName, voi
     Logd("Starting graphics module");
 
     HANDLERS_PRIVATE_DATA_S *pData    = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                    = pData->ctx;
+    CONTEXT_S *ctx                    = pData->handlersParams.ctx;
     GRAPHICS_S *graphicsObj           = ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos   = &ctx->params.graphicsInfos;
     GRAPHICS_PARAMS_S *graphicsParams = &ctx->params.graphicsInfos.graphicsParams;
+    HANDLERS_ERROR_E ret              = HANDLERS_ERROR_NONE;
 
     if (graphicsInfos->state == MODULE_STATE_STARTED) {
         Logw("Graphics module is already started");
@@ -675,10 +684,17 @@ static HANDLERS_ERROR_E startGraphics(HANDLERS_S *obj, char *gfxElementName, voi
 
     if (graphicsObj->drawAllElements(graphicsObj) != GRAPHICS_ERROR_NONE) {
         Loge("drawAllElements() failed");
-        return HANDLERS_ERROR_COMMAND;
+        ret = HANDLERS_ERROR_COMMAND;
     }
 
-    return HANDLERS_ERROR_NONE;
+    HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
+    void *userData                         = pData->handlersParams.userData;
+
+    if (cb) {
+        cb(userData, graphicsParams->screenParams.name, graphicsInfos->state);
+    }
+
+    return ret;
 }
 
 /*!
@@ -699,7 +715,7 @@ static HANDLERS_ERROR_E stopVideo(HANDLERS_S *obj, char *gfxElementName, void *g
     Logd("Stopping video \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
+    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
     VIDEO_S *videoObj              = ctx->modules.videoObj;
     VIDEOS_INFOS_S *videosInfos    = &ctx->params.videosInfos;
     VIDEO_DEVICE_S **videoDevices  = videosInfos->devices;
@@ -739,6 +755,13 @@ static HANDLERS_ERROR_E stopVideo(HANDLERS_S *obj, char *gfxElementName, void *g
 
             if (ret == HANDLERS_ERROR_NONE) {
                 videoDevice->state = MODULE_STATE_STOPPED;
+
+                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
+                void *userData                         = pData->handlersParams.userData;
+
+                if (cb) {
+                    cb(userData, videoDevice->videoParams.name, videoDevice->state);
+                }
             }
             break;
         }
@@ -765,7 +788,7 @@ static HANDLERS_ERROR_E startVideo(HANDLERS_S *obj, char *gfxElementName, void *
     Logd("Starting video \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
+    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
     VIDEO_S *videoObj              = ctx->modules.videoObj;
     VIDEOS_INFOS_S *videosInfos    = &ctx->params.videosInfos;
     VIDEO_DEVICE_S **videoDevices  = videosInfos->devices;
@@ -814,6 +837,13 @@ static HANDLERS_ERROR_E startVideo(HANDLERS_S *obj, char *gfxElementName, void *
                     ret = HANDLERS_ERROR_COMMAND;
                 }
             }
+
+            HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
+            void *userData                         = pData->handlersParams.userData;
+
+            if (cb) {
+                cb(userData, videoDevice->videoParams.name, videoDevice->state);
+            }
             break;
         }
     }
@@ -839,7 +869,7 @@ static HANDLERS_ERROR_E stopServer(HANDLERS_S *obj, char *gfxElementName, void *
     Logd("Starting server \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
+    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
     SERVER_S *serverObj            = ctx->modules.serverObj;
     SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
     SERVER_INFOS_S *serverInfos    = NULL;
@@ -864,6 +894,13 @@ static HANDLERS_ERROR_E stopServer(HANDLERS_S *obj, char *gfxElementName, void *
 
             if (ret == HANDLERS_ERROR_NONE) {
                 serverInfos->state = MODULE_STATE_STOPPED;
+
+                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
+                void *userData                         = pData->handlersParams.userData;
+
+                if (cb) {
+                    cb(userData, serverInfos->serverParams.name, serverInfos->state);
+                }
             }
             break;
         }
@@ -890,7 +927,7 @@ static HANDLERS_ERROR_E startServer(HANDLERS_S *obj, char *gfxElementName, void 
     Logd("Starting server \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
+    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
     SERVER_S *serverObj            = ctx->modules.serverObj;
     SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
     SERVER_INFOS_S *serverInfos    = NULL;
@@ -915,6 +952,13 @@ static HANDLERS_ERROR_E startServer(HANDLERS_S *obj, char *gfxElementName, void 
 
             if (ret == HANDLERS_ERROR_NONE) {
                 serverInfos->state = MODULE_STATE_STARTED;
+
+                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
+                void *userData                         = pData->handlersParams.userData;
+
+                if (cb) {
+                    cb(userData, serverInfos->serverParams.name, serverInfos->state);
+                }
             }
             break;
         }
@@ -941,7 +985,7 @@ static HANDLERS_ERROR_E suspendServer(HANDLERS_S *obj, char *gfxElementName, voi
     Logd("Suspending server \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
+    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
     SERVER_S *serverObj            = ctx->modules.serverObj;
     SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
     SERVER_INFOS_S *serverInfos    = NULL;
@@ -971,6 +1015,13 @@ static HANDLERS_ERROR_E suspendServer(HANDLERS_S *obj, char *gfxElementName, voi
 
             if (ret == HANDLERS_ERROR_NONE) {
                 serverInfos->state = MODULE_STATE_SUSPENDED;
+
+                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
+                void *userData                         = pData->handlersParams.userData;
+
+                if (cb) {
+                    cb(userData, serverInfos->serverParams.name, serverInfos->state);
+                }
             }
             break;
         }
@@ -997,7 +1048,7 @@ static HANDLERS_ERROR_E resumeServer(HANDLERS_S *obj, char *gfxElementName, void
     Logd("Resuming server \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
+    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
     SERVER_S *serverObj            = ctx->modules.serverObj;
     SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
     SERVER_INFOS_S *serverInfos    = NULL;
@@ -1027,6 +1078,13 @@ static HANDLERS_ERROR_E resumeServer(HANDLERS_S *obj, char *gfxElementName, void
 
             if (ret == HANDLERS_ERROR_NONE) {
                 serverInfos->state = MODULE_STATE_STARTED;
+
+                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
+                void *userData                         = pData->handlersParams.userData;
+
+                if (cb) {
+                    cb(userData, serverInfos->serverParams.name, serverInfos->state);
+                }
             }
             break;
         }
@@ -1053,7 +1111,7 @@ static HANDLERS_ERROR_E stopCient(HANDLERS_S *obj, char *gfxElementName, void *g
     Logd("Stopping client \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
+    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
     CLIENT_S *clientObj            = ctx->modules.clientObj;
     CLIENTS_INFOS_S *clientsInfos  = &ctx->params.clientsInfos;
     CLIENT_INFOS_S *clientInfos    = NULL;
@@ -1078,6 +1136,13 @@ static HANDLERS_ERROR_E stopCient(HANDLERS_S *obj, char *gfxElementName, void *g
 
             if (ret == HANDLERS_ERROR_NONE) {
                 clientInfos->state = MODULE_STATE_STOPPED;
+
+                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
+                void *userData                         = pData->handlersParams.userData;
+
+                if (cb) {
+                    cb(userData, clientInfos->clientParams.name, clientInfos->state);
+                }
             }
             break;
         }
@@ -1104,7 +1169,7 @@ static HANDLERS_ERROR_E startClient(HANDLERS_S *obj, char *gfxElementName, void 
     Logd("Starting client \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
+    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
     CLIENT_S *clientObj            = ctx->modules.clientObj;
     CLIENTS_INFOS_S *clientsInfos  = &ctx->params.clientsInfos;
     CLIENT_INFOS_S *clientInfos    = NULL;
@@ -1128,6 +1193,13 @@ static HANDLERS_ERROR_E startClient(HANDLERS_S *obj, char *gfxElementName, void 
 
             if (ret == HANDLERS_ERROR_NONE) {
                 clientInfos->state = MODULE_STATE_STARTED;
+
+                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
+                void *userData                         = pData->handlersParams.userData;
+
+                if (cb) {
+                    cb(userData, clientInfos->clientParams.name, clientInfos->state);
+                }
             }
             break;
         }
@@ -1154,7 +1226,7 @@ static HANDLERS_ERROR_E multiInputs(HANDLERS_S *obj, char *gfxElementName, void 
     Logd("Handling multi inputs request - data : \"%s\"", handlerData);
 
     HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->ctx;
+    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
 
     uint32_t offset                  = 0;
     char functionName[MAX_NAME_SIZE] = { 0 };

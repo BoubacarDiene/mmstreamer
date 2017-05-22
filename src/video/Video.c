@@ -30,8 +30,8 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #include <pthread.h>
-#include <sys/time.h>
 #include <sys/types.h>
+#include <time.h>
 
 #include "utils/List.h"
 #include "utils/Log.h"
@@ -44,7 +44,7 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "VIDEO"
+#define TAG "Video"
 
 #define FRAMES_HANLDER_TASK_NAME "framesHandlerTask"
 #define NOTIFICATION_TASK_NAME   "notificationTask"

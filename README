@@ -37,6 +37,9 @@ be sufficient to use it :
   - res/common/Images.xml    : List images files
   - res/common/Strings.xml   : Define strings
 
+mmstreamer can also be dynamically controlled from external libraries listed in Main.xml.
+See "https://github.com/BoubacarDiene/mmcontroller" to build such libraries.
+
 A simple usage of mmstreamer is to make it behave like a HTTP streamer by streaming
 video signal from your personal computer's webcam toward browsers.
 
@@ -59,6 +62,9 @@ and display it locally and/or stream it over another network interface.
  cvlc v4l2:///dev/video0:chroma=mjpg:width=640:height=480 --sout '#std{access=http{mime
  =multipart/x-mixed-replace;boundary=--7b3cc56e5f51db803f790dad720ed50a},mux=mpjpeg,dst
  =127.0.0.1:8090}'
+
+Another example is providing an external library in which a server is running to be an
+intermediate between mmstreamer engine and remote devices.
 
 2- Goal
 

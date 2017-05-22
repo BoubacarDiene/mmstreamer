@@ -30,18 +30,20 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #include <pthread.h>
+#ifdef _POSIX_PRIORITY_SCHEDULING
 #include <sched.h>
+#endif
 #include <sys/prctl.h>
 
 #include "utils/Log.h"
 #include "utils/Task.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/*                                           DEFINE                                             */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "TASK"
+#define TAG "Task"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -140,15 +142,18 @@ static TASK_ERROR_E create_f(TASK_S *obj, TASK_PARAMS_S *params)
     
     if (sem_init(&reserved->semQuit, 0, 0) != 0) {
         Loge("sem_init() failed - %s", strerror(errno));
-        goto semQuit_exit;
+        goto semQuitExit;
     }
     
     if (sem_init(&reserved->semStart, 0, 0) != 0) {
         Loge("sem_init() failed - %s", strerror(errno));
-        goto semStart_exit;
+        goto semStartExit;
     }
-    
+
+    params->reserved = (void*)reserved;
+
     /* Create loop */
+#ifdef _POSIX_PRIORITY_SCHEDULING
     int policy = SCHED_FIFO;
     pthread_attr_t attr;
     struct sched_param schedParam;
@@ -183,28 +188,33 @@ static TASK_ERROR_E create_f(TASK_S *obj, TASK_PARAMS_S *params)
             Loge("pthread_attr_setinheritsched() failed - %s", strerror(errno));
         }
     }
-    
-    params->reserved = (void*)reserved;
 
     if (pthread_create(&reserved->taskId, &attr, loop, params) != 0) {
         Loge("pthread_create() failed - %s", strerror(errno));
-        goto posix_exit;
+        (void)pthread_attr_destroy(&attr);
+        goto pthreadExit;
     }
     
     (void)pthread_attr_destroy(&attr);
+#else
+    Loge("_POSIX_PRIORITY_SCHEDULING not defined on your system");
+    if (pthread_create(&reserved->taskId, NULL, loop, params) != 0) {
+        Loge("pthread_create() failed - %s", strerror(errno));
+        goto pthreadExit;
+    }
+#endif
     
     ((TASK_PRIVATE_DATA_S*)(obj->pData))->nbTasks++;
     
     return TASK_ERROR_NONE;
 
-posix_exit:
-    (void)pthread_attr_destroy(&attr);
+pthreadExit:
     (void)sem_destroy(&reserved->semStart);
 
-semStart_exit:
+semStartExit:
     (void)sem_destroy(&reserved->semQuit);
 
-semQuit_exit:
+semQuitExit:
     free(reserved);
     reserved = NULL;
     

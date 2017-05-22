@@ -125,6 +125,8 @@ struct GFX_NAV_S {
 };
 
 struct GFX_SCREEN_S {
+    char               name[MAX_NAME_SIZE];
+
     GFX_RECT_S         rect;
 
     char               fbDeviceName[MAX_NAME_SIZE]; // Framebuffer device name

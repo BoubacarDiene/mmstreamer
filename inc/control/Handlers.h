@@ -66,6 +66,7 @@ extern "C" {
 #define HANDLERS_COMMAND_UPDATE_TEXT        "updateText"
 #define HANDLERS_COMMAND_UPDATE_IMAGE       "updateImage"
 #define HANDLERS_COMMAND_UPDATE_NAV         "updateNav"
+#define HANDLERS_COMMAND_SEND_GFX_EVENT     "sendGfxEvent"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEFS                                           */
@@ -73,16 +74,19 @@ extern "C" {
 
 typedef enum   HANDLERS_ERROR_E        HANDLERS_ERROR_E;
 
-typedef struct COMMAND_HANDLERS_S      COMMAND_HANDLERS_S;
+typedef struct HANDLERS_COMMANDS_S     HANDLERS_COMMANDS_S;
 typedef struct HANDLERS_ID_S           HANDLERS_ID_S;
+typedef struct HANDLERS_PARAMS_S       HANDLERS_PARAMS_S;
 typedef struct HANDLERS_PRIVATE_DATA_S HANDLERS_PRIVATE_DATA_S;
 typedef struct HANDLERS_S              HANDLERS_S;
 
-typedef HANDLERS_ERROR_E (*COMMAND_HANDLER_F)(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+typedef void (*HANDLERS_ON_MODULE_STATE_CHANGED_CB)(void *userData, char *name, MODULE_STATE_E state);
 
-typedef HANDLERS_ERROR_E (*HANDLERS_GET_COMMAND_HANDLER_F)(HANDLERS_S *obj, const char *handlerName, COMMAND_HANDLER_F *out);
-typedef HANDLERS_ERROR_E (*HANDLERS_GET_ELEMENT_INDEX_F)(HANDLERS_S *obj, char *elementName, uint32_t *index);
-typedef HANDLERS_ERROR_E (*HANDLERS_GET_SUBSTRING_F    )(HANDLERS_S *obj, const char *haystack, const char *needle, char *out, uint32_t *offset);
+typedef HANDLERS_ERROR_E (*HANDLERS_COMMAND_F)(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+
+typedef HANDLERS_ERROR_E (*HANDLERS_GET_COMMAND_HANDLER_F)(HANDLERS_S *obj, const char *handlerName, HANDLERS_COMMAND_F *out);
+typedef HANDLERS_ERROR_E (*HANDLERS_GET_ELEMENT_INDEX_F  )(HANDLERS_S *obj, char *elementName, uint32_t *index);
+typedef HANDLERS_ERROR_E (*HANDLERS_GET_SUBSTRING_F      )(HANDLERS_S *obj, const char *haystack, const char *needle, char *out, uint32_t *offset);
 
 enum HANDLERS_ERROR_E {
     HANDLERS_ERROR_NONE,
@@ -94,10 +98,10 @@ enum HANDLERS_ERROR_E {
     HANDLERS_ERROR_IO
 };
 
-struct COMMAND_HANDLERS_S {
-    char              *name;
-    char              *data;
-    COMMAND_HANDLER_F fct;
+struct HANDLERS_COMMANDS_S {
+    char               *name;
+    char               *data;
+    HANDLERS_COMMAND_F fct;
 };
 
 struct HANDLERS_ID_S {
@@ -105,14 +109,21 @@ struct HANDLERS_ID_S {
     char *data;
 };
 
+struct HANDLERS_PARAMS_S {
+    CONTEXT_S                           *ctx;
+    HANDLERS_ON_MODULE_STATE_CHANGED_CB onModuleStateChangedCb;
+
+    void                                *userData;
+};
+
 struct HANDLERS_PRIVATE_DATA_S {
-    CONTEXT_S          *ctx;
+    HANDLERS_PARAMS_S   handlersParams;
 
-    uint32_t           nbSingleInputHandlers;
-    COMMAND_HANDLERS_S *singleInputHandlers;
+    uint32_t            nbSingleInputHandlers;
+    HANDLERS_COMMANDS_S *singleInputHandlers;
 
-    uint32_t           nbMultiInputsHandlers;
-    COMMAND_HANDLERS_S *multiInputsHandlers;
+    uint32_t            nbMultiInputsHandlers;
+    HANDLERS_COMMANDS_S *multiInputsHandlers;
 };
 
 struct HANDLERS_S {
@@ -127,7 +138,7 @@ struct HANDLERS_S {
 /*                                           VARIABLES                                          */
 /* -------------------------------------------------------------------------------------------- */
 
-HANDLERS_ERROR_E Handlers_Init  (HANDLERS_S **obj, CONTEXT_S *ctx);
+HANDLERS_ERROR_E Handlers_Init  (HANDLERS_S **obj, HANDLERS_PARAMS_S *handlersParams);
 HANDLERS_ERROR_E Handlers_UnInit(HANDLERS_S **obj);
 
 #ifdef __cplusplus

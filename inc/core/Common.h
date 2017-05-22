@@ -66,6 +66,8 @@ typedef struct SERVERS_INFOS_S     SERVERS_INFOS_S;
 typedef struct CLIENT_INFOS_S      CLIENT_INFOS_S;
 typedef struct CLIENTS_INFOS_S     CLIENTS_INFOS_S;
 
+typedef struct LIBRARY_S           LIBRARY_S;
+
 typedef struct PARAMS_S            PARAMS_S;
 typedef struct MODULE_CONFIG_S     MODULE_CONFIG_S;
 typedef struct MODULES_S           MODULES_S;
@@ -138,6 +140,13 @@ struct CLIENTS_INFOS_S {
     CLIENT_INFOS_S    **clientInfos;
 };
 
+struct LIBRARY_S {
+    char *name;
+    char *initFn;
+    char *uninitFn;
+    char *notifyFn;
+};
+
 struct PARAMS_S {
     GRAPHICS_INFOS_S graphicsInfos;
     VIDEOS_INFOS_S   videosInfos;
@@ -161,9 +170,14 @@ struct MODULES_S {
 struct INPUT_S {
     char            *appDataDir;
     char            *resRootDir;
+    char            *libRootDir;
     
     uint8_t         keepAliveMethod;
     uint32_t        timeout_s;
+
+    uint8_t         nbCtrlLibs;
+    LIBRARY_S       *ctrlLibs;
+    uint8_t         ctrlLibsPrio;
 
     MODULE_CONFIG_S graphicsConfig;
     MODULE_CONFIG_S videosConfig;

@@ -146,7 +146,7 @@ struct XML_STRINGS_S {
 };
 
 struct XML_CAPABILITY_S {
-    char     *item;
+    char *item;
 };
 
 struct XML_CONFIG_S {
@@ -210,6 +210,7 @@ struct XML_COMMON_S {
 };
 
 struct XML_SCREEN_S {
+    char     *name;
     uint16_t width;
     uint16_t height;
     char     *fbDeviceName;
@@ -321,19 +322,19 @@ struct XML_SERVERS_S {
 };
 
 struct XML_CLIENT_S {
-    char     *name;
-    uint8_t  type;
-    uint8_t  link;
-    uint8_t  mode;
-    uint8_t  priority;
-    char     *graphicsDest;
-    char     *serverDest;
+    char    *name;
+    uint8_t type;
+    uint8_t link;
+    uint8_t mode;
+    uint8_t priority;
+    char    *graphicsDest;
+    char    *serverDest;
     
-    char     *serverHost;
-    char     *serverService;
-    char     *serverPath;
+    char    *serverHost;
+    char    *serverService;
+    char    *serverPath;
     
-    char     *serverSocketName;
+    char    *serverSocketName;
 };
 
 struct XML_CLIENTS_S {

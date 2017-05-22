@@ -37,7 +37,7 @@
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
-#define TAG "GRAPHICS-LOADER"
+#define TAG "GraphicsLoader"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
@@ -264,6 +264,11 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
     if (xmlGraphics->common.stringsXmlFile) {
         free(xmlGraphics->common.stringsXmlFile);
         xmlGraphics->common.stringsXmlFile = NULL;
+    }
+    
+    if (xmlGraphics->screen.name) {
+        free(xmlGraphics->screen.name);
+        xmlGraphics->screen.name = NULL;
     }
     
     if (xmlGraphics->screen.fbDeviceName) {
@@ -572,6 +577,12 @@ static void onScreenCb(void *userData, const char **attrs)
     PARSER_S *parserObj         = ctx->parserObj;
     
     PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    	{
+    	    .attrName          = XML_ATTR_NAME,
+    	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
+    	    .attrValue.vector  = (void*)&screen->name,
+    	    .attrGetter.vector = parserObj->getString
+        },
     	{
     	    .attrName          = XML_ATTR_WIDTH,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,

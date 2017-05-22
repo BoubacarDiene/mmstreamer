@@ -23,6 +23,14 @@
                         images, fonts, ...). It is concatenated to filenames specified in other xml
                         files (Graphics.xml, ...) to get the real path to resources.
 
+                        Usually : "/etc/res/"
+
+    - libRootDir      : Relative or absolute path to directory containing dynamic libraries control
+                        mmstreamer engine. t is concatenated to lib. names specified below to get the
+                        real path to them.
+
+                        Usually : "/usr/lib/"
+
     - keepAliveMethod : Method to use to keep app running
                         0 => Events_based    : Can be used when keyEvents are handled by graphics module
                                                E.g: Click on Close button or Press Escape key
@@ -35,8 +43,30 @@
   -->
   <General appDataDir="/tmp/mmstreamer"
            resRootDir="./out/mmstreamer/res/"
+           libRootDir="./out/mmstreamer/lib/"
            keepAliveMethod="0"
            timeout_s="10" />
+
+  <!--
+    Controllers i.e list of libraries loaded once mmstreamer engine is ready and through which
+    latter can be controlled.
+
+    - priority : Internal threads' priority
+                 0 <=> Lowest
+                 1 <=> Default
+                 2 <=> Highest
+
+    - libName  : Name of the dynamic library (Real path : libRootDir/libName)
+    - initFn   : Name of function used to initialize the library
+    - uninitFn : Name of function used to uninitialize the library
+    - notifyFn : Name of function used to notify the library about click events, ...
+  -->
+  <Controllers priority="1">
+    <!--Item libName="libmmcontroller-template-0.1.so"
+          initFn="Template_Init"
+          uninitFn="Template_UnInit"
+          notifyFn="Template_Notify" /-->
+  </Controllers>
 
   <!--
     Modules
