@@ -225,11 +225,11 @@ int main(int argc, char **argv)
             goto loadVideosParamsExit;
         }
 
-        if (input->videosConfig.autoStart) {
-            videosInfos  = &params->videosInfos;
-            videoDevices = videosInfos->devices;
-            nbDevices    = videosInfos->nbDevices;
+        videosInfos  = &params->videosInfos;
+        videoDevices = videosInfos->devices;
+        nbDevices    = videosInfos->nbDevices;
 
+        if (input->videosConfig.autoStart) {
             for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
                 videoDevice        = videoDevices[videoIndex];
                 videoDevice->state = MODULE_STATE_STOPPED;
