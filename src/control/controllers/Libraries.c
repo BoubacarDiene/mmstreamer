@@ -81,7 +81,7 @@ CONTROLLERS_ERROR_E loadLibs_f(CONTROLLERS_S *obj)
     uint8_t priority                  = input->ctrlLibsPrio;
 
     pData->nbLibs = input->nbCtrlLibs;
-    if (input->nbCtrlLibs == 0) {
+    if (pData->nbLibs == 0) {
         Logw("No library provided");
         return CONTROLLERS_ERROR_NONE;
     }
@@ -99,6 +99,11 @@ CONTROLLERS_ERROR_E loadLibs_f(CONTROLLERS_S *obj)
     uint8_t index, count;
     for (index = 0; index < pData->nbLibs; ++index) {
         lib = &pData->libs[index];
+
+        if (access(ctrlLibs[index].name, F_OK) != 0) {
+            Loge("\"%s\" not found", ctrlLibs[index].name);
+            goto libExit;
+        }
 
         lib->handle = dlopen(ctrlLibs[index].name, RTLD_LAZY);
         if (!lib->handle) {
@@ -157,6 +162,8 @@ libExit:
 
     free(pData->libs);
     pData->libs = NULL;
+
+    pData->nbLibs = 0;
 
     return CONTROLLERS_ERROR_LIB;
 }

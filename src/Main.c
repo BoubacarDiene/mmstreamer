@@ -229,11 +229,11 @@ int main(int argc, char **argv)
         videoDevices = videosInfos->devices;
         nbDevices    = videosInfos->nbDevices;
 
-        if (input->videosConfig.autoStart) {
-            for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
-                videoDevice        = videoDevices[videoIndex];
-                videoDevice->state = MODULE_STATE_STOPPED;
+        for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
+            videoDevice        = videoDevices[videoIndex];
+            videoDevice->state = MODULE_STATE_STOPPED;
 
+            if (input->videosConfig.autoStart) {
                 Logd("Starting video capture on device \"%s\"", videoDevice->videoParams.name);
                 if (modules->videoObj->startDeviceCapture(modules->videoObj, &videoDevice->videoParams) != VIDEO_ERROR_NONE) {
                     Loge("startDeviceCapture() failed");
@@ -305,15 +305,15 @@ int main(int argc, char **argv)
             goto loadClientsParamsExit;
         }
 
-        if (input->clientsConfig.autoStart) {
-            nbClients = params->clientsInfos.nbClients;
-            Logd("Starting %u clients", nbClients);
+        nbClients = params->clientsInfos.nbClients;
+        Logd("Starting %u clients", nbClients);
 
-            for (index = 0; index < nbClients; index++) {
-                clientInfos        = params->clientsInfos.clientInfos[index];
-                clientParams       = &clientInfos->clientParams;
-                clientInfos->state = MODULE_STATE_STOPPED;
+        for (index = 0; index < nbClients; index++) {
+            clientInfos        = params->clientsInfos.clientInfos[index];
+            clientParams       = &clientInfos->clientParams;
+            clientInfos->state = MODULE_STATE_STOPPED;
 
+            if (input->clientsConfig.autoStart) {
                 if (modules->clientObj->start(modules->clientObj, clientParams) != CLIENT_ERROR_NONE) {
                     Loge("Failed to start client %s", clientParams->name);
                     //goto stopClientsExit;

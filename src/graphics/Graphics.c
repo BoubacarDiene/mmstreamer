@@ -59,6 +59,8 @@ typedef struct GRAPHICS_LIST_ELEMENT_S {
 } GRAPHICS_LIST_ELEMENT_S;
 
 typedef struct GRAPHICS_TASK_S {
+    volatile uint8_t  quit;
+
     LIST_S           *list;
 
     TASK_S           *task;
@@ -288,6 +290,7 @@ GRAPHICS_ERROR_E Graphics_UnInit(GRAPHICS_S **obj)
 
     (void)FbDev_UnInit(&pData->fbDevObj);
 
+    simulateEvtTask->quit = 1;
     sem_post(&simulateEvtTask->sem);
 
     (void)simulateEvtTask->list->lock(simulateEvtTask->list);
@@ -1589,13 +1592,13 @@ static void taskFct_f(TASK_PARAMS_S *params)
     LIST_S *evtsList                 = simulateEvtTask->list;
     GRAPHICS_LIST_ELEMENT_S *element = NULL;
 
-    if (pData->quit) {
+    if (simulateEvtTask->quit) {
         return;
     }
 
     sem_wait(&simulateEvtTask->sem);
 
-    if (pData->quit) {
+    if (simulateEvtTask->quit) {
         return;
     }
 

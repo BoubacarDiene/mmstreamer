@@ -250,7 +250,7 @@ CONTROLLERS_ERROR_E notify_f(CONTROLLERS_S *obj, CONTROLLER_EVENT_S *event)
     EVENTS_LIST_ELEMENT_S *element    = NULL;
     INPUT_S *input                    = &pData->params.ctx->input;
 
-    if (input->nbCtrlLibs == 0) {
+    if (pData->nbLibs == 0) {
         Logw("No library provided");
         return CONTROLLERS_ERROR_NONE;
     }

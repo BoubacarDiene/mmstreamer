@@ -62,10 +62,10 @@
     - notifyFn : Name of function used to notify the library about click events, ...
   -->
   <Controllers priority="1">
-    <!--Item libName="libmmcontroller-template-0.1.so"
-          initFn="Template_Init"
-          uninitFn="Template_UnInit"
-          notifyFn="Template_Notify" /-->
+    <!--Item libName="libmmcontroller-test-0.1.so"
+          initFn="Test_Init"
+          uninitFn="Test_UnInit"
+          notifyFn="Test_Notify" /-->
   </Controllers>
 
   <!--
