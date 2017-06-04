@@ -1129,12 +1129,18 @@ static GRAPHICS_ERROR_E quit_f(GRAPHICS_S *obj)
 
     GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
 
+    if (!pData->drawerObj) {
+        Loge("Drawer not initialized yet");
+        return GRAPHICS_ERROR_DRAWER;
+    }
+
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
     
     pData->quit = 1;
+    (void)pData->drawerObj->stopAwaitingEvent(pData->drawerObj);
 
     (void)pthread_mutex_unlock(&pData->gfxLock);
 

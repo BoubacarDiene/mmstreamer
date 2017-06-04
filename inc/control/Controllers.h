@@ -61,15 +61,10 @@ typedef void (*CONTROLLERS_ON_COMMAND_CB)(void *userData, CONTROLLER_COMMAND_S *
 typedef CONTROLLERS_ERROR_E (*CONTROLLERS_LOAD_LIBS_F  )(CONTROLLERS_S *obj);
 typedef CONTROLLERS_ERROR_E (*CONTROLLERS_UNLOAD_LIBS_F)(CONTROLLERS_S *obj);
 
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_INIT_CMDS_TASK_F  )(CONTROLLERS_S *obj);
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_UNINIT_CMDS_TASK_F)(CONTROLLERS_S *obj);
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_START_CMDS_TASK_F )(CONTROLLERS_S *obj);
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_STOP_CMDS_TASK_F  )(CONTROLLERS_S *obj);
-
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_INIT_EVTS_TASK_F  )(CONTROLLERS_S *obj);
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_UNINIT_EVTS_TASK_F)(CONTROLLERS_S *obj);
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_START_EVTS_TASK_F )(CONTROLLERS_S *obj);
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_STOP_EVTS_TASK_F  )(CONTROLLERS_S *obj);
+typedef CONTROLLERS_ERROR_E (*CONTROLLERS_INIT_TASK_F  )(CONTROLLERS_S *obj);
+typedef CONTROLLERS_ERROR_E (*CONTROLLERS_UNINIT_TASK_F)(CONTROLLERS_S *obj);
+typedef CONTROLLERS_ERROR_E (*CONTROLLERS_START_TASK_F )(CONTROLLERS_S *obj);
+typedef CONTROLLERS_ERROR_E (*CONTROLLERS_STOP_TASK_F  )(CONTROLLERS_S *obj);
 
 typedef CONTROLLERS_ERROR_E (*CONTROLLERS_NOTIFY_F)(CONTROLLERS_S *obj, CONTROLLER_EVENT_S *event);
 
@@ -95,16 +90,19 @@ struct CONTROLLERS_COMMAND_S {
 };
 
 struct CONTROLLERS_LIB_S {
-    CONTROLLER_S        *obj;
-    void                *handle;
+    char                        *path;
 
-    CONTROLLER_INIT_F   init;
-    CONTROLLER_UNINIT_F uninit;
-    CONTROLLER_NOTIFY_F notify;
+    CONTROLLER_S                *obj;
+    void                        *handle;
 
-    int32_t             eventsMask;
+    CONTROLLER_INIT_LIBRARY_F   init;
+    CONTROLLER_UNINIT_LIBRARY_F uninit;
+    CONTROLLER_ON_COMMAND_CB    onCommand;
+    CONTROLLER_ON_EVENT_CB      onEvent;
 
-    void                *pData;
+    int32_t                     eventsMask;
+
+    void                        *pData;
 };
 
 struct CONTROLLERS_TASK_S {
@@ -133,25 +131,31 @@ struct CONTROLLERS_PRIVATE_DATA_S {
 
     CONTROLLERS_TASK_S   cmdsTask;
     CONTROLLERS_TASK_S   evtsTask;
+    CONTROLLERS_TASK_S   libsTask;
 };
 
 struct CONTROLLERS_S {
-    CONTROLLERS_LOAD_LIBS_F        loadLibs;
-    CONTROLLERS_UNLOAD_LIBS_F      unloadLibs;
+    CONTROLLERS_LOAD_LIBS_F    loadLibs;
+    CONTROLLERS_UNLOAD_LIBS_F  unloadLibs;
 
-    CONTROLLERS_INIT_CMDS_TASK_F   initCmdsTask;
-    CONTROLLERS_UNINIT_CMDS_TASK_F uninitCmdsTask;
-    CONTROLLERS_START_CMDS_TASK_F  startCmdsTask;
-    CONTROLLERS_STOP_CMDS_TASK_F   stopCmdsTask;
+    CONTROLLERS_INIT_TASK_F    initCmdsTask;
+    CONTROLLERS_UNINIT_TASK_F  uninitCmdsTask;
+    CONTROLLERS_START_TASK_F   startCmdsTask;
+    CONTROLLERS_STOP_TASK_F    stopCmdsTask;
 
-    CONTROLLERS_INIT_EVTS_TASK_F   initEvtsTask;
-    CONTROLLERS_UNINIT_EVTS_TASK_F uninitEvtsTask;
-    CONTROLLERS_START_EVTS_TASK_F  startEvtsTask;
-    CONTROLLERS_STOP_EVTS_TASK_F   stopEvtsTask;
+    CONTROLLERS_INIT_TASK_F    initEvtsTask;
+    CONTROLLERS_UNINIT_TASK_F  uninitEvtsTask;
+    CONTROLLERS_START_TASK_F   startEvtsTask;
+    CONTROLLERS_STOP_TASK_F    stopEvtsTask;
 
-    CONTROLLERS_NOTIFY_F           notify;
+    CONTROLLERS_INIT_TASK_F    initLibsTask;
+    CONTROLLERS_UNINIT_TASK_F  uninitLibsTask;
+    CONTROLLERS_START_TASK_F   startLibsTask;
+    CONTROLLERS_STOP_TASK_F    stopLibsTask;
 
-    CONTROLLERS_PRIVATE_DATA_S     *pData;
+    CONTROLLERS_NOTIFY_F       notify;
+
+    CONTROLLERS_PRIVATE_DATA_S *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */

@@ -81,9 +81,9 @@ enum KEEP_ALIVE_METHOD_E {
 };
 
 enum MODULE_STATE_E {
-    MODULE_STATE_STOPPED,
-    MODULE_STATE_STARTED,
-    MODULE_STATE_SUSPENDED
+    MODULE_STATE_STOPPED   = 1 << 0,
+    MODULE_STATE_STARTED   = 1 << 1,
+    MODULE_STATE_SUSPENDED = 1 << 2
 };
 
 struct GRAPHICS_INFOS_S {
@@ -141,10 +141,12 @@ struct CLIENTS_INFOS_S {
 };
 
 struct LIBRARY_S {
-    char *name;
+    char *path;
+
     char *initFn;
     char *uninitFn;
-    char *notifyFn;
+    char *onCommandCb;
+    char *onEventCb;
 };
 
 struct PARAMS_S {

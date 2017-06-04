@@ -59,6 +59,11 @@ extern CONTROLLERS_ERROR_E uninitEvtsTask_f(CONTROLLERS_S *obj);
 extern CONTROLLERS_ERROR_E startEvtsTask_f (CONTROLLERS_S *obj);
 extern CONTROLLERS_ERROR_E stopEvtsTask_f  (CONTROLLERS_S *obj);
 
+extern CONTROLLERS_ERROR_E initLibsTask_f  (CONTROLLERS_S *obj);
+extern CONTROLLERS_ERROR_E uninitLibsTask_f(CONTROLLERS_S *obj);
+extern CONTROLLERS_ERROR_E startLibsTask_f (CONTROLLERS_S *obj);
+extern CONTROLLERS_ERROR_E stopLibsTask_f  (CONTROLLERS_S *obj);
+
 extern CONTROLLERS_ERROR_E notify_f(CONTROLLERS_S *obj, CONTROLLER_EVENT_S *event);
 
 /* -------------------------------------------------------------------------------------------- */
@@ -91,6 +96,11 @@ CONTROLLERS_ERROR_E Controllers_Init(CONTROLLERS_S **obj, CONTROLLERS_PARAMS_S *
     (*obj)->uninitEvtsTask = uninitEvtsTask_f;
     (*obj)->startEvtsTask  = startEvtsTask_f;
     (*obj)->stopEvtsTask   = stopEvtsTask_f;
+
+    (*obj)->initLibsTask   = initLibsTask_f;
+    (*obj)->uninitLibsTask = uninitLibsTask_f;
+    (*obj)->startLibsTask  = startLibsTask_f;
+    (*obj)->stopLibsTask   = stopLibsTask_f;
 
     (*obj)->notify         = notify_f;
 

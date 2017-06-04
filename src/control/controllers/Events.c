@@ -34,7 +34,7 @@
 #include "control/Controllers.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/*                                           DEFINE                                             */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -251,7 +251,7 @@ CONTROLLERS_ERROR_E notify_f(CONTROLLERS_S *obj, CONTROLLER_EVENT_S *event)
     INPUT_S *input                    = &pData->params.ctx->input;
 
     if (pData->nbLibs == 0) {
-        Logw("No library provided");
+        Logw("No library loaded");
         return CONTROLLERS_ERROR_NONE;
     }
 
@@ -268,8 +268,9 @@ CONTROLLERS_ERROR_E notify_f(CONTROLLERS_S *obj, CONTROLLER_EVENT_S *event)
     Logd("Notify contoller - event id : \"%u\"", event->id);
 
     assert((element = calloc(1, sizeof(EVENTS_LIST_ELEMENT_S))));
-    element->seconds = time(NULL);
-    memcpy(&element->event, event, sizeof(CONTROLLER_EVENT_S));
+    element->seconds    = time(NULL);
+    element->event.id   = event->id;
+    element->event.name = strdup(event->name);
 
     (void)evtsList->add(evtsList, (void*)element);
 
@@ -298,7 +299,7 @@ void registerEvents_f(void *userData, int32_t eventsMask)
 
     Logd("Register events : %d", eventsMask);
 
-    lib->eventsMask |= eventsMask;
+    lib->eventsMask |= (eventsMask);
 
     (void)pthread_mutex_unlock(&evtsTask->lock);
 }
@@ -372,7 +373,7 @@ static void taskFct_f(TASK_PARAMS_S *params)
         lib = &pData->libs[i];
         if (element->event.id & lib->eventsMask) {
             (void)pthread_mutex_unlock(&evtsTask->lock);
-            lib->notify(lib->obj, &element->event);
+            lib->onEvent(lib->obj, &element->event);
             (void)pthread_mutex_lock(&evtsTask->lock);
             break;
         }
@@ -408,6 +409,12 @@ static void releaseCb(LIST_S *obj, void *element)
     assert(obj && element);
 
     EVENTS_LIST_ELEMENT_S *elementToRemove = (EVENTS_LIST_ELEMENT_S*)element;
+    CONTROLLER_EVENT_S *event              = &elementToRemove->event;
+
+    if (event->name) {
+        free(event->name);
+        event->name = NULL;
+    }
 
     free(elementToRemove);
     elementToRemove = NULL;

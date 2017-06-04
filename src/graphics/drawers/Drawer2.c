@@ -100,7 +100,8 @@ static DRAWER_ERROR_E setBgColor_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S 
 static DRAWER_ERROR_E saveBuffer_f(DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
 static DRAWER_ERROR_E saveScreen_f(DRAWER_S *obj, GFX_IMAGE_S *inOut);
 
-static DRAWER_ERROR_E getEvent_f(DRAWER_S *obj, GFX_EVENT_S *gfxEvent);
+static DRAWER_ERROR_E getEvent_f         (DRAWER_S *obj, GFX_EVENT_S *gfxEvent);
+static DRAWER_ERROR_E stopAwaitingEvent_f(DRAWER_S *obj);
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                      PUBLIC FUNCTIONS                                        */
@@ -116,19 +117,20 @@ DRAWER_ERROR_E Drawer_Init(DRAWER_S **obj)
     DRAWER_PRIVATE_DATA_S *pData;
     assert((pData = calloc(1, sizeof(DRAWER_PRIVATE_DATA_S))));
     
-    (*obj)->initScreen   = initScreen_f;
-    (*obj)->unInitScreen = unInitScreen_f;
+    (*obj)->initScreen        = initScreen_f;
+    (*obj)->unInitScreen      = unInitScreen_f;
     
-    (*obj)->drawVideo    = drawVideo_f;
-    (*obj)->drawImage    = drawImage_f;
-    (*obj)->drawText     = drawText_f;
+    (*obj)->drawVideo         = drawVideo_f;
+    (*obj)->drawImage         = drawImage_f;
+    (*obj)->drawText          = drawText_f;
     
-    (*obj)->setBgColor   = setBgColor_f;
+    (*obj)->setBgColor        = setBgColor_f;
     
-    (*obj)->saveBuffer   = saveBuffer_f;
-    (*obj)->saveScreen   = saveScreen_f;
+    (*obj)->saveBuffer        = saveBuffer_f;
+    (*obj)->saveScreen        = saveScreen_f;
     
-    (*obj)->getEvent     = getEvent_f;
+    (*obj)->getEvent          = getEvent_f;
+    (*obj)->stopAwaitingEvent = stopAwaitingEvent_f;
     
     assert((pData->lock = SDL_CreateMutex()));
     
@@ -818,4 +820,18 @@ static DRAWER_ERROR_E getEvent_f(DRAWER_S *obj, GFX_EVENT_S *gfxEvent)
     }
     
     return ((gfxEvent->type != GFX_EVENT_TYPE_COUNT) ? DRAWER_ERROR_NONE : DRAWER_ERROR_EVENT);
+}
+
+/*!
+ *
+ */
+static DRAWER_ERROR_E stopAwaitingEvent_f(DRAWER_S *obj)
+{
+    assert(obj && obj->pData);
+
+    SDL_Event userEvent;
+    userEvent.type = SDL_USEREVENT;
+    SDL_PushEvent(&userEvent);
+
+    return DRAWER_ERROR_NONE;
 }

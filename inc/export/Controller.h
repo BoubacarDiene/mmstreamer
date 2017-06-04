@@ -43,43 +43,40 @@ extern "C" {
 /*                                           DEFINE                                             */
 /* -------------------------------------------------------------------------------------------- */
 
-#define MAX_NAME_SIZE 128
+#define CONTROLLER_FORMAT_VALUE "%u"
+#define CONTROLLER_FORMAT_TEXT  "%u;%u;%u;%u"
+#define CONTROLLER_FORMAT_IMAGE "%u;%d"
+#define CONTROLLER_FORMAT_NAV   "%s;%s;%s;%s"
+#define CONTROLLER_FORMAT_GFX   "%u;%u;%u"
 
 /* -------------------------------------------------------------------------------------------- */
 /*                                           TYPEDEF                                            */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   CONTROLLER_ERROR_E           CONTROLLER_ERROR_E;
-typedef enum   CONTROLLER_COMMAND_E         CONTROLLER_COMMAND_E;
-typedef enum   CONTROLLER_EVENT_E           CONTROLLER_EVENT_E;
-typedef enum   CONTROLLER_STATE_E           CONTROLLER_STATE_E;
-typedef enum   CONTROLLER_GFX_EVENT_E       CONTROLLER_GFX_EVENT_E;
+typedef enum   CONTROLLER_ERROR_E     CONTROLLER_ERROR_E;
+typedef enum   CONTROLLER_COMMAND_E   CONTROLLER_COMMAND_E;
+typedef enum   CONTROLLER_EVENT_E     CONTROLLER_EVENT_E;
+typedef enum   CONTROLLER_GFX_E       CONTROLLER_GFX_E;
 
-typedef struct CONTROLLER_ACK_S             CONTROLLER_ACK_S;
-typedef struct CONTROLLER_CLICK_S           CONTROLLER_CLICK_S;
-typedef struct CONTROLLER_STATE_S           CONTROLLER_STATE_S;
-typedef struct CONTROLLER_EVENT_S           CONTROLLER_EVENT_S;
-typedef struct CONTROLLER_POINT_S           CONTROLLER_POINT_S;
+typedef struct CONTROLLER_COMMAND_S   CONTROLLER_COMMAND_S;
+typedef struct CONTROLLER_EVENT_S     CONTROLLER_EVENT_S;
+typedef struct CONTROLLER_LIBRARY_S   CONTROLLER_LIBRARY_S;
+typedef struct CONTROLLER_FUNCTIONS_S CONTROLLER_FUNCTIONS_S;
+typedef struct CONTROLLER_S           CONTROLLER_S;
 
-typedef struct CONTROLLER_DATA_COMMON_S     CONTROLLER_DATA_COMMON_S;
-typedef struct CONTROLLER_DATA_SCREENSHOT_S CONTROLLER_DATA_SCREENSHOT_S;
-typedef struct CONTROLLER_DATA_TEXT_S       CONTROLLER_DATA_TEXT_S;
-typedef struct CONTROLLER_DATA_IMAGE_S      CONTROLLER_DATA_IMAGE_S;
-typedef struct CONTROLLER_DATA_NAV_S        CONTROLLER_DATA_NAV_S;
-typedef struct CONTROLLER_DATA_GFX_EVENT_S  CONTROLLER_DATA_GFX_EVENT_S;
+typedef void (*CONTROLLER_RELEASE_CB)(void *memory);
 
-typedef struct CONTROLLER_COMMAND_S         CONTROLLER_COMMAND_S;
+typedef void (*CONTROLLER_ON_COMMAND_CB)(CONTROLLER_S *obj, void *data);
+typedef void (*CONTROLLER_ON_EVENT_CB  )(CONTROLLER_S *obj, CONTROLLER_EVENT_S *event);
 
-typedef struct CONTROLLER_FUNCTIONS_S       CONTROLLER_FUNCTIONS_S;
-typedef struct CONTROLLER_S                 CONTROLLER_S;
+typedef CONTROLLER_ERROR_E (*CONTROLLER_INIT_LIBRARY_F  )(CONTROLLER_S **obj, CONTROLLER_FUNCTIONS_S *fcts);
+typedef CONTROLLER_ERROR_E (*CONTROLLER_UNINIT_LIBRARY_F)(CONTROLLER_S **obj);
 
 typedef void (*CONTROLLER_REGISTER_EVENTS_F  )(void *userData, int32_t eventsMask);
 typedef void (*CONTROLLER_UNREGISTER_EVENTS_F)(void *userData, int32_t eventsMask);
-typedef void (*CONTROLLER_SEND_COMMAND_F     )(void *userData, CONTROLLER_COMMAND_S *command);
 
-typedef CONTROLLER_ERROR_E (*CONTROLLER_INIT_F  )(CONTROLLER_S **obj, CONTROLLER_FUNCTIONS_S *fcts);
-typedef CONTROLLER_ERROR_E (*CONTROLLER_UNINIT_F)(CONTROLLER_S **obj);
-typedef CONTROLLER_ERROR_E (*CONTROLLER_NOTIFY_F)(CONTROLLER_S *obj, CONTROLLER_EVENT_S *event);
+typedef void (*CONTROLLER_SEND_TO_ENGINE_F )(void *userData, CONTROLLER_COMMAND_S *command);
+typedef void (*CONTROLLER_SEND_TO_LIBRARY_F)(void *userData, CONTROLLER_LIBRARY_S *library);
 
 enum CONTROLLER_ERROR_E {
     CONTROLLER_ERROR_NONE,
@@ -126,105 +123,45 @@ enum CONTROLLER_COMMAND_E {
 };
 
 enum CONTROLLER_EVENT_E {
-    CONTROLLER_EVENT_ACK   = 1 << 0,
-    CONTROLLER_EVENT_CLICK = 1 << 1,
-    CONTROLLER_EVENT_STATE = 1 << 2,
+    CONTROLLER_EVENT_STOPPED   = 1 << 0,
+    CONTROLLER_EVENT_STARTED   = 1 << 1,
+    CONTROLLER_EVENT_SUSPENDED = 1 << 2,
+    CONTROLLER_EVENT_CLICKED   = 1 << 3,
 
-    CONTROLLER_EVENT_ALL   = 0xFF
+    CONTROLLER_EVENT_ALL       = 0xFF
 };
 
-enum CONTROLLER_STATE_E {
-    CONTROLLER_STATE_STOPPED,
-    CONTROLLER_STATE_STARTED,
-    CONTROLLER_STATE_SUSPENDED
+enum CONTROLLER_GFX_E {
+    CONTROLLER_GFX_MOVE_LEFT,
+    CONTROLLER_GFX_MOVE_UP,
+    CONTROLLER_GFX_MOVE_RIGHT,
+    CONTROLLER_GFX_MOVE_DOWN,
+    CONTROLLER_GFX_CLICK
 };
 
-enum CONTROLLER_GFX_EVENT_E {
-    CONTROLLER_GFX_EVENT_CLICK      = 0x03,
-    CONTROLLER_GFX_EVENT_MOVE_LEFT  = 0x05,
-    CONTROLLER_GFX_EVENT_MOVE_UP    = 0x06,
-    CONTROLLER_GFX_EVENT_MOVE_RIGHT = 0x07,
-    CONTROLLER_GFX_EVENT_MOVE_DOWN  = 0x08
-};
-
-struct CONTROLLER_ACK_S {
-    CONTROLLER_COMMAND_E id;
-    uint8_t              done;
-};
-
-struct CONTROLLER_CLICK_S {
-    char elementName[MAX_NAME_SIZE];
-};
-
-struct CONTROLLER_STATE_S {
-    char               name[MAX_NAME_SIZE];
-    CONTROLLER_STATE_E state;
+struct CONTROLLER_COMMAND_S {
+    CONTROLLER_COMMAND_E  id;
+    char                  *data;
+    CONTROLLER_RELEASE_CB release;
 };
 
 struct CONTROLLER_EVENT_S {
     CONTROLLER_EVENT_E id;
-
-    union {
-        CONTROLLER_ACK_S   ack;
-        CONTROLLER_CLICK_S click;
-        CONTROLLER_STATE_S module;
-    } arg;
+    char               *name;
 };
 
-struct CONTROLLER_POINT_S {
-    uint16_t x;
-    uint16_t y;
-};
-
-struct CONTROLLER_DATA_COMMON_S {
-    char name[MAX_NAME_SIZE];
-};
-
-struct CONTROLLER_DATA_SCREENSHOT_S {
-    uint32_t imageFormat;
-};
-
-struct CONTROLLER_DATA_TEXT_S {
-    uint32_t stringId;
-    uint32_t fontId;
-    uint32_t fontSize;
-    uint32_t colorId;
-};
-
-struct CONTROLLER_DATA_IMAGE_S {
-    uint32_t imageId;
-    int32_t  hiddenColorId;
-};
-
-struct CONTROLLER_DATA_NAV_S {
-    char left[MAX_NAME_SIZE];
-    char up[MAX_NAME_SIZE];
-    char right[MAX_NAME_SIZE];
-    char down[MAX_NAME_SIZE];
-};
-
-struct CONTROLLER_DATA_GFX_EVENT_S {
-    CONTROLLER_GFX_EVENT_E id;
-    CONTROLLER_POINT_S     point;
-};
-
-struct CONTROLLER_COMMAND_S {
-    CONTROLLER_COMMAND_E id;
-
-    union {
-        CONTROLLER_DATA_COMMON_S     common;
-        CONTROLLER_DATA_SCREENSHOT_S screenshot;
-        CONTROLLER_DATA_TEXT_S       text;
-        CONTROLLER_DATA_IMAGE_S      image;
-        CONTROLLER_DATA_NAV_S        nav;
-        CONTROLLER_DATA_GFX_EVENT_S  event;
-    } data;
+struct CONTROLLER_LIBRARY_S {
+    char                  *name;
+    void                  *data;
+    CONTROLLER_RELEASE_CB release;
 };
 
 struct CONTROLLER_FUNCTIONS_S {
     CONTROLLER_REGISTER_EVENTS_F   registerEvents;
     CONTROLLER_UNREGISTER_EVENTS_F unregisterEvents;
-    CONTROLLER_SEND_COMMAND_F      sendCommand;
+
+    CONTROLLER_SEND_TO_ENGINE_F    sendToEngine;
+    CONTROLLER_SEND_TO_LIBRARY_F   sendToLibrary;
 
     void                           *userData;
 };

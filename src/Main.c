@@ -499,9 +499,9 @@ parserParseExit:
     uint8_t count;
     while (input->nbCtrlLibs > 0) {
         count = input->nbCtrlLibs - 1;
-        if (input->ctrlLibs[count].name) {
-            free(input->ctrlLibs[count].name);
-            input->ctrlLibs[count].name = NULL;
+        if (input->ctrlLibs[count].path) {
+            free(input->ctrlLibs[count].path);
+            input->ctrlLibs[count].path = NULL;
         }
         if (input->ctrlLibs[count].initFn) {
             free(input->ctrlLibs[count].initFn);
@@ -511,9 +511,13 @@ parserParseExit:
             free(input->ctrlLibs[count].uninitFn);
             input->ctrlLibs[count].uninitFn = NULL;
         }
-        if (input->ctrlLibs[count].notifyFn) {
-            free(input->ctrlLibs[count].notifyFn);
-            input->ctrlLibs[count].notifyFn = NULL;
+        if (input->ctrlLibs[count].onCommandCb) {
+            free(input->ctrlLibs[count].onCommandCb);
+            input->ctrlLibs[count].onCommandCb = NULL;
+        }
+        if (input->ctrlLibs[count].onEventCb) {
+            free(input->ctrlLibs[count].onEventCb);
+            input->ctrlLibs[count].onEventCb = NULL;
         }
         --input->nbCtrlLibs;
     }
@@ -685,7 +689,7 @@ static void onItemCb(void *userData, const char **attrs)
         {
             .attrName          = XML_ATTR_LIB_NAME,
             .attrType          = PARSER_ATTR_TYPE_VECTOR,
-            .attrValue.vector  = (void**)&ctrlLib->name,
+            .attrValue.vector  = (void**)&ctrlLib->path,
             .attrGetter.vector = parserObj->getString
         },
         {
@@ -701,9 +705,15 @@ static void onItemCb(void *userData, const char **attrs)
             .attrGetter.vector = parserObj->getString
         },
         {
-            .attrName          = XML_ATTR_NOTIFY_FN,
+            .attrName          = XML_ATTR_ON_COMMAND_CB,
             .attrType          = PARSER_ATTR_TYPE_VECTOR,
-            .attrValue.vector  = (void**)&ctrlLib->notifyFn,
+            .attrValue.vector  = (void**)&ctrlLib->onCommandCb,
+            .attrGetter.vector = parserObj->getString
+        },
+        {
+            .attrName          = XML_ATTR_ON_EVENT_CB,
+            .attrType          = PARSER_ATTR_TYPE_VECTOR,
+            .attrValue.vector  = (void**)&ctrlLib->onEventCb,
             .attrGetter.vector = parserObj->getString
         },
         {
@@ -720,21 +730,25 @@ static void onItemCb(void *userData, const char **attrs)
         Logd("Failed to retrieve attributes in \"Item\" tag");
     }
 
-    if (ctrlLib->name) {
-        char *temp   = strdup(ctrlLib->name);
+    if (ctrlLib->path) {
+        char *temp   = strdup(ctrlLib->path);
         uint32_t len = (strlen(temp) + strlen(input->libRootDir) + 2) * sizeof(char);
 
-        assert((ctrlLib->name = realloc(ctrlLib->name, len)));
-        memset(ctrlLib->name, '\0', len);
+        assert((ctrlLib->path = realloc(ctrlLib->path, len)));
+        memset(ctrlLib->path, '\0', len);
 
-        snprintf(ctrlLib->name, len, "%s/%s", input->libRootDir, temp);
+        snprintf(ctrlLib->path, len, "%s/%s", input->libRootDir, temp);
 
         free(temp);
         temp = NULL;
     }
 
-    Logd("Control library - name : \"%s\" / initFn : \"%s\" / uninitFn : \"%s\"",
-            ctrlLib->name, ctrlLib->initFn, ctrlLib->uninitFn);
+    Logd("Control library - path : \"%s\" / \
+                            initFn : \"%s\" / uninitFn : \"%s\" / \
+                            onCommandCb : \"%s\" / onEventCb ; \"%s\"",
+                            ctrlLib->path,
+                            ctrlLib->initFn, ctrlLib->uninitFn,
+                            ctrlLib->onCommandCb, ctrlLib->onEventCb);
 }
 
 /*!

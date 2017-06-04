@@ -32,7 +32,7 @@
 #include "control/Control.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/*                                           DEFINE                                             */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -426,6 +426,11 @@ static CONTROL_ERROR_E loadControllers_f(CONTROL_S *obj)
         goto initEvtsTaskExit;
     }
 
+    if (controllersObj->initLibsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("initLibsTask() failed");
+        goto initLibsTaskExit;
+    }
+
     if (controllersObj->loadLibs(controllersObj) != CONTROLLERS_ERROR_NONE) {
         Loge("loadLibs() failed");
         goto loadLibsExit;
@@ -441,7 +446,15 @@ static CONTROL_ERROR_E loadControllers_f(CONTROL_S *obj)
         goto startEvtsTaskExit;
     }
 
+    if (controllersObj->startLibsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("startLibsTask() failed");
+        goto startLibsTaskExit;
+    }
+
     return CONTROL_ERROR_NONE;
+
+startLibsTaskExit:
+	(void)controllersObj->stopEvtsTask(controllersObj);
 
 startEvtsTaskExit:
     (void)controllersObj->stopCmdsTask(controllersObj);
@@ -450,6 +463,9 @@ startCmdsTaskExit:
     (void)controllersObj->unloadLibs(controllersObj);
 
 loadLibsExit:
+	(void)controllersObj->uninitLibsTask(controllersObj);
+
+initLibsTaskExit:
     (void)controllersObj->uninitEvtsTask(controllersObj);
 
 initEvtsTaskExit:
@@ -469,6 +485,11 @@ static CONTROL_ERROR_E unloadControllers_f(CONTROL_S *obj)
     CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
     CONTROLLERS_S *controllersObj = pData->controllersObj;
 
+    if (controllersObj->stopLibsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("stopLibsTask() failed");
+        ret = CONTROL_ERROR_UNKNOWN;
+    }
+
     if (controllersObj->stopEvtsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
         Loge("stopEvtsTask() failed");
         ret = CONTROL_ERROR_UNKNOWN;
@@ -481,6 +502,11 @@ static CONTROL_ERROR_E unloadControllers_f(CONTROL_S *obj)
 
     if (controllersObj->unloadLibs(controllersObj) != CONTROLLERS_ERROR_NONE) {
         Loge("unloadLibs() failed");
+        ret = CONTROL_ERROR_UNKNOWN;
+    }
+
+    if (controllersObj->uninitLibsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+        Loge("uninitLibsTask() failed");
         ret = CONTROL_ERROR_UNKNOWN;
     }
 
@@ -528,8 +554,8 @@ CONTROL_ERROR_E handleClick_f(CONTROL_S *obj, GFX_EVENT_S *gfxEvent)
     }
 
     CONTROLLER_EVENT_S event = { 0 };
-    event.id = CONTROLLER_EVENT_CLICK;
-    strcpy(event.arg.click.elementName, gfxEvent->gfxElementName);
+    event.id   = CONTROLLER_EVENT_CLICKED;
+    event.name = gfxEvent->gfxElementName;
 
     (void)controllersObj->notify(controllersObj, &event);
 
@@ -587,7 +613,6 @@ static void onCommandCb(void *userData, CONTROLLER_COMMAND_S *command)
     uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
     GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
     CONTROLLERS_COMMAND_S cmd       = { 0 };
-    CONTROLLER_EVENT_S event        = { 0 };
 
     char gfxElementName[MAX_NAME_SIZE] = { 0 };
     char handlerName[MAX_NAME_SIZE]    = { 0 };
@@ -597,7 +622,7 @@ static void onCommandCb(void *userData, CONTROLLER_COMMAND_S *command)
 
     /* handlerName */
     uint32_t index;
-    if (gCommandsList[command->id].id == command->id) {
+    if ((command->id < gNbCommands) && (gCommandsList[command->id].id == command->id)) {
         strcpy(handlerName, gCommandsList[command->id].str);
     }
     else {
@@ -611,19 +636,16 @@ static void onCommandCb(void *userData, CONTROLLER_COMMAND_S *command)
 
         if (index == gNbCommands) {
             Loge("Command \"%u\" not found", command->id);
-            goto exit;
+            return;
         }
     }
 
     /* handlerData */
     switch (command->id) {
-        case CONTROLLER_COMMAND_TAKE_SCREENSHOT:
-            sprintf(handlerData, "%u", command->data.screenshot.imageFormat);
-            break;
-
         case CONTROLLER_COMMAND_CHANGE_LANGUAGE:
             strcpy(gfxElementName, gfxElements[0]->name);
             // No break
+        case CONTROLLER_COMMAND_TAKE_SCREENSHOT:
         case CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT:
         case CONTROLLER_COMMAND_HIDE_ELEMENT:
         case CONTROLLER_COMMAND_SHOW_ELEMENT:
@@ -640,37 +662,16 @@ static void onCommandCb(void *userData, CONTROLLER_COMMAND_S *command)
         case CONTROLLER_COMMAND_RESUME_SERVER:
         case CONTROLLER_COMMAND_STOP_CLIENT:
         case CONTROLLER_COMMAND_START_CLIENT:
-            strcpy(handlerData, command->data.common.name);
+        case CONTROLLER_COMMAND_UPDATE_TEXT:
+        case CONTROLLER_COMMAND_UPDATE_IMAGE:
+        case CONTROLLER_COMMAND_UPDATE_NAV:
+        case CONTROLLER_COMMAND_SEND_GFX_EVENT:
+            strcpy(handlerData, command->data);
             break;
 
         case CONTROLLER_COMMAND_CLOSE_APPLICATION:
         case CONTROLLER_COMMAND_STOP_GRAPHICS:
         case CONTROLLER_COMMAND_START_GRAPHICS:
-            break;
-
-        case CONTROLLER_COMMAND_UPDATE_TEXT:
-            sprintf(handlerData, "%u;%u;%u;%u", command->data.text.stringId,
-                                                command->data.text.fontId,
-                                                command->data.text.fontSize,
-                                                command->data.text.colorId);
-            break;
-
-        case CONTROLLER_COMMAND_UPDATE_IMAGE:
-            sprintf(handlerData, "%u;%d", command->data.image.imageId,
-                                          command->data.image.hiddenColorId);
-            break;
-
-        case CONTROLLER_COMMAND_UPDATE_NAV:
-            sprintf(handlerData, "%s;%s;%s;%s", command->data.nav.left,
-                                                command->data.nav.up,
-                                                command->data.nav.right,
-                                                command->data.nav.down);
-            break;
-
-        case CONTROLLER_COMMAND_SEND_GFX_EVENT:
-            sprintf(handlerData, "%u;%u;%u", command->data.event.id,
-                                             command->data.event.point.x,
-                                             command->data.event.point.y);
             break;
 
         default:
@@ -690,29 +691,14 @@ static void onCommandCb(void *userData, CONTROLLER_COMMAND_S *command)
         }
     }
 
-    if (strlen(handlerName) != 0) {
-        cmd.handlerName = handlerName;
-    }
+    cmd.handlerName = handlerName;
 
     if (strlen(handlerData) != 0) {
         cmd.handlerData = handlerData;
     }
 
     /* Call handler */
-    if (handleCommand_f((CONTROL_S*)userData, &cmd) == CONTROL_ERROR_NONE) {
-        event.arg.ack.done = 1;
-    }
-
-    cmd.gfxElementName = NULL;
-    cmd.gfxElementData = NULL;
-    cmd.gfxElementName = NULL;
-    cmd.gfxElementData = NULL;
-
-exit:
-    event.id         = CONTROLLER_EVENT_ACK,
-    event.arg.ack.id = command->id,
-
-    (void)controllersObj->notify(controllersObj, &event);
+    (void)handleCommand_f((CONTROL_S*)userData, &cmd);
 }
 
 /*!
@@ -726,10 +712,9 @@ static void onModuleStateChangedCb(void *userData, char *name, MODULE_STATE_E st
     CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
     CONTROLLERS_S *controllersObj = pData->controllersObj;
 
-    CONTROLLER_EVENT_S event = { 0 };
-    event.id               = CONTROLLER_EVENT_STATE;
-    event.arg.module.state = state;
-    strcpy(event.arg.module.name, name);
+    CONTROLLER_EVENT_S event;
+    event.id   = state;
+    event.name = name;
 
     (void)controllersObj->notify(controllersObj, &event);
 }

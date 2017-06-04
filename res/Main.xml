@@ -48,8 +48,8 @@
            timeout_s="10" />
 
   <!--
-    Controllers i.e list of libraries loaded once mmstreamer engine is ready and through which
-    latter can be controlled.
+    Controllers i.e list of libraries loaded once mmstreamer engine is ready and through which it can be
+    controlled.
 
     - priority : Internal threads' priority
                  0 <=> Lowest
@@ -65,7 +65,8 @@
     <!--Item libName="libmmcontroller-test-0.1.so"
           initFn="Test_Init"
           uninitFn="Test_UnInit"
-          notifyFn="Test_Notify" /-->
+          onCommandCb="Test_onCommandCb"
+          onEventCb="Test_onEventCb" /-->
   </Controllers>
 
   <!--

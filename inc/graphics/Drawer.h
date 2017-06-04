@@ -62,7 +62,8 @@ typedef DRAWER_ERROR_E (*DRAWER_SET_BGCOLOR_F)(DRAWER_S *obj, GFX_RECT_S *rect, 
 typedef DRAWER_ERROR_E (*DRAWER_SAVE_BUFFER_F)(DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
 typedef DRAWER_ERROR_E (*DRAWER_SAVE_SCREEN_F)(DRAWER_S *obj, GFX_IMAGE_S *inOut);
 
-typedef DRAWER_ERROR_E (*DRAWER_GET_EVENT_F)(DRAWER_S *obj, GFX_EVENT_S *gfxEvent);
+typedef DRAWER_ERROR_E (*DRAWER_GET_EVENT_F          )(DRAWER_S *obj, GFX_EVENT_S *gfxEvent);
+typedef DRAWER_ERROR_E (*DRAWER_STOP_AWAITING_EVENT_F)(DRAWER_S *obj);
 
 enum DRAWER_ERROR_E {
     DRAWER_ERROR_NONE,
@@ -76,21 +77,22 @@ enum DRAWER_ERROR_E {
 };
 
 struct DRAWER_S {
-    DRAWER_INIT_SCREEN_F   initScreen;
-    DRAWER_UNINIT_SCREEN_F unInitScreen;
+    DRAWER_INIT_SCREEN_F         initScreen;
+    DRAWER_UNINIT_SCREEN_F       unInitScreen;
     
-    DRAWER_DRAW_VIDEO_F    drawVideo;
-    DRAWER_DRAW_IMAGE_F    drawImage;
-    DRAWER_DRAW_TEXT_F     drawText;
+    DRAWER_DRAW_VIDEO_F          drawVideo;
+    DRAWER_DRAW_IMAGE_F          drawImage;
+    DRAWER_DRAW_TEXT_F           drawText;
     
-    DRAWER_SET_BGCOLOR_F   setBgColor;
+    DRAWER_SET_BGCOLOR_F         setBgColor;
     
-    DRAWER_SAVE_BUFFER_F   saveBuffer;
-    DRAWER_SAVE_SCREEN_F   saveScreen;
+    DRAWER_SAVE_BUFFER_F         saveBuffer;
+    DRAWER_SAVE_SCREEN_F         saveScreen;
     
-    DRAWER_GET_EVENT_F     getEvent;
+    DRAWER_GET_EVENT_F           getEvent;
+    DRAWER_STOP_AWAITING_EVENT_F stopAwaitingEvent;
     
-    void                   *pData;
+    void                         *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */

@@ -34,7 +34,7 @@
 #include "control/Controllers.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/*                                           DEFINE                                             */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -48,7 +48,7 @@
 
 typedef struct COMMANDS_LIST_ELEMENT_S {
     time_t               seconds;
-    CONTROLLER_COMMAND_S command;
+    CONTROLLER_COMMAND_S *command;
 } COMMANDS_LIST_ELEMENT_S;
 
 /* -------------------------------------------------------------------------------------------- */
@@ -60,7 +60,7 @@ CONTROLLERS_ERROR_E uninitCmdsTask_f(CONTROLLERS_S *obj);
 CONTROLLERS_ERROR_E startCmdsTask_f (CONTROLLERS_S *obj);
 CONTROLLERS_ERROR_E stopCmdsTask_f  (CONTROLLERS_S *obj);
 
-void sendCommand_f(void *userData, CONTROLLER_COMMAND_S *command);
+void sendToEngine_f(void *userData, CONTROLLER_COMMAND_S *command);
 
 static void    taskFct_f(TASK_PARAMS_S *params);
 static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData);
@@ -230,7 +230,7 @@ CONTROLLERS_ERROR_E stopCmdsTask_f(CONTROLLERS_S *obj)
 /*!
  *+
  */
-void sendCommand_f(void *userData, CONTROLLER_COMMAND_S *command)
+void sendToEngine_f(void *userData, CONTROLLER_COMMAND_S *command)
 {
     assert(userData && command);
 
@@ -250,11 +250,11 @@ void sendCommand_f(void *userData, CONTROLLER_COMMAND_S *command)
         return;
     }
 
-    Logd("Send command - id : \"%u\"", command->id);
+    Logd("Send command - id : \"%u\" / data : \"%s\"", command->id, command->data);
 
     assert((element = calloc(1, sizeof(COMMANDS_LIST_ELEMENT_S))));
     element->seconds = time(NULL);
-    memcpy(&element->command, command, sizeof(CONTROLLER_COMMAND_S));
+    element->command = command;
 
     (void)cmdsList->add(cmdsList, (void*)element);
 
@@ -300,8 +300,11 @@ static void taskFct_f(TASK_PARAMS_S *params)
 
     CONTROLLERS_ON_COMMAND_CB cb = pData->params.onCommandCb;
     void *userData               = pData->params.userData;
+    CONTROLLER_COMMAND_S *cmd    = element->command;
+
     if (cb) {
-        cb(userData, &element->command);
+        Logd("Handling cmd - id : \"%u\" / data : \"%s\"", cmd->id, cmd->data);
+        cb(userData, cmd);
     }
 
     (void)cmdsList->lock(cmdsList);
@@ -332,6 +335,13 @@ static void releaseCb(LIST_S *obj, void *element)
     assert(obj && element);
 
     COMMANDS_LIST_ELEMENT_S *elementToRemove = (COMMANDS_LIST_ELEMENT_S*)element;
+    CONTROLLER_COMMAND_S *command            = elementToRemove->command;
+
+    if (command->release) {
+        command->release((void*)command);
+    }
+
+    elementToRemove->command = NULL;
 
     free(elementToRemove);
     elementToRemove = NULL;
