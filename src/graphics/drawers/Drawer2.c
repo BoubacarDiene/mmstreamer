@@ -682,6 +682,7 @@ static DRAWER_ERROR_E saveBuffer_f(DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S 
     switch (inOut->format) {
         case GFX_IMAGE_FORMAT_PNG:
             Logw("PNG not supported yet");
+            //IMG_SavePNG(pData->image, inOut->path);
             break;
             
         case GFX_IMAGE_FORMAT_BMP:
@@ -689,6 +690,7 @@ static DRAWER_ERROR_E saveBuffer_f(DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S 
             break;
             
         case GFX_IMAGE_FORMAT_JPG:
+            //IMG_SaveJPG(pData->image, inOut->path, 100);
             if((jpeg = open(inOut->path, O_WRONLY | O_CREAT, 0660)) < 0){
                 Loge("Failed to create %s", inOut->path);
             }
@@ -740,6 +742,7 @@ static DRAWER_ERROR_E saveScreen_f(DRAWER_S *obj, GFX_IMAGE_S *inOut)
     switch (inOut->format) {
         case GFX_IMAGE_FORMAT_PNG:
             Logw("PNG not supported yet");
+            //IMG_SavePNG(pData->screenSurface, inOut->path);
             break;
 
         case GFX_IMAGE_FORMAT_BMP:
@@ -748,6 +751,7 @@ static DRAWER_ERROR_E saveScreen_f(DRAWER_S *obj, GFX_IMAGE_S *inOut)
 
         case GFX_IMAGE_FORMAT_JPG:
             Logw("JPEG not supported yet");
+            //IMG_SaveJPG(pData->screenSurface, inOut->path, 100);
             break;
 
         default:

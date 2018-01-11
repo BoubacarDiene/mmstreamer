@@ -134,7 +134,7 @@ ${SDL_TARGET}-image:
 	if [ ! -f ${SDL_PATH}/${SDL_IMAGE_SRC}.built ]; then \
 	    tar xvf ${SDL_PATH}/${SDL_IMAGE_SRC}.tar.gz -C ${SDL_PATH}; \
 	    cd ${SDL_PATH}/${SDL_IMAGE_SRC} \
-	    && ./configure --prefix=${OUT_BUILD_DIR} --with-sdl-prefix=${OUT_BUILD_DIR} \
+	    && ./configure --prefix=${OUT_BUILD_DIR} --with-sdl-prefix=${OUT_BUILD_DIR} --enable-png=no \
 	    && make && make install \
 	    && cd -; \
 	    touch ${SDL_PATH}/${SDL_IMAGE_SRC}.built; \

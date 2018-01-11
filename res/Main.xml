@@ -56,17 +56,18 @@
                  1 <=> Default
                  2 <=> Highest
 
-    - libName  : Name of the dynamic library (Real path : libRootDir/libName)
-    - initFn   : Name of function used to initialize the library
-    - uninitFn : Name of function used to uninitialize the library
-    - notifyFn : Name of function used to notify the library about click events, ...
+    - libName     : Name of the dynamic library (Real path : libRootDir/libName)
+    - initFn      : Name of function used to initialize the library
+    - uninitFn    : Name of function used to uninitialize the library
+    - onCommandCb : Name of function used to notify the library about commands from other libraries
+    - onEventCb   : Name of function used to notify the library about click events, ...
   -->
   <Controllers priority="1">
     <!--Item libName="libmmcontroller-test-0.1.so"
           initFn="Test_Init"
           uninitFn="Test_UnInit"
-          onCommandCb="Test_onCommandCb"
-          onEventCb="Test_onEventCb" /-->
+          onCommandCb="Test_OnCommandCb"
+          onEventCb="Test_OnEventCb" /-->
   </Controllers>
 
   <!--
@@ -92,7 +93,7 @@
     - xmlFile : Path to the config file of the module
   -->
   <Graphics enable="1" autoStart="1" xmlFile="configs/Graphics.xml"/>
-  <Videos   enable="1" autoStart="1" xmlFile="configs/Videos.xml"   />
+  <Videos   enable="1" autoStart="1" xmlFile="configs/Videos.xml"  />
   <Servers  enable="1" autoStart="1" xmlFile="configs/Servers.xml" />
   <Clients  enable="0" autoStart="1" xmlFile="configs/Clients.xml" />
 

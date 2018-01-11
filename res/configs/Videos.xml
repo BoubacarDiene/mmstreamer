@@ -6,10 +6,10 @@
 
   - \brief  Here are listed some informations needed by the videos module
 
-            It's possible to simultaneously capture from several video devices.
-
             Note that this latter is also built as a dynamic library to make it
             usable alone in order to control video devices.
+
+            It's possible to simultaneously capture from several video devices.
 -->
 
 <Videos>

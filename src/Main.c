@@ -974,7 +974,7 @@ static void parseOptions(int argc, char **argv, OPTIONS_S *out)
                 out->priority = atoi(optarg);
                 break;
 
-            default:;
+            default:
                 usage(argv[0]);
                 exit(EXIT_FAILURE);
         }

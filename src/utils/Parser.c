@@ -274,41 +274,41 @@ exit:
  */
 static PARSER_ERROR_E getAttributes_f(PARSER_S *obj, PARSER_ATTR_HANDLER_S *attrHandlers, const char **attrs)
 {
-	assert(obj);
+    assert(obj);
 
-	if (!attrHandlers || !attrs) {
-		Loge("Bad arguments");
-		return PARSER_ERROR_ATTR;
-	}
+    if (!attrHandlers || !attrs) {
+        Loge("Bad arguments");
+        return PARSER_ERROR_ATTR;
+    }
     
     PARSER_PRIVATE_DATA_S *pData = (PARSER_PRIVATE_DATA_S*)(obj->pData);
     uint32_t i, j;
 	
-	if (pData->openedTag && pData->openedTag->tagName) {
-		Logd("Retrieving attributes of tag \"%s\"", pData->openedTag->tagName);
-	}
+    if (pData->openedTag && pData->openedTag->tagName) {
+        Logd("Retrieving attributes of tag \"%s\"", pData->openedTag->tagName);
+    }
 	
-	i = 0;
-	while (attrs[i]) {
-		j = 0;
-		while (attrHandlers[j].attrName && (strcmp(attrHandlers[j].attrName, attrs[i]) != 0)) {
-			j++;
-		}
+    i = 0;
+    while (attrs[i]) {
+        j = 0;
+        while (attrHandlers[j].attrName && (strcmp(attrHandlers[j].attrName, attrs[i]) != 0)) {
+            j++;
+        }
+
+        if (attrHandlers[j].attrName) {
+            if ((attrHandlers[j].attrType == PARSER_ATTR_TYPE_SCALAR) && attrHandlers[j].attrGetter.scalar) {
+                attrHandlers[j].attrGetter.scalar(obj, attrHandlers[j].attrValue.scalar, attrs[i + 1]);
+            }
+            else if ((attrHandlers[j].attrType == PARSER_ATTR_TYPE_VECTOR) && attrHandlers[j].attrGetter.vector) {
+                attrHandlers[j].attrGetter.vector(obj, attrHandlers[j].attrValue.vector, attrs[i + 1]);
+            }
+            Logd("%s = \"%s\"", attrs[i], attrs[i + 1]);
+        }
 		
-		if (attrHandlers[j].attrName) {
-			if ((attrHandlers[j].attrType == PARSER_ATTR_TYPE_SCALAR) && attrHandlers[j].attrGetter.scalar) {
-			    attrHandlers[j].attrGetter.scalar(obj, attrHandlers[j].attrValue.scalar, attrs[i + 1]);
-			}
-			else if ((attrHandlers[j].attrType == PARSER_ATTR_TYPE_VECTOR) && attrHandlers[j].attrGetter.vector) {
-			    attrHandlers[j].attrGetter.vector(obj, attrHandlers[j].attrValue.vector, attrs[i + 1]);
-			}
-			Logd("%s = \"%s\"", attrs[i], attrs[i + 1]);
-		}
-		
-		i += 2;
-	}
+        i += 2;
+    }
 	
-	return PARSER_ERROR_NONE;
+    return PARSER_ERROR_NONE;
 }
 
 /*!
@@ -316,20 +316,20 @@ static PARSER_ERROR_E getAttributes_f(PARSER_S *obj, PARSER_ATTR_HANDLER_S *attr
  */
 static PARSER_ERROR_E getString_f(PARSER_S *obj, void **attrValueOut, const char *attrValueIn)
 {
-	assert(obj);
+    assert(obj);
 
-	if (!attrValueOut || !attrValueIn) {
-		return PARSER_ERROR_ATTR;
-	}
+    if (!attrValueOut || !attrValueIn) {
+        return PARSER_ERROR_ATTR;
+    }
 
-	if (*attrValueOut) {
-		Loge("Memory is already allocated");
-		return PARSER_ERROR_ATTR;
-	}
+    if (*attrValueOut) {
+        Loge("Memory is already allocated");
+        return PARSER_ERROR_ATTR;
+    }
 	
-	*attrValueOut = strdup(attrValueIn);
+    *attrValueOut = strdup(attrValueIn);
 	
-	return PARSER_ERROR_NONE;
+    return PARSER_ERROR_NONE;
 }
 
 /*!
@@ -337,15 +337,15 @@ static PARSER_ERROR_E getString_f(PARSER_S *obj, void **attrValueOut, const char
  */
 static PARSER_ERROR_E getInt8_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
 {
-	assert(obj);
+    assert(obj);
 
-	if (!attrValueOut || !attrValueIn) {
-		return PARSER_ERROR_ATTR;
-	}
+    if (!attrValueOut || !attrValueIn) {
+        return PARSER_ERROR_ATTR;
+    }
 	
-	*((int8_t*)attrValueOut) = (int8_t)atoi(attrValueIn);
+    *((int8_t*)attrValueOut) = (int8_t)atoi(attrValueIn);
 	
-	return PARSER_ERROR_NONE;
+    return PARSER_ERROR_NONE;
 }
 
 /*!
@@ -353,15 +353,15 @@ static PARSER_ERROR_E getInt8_f(PARSER_S *obj, void *attrValueOut, const char *a
  */
 static PARSER_ERROR_E getUint8_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
 {
-	assert(obj);
+    assert(obj);
 
-	if (!attrValueOut || !attrValueIn) {
-		return PARSER_ERROR_ATTR;
-	}
+    if (!attrValueOut || !attrValueIn) {
+        return PARSER_ERROR_ATTR;
+    }
 	
-	*((uint8_t*)attrValueOut) = (uint8_t)atoi(attrValueIn);
+    *((uint8_t*)attrValueOut) = (uint8_t)atoi(attrValueIn);
 	
-	return PARSER_ERROR_NONE;
+    return PARSER_ERROR_NONE;
 }
 
 /*!
@@ -369,15 +369,15 @@ static PARSER_ERROR_E getUint8_f(PARSER_S *obj, void *attrValueOut, const char *
  */
 static PARSER_ERROR_E getInt16_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
 {
-	assert(obj);
+    assert(obj);
 
-	if (!attrValueOut || !attrValueIn) {
-		return PARSER_ERROR_ATTR;
-	}
+    if (!attrValueOut || !attrValueIn) {
+        return PARSER_ERROR_ATTR;
+    }
 	
-	*((int16_t*)attrValueOut) = (int16_t)atoi(attrValueIn);
+    *((int16_t*)attrValueOut) = (int16_t)atoi(attrValueIn);
 	
-	return PARSER_ERROR_NONE;
+    return PARSER_ERROR_NONE;
 }
 
 /*!
@@ -385,15 +385,15 @@ static PARSER_ERROR_E getInt16_f(PARSER_S *obj, void *attrValueOut, const char *
  */
 static PARSER_ERROR_E getUint16_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
 {
-	assert(obj);
+    assert(obj);
 
-	if (!attrValueOut || !attrValueIn) {
-		return PARSER_ERROR_ATTR;
-	}
+    if (!attrValueOut || !attrValueIn) {
+        return PARSER_ERROR_ATTR;
+    }
 	
-	*((uint16_t*)attrValueOut) = (uint16_t)atoi(attrValueIn);
+    *((uint16_t*)attrValueOut) = (uint16_t)atoi(attrValueIn);
 	
-	return PARSER_ERROR_NONE;
+    return PARSER_ERROR_NONE;
 }
 
 /*!
@@ -401,15 +401,15 @@ static PARSER_ERROR_E getUint16_f(PARSER_S *obj, void *attrValueOut, const char 
  */
 static PARSER_ERROR_E getInt32_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
 {
-	assert(obj);
+    assert(obj);
 
-	if (!attrValueOut || !attrValueIn) {
-		return PARSER_ERROR_ATTR;
-	}
+    if (!attrValueOut || !attrValueIn) {
+        return PARSER_ERROR_ATTR;
+    }
 	
-	*((int32_t*)attrValueOut) = (int32_t)atoi(attrValueIn);
+    *((int32_t*)attrValueOut) = (int32_t)atoi(attrValueIn);
 	
-	return PARSER_ERROR_NONE;
+    return PARSER_ERROR_NONE;
 }
 
 /*!
@@ -417,15 +417,15 @@ static PARSER_ERROR_E getInt32_f(PARSER_S *obj, void *attrValueOut, const char *
  */
 static PARSER_ERROR_E getUint32_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
 {
-	assert(obj);
+    assert(obj);
 
-	if (!attrValueOut || !attrValueIn) {
-		return PARSER_ERROR_ATTR;
-	}
+    if (!attrValueOut || !attrValueIn) {
+        return PARSER_ERROR_ATTR;
+    }
 	
-	*((uint32_t*)attrValueOut) = (uint32_t)atoi(attrValueIn);
+    *((uint32_t*)attrValueOut) = (uint32_t)atoi(attrValueIn);
 	
-	return PARSER_ERROR_NONE;
+    return PARSER_ERROR_NONE;
 }
 
 /*!
@@ -433,15 +433,15 @@ static PARSER_ERROR_E getUint32_f(PARSER_S *obj, void *attrValueOut, const char 
  */
 static PARSER_ERROR_E getInt64_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
 {
-	assert(obj);
+    assert(obj);
 
-	if (!attrValueOut || !attrValueIn) {
-		return PARSER_ERROR_ATTR;
-	}
+    if (!attrValueOut || !attrValueIn) {
+        return PARSER_ERROR_ATTR;
+    }
 	
-	*((int64_t*)attrValueOut) = (int64_t)atol(attrValueIn);
+    *((int64_t*)attrValueOut) = (int64_t)atol(attrValueIn);
 	
-	return PARSER_ERROR_NONE;
+    return PARSER_ERROR_NONE;
 }
 
 /*!
@@ -449,15 +449,15 @@ static PARSER_ERROR_E getInt64_f(PARSER_S *obj, void *attrValueOut, const char *
  */
 static PARSER_ERROR_E getUint64_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
 {
-	assert(obj);
+    assert(obj);
 
-	if (!attrValueOut || !attrValueIn) {
-		return PARSER_ERROR_ATTR;
-	}
+    if (!attrValueOut || !attrValueIn) {
+        return PARSER_ERROR_ATTR;
+    }
 	
-	*((uint64_t*)attrValueOut) = (uint64_t)atol(attrValueIn);
+    *((uint64_t*)attrValueOut) = (uint64_t)atol(attrValueIn);
 	
-	return PARSER_ERROR_NONE;
+    return PARSER_ERROR_NONE;
 }
 
 /* -------------------------------------------------------------------------------------------- */
@@ -469,29 +469,29 @@ static PARSER_ERROR_E getUint64_f(PARSER_S *obj, void *attrValueOut, const char 
  */
 static void XMLCALL startElementCb(void *userData, const char *name, const char **attrs)
 {
-	assert(userData && name);
+    assert(userData && name);
 	
-	PARSER_PRIVATE_DATA_S *pData = (PARSER_PRIVATE_DATA_S*)userData;
+    PARSER_PRIVATE_DATA_S *pData = (PARSER_PRIVATE_DATA_S*)userData;
 	
-	Logd("Start tag : \"%s\"", name);
+    Logd("Start tag : \"%s\"", name);
 	
-	uint32_t index = 0;
-	while (pData->params.tagsHandlers[index].tagName
-			&& (strcmp(pData->params.tagsHandlers[index].tagName, name) != 0)) {
-		index++;
-	}
+    uint32_t index = 0;
+    while (pData->params.tagsHandlers[index].tagName
+            && (strcmp(pData->params.tagsHandlers[index].tagName, name) != 0)) {
+        index++;
+    }
 	
-	if (pData->params.tagsHandlers[index].tagName) {
-		Logd("Start tag handler found ( tag : \"%s\" )", name);
-		pData->openedTag = &pData->params.tagsHandlers[index];
-	}
-	else {
-		Logw("Start tag handler not found ( tag : \"%s\" )", name);
-	}
+    if (pData->params.tagsHandlers[index].tagName) {
+        Logd("Start tag handler found ( tag : \"%s\" )", name);
+        pData->openedTag = &pData->params.tagsHandlers[index];
+    }
+    else {
+        Logw("Start tag handler not found ( tag : \"%s\" )", name);
+    }
 	
-	if (pData->openedTag && pData->openedTag->onStartCb) {
-		pData->openedTag->onStartCb(pData->params.userData, attrs);
-	}
+    if (pData->openedTag && pData->openedTag->onStartCb) {
+        pData->openedTag->onStartCb(pData->params.userData, attrs);
+    }
 }
 
 /*!
@@ -499,33 +499,33 @@ static void XMLCALL startElementCb(void *userData, const char *name, const char 
  */
 static void XMLCALL endElementCb(void *userData, const char *name)
 {
-	assert(userData && name);
+    assert(userData && name);
 	
-	PARSER_PRIVATE_DATA_S *pData = (PARSER_PRIVATE_DATA_S*)userData;
+    PARSER_PRIVATE_DATA_S *pData = (PARSER_PRIVATE_DATA_S*)userData;
 	
-	Logd("End tag : \"%s\"", name);
+    Logd("End tag : \"%s\"", name);
 	
-	if (!pData->openedTag || (strcmp(pData->openedTag->tagName, name) != 0)) {
-	    uint32_t index = 0;
-	    while (pData->params.tagsHandlers[index].tagName
-			    && (strcmp(pData->params.tagsHandlers[index].tagName, name) != 0)) {
-		    index++;		
-	    }
+    if (!pData->openedTag || (strcmp(pData->openedTag->tagName, name) != 0)) {
+        uint32_t index = 0;
+        while (pData->params.tagsHandlers[index].tagName
+                && (strcmp(pData->params.tagsHandlers[index].tagName, name) != 0)) {
+            index++;
+        }
+
+        if (pData->params.tagsHandlers[index].tagName) {
+            Logd("End tag handler found ( tag : \"%s\" )", name);
+            pData->openedTag = &pData->params.tagsHandlers[index];
+        }
+        else {
+            Logw("End tag handler not found ( tag : \"%s\" )", name);
+        }
+    }
 	
-	    if (pData->params.tagsHandlers[index].tagName) {
-		    Logd("End tag handler found ( tag : \"%s\" )", name);
-		    pData->openedTag = &pData->params.tagsHandlers[index];
-	    }
-	    else {
-		    Logw("End tag handler not found ( tag : \"%s\" )", name);
-	    }
-	}
+    if (pData->openedTag && pData->openedTag->onEndCb) {
+        pData->openedTag->onEndCb(pData->params.userData);
+    }
 	
-	if (pData->openedTag && pData->openedTag->onEndCb) {
-		pData->openedTag->onEndCb(pData->params.userData);
-	}
-	
-	pData->openedTag = NULL;
+    pData->openedTag = NULL;
 }
 
 /*!
@@ -533,21 +533,21 @@ static void XMLCALL endElementCb(void *userData, const char *name)
  */
 static void XMLCALL dataCb(void *userData, const char *value, int32_t len)
 {
-	assert(userData);
+    assert(userData);
 	
-	if ((len == 0) || !value) {
-		return;
-	}
+    if ((len == 0) || !value) {
+        return;
+    }
 	
-	PARSER_PRIVATE_DATA_S *pData = (PARSER_PRIVATE_DATA_S*)userData;
+    PARSER_PRIVATE_DATA_S *pData = (PARSER_PRIVATE_DATA_S*)userData;
 	
-	if (pData->openedTag) {
-		if (pData->openedTag->tagName) {
-			Logd("Value for tag : \"%s\"", pData->openedTag->tagName);
-		}
+    if (pData->openedTag) {
+        if (pData->openedTag->tagName) {
+            Logd("Value for tag : \"%s\"", pData->openedTag->tagName);
+        }
 	
-		if (pData->openedTag->onDataCb) {
-			pData->openedTag->onDataCb(pData->params.userData, value, len);
-		}
-	}
+        if (pData->openedTag->onDataCb) {
+            pData->openedTag->onDataCb(pData->params.userData, value, len);
+        }
+    }
 }
