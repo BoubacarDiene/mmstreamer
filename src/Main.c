@@ -940,37 +940,40 @@ static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr)
 static void usage(const char * const program)
 {
 #ifdef _POSIX_PRIORITY_SCHEDULING
-    Loge("Usage: %s [-f <path to Main.xml>][-p <priority {%d --> %d}>]",
+    Loge("Usage: %s [-f|--mainXml <path to Main.xml>][-p|--priority <%d --> %d>]",
             program, sched_get_priority_min(SCHED_POLICY), sched_get_priority_max(SCHED_POLICY));
 #else
-    Loge("Usage: %s [-f <path to Main.xml>][-p <niceness {%d --> %d}>]",
+    Loge("Usage: %s [-f|--mainXml <path to Main.xml>][-n|--niceness <%d --> %d>]",
             program, MIN_NICENESS, MAX_NICENESS);
 #endif
 }
 
 static void parseOptions(int argc, char **argv, OPTIONS_S *out)
 {
-    int opt, index;
-    static struct option long_options[] = {
-        { "mainXml",   no_argument,  0,  0 },
-        { "priority",  no_argument,  0,  0 },
-        { 0,           0,            0,  0 }
+    int opt = 0;
+
+    const char* const short_options    = "f:p:n:";
+    const struct option long_options[] = {
+        { "mainXml",   required_argument,  NULL,  'f' },
+        { "priority",  required_argument,  NULL,  'p' },
+        { "niceness",  required_argument,  NULL,  'n' },
+        { NULL,        0,                  NULL,   0  }
     };
 
-    while (1) {
-        index = 0;
-        opt = getopt_long(argc, argv, "f:p:", long_options, &index);
-        if (opt == -1) {
-            Logd("No option is set");
-            break;
-        }
+    while (opt != -1) {
+        opt = getopt_long(argc, argv, short_options, long_options, NULL);
 
         switch (opt) {
+            case -1:
+                Logd("No more option is set");
+                break;
+
             case 'f':
                 out->mainXml = optarg;
                 break;
 
             case 'p':
+            case 'n':
                 out->priority = atoi(optarg);
                 break;
 
