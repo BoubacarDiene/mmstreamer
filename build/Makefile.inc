@@ -15,7 +15,7 @@
 
 # Project
 PROJECT_NAME    := mmstreamer
-PROJECT_VERSION := 0.8
+PROJECT_VERSION := 0.9
 
 # Path
 LOCAL := ${shell pwd}
