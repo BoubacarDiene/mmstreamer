@@ -493,15 +493,20 @@ open_exit:
     }
     else {
         pData->videosList->remove(pData->videosList, (void*)ctx->params.name);
+        ctx = NULL;
         (void)pData->videosList->unlock(pData->videosList);
     }
 
 list_exit:
-    (void)uninitVideoContext_f(&ctx);
+    if (ctx) {
+        (void)uninitVideoContext_f(&ctx);
+    }
 
 exit:
-    free(ctx);
-    ctx = NULL;
+    if (ctx) {
+        free(ctx);
+        ctx = NULL;
+    }
 
     return VIDEO_ERROR_START;
 }
@@ -938,9 +943,9 @@ static void releaseVideoCb(LIST_S *obj, void *element)
 {
     assert(obj && element);
 
-    VIDEO_CONTEXT_S *ctx = (VIDEO_CONTEXT_S*)element;
+    VIDEO_CONTEXT_S **ctx = (VIDEO_CONTEXT_S**)&element;
 
-    uninitVideoContext_f(&ctx);
+    (void)uninitVideoContext_f(ctx);
 }
 
 /*!

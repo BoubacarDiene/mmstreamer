@@ -144,15 +144,15 @@ LISTENERS_ERROR_E unsetVideosListeners_f(LISTENERS_S *obj)
 {
     assert(obj && obj->pData);
     
-    LISTENERS_PDATA_S *pData                          = (LISTENERS_PDATA_S*)(obj->pData);
-    VIDEOS_INFOS_S *videosInfos                       = &pData->ctx->params.videosInfos;
-    VIDEO_DEVICE_S ***videoDevices                    = &videosInfos->devices;
-    VIDEO_DEVICE_S *videoDevice                       = NULL;
-    uint8_t nbDevices                                 = videosInfos->nbDevices;
-    uint8_t nbVideoListeners                          = 0;
-    VIDEO_LISTENER_S  ***videoListeners               = NULL;
-    VIDEO_LISTENER_S  **videoListener                 = NULL;
-    VIDEOS_LISTENERS_INTERNAL_PDATA_S **internalPdata = NULL;
+    LISTENERS_PDATA_S *pData                         = (LISTENERS_PDATA_S*)(obj->pData);
+    VIDEOS_INFOS_S *videosInfos                      = &pData->ctx->params.videosInfos;
+    VIDEO_DEVICE_S ***videoDevices                   = &videosInfos->devices;
+    VIDEO_DEVICE_S *videoDevice                      = NULL;
+    uint8_t nbDevices                                = videosInfos->nbDevices;
+    uint8_t nbVideoListeners                         = 0;
+    VIDEO_LISTENER_S  ***videoListeners              = NULL;
+    VIDEO_LISTENER_S  **videoListener                = NULL;
+    VIDEOS_LISTENERS_INTERNAL_PDATA_S *internalPdata = NULL;
 
     uint8_t videoIndex, listenerIndex;
     for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
@@ -162,17 +162,17 @@ LISTENERS_ERROR_E unsetVideosListeners_f(LISTENERS_S *obj)
 
         for (listenerIndex = 0; listenerIndex < nbVideoListeners; listenerIndex++) {
             videoListener              = &(*videoListeners)[listenerIndex];
-            internalPdata              = (VIDEOS_LISTENERS_INTERNAL_PDATA_S**)&((*videoListener)->userData);
+            internalPdata              = (VIDEOS_LISTENERS_INTERNAL_PDATA_S*)((*videoListener)->userData);
             (*videoListener)->userData = NULL;
-
-            if (internalPdata && *internalPdata) {
-                (*internalPdata)->listenersPdata = NULL;
-                free(*internalPdata);
-                *internalPdata = NULL;
-            }
 
             free(*videoListener);
             *videoListener = NULL;
+        }
+
+        if (internalPdata) {
+            internalPdata->listenersPdata = NULL;
+            free(internalPdata);
+            internalPdata = NULL;
         }
 
         free(*videoListeners);

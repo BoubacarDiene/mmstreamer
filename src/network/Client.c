@@ -760,32 +760,27 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
             if ((pData->linkHelper->readData(pData->linkHelper, ctx->client, NULL, &ctx->httpBuffer, &ctx->nbRead) == ERROR)
                 || (ctx->nbRead == 0)) {
                 Loge("Failed to receive http content's header");
-                ctx->httpBuffer.data = NULL;
-                goto exit;
+                goto exitNoFree;
             }
             
             pData->linkHelper->parseHttpContent(pData->linkHelper, &ctx->httpContent);
-            Logd("Http Content : %s / read = %ld", ctx->httpContent.str, ctx->nbRead);
-            
-            ctx->httpBuffer.data = NULL;
+            Logd("Http Content : %s / read = %ld / bodyStart = %d", ctx->httpContent.str, ctx->nbRead, ctx->httpContent.bodyStart);
             
             if (ctx->httpContent.length == 0) {
-                Loge("Bad HTTP response");
-                goto exit;
+                Logw("Bad HTTP response");
+                goto exitNoFree;
             }
             
             ctx->nbBodyRead        = ctx->nbRead - ctx->httpContent.bodyStart;
             ctx->httpBuffer.length = ctx->httpContent.length - ctx->nbBodyRead;
             
             assert((ctx->httpBuffer.data = calloc(1, ctx->httpBuffer.length)));
-            
-            memcpy(ctx->bufferIn.data, ctx->httpContent.str + ctx->httpContent.bodyStart, ctx->nbBodyRead);
-            
             if (pData->linkHelper->readData(pData->linkHelper, ctx->client, NULL, &ctx->httpBuffer, &ctx->nbRead) == ERROR) {
                 Loge("Failed to read from server");
                 goto exit;
             }
             
+            memcpy(ctx->bufferIn.data, ctx->httpContent.str + ctx->httpContent.bodyStart, ctx->nbBodyRead);
             memcpy(ctx->bufferIn.data + ctx->nbBodyRead, ctx->httpBuffer.data, ctx->nbRead);
             ctx->bufferIn.length = ctx->nbBodyRead + ctx->nbRead;
             Logd("Http body length : read = %ld / expected : %ld", ctx->bufferIn.length, ctx->httpBuffer.length);
@@ -809,6 +804,7 @@ exit:
         ctx->httpBuffer.data = NULL;
     }
 
+exitNoFree:
     (void)pthread_mutex_unlock(&ctx->lock);
 }
 

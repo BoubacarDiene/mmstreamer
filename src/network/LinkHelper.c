@@ -493,41 +493,44 @@ static void parseHttpContent_f(LINK_HELPER_S *obj, HTTP_CONTENT_S *inOut)
     
     char *str = strdup(inOut->str);
 
+    // Start of body
     char *end = strstr(str, LF""CRLF);
     if (!end) {
         end = strstr(str, LFLF);
         if (!end) {
-            return;
+            goto exit;
         }
         end[1] = '\0';
     }
     else {
         end[2] = '\0';
     }
-    
+
     inOut->bodyStart = strlen(str) + 1;
     
+    // Type and length
     char *contentType   = strstr(str, CONTENT_TYPE);
     char *contentLength = strstr(str, CONTENT_LENGTH);
     
-    char *strip;
-    
-    if (contentType) {
-        strip = strstr(contentType, CRLF);
-        if (strip) {
-            strip[0] = '\0';
-        }
-        strcpy(inOut->mime, contentType);
+    if (!contentType || !contentLength) {
+        goto exit;
     }
     
-    if (contentLength) {
-        strip = strstr(contentLength, CRLF);
-        if (strip) {
-            strip[0] = '\0';
-        }
-        inOut->length = (size_t)atoi(contentLength + strlen(CONTENT_LENGTH));
+    // --> Content type
+    char *strip = strstr(contentType, CRLF);
+    if (strip) {
+        strip[0] = '\0';
     }
+    strcpy(inOut->mime, contentType);
     
+    // --> Content length
+    strip = strstr(contentLength, CRLF);
+    if (strip) {
+        strip[0] = '\0';
+    }
+    inOut->length = (size_t)atoi(contentLength + strlen(CONTENT_LENGTH));
+
+exit:
     free(str);
     str = NULL;
 }
@@ -717,8 +720,6 @@ static int8_t readData_f(LINK_HELPER_S *obj, LINK_S *src, LINK_S *dst, BUFFER_S 
     if (nbRead) {
         *nbRead = pData->nbBytesReceived;
     }
-    
-    ((int8_t*)buffer->data)[pData->nbBytesReceived] = '\0';
     
     return DONE;
 }

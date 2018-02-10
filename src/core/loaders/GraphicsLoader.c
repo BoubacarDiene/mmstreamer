@@ -340,6 +340,9 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
         }
     }
     
+    free(xmlGraphics->elements);
+    xmlGraphics->elements = NULL;
+    
     XML_COLORS_S *xmlColors = &xmlGraphics->common.xmlColors;
     if (xmlColors->colors) {
         free(xmlColors->colors);

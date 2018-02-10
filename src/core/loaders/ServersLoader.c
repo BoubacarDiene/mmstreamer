@@ -143,6 +143,9 @@ LOADERS_ERROR_E unloadServersXml_f(LOADERS_S *obj, XML_SERVERS_S *xmlServers)
         }
     }
     
+    free(xmlServers->servers);
+    xmlServers->servers = NULL;
+    
     xmlServers->reserved = NULL;
     
     return LOADERS_ERROR_NONE;

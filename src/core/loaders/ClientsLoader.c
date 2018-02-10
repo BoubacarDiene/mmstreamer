@@ -147,6 +147,9 @@ LOADERS_ERROR_E unloadClientsXml_f(LOADERS_S *obj, XML_CLIENTS_S *xmlClients)
         }
     }
     
+    free(xmlClients->clients);
+    xmlClients->clients = NULL;
+    
     xmlClients->reserved = NULL;
     
     return LOADERS_ERROR_NONE;

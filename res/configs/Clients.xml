@@ -60,7 +60,7 @@
             mode="1"
             priority="2"
             gfxDest="videoZone"
-            serverDest="" />
+            serverDest="inet-videoServer" />
 
     <!--
       Inet
@@ -68,7 +68,7 @@
       - service : Protocol that server is using (E.g: http or 80)
       - path    : Resource on the server where to get stream from
     -->
-    <Inet host="localhost" service="8090" path="/webcam" />
+    <Inet host="localhost" service="8090" path="/" />
   </Client>
 
   <Client>

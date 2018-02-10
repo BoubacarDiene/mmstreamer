@@ -164,6 +164,9 @@ LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos)
         }
     }
     
+    free(xmlVideos->videos);
+    xmlVideos->videos = NULL;
+    
     for (i = 0; i < xmlVideos->nbConfigs; i++) {
         config = &xmlVideos->configs[i];
         for (j = 0; j < config->nbItems; j++) {
@@ -172,6 +175,8 @@ LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos)
                 config->capabilities[j].item = NULL;
             }
         }
+        
+        free(config->capabilities);
         config->capabilities = NULL;
 
         if (config->bufferType) {
@@ -199,6 +204,9 @@ LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos)
             config->awaitMode = NULL;
         }
     }
+    
+    free(xmlVideos->configs);
+    xmlVideos->configs = NULL;
     
     xmlVideos->reserved = NULL;
     

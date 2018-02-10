@@ -644,17 +644,18 @@ static CORE_ERROR_E loadVideosParams_f(CORE_S *obj)
     
 badConfig_exit:
     for (index = 0; index < *nbDevices; index++) {
-        videoDevice = (*videoDevices)[index];
-
-        if (videoDevice->serverDest) {
-            free(videoDevice->serverDest);
-            videoDevice->serverDest = NULL;
+        if (((*videoDevices)[index])->serverDest) {
+            free(((*videoDevices)[index])->serverDest);
+            ((*videoDevices)[index])->serverDest = NULL;
         }
     
-        if (videoDevice->graphicsDest) {
-            free(videoDevice->graphicsDest);
-            videoDevice->graphicsDest = NULL;
+        if (((*videoDevices)[index])->graphicsDest) {
+            free(((*videoDevices)[index])->graphicsDest);
+            ((*videoDevices)[index])->graphicsDest = NULL;
         }
+
+        free(((*videoDevices)[index]));
+        (*videoDevices)[index] = NULL;
     }
 
     if (*videoDevices) {
@@ -684,17 +685,18 @@ static CORE_ERROR_E unloadVideosParams_f(CORE_S *obj)
     
     uint8_t index;
     for (index = 0; index < nbDevices; index++) {
-        videoDevice = (*videoDevices)[index];
-
-        if (videoDevice->serverDest) {
-            free(videoDevice->serverDest);
-            videoDevice->serverDest = NULL;
+        if (((*videoDevices)[index])->serverDest) {
+            free(((*videoDevices)[index])->serverDest);
+            ((*videoDevices)[index])->serverDest = NULL;
         }
     
-        if (videoDevice->graphicsDest) {
-            free(videoDevice->graphicsDest);
-            videoDevice->graphicsDest = NULL;
+        if (((*videoDevices)[index])->graphicsDest) {
+            free(((*videoDevices)[index])->graphicsDest);
+            ((*videoDevices)[index])->graphicsDest = NULL;
         }
+
+        free(((*videoDevices)[index]));
+        (*videoDevices)[index] = NULL;
     }
 
     if (*videoDevices) {
@@ -788,10 +790,8 @@ static CORE_ERROR_E loadServersParams_f(CORE_S *obj)
     
 badConfig_exit:
     for (index = 0; index < *nbServers; index++) {
-        if ((*serverInfos)[index]) {
-            free((*serverInfos)[index]);
-            (*serverInfos)[index] = NULL;
-        }
+        free((*serverInfos)[index]);
+        (*serverInfos)[index] = NULL;
     }
     
     if (*serverInfos) {
@@ -821,10 +821,8 @@ static CORE_ERROR_E unloadServersParams_f(CORE_S *obj)
     
     uint8_t index;
     for (index = 0; index < nbServers; index++) {
-        if ((*serverInfos)[index]) {
-            free((*serverInfos)[index]);
-            (*serverInfos)[index] = NULL;
-        }
+        free((*serverInfos)[index]);
+        (*serverInfos)[index] = NULL;
     }
     
     if (*serverInfos) {
@@ -933,10 +931,8 @@ badConfig_exit:
             ((*clientInfos)[index])->serverDest = NULL;
         }
 
-        if ((*clientInfos)[index]) {
-            free((*clientInfos)[index]);
-            (*clientInfos)[index] = NULL;
-        }
+        free((*clientInfos)[index]);
+        (*clientInfos)[index] = NULL;
     }
     
     if (*clientInfos) {
@@ -976,10 +972,8 @@ static CORE_ERROR_E unloadClientsParams_f(CORE_S *obj)
             ((*clientInfos)[index])->serverDest = NULL;
         }
 
-        if ((*clientInfos)[index]) {
-            free((*clientInfos)[index]);
-            (*clientInfos)[index] = NULL;
-        }
+        free((*clientInfos)[index]);
+        (*clientInfos)[index] = NULL;
     }
     
     if (*clientInfos) {

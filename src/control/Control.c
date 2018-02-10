@@ -401,7 +401,10 @@ CONTROL_ERROR_E unsetCommandHandlers_f(CONTROL_S *obj, void *data)
         (elementData->commandHandlers[i]).fct = NULL;
     }
 
-    elementData->commandHandlers = NULL;
+    if (elementData->commandHandlers) {
+        free(elementData->commandHandlers);
+        elementData->commandHandlers = NULL;
+    }
 
     return CONTROL_ERROR_NONE;
 }

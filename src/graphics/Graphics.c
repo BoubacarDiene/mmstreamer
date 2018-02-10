@@ -1260,6 +1260,7 @@ static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxEleme
                 evt.gfxElementName  = strdup(pData->focusedElement->name);
                 evt.gfxElementPData = pData->focusedElement->pData;
                 pData->params.onGfxEventCb(&evt, pData->params.userData);
+                free(evt.gfxElementName);
             }
         }
         else if (gfxElement->isFocusable
