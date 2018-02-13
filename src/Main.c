@@ -248,7 +248,7 @@ int main(int argc, char **argv)
         }
     }
 
-    size_t maxBufferSize          = -1;
+    size_t maxBufferSize          = 0;
     uint8_t nbServers             = 0;
     SERVER_INFOS_S *serverInfos   = NULL;
     SERVER_PARAMS_S *serverParams = NULL;
@@ -269,8 +269,6 @@ int main(int argc, char **argv)
             serverInfos->state = MODULE_STATE_STOPPED;
 
             if (serverParams->maxBufferSize == (size_t)-1) {
-                maxBufferSize = -1;
-
                 for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
                     videoDevice = videoDevices[videoIndex];
                     if (!videoDevice->serverDest || (strcmp(videoDevice->serverDest, serverParams->name) != 0)) {
@@ -282,6 +280,8 @@ int main(int argc, char **argv)
 
                 serverParams->maxBufferSize = (maxBufferSize > 0 ? maxBufferSize : MAX_BUFFER_SIZE);
                 Logd("Server \"%s\"'s buffer size set to %lu bytes", serverParams->name, serverParams->maxBufferSize);
+
+                maxBufferSize = 0;
             }
 
             if (input->serversConfig.autoStart) {
