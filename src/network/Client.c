@@ -780,6 +780,17 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
                 goto exit;
             }
             
+            // Adjust buffer size if necessary
+            if (ctx->httpContent.length > ctx->maxBufferSize) {
+                Logw("Ajusting maxBufferSize from %ld bytes to %ld bytes", ctx->maxBufferSize, ctx->httpContent.length);
+                free(ctx->bufferIn.data);
+
+                ctx->bufferIn.length = ctx->httpContent.length;
+                ctx->maxBufferSize   = ctx->httpContent.length;
+                assert((ctx->bufferIn.data = calloc(1, ctx->bufferIn.length)));
+            }
+
+            // Copy received data
             memcpy(ctx->bufferIn.data, ctx->httpContent.str + ctx->httpContent.bodyStart, ctx->nbBodyRead);
             memcpy(ctx->bufferIn.data + ctx->nbBodyRead, ctx->httpBuffer.data, ctx->nbRead);
             ctx->bufferIn.length = ctx->nbBodyRead + ctx->nbRead;
