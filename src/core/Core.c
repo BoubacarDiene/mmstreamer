@@ -457,6 +457,8 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
         goto badConfig_exit;
     }
     
+    (void)pData->loadersObj->unloadGraphicsXml(pData->loadersObj, xmlGraphics);
+    
     return CORE_ERROR_NONE;
     
 badConfig_exit:
@@ -549,8 +551,6 @@ static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj)
     free(graphicsInfos->currentLanguage);
     graphicsInfos->currentLanguage = NULL;
     
-    (void)pData->loadersObj->unloadGraphicsXml(pData->loadersObj, xmlGraphics);
-    
     return CORE_ERROR_NONE;
 }
 
@@ -639,6 +639,8 @@ static CORE_ERROR_E loadVideosParams_f(CORE_S *obj)
         Loge("Failed to set video listeners");
         goto badConfig_exit;
     }
+
+    (void)pData->loadersObj->unloadVideosXml(pData->loadersObj, xmlVideos);
     
     return CORE_ERROR_NONE;
     
@@ -703,8 +705,6 @@ static CORE_ERROR_E unloadVideosParams_f(CORE_S *obj)
         free(*videoDevices);
         *videoDevices = NULL;
     }
-    
-    (void)pData->loadersObj->unloadVideosXml(pData->loadersObj, &pData->xml.xmlVideos);
     
     return CORE_ERROR_NONE;
 }
@@ -786,6 +786,8 @@ static CORE_ERROR_E loadServersParams_f(CORE_S *obj)
         goto badConfig_exit;
     }
     
+    (void)pData->loadersObj->unloadServersXml(pData->loadersObj, xmlServers);
+    
     return CORE_ERROR_NONE;
     
 badConfig_exit:
@@ -829,8 +831,6 @@ static CORE_ERROR_E unloadServersParams_f(CORE_S *obj)
         free(*serverInfos);
         *serverInfos = NULL;
     }
-    
-    (void)pData->loadersObj->unloadServersXml(pData->loadersObj, &pData->xml.xmlServers);
     
     return CORE_ERROR_NONE;
 }
@@ -917,6 +917,8 @@ static CORE_ERROR_E loadClientsParams_f(CORE_S *obj)
         goto badConfig_exit;
     }
     
+    (void)pData->loadersObj->unloadClientsXml(pData->loadersObj, xmlClients);
+    
     return CORE_ERROR_NONE;
     
 badConfig_exit:
@@ -980,8 +982,6 @@ static CORE_ERROR_E unloadClientsParams_f(CORE_S *obj)
         free(*clientInfos);
         *clientInfos = NULL;
     }
-    
-    (void)pData->loadersObj->unloadClientsXml(pData->loadersObj, &pData->xml.xmlClients);
     
     return CORE_ERROR_NONE;
 }
