@@ -40,12 +40,16 @@
 
                                                Note: Attribute timeout_s="<value in seconds>" is ignored if
                                                method is not Timer_based.
+
+    - maxBufferSize   : Maximum size of buffer used in "Servers" and "Clients" modules (in bytes)
+                        -1 => Let app choose the most suitable value
   -->
   <General appDataDir="/tmp/mmstreamer"
            resRootDir="./out/mmstreamer/res/"
            libRootDir="./out/mmstreamer/lib/"
            keepAliveMethod="0"
-           timeout_s="10" />
+           timeout_s="10"
+           maxBufferSize="-1" />
 
   <!--
     Controllers i.e list of libraries loaded once mmstreamer engine is ready and through which it can be

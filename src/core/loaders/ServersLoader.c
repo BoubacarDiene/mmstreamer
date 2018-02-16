@@ -250,12 +250,6 @@ static void onGeneralCb(void *userData, const char **attrs)
     	    .attrGetter.vector = parserObj->getString
         },
     	{
-    	    .attrName          = XML_ATTR_MAX_BUFFER_SIZE,
-    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&server->maxBufferSize,
-    	    .attrGetter.scalar = parserObj->getInt32
-        },
-    	{
     	    NULL,
     	    PARSER_ATTR_TYPE_NONE,
     	    NULL,

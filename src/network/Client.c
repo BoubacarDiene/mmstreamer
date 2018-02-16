@@ -64,7 +64,6 @@ typedef struct CLIENT_CONTEXT_S {
     
     BUFFER_S         bufferIn;
     BUFFER_S         bufferOut;
-    size_t           maxBufferSize;
     ssize_t          nbRead;
     
     sem_t            sem;
@@ -218,6 +217,7 @@ static CLIENT_ERROR_E start_f(CLIENT_S *obj, CLIENT_PARAMS_S *params)
     ctx->params.mode             = params->mode;
     memcpy(&ctx->params.recipient, &params->recipient, sizeof(params->recipient));
     ctx->params.priority         = params->priority;
+    ctx->params.maxBufferSize    = params->maxBufferSize;
     ctx->params.onDataReceivedCb = params->onDataReceivedCb;
     ctx->params.onLinkBrokenCb   = params->onLinkBrokenCb;
     ctx->params.userData         = params->userData;
@@ -687,6 +687,8 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
     }
     
     if (!ctx->ackReceived) {
+        uint8_t allocateBufferNeeded = 1;
+
         if (ctx->params.mode == LINK_MODE_HTTP) {
             ctx->bufferIn.data   = (void*)ctx->http200Ok.str;
             ctx->bufferIn.length = sizeof(ctx->http200Ok.str);
@@ -703,9 +705,7 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
             
             if (!ctx->http200Ok.is200Ok) {
                 Loge("200 OK not received");
-            }
-            else {
-                ctx->maxBufferSize = MAX_BUFFER_SIZE;
+                allocateBufferNeeded = 0;
             }
             
             ctx->bufferIn.data = NULL;
@@ -726,18 +726,18 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
             
             if (ctx->customContent.maxBufferSize == 0) {
                 Loge("Unexpected message received from server");
+                allocateBufferNeeded = 0;
             }
             else {
-                ctx->maxBufferSize = ctx->customContent.maxBufferSize;
+                Logw("maxBufferSize changed by remote server from %lu bytes to %lu bytes",
+                        ctx->params.maxBufferSize, ctx->customContent.maxBufferSize);
+                ctx->params.maxBufferSize = ctx->customContent.maxBufferSize;
             }
             
             ctx->bufferIn.data = NULL;
         }
-        else {
-            ctx->maxBufferSize = MAX_BUFFER_SIZE;
-        }
         
-        if (ctx->maxBufferSize == 0) {
+        if (!allocateBufferNeeded) {
             Logd("Client socket already closed on server side");
             close(ctx->client->sock);
             if (ctx->params.onLinkBrokenCb) {
@@ -746,11 +746,11 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
             goto exit;
         }
         
-        assert((ctx->bufferIn.data = calloc(1, ctx->maxBufferSize)));
-        ctx->bufferIn.length = ctx->maxBufferSize;
+        assert((ctx->bufferIn.data = calloc(1, ctx->params.maxBufferSize)));
+        ctx->bufferIn.length = ctx->params.maxBufferSize;
         
         ctx->ackReceived = 1;
-        Logd("ackReceived = %d", ctx->ackReceived);
+        Logd("ackReceived = %d / maxBufferSize = %lu", ctx->ackReceived, ctx->params.maxBufferSize);
     }
     else {
         if (ctx->params.mode == LINK_MODE_HTTP) {
@@ -781,12 +781,12 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
             }
             
             // Adjust buffer size if necessary
-            if (ctx->httpContent.length > ctx->maxBufferSize) {
-                Logw("Ajusting maxBufferSize from %ld bytes to %ld bytes", ctx->maxBufferSize, ctx->httpContent.length);
+            if (ctx->httpContent.length > ctx->params.maxBufferSize) {
+                Logw("Ajusting maxBufferSize from %lu bytes to %lu bytes", ctx->params.maxBufferSize, ctx->httpContent.length);
                 free(ctx->bufferIn.data);
 
-                ctx->bufferIn.length = ctx->httpContent.length;
-                ctx->maxBufferSize   = ctx->httpContent.length;
+                ctx->bufferIn.length       = ctx->httpContent.length;
+                ctx->params.maxBufferSize  = ctx->httpContent.length;
                 assert((ctx->bufferIn.data = calloc(1, ctx->bufferIn.length)));
             }
 

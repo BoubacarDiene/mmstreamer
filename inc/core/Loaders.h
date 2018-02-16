@@ -305,7 +305,6 @@ struct XML_SERVER_S {
     uint8_t  priority;
     uint32_t maxClients;
     char     *mime;
-    int32_t  maxBufferSize;
     
     char     *host;
     char     *service;

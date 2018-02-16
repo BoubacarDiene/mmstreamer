@@ -45,9 +45,6 @@
       - maxClients : Max number of clients that server can accept
 
       - mime       : Mime type (Useful for HTTP clients - depends on video format (mjpeg, ...))
-
-      - maxBufferSize : Maximum size of buffer used to send data to clients (in bytes)
-                        -1 => Let app choose the most suitable value
     -->
     <General name="inet-videoServer"
             type="0"
@@ -56,8 +53,7 @@
             acceptMode="0"
             priority="2"
             maxClients="5"
-            mime="image/jpeg"
-            maxBufferSize="-1" />
+            mime="image/jpeg" />
 
     <!--
       Inet
@@ -99,9 +95,6 @@
       - maxClients : Max number of clients that server can accept
 
       - mime       : Mime type (Useful for HTTP clients - depends on video format (mjpeg, ...))
-
-      - maxBufferSize : Maximum size of buffer used to send data to clients (in bytes)
-                        -1 => Let app choose the most suitable value
     -->
     <General name="unix-videoServer"
             type="0"
@@ -110,8 +103,7 @@
             acceptMode="0"
             priority="2"
             maxClients="5"
-            mime="image/jpeg"
-            maxBufferSize="-1" />
+            mime="image/jpeg" />
 
     <!--
       Unix

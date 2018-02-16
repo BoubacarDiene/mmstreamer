@@ -82,6 +82,7 @@ struct CLIENT_PARAMS_S {
     } recipient;
     
     PRIORITY_E          priority;
+    size_t              maxBufferSize;
     
     ON_DATA_RECEIVED_CB onDataReceivedCb;
     ON_LINK_BROKEN_CB   onLinkBrokenCb;

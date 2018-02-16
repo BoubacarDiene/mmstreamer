@@ -60,7 +60,7 @@ extern "C" {
 #define MAX_HEADER_SIZE  512
 #define MAX_XML_SIZE     256
 #define MAX_BLOCK_SIZE   512
-#define MAX_BUFFER_SIZE  1024*600
+#define MAX_BUFFER_SIZE  1024 * 64
 
 #define WAIT_TIME_1MS    1
 #define WAIT_TIME_10MS   WAIT_TIME_1MS * 10

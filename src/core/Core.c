@@ -749,7 +749,6 @@ static CORE_ERROR_E loadServersParams_f(CORE_S *obj)
         serverParams->acceptMode    = xmlServers->servers[index].acceptMode;
         serverParams->priority      = xmlServers->servers[index].priority;
         serverParams->maxClients    = xmlServers->servers[index].maxClients;
-        serverParams->maxBufferSize = xmlServers->servers[index].maxBufferSize;
         
         strncpy(serverParams->mime, xmlServers->servers[index].mime, sizeof(serverParams->mime));
         

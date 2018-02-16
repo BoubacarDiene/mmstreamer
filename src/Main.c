@@ -268,6 +268,8 @@ int main(int argc, char **argv)
             serverParams       = &serverInfos->serverParams;
             serverInfos->state = MODULE_STATE_STOPPED;
 
+            serverParams->maxBufferSize = (size_t)input->maxBufferSize;
+
             if (serverParams->maxBufferSize == (size_t)-1) {
                 for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
                     videoDevice = videoDevices[videoIndex];
@@ -279,10 +281,10 @@ int main(int argc, char **argv)
                 }
 
                 serverParams->maxBufferSize = (maxBufferSize > 0 ? maxBufferSize : MAX_BUFFER_SIZE);
-                Logd("Server \"%s\"'s buffer size set to %lu bytes", serverParams->name, serverParams->maxBufferSize);
-
                 maxBufferSize = 0;
             }
+
+            Logd("Server \"%s\"'s max buffer size set to %lu bytes", serverParams->name, serverParams->maxBufferSize);
 
             if (input->serversConfig.autoStart) {
                 if (modules->serverObj->start(modules->serverObj, serverParams) != SERVER_ERROR_NONE) {
@@ -312,6 +314,9 @@ int main(int argc, char **argv)
             clientInfos        = params->clientsInfos.clientInfos[index];
             clientParams       = &clientInfos->clientParams;
             clientInfos->state = MODULE_STATE_STOPPED;
+
+            clientParams->maxBufferSize = (input->maxBufferSize <= 0 ? MAX_BUFFER_SIZE : (size_t)input->maxBufferSize);
+            Logd("Client \"%s\"'s max buffer size set to %lu bytes", clientParams->name, clientParams->maxBufferSize);
 
             if (input->clientsConfig.autoStart) {
                 if (modules->clientObj->start(modules->clientObj, clientParams) != CLIENT_ERROR_NONE) {
@@ -604,6 +609,12 @@ static void onGeneralCb(void *userData, const char **attrs)
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void**)&input->timeout_s,
     	    .attrGetter.scalar = parserObj->getUint32
+        },
+    	{
+    	    .attrName          = XML_ATTR_MAX_BUFFER_SIZE,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&input->maxBufferSize,
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    NULL,

@@ -176,6 +176,7 @@ struct INPUT_S {
     
     uint8_t         keepAliveMethod;
     uint32_t        timeout_s;
+    int32_t         maxBufferSize;
 
     uint8_t         nbCtrlLibs;
     LIBRARY_S       *ctrlLibs;
