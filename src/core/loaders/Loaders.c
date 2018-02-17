@@ -53,6 +53,9 @@
 extern LOADERS_ERROR_E loadGraphicsXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S *xmlGraphics);
 extern LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics);
 
+extern LOADERS_ERROR_E loadCommonXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_COMMON_S *xmlCommon);
+extern LOADERS_ERROR_E unloadCommonXml_f(LOADERS_S *obj, XML_COMMON_S *xmlCommon);
+
 extern LOADERS_ERROR_E loadVideosXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xmlVideos);
 extern LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos);
 
@@ -75,6 +78,9 @@ LOADERS_ERROR_E Loaders_Init(LOADERS_S **obj)
     
     (*obj)->loadGraphicsXml   = loadGraphicsXml_f;
     (*obj)->unloadGraphicsXml = unloadGraphicsXml_f;
+    
+    (*obj)->loadCommonXml     = loadCommonXml_f;
+    (*obj)->unloadCommonXml   = unloadCommonXml_f;
     
     (*obj)->loadVideosXml     = loadVideosXml_f;
     (*obj)->unloadVideosXml   = unloadVideosXml_f;

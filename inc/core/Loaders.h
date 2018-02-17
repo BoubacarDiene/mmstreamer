@@ -66,6 +66,7 @@ typedef struct XML_VIDEO_AREA_S    XML_VIDEO_AREA_S;
 typedef struct XML_VIDEO_S         XML_VIDEO_S;
 typedef struct XML_VIDEOS_S        XML_VIDEOS_S;
 
+typedef struct XML_COMMON_FILES_S  XML_COMMON_FILES_S;
 typedef struct XML_COMMON_S        XML_COMMON_S;
 typedef struct XML_SCREEN_S        XML_SCREEN_S;
 typedef struct XML_ELEMENT_TEXT_S  XML_ELEMENT_TEXT_S;
@@ -87,6 +88,9 @@ typedef struct LOADERS_S           LOADERS_S;
 
 typedef LOADERS_ERROR_E (*LOADERS_LOAD_GRAPHICS_XML_F  )(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S *xmlGraphics);
 typedef LOADERS_ERROR_E (*LOADERS_UNLOAD_GRAPHICS_XML_F)(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics);
+
+typedef LOADERS_ERROR_E (*LOADERS_LOAD_COMMON_XML_F  )(LOADERS_S *obj, CONTEXT_S *ctx, XML_COMMON_S *xmlCommon);
+typedef LOADERS_ERROR_E (*LOADERS_UNLOAD_COMMON_XML_F)(LOADERS_S *obj, XML_COMMON_S *xmlCommon);
 
 typedef LOADERS_ERROR_E (*LOADERS_LOAD_VIDEOS_XML_F  )(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xmlVideos);
 typedef LOADERS_ERROR_E (*LOADERS_UNLOAD_VIDEOS_XML_F)(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos);
@@ -194,19 +198,25 @@ struct XML_VIDEOS_S {
     void         *reserved;
 };
 
+struct XML_COMMON_FILES_S {
+    char colors[MAX_PATH_SIZE];
+    char images[MAX_PATH_SIZE];
+    char fonts[MAX_PATH_SIZE];
+    char strings[MAX_PATH_SIZE];
+};
+
 struct XML_COMMON_S {
-    uint32_t      nbLanguages;
-    char          *defaultLanguage;
+    uint32_t           nbLanguages;
+    char               defaultLanguage[MIN_STR_SIZE];
+
+    XML_COMMON_FILES_S files;
     
-    char          *colorsXmlFile;
-    char          *imagesXmlFile;
-    char          *fontsXmlFile;
-    char          *stringsXmlFile;
-    
-    XML_COLORS_S  xmlColors;
-    XML_FONTS_S   xmlFonts;
-    XML_IMAGES_S  xmlImages;
-    XML_STRINGS_S *xmlStrings;
+    XML_COLORS_S       xmlColors;
+    XML_FONTS_S        xmlFonts;
+    XML_IMAGES_S       xmlImages;
+    XML_STRINGS_S      *xmlStrings;
+
+    void               *reserved;
 };
 
 struct XML_SCREEN_S {
@@ -282,18 +292,23 @@ struct XML_ELEMENT_S {
 };
 
 struct XML_GRAPHICS_S {
-    XML_COMMON_S  common;
+    char               *defaultLanguage;
+
+    char               *colorsXmlFile;
+    char               *imagesXmlFile;
+    char               *fontsXmlFile;
+    char               *stringsXmlFile;
     
-    uint32_t      onFocusColorId;
-    uint32_t      onBlurColorId;
-    uint32_t      onResetColorId;
+    uint32_t           onFocusColorId;
+    uint32_t           onBlurColorId;
+    uint32_t           onResetColorId;
     
-    XML_SCREEN_S  screen;
+    XML_SCREEN_S       screen;
     
-    uint32_t      nbElements;
-    XML_ELEMENT_S *elements;
+    uint32_t           nbElements;
+    XML_ELEMENT_S      *elements;
     
-    void         *reserved;
+    void               *reserved;
 };
 
 struct XML_SERVER_S {
@@ -344,6 +359,7 @@ struct XML_CLIENTS_S {
 };
 
 struct XML_S {
+    XML_COMMON_S   xmlCommon;
     XML_GRAPHICS_S xmlGraphics;
     XML_VIDEOS_S   xmlVideos;
     XML_SERVERS_S  xmlServers;
@@ -353,6 +369,9 @@ struct XML_S {
 struct LOADERS_S {
     LOADERS_LOAD_GRAPHICS_XML_F   loadGraphicsXml;
     LOADERS_UNLOAD_GRAPHICS_XML_F unloadGraphicsXml;
+    
+    LOADERS_LOAD_COMMON_XML_F     loadCommonXml;
+    LOADERS_UNLOAD_COMMON_XML_F   unloadCommonXml;
     
     LOADERS_LOAD_VIDEOS_XML_F     loadVideosXml;
     LOADERS_UNLOAD_VIDEOS_XML_F   unloadVideosXml;

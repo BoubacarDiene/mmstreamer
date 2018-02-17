@@ -50,6 +50,9 @@
 LOADERS_ERROR_E loadGraphicsXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S *xmlGraphics);
 LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics);
 
+LOADERS_ERROR_E loadCommonXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_COMMON_S *xmlCommon);
+LOADERS_ERROR_E unloadCommonXml_f(LOADERS_S *obj, XML_COMMON_S *xmlCommon);
+
 static void onCommonCb (void *userData, const char **attrs);
 static void onColorsCb (void *userData, const char **attrs);
 static void onImagesCb (void *userData, const char **attrs);
@@ -141,96 +144,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
         xmlGraphics->reserved = NULL;
         return LOADERS_ERROR_XML;
     }
-    
-    if (xmlGraphics->common.colorsXmlFile) {
-        Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlGraphics->common.colorsXmlFile);
-        
-        PARSER_TAGS_HANDLER_S colorsTagsHandlers[] = {
-        	{ XML_TAG_COLOR,  onColorCb,  NULL,  NULL },
-        	{ NULL,           NULL,       NULL,  NULL }
-        };
-        
-        PARSER_PARAMS_S colorsParserParams;
-        snprintf(colorsParserParams.path, sizeof(colorsParserParams.path), "%s/%s", input->resRootDir, xmlGraphics->common.colorsXmlFile);
-        colorsParserParams.encoding     = PARSER_ENCODING_UTF_8;
-        colorsParserParams.tagsHandlers = colorsTagsHandlers;
-        colorsParserParams.onErrorCb    = onErrorCb;
-        colorsParserParams.userData     = xmlGraphics;
-        
-        if (parserObj->parse(parserObj, &colorsParserParams) != PARSER_ERROR_NONE) {
-            Loge("Failed to parse file");
-            xmlGraphics->reserved = NULL;
-            return LOADERS_ERROR_XML;
-        }
-    }
-    
-    if (xmlGraphics->common.imagesXmlFile) {
-        Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlGraphics->common.imagesXmlFile);
-        
-        PARSER_TAGS_HANDLER_S imagesTagsHandlers[] = {
-        	{ XML_TAG_IMAGE,  onImageCb,  NULL,  NULL },
-        	{ NULL,           NULL,       NULL,  NULL }
-        };
-        
-        PARSER_PARAMS_S imagesParserParams;
-        snprintf(imagesParserParams.path, sizeof(imagesParserParams.path), "%s/%s", input->resRootDir, xmlGraphics->common.imagesXmlFile);
-        imagesParserParams.encoding     = PARSER_ENCODING_UTF_8;
-        imagesParserParams.tagsHandlers = imagesTagsHandlers;
-        imagesParserParams.onErrorCb    = onErrorCb;
-        imagesParserParams.userData     = xmlGraphics;
-        
-        if (parserObj->parse(parserObj, &imagesParserParams) != PARSER_ERROR_NONE) {
-            Loge("Failed to parse file");
-            xmlGraphics->reserved = NULL;
-            return LOADERS_ERROR_XML;
-        }
-    }
-    
-    if (xmlGraphics->common.fontsXmlFile) {
-        Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlGraphics->common.fontsXmlFile);
-        
-        PARSER_TAGS_HANDLER_S fontsTagsHandlers[] = {
-        	{ XML_TAG_FONT,  onFontCb,  NULL,  NULL },
-        	{ NULL,          NULL,      NULL,  NULL }
-        };
-        
-        PARSER_PARAMS_S fontsParserParams;
-        snprintf(fontsParserParams.path, sizeof(fontsParserParams.path), "%s/%s", input->resRootDir, xmlGraphics->common.fontsXmlFile);
-        fontsParserParams.encoding     = PARSER_ENCODING_UTF_8;
-        fontsParserParams.tagsHandlers = fontsTagsHandlers;
-        fontsParserParams.onErrorCb    = onErrorCb;
-        fontsParserParams.userData     = xmlGraphics;
-        
-        if (parserObj->parse(parserObj, &fontsParserParams) != PARSER_ERROR_NONE) {
-            Loge("Failed to parse file");
-            xmlGraphics->reserved = NULL;
-            return LOADERS_ERROR_XML;
-        }
-    }
-    
-    if (xmlGraphics->common.stringsXmlFile) {
-        Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlGraphics->common.stringsXmlFile);
-        
-        PARSER_TAGS_HANDLER_S stringsTagsHandlers[] = {
-        	{ XML_TAG_STR_GROUP,  onStrGroupStartCb,  onStrGroupEndCb,  NULL },
-        	{ XML_TAG_STRING,     onStringCb,         NULL,             NULL },
-        	{ NULL,               NULL,               NULL,             NULL }
-        };
-        
-        PARSER_PARAMS_S stringsParserParams;
-        snprintf(stringsParserParams.path, sizeof(stringsParserParams.path), "%s/%s", input->resRootDir, xmlGraphics->common.stringsXmlFile);
-        stringsParserParams.encoding     = PARSER_ENCODING_UTF_8;
-        stringsParserParams.tagsHandlers = stringsTagsHandlers;
-        stringsParserParams.onErrorCb    = onErrorCb;
-        stringsParserParams.userData     = xmlGraphics;
-        
-        if (parserObj->parse(parserObj, &stringsParserParams) != PARSER_ERROR_NONE) {
-            Loge("Failed to parse file");
-            xmlGraphics->reserved = NULL;
-            return LOADERS_ERROR_XML;
-        }
-    }
-    
+
     return LOADERS_ERROR_NONE;
 }
 
@@ -241,29 +155,29 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
 {
     assert(obj && xmlGraphics);
     
-    if (xmlGraphics->common.defaultLanguage) {
-        free(xmlGraphics->common.defaultLanguage);
-        xmlGraphics->common.defaultLanguage = NULL;
+    if (xmlGraphics->defaultLanguage) {
+        free(xmlGraphics->defaultLanguage);
+        xmlGraphics->defaultLanguage = NULL;
     }
     
-    if (xmlGraphics->common.colorsXmlFile) {
-        free(xmlGraphics->common.colorsXmlFile);
-        xmlGraphics->common.colorsXmlFile = NULL;
+    if (xmlGraphics->colorsXmlFile) {
+        free(xmlGraphics->colorsXmlFile);
+        xmlGraphics->colorsXmlFile = NULL;
     }
     
-    if (xmlGraphics->common.imagesXmlFile) {
-        free(xmlGraphics->common.imagesXmlFile);
-        xmlGraphics->common.imagesXmlFile = NULL;
+    if (xmlGraphics->imagesXmlFile) {
+        free(xmlGraphics->imagesXmlFile);
+        xmlGraphics->imagesXmlFile = NULL;
     }
     
-    if (xmlGraphics->common.fontsXmlFile) {
-        free(xmlGraphics->common.fontsXmlFile);
-        xmlGraphics->common.fontsXmlFile = NULL;
+    if (xmlGraphics->fontsXmlFile) {
+        free(xmlGraphics->fontsXmlFile);
+        xmlGraphics->fontsXmlFile = NULL;
     }
     
-    if (xmlGraphics->common.stringsXmlFile) {
-        free(xmlGraphics->common.stringsXmlFile);
-        xmlGraphics->common.stringsXmlFile = NULL;
+    if (xmlGraphics->stringsXmlFile) {
+        free(xmlGraphics->stringsXmlFile);
+        xmlGraphics->stringsXmlFile = NULL;
     }
     
     if (xmlGraphics->screen.name) {
@@ -343,13 +257,131 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
     free(xmlGraphics->elements);
     xmlGraphics->elements = NULL;
     
-    XML_COLORS_S *xmlColors = &xmlGraphics->common.xmlColors;
+    xmlGraphics->reserved = NULL;
+    
+    return LOADERS_ERROR_NONE;
+}
+
+/*!
+ *
+ */
+LOADERS_ERROR_E loadCommonXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_COMMON_S *xmlCommon)
+{
+    assert(obj && ctx && xmlCommon);
+    
+    PARSER_S *parserObj = ctx->parserObj;
+    INPUT_S *input      = &ctx->input;
+    
+    xmlCommon->reserved = ctx;
+    
+    if (xmlCommon->files.colors[0] != '\0') {
+        Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlCommon->files.colors);
+        
+        PARSER_TAGS_HANDLER_S colorsTagsHandlers[] = {
+        	{ XML_TAG_COLOR,  onColorCb,  NULL,  NULL },
+        	{ NULL,           NULL,       NULL,  NULL }
+        };
+        
+        PARSER_PARAMS_S colorsParserParams;
+        snprintf(colorsParserParams.path, sizeof(colorsParserParams.path), "%s/%s", input->resRootDir, xmlCommon->files.colors);
+        colorsParserParams.encoding     = PARSER_ENCODING_UTF_8;
+        colorsParserParams.tagsHandlers = colorsTagsHandlers;
+        colorsParserParams.onErrorCb    = onErrorCb;
+        colorsParserParams.userData     = xmlCommon;
+        
+        if (parserObj->parse(parserObj, &colorsParserParams) != PARSER_ERROR_NONE) {
+            Loge("Failed to parse file");
+            xmlCommon->reserved = NULL;
+            return LOADERS_ERROR_XML;
+        }
+    }
+    
+    if (xmlCommon->files.images[0] != '\0') {
+        Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlCommon->files.images);
+        
+        PARSER_TAGS_HANDLER_S imagesTagsHandlers[] = {
+        	{ XML_TAG_IMAGE,  onImageCb,  NULL,  NULL },
+        	{ NULL,           NULL,       NULL,  NULL }
+        };
+        
+        PARSER_PARAMS_S imagesParserParams;
+        snprintf(imagesParserParams.path, sizeof(imagesParserParams.path), "%s/%s", input->resRootDir, xmlCommon->files.images);
+        imagesParserParams.encoding     = PARSER_ENCODING_UTF_8;
+        imagesParserParams.tagsHandlers = imagesTagsHandlers;
+        imagesParserParams.onErrorCb    = onErrorCb;
+        imagesParserParams.userData     = xmlCommon;
+        
+        if (parserObj->parse(parserObj, &imagesParserParams) != PARSER_ERROR_NONE) {
+            Loge("Failed to parse file");
+            xmlCommon->reserved = NULL;
+            return LOADERS_ERROR_XML;
+        }
+    }
+    
+    if (xmlCommon->files.fonts[0] != '\0') {
+        Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlCommon->files.fonts);
+        
+        PARSER_TAGS_HANDLER_S fontsTagsHandlers[] = {
+        	{ XML_TAG_FONT,  onFontCb,  NULL,  NULL },
+        	{ NULL,          NULL,      NULL,  NULL }
+        };
+        
+        PARSER_PARAMS_S fontsParserParams;
+        snprintf(fontsParserParams.path, sizeof(fontsParserParams.path), "%s/%s", input->resRootDir, xmlCommon->files.fonts);
+        fontsParserParams.encoding     = PARSER_ENCODING_UTF_8;
+        fontsParserParams.tagsHandlers = fontsTagsHandlers;
+        fontsParserParams.onErrorCb    = onErrorCb;
+        fontsParserParams.userData     = xmlCommon;
+        
+        if (parserObj->parse(parserObj, &fontsParserParams) != PARSER_ERROR_NONE) {
+            Loge("Failed to parse file");
+            xmlCommon->reserved = NULL;
+            return LOADERS_ERROR_XML;
+        }
+    }
+    
+    if (xmlCommon->files.strings[0] != '\0') {
+        Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlCommon->files.strings);
+        
+        PARSER_TAGS_HANDLER_S stringsTagsHandlers[] = {
+        	{ XML_TAG_STR_GROUP,  onStrGroupStartCb,  onStrGroupEndCb,  NULL },
+        	{ XML_TAG_STRING,     onStringCb,         NULL,             NULL },
+        	{ NULL,               NULL,               NULL,             NULL }
+        };
+        
+        PARSER_PARAMS_S stringsParserParams;
+        snprintf(stringsParserParams.path, sizeof(stringsParserParams.path), "%s/%s", input->resRootDir, xmlCommon->files.strings);
+        stringsParserParams.encoding     = PARSER_ENCODING_UTF_8;
+        stringsParserParams.tagsHandlers = stringsTagsHandlers;
+        stringsParserParams.onErrorCb    = onErrorCb;
+        stringsParserParams.userData     = xmlCommon;
+        
+        if (parserObj->parse(parserObj, &stringsParserParams) != PARSER_ERROR_NONE) {
+            Loge("Failed to parse file");
+            xmlCommon->reserved = NULL;
+            return LOADERS_ERROR_XML;
+        }
+    }
+    
+    return LOADERS_ERROR_NONE;
+}
+
+/*!
+ *
+ */
+LOADERS_ERROR_E unloadCommonXml_f(LOADERS_S *obj, XML_COMMON_S *xmlCommon)
+{
+    assert(obj && xmlCommon);
+
+    uint32_t index;
+
+    XML_COLORS_S *xmlColors = &xmlCommon->xmlColors;
     if (xmlColors->colors) {
         free(xmlColors->colors);
         xmlColors->colors = NULL;
     }
     
-    XML_IMAGES_S *xmlImages = &xmlGraphics->common.xmlImages;
+    XML_IMAGES_S *xmlImages = &xmlCommon->xmlImages;
     if (xmlImages->images) {
         XML_IMAGE_S *image;
         for (index = 0; index < xmlImages->nbImages; index++) {
@@ -363,7 +395,7 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
         xmlImages->images = NULL;
     }
     
-    XML_FONTS_S *xmlFonts = &xmlGraphics->common.xmlFonts;
+    XML_FONTS_S *xmlFonts = &xmlCommon->xmlFonts;
     if (xmlFonts->fonts) {
         XML_FONT_S *font;
         for (index = 0; index < xmlFonts->nbFonts; index++) {
@@ -377,8 +409,8 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
         xmlFonts->fonts = NULL;
     }
     
-    XML_STRINGS_S *xmlStrings = xmlGraphics->common.xmlStrings;
-    uint32_t nbXmlStrings     = xmlGraphics->common.nbLanguages;
+    XML_STRINGS_S *xmlStrings = xmlCommon->xmlStrings;
+    uint32_t nbXmlStrings     = xmlCommon->nbLanguages;
     uint32_t nbStrings, strCount;
     
     if (xmlStrings) {
@@ -403,7 +435,7 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
         xmlStrings = NULL;
     }
     
-    xmlGraphics->reserved = NULL;
+    xmlCommon->reserved = NULL;
     
     return LOADERS_ERROR_NONE;
 }
@@ -427,7 +459,7 @@ static void onCommonCb(void *userData, const char **attrs)
     	{
     	    .attrName          = XML_ATTR_DEFAULT_LANGUAGE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&xmlGraphics->common.defaultLanguage,
+    	    .attrValue.vector  = (void**)&xmlGraphics->defaultLanguage,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
@@ -458,7 +490,7 @@ static void onColorsCb(void *userData, const char **attrs)
     	{
     	    .attrName          = XML_ATTR_XML_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&xmlGraphics->common.colorsXmlFile,
+    	    .attrValue.vector  = (void**)&xmlGraphics->colorsXmlFile,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
@@ -489,7 +521,7 @@ static void onImagesCb(void *userData, const char **attrs)
     	{
     	    .attrName          = XML_ATTR_XML_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&xmlGraphics->common.imagesXmlFile,
+    	    .attrValue.vector  = (void**)&xmlGraphics->imagesXmlFile,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
@@ -520,7 +552,7 @@ static void onFontsCb(void *userData, const char **attrs)
     	{
     	    .attrName          = XML_ATTR_XML_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&xmlGraphics->common.fontsXmlFile,
+    	    .attrValue.vector  = (void**)&xmlGraphics->fontsXmlFile,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
@@ -551,7 +583,7 @@ static void onStringsCb(void *userData, const char **attrs)
     	{
     	    .attrName          = XML_ATTR_XML_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void**)&xmlGraphics->common.stringsXmlFile,
+    	    .attrValue.vector  = (void**)&xmlGraphics->stringsXmlFile,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
@@ -1195,10 +1227,10 @@ static void onColorCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
-    XML_COLORS_S *xmlColors     = &xmlGraphics->common.xmlColors;
+    XML_COMMON_S *xmlCommon = (XML_COMMON_S*)userData;
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlCommon->reserved;
+    PARSER_S *parserObj     = ctx->parserObj;
+    XML_COLORS_S *xmlColors = &xmlCommon->xmlColors;
     
     Logd("Adding color %u", (xmlColors->nbColors + 1));
     
@@ -1255,11 +1287,11 @@ static void onImageCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    INPUT_S *input              = &ctx->input;
-    PARSER_S *parserObj         = ctx->parserObj;
-    XML_IMAGES_S *xmlImages     = &xmlGraphics->common.xmlImages;
+    XML_COMMON_S *xmlCommon = (XML_COMMON_S*)userData;
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlCommon->reserved;
+    INPUT_S *input          = &ctx->input;
+    PARSER_S *parserObj     = ctx->parserObj;
+    XML_IMAGES_S *xmlImages = &xmlCommon->xmlImages;
     
     Logd("Adding image %u", (xmlImages->nbImages + 1));
     
@@ -1317,11 +1349,11 @@ static void onFontCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    INPUT_S *input              = &ctx->input;
-    PARSER_S *parserObj         = ctx->parserObj;
-    XML_FONTS_S *xmlFonts       = &xmlGraphics->common.xmlFonts;
+    XML_COMMON_S *xmlCommon = (XML_COMMON_S*)userData;
+    CONTEXT_S *ctx          = (CONTEXT_S*)xmlCommon->reserved;
+    INPUT_S *input          = &ctx->input;
+    PARSER_S *parserObj     = ctx->parserObj;
+    XML_FONTS_S *xmlFonts   = &xmlCommon->xmlFonts;
     
     Logd("Adding font %u", (xmlFonts->nbFonts + 1));
     
@@ -1373,10 +1405,10 @@ static void onStrGroupStartCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    XML_STRINGS_S **xmlStrings  = (XML_STRINGS_S**)&xmlGraphics->common.xmlStrings;
-    uint32_t nbXmlStrings       = xmlGraphics->common.nbLanguages;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
+    XML_COMMON_S *xmlCommon     = (XML_COMMON_S*)userData;
+    XML_STRINGS_S **xmlStrings  = (XML_STRINGS_S**)&xmlCommon->xmlStrings;
+    uint32_t nbXmlStrings       = xmlCommon->nbLanguages;
+    CONTEXT_S *ctx              = (CONTEXT_S*)xmlCommon->reserved;
     PARSER_S *parserObj         = ctx->parserObj;
     
     Logd("Adding strGroup %u", (nbXmlStrings + 1));
@@ -1413,14 +1445,14 @@ static void onStringCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
-    uint32_t nbXmlStrings       = xmlGraphics->common.nbLanguages;
-    XML_STRINGS_S *xmlStrings   = xmlGraphics->common.xmlStrings;
+    XML_COMMON_S *xmlCommon   = (XML_COMMON_S*)userData;
+    CONTEXT_S *ctx            = (CONTEXT_S*)xmlCommon->reserved;
+    PARSER_S *parserObj       = ctx->parserObj;
+    uint32_t nbXmlStrings     = xmlCommon->nbLanguages;
+    XML_STRINGS_S *xmlStrings = xmlCommon->xmlStrings;
     
-    uint32_t *nbStrings         = &xmlStrings[nbXmlStrings].nbStrings;
-    XML_STRING_S **strings      = &xmlStrings[nbXmlStrings].strings;
+    uint32_t *nbStrings       = &xmlStrings[nbXmlStrings].nbStrings;
+    XML_STRING_S **strings    = &xmlStrings[nbXmlStrings].strings;
     
     Logd("Adding string %u", (*nbStrings + 1));
     
@@ -1458,11 +1490,11 @@ static void onStrGroupEndCb(void *userData)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
+    XML_COMMON_S *xmlCommon = (XML_COMMON_S*)userData;
     
-    (xmlGraphics->common.nbLanguages)++;
+    (xmlCommon->nbLanguages)++;
     
-    Logd("StrGroup %u added", xmlGraphics->common.nbLanguages);
+    Logd("StrGroup %u added", xmlCommon->nbLanguages);
 }
 
 /*!

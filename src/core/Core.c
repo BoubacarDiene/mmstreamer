@@ -48,7 +48,7 @@
 typedef struct CORE_PRIVATE_DATA_S {
     CONTEXT_S   *ctx;
     XML_S       xml;
-    
+
     CONFIGS_S   *configsObj;
     CONTROL_S   *controlObj;
     LOADERS_S   *loadersObj;
@@ -254,24 +254,47 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
     assert(obj && obj->pData);
     
     CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
+    CORE_ERROR_E ret           = CORE_ERROR_PARAMS;
 
     if (pData->loadersObj->loadGraphicsXml(pData->loadersObj, pData->ctx, &pData->xml.xmlGraphics) != LOADERS_ERROR_NONE) {
         Loge("Failed to load graphics xml");
         return CORE_ERROR_XML;
     }
     
-    XML_GRAPHICS_S *xmlGraphics       = &pData->xml.xmlGraphics;
+    XML_COMMON_S *xmlCommon     = &pData->xml.xmlCommon;
+    XML_GRAPHICS_S *xmlGraphics = &pData->xml.xmlGraphics;
+
+    snprintf(xmlCommon->defaultLanguage, sizeof(xmlCommon->defaultLanguage), "%s", xmlGraphics->defaultLanguage);
+
+    const char *colorsXmlFile = (xmlGraphics->colorsXmlFile ? xmlGraphics->colorsXmlFile : "");
+    snprintf(xmlCommon->files.colors, sizeof(xmlCommon->files.colors), "%s", colorsXmlFile);
+
+    const char *imagesXmlFile = (xmlGraphics->imagesXmlFile ? xmlGraphics->imagesXmlFile : "");
+    snprintf(xmlCommon->files.images, sizeof(xmlCommon->files.images), "%s", imagesXmlFile);
+
+    const char *fontsXmlFile = (xmlGraphics->fontsXmlFile ? xmlGraphics->fontsXmlFile : "");
+    snprintf(xmlCommon->files.fonts, sizeof(xmlCommon->files.fonts), "%s", fontsXmlFile);
+
+    const char *stringsXmlFile = (xmlGraphics->stringsXmlFile ? xmlGraphics->stringsXmlFile : "");
+    snprintf(xmlCommon->files.strings, sizeof(xmlCommon->files.strings), "%s", stringsXmlFile);
+
+    if (pData->loadersObj->loadCommonXml(pData->loadersObj, pData->ctx, xmlCommon) != LOADERS_ERROR_NONE) {
+        Loge("Failed to load common xml");
+        ret = CORE_ERROR_XML;
+        goto unloadXml_exit;
+    }
+
     GRAPHICS_INFOS_S *graphicsInfos   = &pData->ctx->params.graphicsInfos;
     GRAPHICS_PARAMS_S *graphicsParams = &graphicsInfos->graphicsParams;
     
     assert((graphicsInfos->currentLanguage = calloc(1, MIN_STR_SIZE)));
-    strncpy(graphicsInfos->currentLanguage, xmlGraphics->common.defaultLanguage, MIN_STR_SIZE);
+    strncpy(graphicsInfos->currentLanguage, xmlCommon->defaultLanguage, MIN_STR_SIZE);
     
     Logd("Setting main colors");
 
-    getColor_f((void*)&xmlGraphics->common, (int32_t)xmlGraphics->onFocusColorId, &graphicsParams->colorOnFocus);
-    getColor_f((void*)&xmlGraphics->common, (int32_t)xmlGraphics->onBlurColorId, &graphicsParams->colorOnBlur);
-    getColor_f((void*)&xmlGraphics->common, (int32_t)xmlGraphics->onResetColorId, &graphicsParams->colorOnReset);
+    getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->onFocusColorId, &graphicsParams->colorOnFocus);
+    getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->onBlurColorId, &graphicsParams->colorOnBlur);
+    getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->onResetColorId, &graphicsParams->colorOnReset);
 
     Logd("Setting screen params");
     
@@ -302,23 +325,23 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
         screenParams->isTitleBarUsed = 0;
     }
     
-    getImage_f((void*)&xmlGraphics->common, xmlGraphics->screen.iconImageId, &screenParams->icon);
+    getImage_f((void*)xmlCommon, xmlGraphics->screen.iconImageId, &screenParams->icon);
     
     if (xmlGraphics->screen.iconHiddenColorId >= 0) {
         assert((screenParams->icon.hiddenColor = calloc(1, sizeof(GFX_COLOR_S))));
-        getColor_f((void*)&xmlGraphics->common, xmlGraphics->screen.iconHiddenColorId, screenParams->icon.hiddenColor);
+        getColor_f((void*)xmlCommon, xmlGraphics->screen.iconHiddenColorId, screenParams->icon.hiddenColor);
     }
 
     if (!(screenParams->isBgImageUsed = !xmlGraphics->screen.useColor)) {
-        getColor_f((void*)&xmlGraphics->common, (int32_t)xmlGraphics->screen.BgColorId, &screenParams->background.color);
+        getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->screen.BgColorId, &screenParams->background.color);
     }
     else {
-        getImage_f((void*)&xmlGraphics->common, xmlGraphics->screen.BgImageId, &screenParams->background.image);
+        getImage_f((void*)xmlCommon, xmlGraphics->screen.BgImageId, &screenParams->background.image);
         
         int32_t BgHiddenColorId = xmlGraphics->screen.BgHiddenColorId;
         if (BgHiddenColorId >= 0) {
             assert((screenParams->background.image.hiddenColor = calloc(1, sizeof(GFX_COLOR_S))));
-            getColor_f((void*)&xmlGraphics->common, BgHiddenColorId, screenParams->background.image.hiddenColor);
+            getColor_f((void*)xmlCommon, BgHiddenColorId, screenParams->background.image.hiddenColor);
         }
     }
 
@@ -371,11 +394,11 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
 	                
                     (void)pData->controlObj->setElementImageIds(pData->controlObj, (*gfxElements)[index]->pData, &imageIds);
 	                
-                    getImage_f((void*)&xmlGraphics->common, imageIds.imageId, &(*gfxElements)[index]->data.image);
+                    getImage_f((void*)xmlCommon, imageIds.imageId, &(*gfxElements)[index]->data.image);
 	                
                     if (imageIds.hiddenColorId >= 0) {
                         assert(((*gfxElements)[index]->data.image.hiddenColor = calloc(1, sizeof(GFX_COLOR_S))));
-                        getColor_f((void*)&xmlGraphics->common, imageIds.hiddenColorId, (*gfxElements)[index]->data.image.hiddenColor);
+                        getColor_f((void*)xmlCommon, imageIds.hiddenColorId, (*gfxElements)[index]->data.image.hiddenColor);
                     }
                     break;
 	                
@@ -392,11 +415,11 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
 	                
                     (void)pData->controlObj->setElementTextIds(pData->controlObj, (*gfxElements)[index]->pData, &textIds);
                     
-                    getString_f((void*)&xmlGraphics->common, textIds.stringId, graphicsInfos->currentLanguage, (*gfxElements)[index]->data.text.str);
-                    getFont_f((void*)&xmlGraphics->common, textIds.fontId, (*gfxElements)[index]->data.text.ttfFont);
+                    getString_f((void*)xmlCommon, textIds.stringId, graphicsInfos->currentLanguage, (*gfxElements)[index]->data.text.str);
+                    getFont_f((void*)xmlCommon, textIds.fontId, (*gfxElements)[index]->data.text.ttfFont);
 	                
                     (*gfxElements)[index]->data.text.ttfFontSize = xmlGraphics->elements[index].text->size;
-                    getColor_f((void*)&xmlGraphics->common, (int32_t)textIds.colorId, &(*gfxElements)[index]->data.text.color);
+                    getColor_f((void*)xmlCommon, (int32_t)textIds.colorId, &(*gfxElements)[index]->data.text.color);
                     break;
 	                
                 default:
@@ -427,18 +450,16 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
                             xmlGraphics->elements[index].nav->down,
                             sizeof((*gfxElements)[index]->nav.down));
             }
-            
+
             CONTROL_GETTERS_S getters;
             getters.getString   = getString_f;
             getters.getColor    = getColor_f;
             getters.getFont     = getFont_f;
             getters.getImage    = getImage_f;
             getters.getLanguage = getLanguage_f;
-            
-            getters.userData    = (void*)&xmlGraphics->common;
+            getters.userData    = (void*)xmlCommon;
 	                
             (void)pData->controlObj->setElementGetters(pData->controlObj, (*gfxElements)[index]->pData, &getters);
-            
             (void)pData->controlObj->setCommandHandlers(pData->controlObj, (*gfxElements)[index]->pData,
 	                                            (HANDLERS_ID_S*)xmlGraphics->elements[index].clickHandlers,
 	                                            xmlGraphics->elements[index].nbClickHandlers, index);
@@ -457,8 +478,9 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
         goto badConfig_exit;
     }
     
-    return CORE_ERROR_NONE;
-    
+    ret = CORE_ERROR_NONE;
+    goto unloadXml_exit;
+
 badConfig_exit:
     if ((*gfxElements)) {
         for (index = 0; index < *nbGfxElements; index++) {
@@ -490,10 +512,11 @@ badConfig_exit:
         free(screenParams->icon.hiddenColor);
         screenParams->icon.hiddenColor = NULL;
     }
-    
+
+unloadXml_exit:
     (void)pData->loadersObj->unloadGraphicsXml(pData->loadersObj, xmlGraphics);
     
-    return CORE_ERROR_PARAMS;
+    return ret;
 }
 
 /*!
@@ -504,6 +527,7 @@ static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj)
     assert(obj && obj->pData);
     
     CORE_PRIVATE_DATA_S *pData      = (CORE_PRIVATE_DATA_S*)(obj->pData);
+    XML_COMMON_S *xmlCommon         = &pData->xml.xmlCommon;
     XML_GRAPHICS_S *xmlGraphics     = &pData->xml.xmlGraphics;
     GRAPHICS_S *graphicsObj         = pData->ctx->modules.graphicsObj;
     GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
@@ -512,7 +536,7 @@ static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj)
     uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
     
     (void)pData->listenersObj->unsetGraphicsListeners(pData->listenersObj);
-    
+
     if (gfxElements && *gfxElements) {
         uint32_t index;
         for (index = 0; index < nbGfxElements; index++) {
@@ -548,9 +572,9 @@ static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj)
     
     free(graphicsInfos->currentLanguage);
     graphicsInfos->currentLanguage = NULL;
-    
-    (void)pData->loadersObj->unloadGraphicsXml(pData->loadersObj, xmlGraphics);
-    
+
+    (void)pData->loadersObj->unloadCommonXml(pData->loadersObj, xmlCommon);
+
     return CORE_ERROR_NONE;
 }
 
@@ -562,6 +586,7 @@ static CORE_ERROR_E loadVideosParams_f(CORE_S *obj)
     assert(obj && obj->pData);
     
     CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
+    CORE_ERROR_E ret           = CORE_ERROR_NONE;
 
     if (pData->loadersObj->loadVideosXml(pData->loadersObj, pData->ctx, &pData->xml.xmlVideos) != LOADERS_ERROR_NONE) {
         Loge("Failed to load videos xml");
@@ -639,8 +664,9 @@ static CORE_ERROR_E loadVideosParams_f(CORE_S *obj)
         Loge("Failed to set video listeners");
         goto badConfig_exit;
     }
-    
-    return CORE_ERROR_NONE;
+
+    ret = CORE_ERROR_NONE;
+    goto unloadXml_exit;
     
 badConfig_exit:
     for (index = 0; index < *nbDevices; index++) {
@@ -663,9 +689,10 @@ badConfig_exit:
         *videoDevices = NULL;
     }
 
+unloadXml_exit:
     (void)pData->loadersObj->unloadVideosXml(pData->loadersObj, xmlVideos);
 
-    return CORE_ERROR_PARAMS;
+    return ret;
 }
 
 /*!
@@ -704,8 +731,6 @@ static CORE_ERROR_E unloadVideosParams_f(CORE_S *obj)
         *videoDevices = NULL;
     }
     
-    (void)pData->loadersObj->unloadVideosXml(pData->loadersObj, &pData->xml.xmlVideos);
-    
     return CORE_ERROR_NONE;
 }
 
@@ -717,6 +742,7 @@ static CORE_ERROR_E loadServersParams_f(CORE_S *obj)
     assert(obj && obj->pData);
     
     CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
+    CORE_ERROR_E ret           = CORE_ERROR_NONE;
 
     if (pData->loadersObj->loadServersXml(pData->loadersObj, pData->ctx, &pData->xml.xmlServers) != LOADERS_ERROR_NONE) {
         Loge("Failed to load servers xml");
@@ -743,12 +769,12 @@ static CORE_ERROR_E loadServersParams_f(CORE_S *obj)
 
         strncpy(serverParams->name, xmlServers->servers[index].name, sizeof(serverParams->name));
         
-        serverParams->type          = xmlServers->servers[index].type;
-        serverParams->link          = xmlServers->servers[index].link;
-        serverParams->mode          = xmlServers->servers[index].mode;
-        serverParams->acceptMode    = xmlServers->servers[index].acceptMode;
-        serverParams->priority      = xmlServers->servers[index].priority;
-        serverParams->maxClients    = xmlServers->servers[index].maxClients;
+        serverParams->type       = xmlServers->servers[index].type;
+        serverParams->link       = xmlServers->servers[index].link;
+        serverParams->mode       = xmlServers->servers[index].mode;
+        serverParams->acceptMode = xmlServers->servers[index].acceptMode;
+        serverParams->priority   = xmlServers->servers[index].priority;
+        serverParams->maxClients = xmlServers->servers[index].maxClients;
         
         strncpy(serverParams->mime, xmlServers->servers[index].mime, sizeof(serverParams->mime));
         
@@ -784,8 +810,9 @@ static CORE_ERROR_E loadServersParams_f(CORE_S *obj)
         Loge("Failed to set servers listeners");
         goto badConfig_exit;
     }
-    
-    return CORE_ERROR_NONE;
+
+    ret = CORE_ERROR_NONE;
+    goto unloadXml_exit;
     
 badConfig_exit:
     for (index = 0; index < *nbServers; index++) {
@@ -797,10 +824,11 @@ badConfig_exit:
         free(*serverInfos);
         *serverInfos = NULL;
     }
-    
+
+unloadXml_exit:
     (void)pData->loadersObj->unloadServersXml(pData->loadersObj, xmlServers);
 
-    return CORE_ERROR_PARAMS;
+    return ret;
 }
 
 /*!
@@ -829,8 +857,6 @@ static CORE_ERROR_E unloadServersParams_f(CORE_S *obj)
         *serverInfos = NULL;
     }
     
-    (void)pData->loadersObj->unloadServersXml(pData->loadersObj, &pData->xml.xmlServers);
-    
     return CORE_ERROR_NONE;
 }
 
@@ -842,6 +868,7 @@ static CORE_ERROR_E loadClientsParams_f(CORE_S *obj)
     assert(obj && obj->pData);
     
     CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
+    CORE_ERROR_E ret           = CORE_ERROR_NONE;
 
     if (pData->loadersObj->loadClientsXml(pData->loadersObj, pData->ctx, &pData->xml.xmlClients) != LOADERS_ERROR_NONE) {
         Loge("Failed to load clients xml");
@@ -915,8 +942,9 @@ static CORE_ERROR_E loadClientsParams_f(CORE_S *obj)
         Loge("Failed to set clients listeners");
         goto badConfig_exit;
     }
-    
-    return CORE_ERROR_NONE;
+
+    ret = CORE_ERROR_NONE;
+    goto unloadXml_exit;
     
 badConfig_exit:
     for (index = 0; index < *nbClients; index++) {
@@ -938,10 +966,11 @@ badConfig_exit:
         free(*clientInfos);
         *clientInfos = NULL;
     }
-    
+
+unloadXml_exit:
     (void)pData->loadersObj->unloadClientsXml(pData->loadersObj, xmlClients);
 
-    return CORE_ERROR_PARAMS;
+    return ret;
 }
 
 /*!
@@ -979,8 +1008,6 @@ static CORE_ERROR_E unloadClientsParams_f(CORE_S *obj)
         free(*clientInfos);
         *clientInfos = NULL;
     }
-    
-    (void)pData->loadersObj->unloadClientsXml(pData->loadersObj, &pData->xml.xmlClients);
     
     return CORE_ERROR_NONE;
 }

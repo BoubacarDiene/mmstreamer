@@ -579,7 +579,7 @@ static SERVER_ERROR_E openServerSocket_f(SERVER_CONTEXT_S *ctx, LINK_HELPER_S *l
                                     ctx->params.recipient.server.service, &ctx->hints, &ctx->result);
         if (status != 0) {
             Loge("getaddrinfo() failed - %s", gai_strerror(status));
-            goto exit;
+            goto getaddrinfo_exit;
         }
     }
 
@@ -589,7 +589,7 @@ next_addr:
         
         if (!ctx->rp) {
             Loge("No address succeeded");
-            goto exit;
+            goto freeaddrinfo_exit;
         }
         
         ctx->server->domain = ctx->rp->ai_family;
@@ -617,7 +617,7 @@ next_addr:
             goto next_addr;
         }
         Loge("Failed to create server socket");
-        goto exit;
+        goto freeaddrinfo_exit;
     }
     
     if (ctx->server->domain != AF_UNIX) {
@@ -657,7 +657,7 @@ next_addr:
             goto next_addr;
         }
         Loge("Failed to bind to server socket");
-        goto exit;
+        goto freeaddrinfo_exit;
     }
     
     if (ctx->server->type == SOCK_DGRAM) {
@@ -669,7 +669,7 @@ next_addr:
             goto next_addr;
         }
         Loge("listen() failed");
-        goto exit;
+        goto freeaddrinfo_exit;
     }
     
     if (linkHelper->setBlocking(linkHelper, ctx->server, NO) == ERROR) {
@@ -685,8 +685,14 @@ next_addr:
     }
     
     return SERVER_ERROR_NONE;
+
+freeaddrinfo_exit:
+    if (ctx->result) {
+        freeaddrinfo(ctx->result);
+        ctx->result = NULL;
+    }
     
-exit:
+getaddrinfo_exit:
     if (ctx->server->sock != INVALID_SOCKET) {
         close(ctx->server->sock);
     }

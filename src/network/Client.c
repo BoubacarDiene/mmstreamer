@@ -413,7 +413,7 @@ static CLIENT_ERROR_E openClientSocket_f(CLIENT_CONTEXT_S *ctx, LINK_HELPER_S *l
                                     ctx->params.recipient.server.service, &ctx->hints, &ctx->result);
         if (status != 0) {
             Loge("getaddrinfo() failed - %s", gai_strerror(status));
-            goto exit;
+            goto getaddrinfo_exit;
         }
     }
 
@@ -423,7 +423,7 @@ next_addr:
         
         if (!ctx->rp) {
             Loge("No address succeeded");
-            goto exit;
+            goto freeaddrinfo_exit;
         }
         
         ctx->client->domain = ctx->rp->ai_family;
@@ -451,7 +451,7 @@ next_addr:
             goto next_addr;
         }
         Loge("Failed to create client socket");
-        goto exit;
+        goto freeaddrinfo_exit;
     }
     
     /* Init server's data */
@@ -488,7 +488,7 @@ next_addr:
                 goto next_addr;
             }
             Loge("Failed to connect to server");
-            goto exit;
+            goto freeaddrinfo_exit;
         }
         
         if (linkHelper->setBlocking(linkHelper, ctx->client, NO) == ERROR) {
@@ -514,7 +514,7 @@ next_addr:
             unlink(ctx->client->addr.sun.sun_path);
             if (bind(ctx->client->sock, (SOCKADDR*)&(ctx->client->addr.sun), sizeof(ctx->client->addr.sun)) == SOCKET_ERROR) {
                 Loge("Failed to bind to client socket");
-                goto exit;
+                goto freeaddrinfo_exit;
             }
         }
     }
@@ -531,7 +531,7 @@ next_addr:
         
         if (linkHelper->isReadyForWriting(linkHelper, ctx->client, WAIT_TIME_10MS) == NO) {
             Loge("Server not ready for writing");
-            goto exit;
+            goto freeaddrinfo_exit;
         }
         
         buffer.data   = (void*)ctx->httpGet.str;
@@ -539,13 +539,13 @@ next_addr:
             
         if (linkHelper->writeData(linkHelper, ctx->client, NULL, &buffer, NULL) == ERROR) {
             Loge("Failed to send data to server");
-            goto exit;
+            goto freeaddrinfo_exit;
         }
     }
     else if ((ctx->client->type == SOCK_DGRAM) || (ctx->params.mode == LINK_MODE_CUSTOM)) {
         if (linkHelper->isReadyForWriting(linkHelper, ctx->client, WAIT_TIME_10MS) == NO) {
             Loge("Server not ready for writing");
-            goto exit;
+            goto freeaddrinfo_exit;
         }
             
         linkHelper->prepareCustomHeader(linkHelper, &ctx->customHeader); 
@@ -556,7 +556,7 @@ next_addr:
             
         if (linkHelper->writeData(linkHelper, ctx->client, ctx->server, &buffer, NULL) == ERROR) {
             Loge("Failed to send data to server");
-            goto exit;
+            goto freeaddrinfo_exit;
         }
     }
     
@@ -569,8 +569,14 @@ next_addr:
     }
     
     return CLIENT_ERROR_NONE;
-    
-exit:
+
+freeaddrinfo_exit:
+    if (ctx->result) {
+        freeaddrinfo(ctx->result);
+        ctx->result = NULL;
+    }
+
+getaddrinfo_exit:
     if (ctx->client->sock != INVALID_SOCKET) {
         close(ctx->client->sock);
     }
@@ -728,7 +734,7 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
                 Loge("Unexpected message received from server");
                 allocateBufferNeeded = 0;
             }
-            else {
+            else if (ctx->params.maxBufferSize < ctx->customContent.maxBufferSize) {
                 Logw("maxBufferSize changed by remote server from %lu bytes to %lu bytes",
                         ctx->params.maxBufferSize, ctx->customContent.maxBufferSize);
                 ctx->params.maxBufferSize = ctx->customContent.maxBufferSize;
