@@ -20,61 +20,51 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Listeners.c
-* \brief  TODO
+* \file Listeners.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Listeners.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "Listeners"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
+extern enum listeners_error_e setGraphicsListeners_f(struct listeners_s *obj);
+extern enum listeners_error_e unsetGraphicsListeners_f(struct listeners_s *obj);
 
-extern LISTENERS_ERROR_E setGraphicsListeners_f  (LISTENERS_S *obj);
-extern LISTENERS_ERROR_E unsetGraphicsListeners_f(LISTENERS_S *obj);
+extern enum listeners_error_e setVideosListeners_f(struct listeners_s *obj);
+extern enum listeners_error_e unsetVideosListeners_f(struct listeners_s *obj);
 
-extern LISTENERS_ERROR_E setVideosListeners_f  (LISTENERS_S *obj);
-extern LISTENERS_ERROR_E unsetVideosListeners_f(LISTENERS_S *obj);
+extern enum listeners_error_e setServersListeners_f(struct listeners_s *obj);
+extern enum listeners_error_e unsetServersListeners_f(struct listeners_s *obj);
 
-extern LISTENERS_ERROR_E setServersListeners_f  (LISTENERS_S *obj);
-extern LISTENERS_ERROR_E unsetServersListeners_f(LISTENERS_S *obj);
-
-extern LISTENERS_ERROR_E setClientsListeners_f  (LISTENERS_S *obj);
-extern LISTENERS_ERROR_E unsetClientsListeners_f(LISTENERS_S *obj);
+extern enum listeners_error_e setClientsListeners_f(struct listeners_s *obj);
+extern enum listeners_error_e unsetClientsListeners_f(struct listeners_s *obj);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-LISTENERS_ERROR_E Listeners_Init(LISTENERS_S **obj, CONTEXT_S *ctx, CONTROL_S *controlObj)
+enum listeners_error_e Listeners_Init(struct listeners_s **obj,
+                                      struct listeners_params_s *params)
 {
-    assert(obj && ctx && (*obj = calloc(1, sizeof(LISTENERS_S))));
-    
-    LISTENERS_PDATA_S *pData;
-    assert((pData = calloc(1, sizeof(LISTENERS_PDATA_S))));
+    assert(obj && params && (*obj = calloc(1, sizeof(struct listeners_s))));
     
     (*obj)->setGraphicsListeners   = setGraphicsListeners_f;
     (*obj)->unsetGraphicsListeners = unsetGraphicsListeners_f;
@@ -88,10 +78,7 @@ LISTENERS_ERROR_E Listeners_Init(LISTENERS_S **obj, CONTEXT_S *ctx, CONTROL_S *c
     (*obj)->setClientsListeners    = setClientsListeners_f;
     (*obj)->unsetClientsListeners  = unsetClientsListeners_f;
     
-    pData->ctx        = ctx;
-    pData->controlObj = controlObj;
-    
-    (*obj)->pData = pData;
+    (*obj)->params = *params;
     
     return LISTENERS_ERROR_NONE;
 }
@@ -99,17 +86,12 @@ LISTENERS_ERROR_E Listeners_Init(LISTENERS_S **obj, CONTEXT_S *ctx, CONTROL_S *c
 /*!
  *
  */
-LISTENERS_ERROR_E Listeners_UnInit(LISTENERS_S **obj)
+enum listeners_error_e Listeners_UnInit(struct listeners_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    assert(obj && *obj);
     
-    LISTENERS_PDATA_S *pData = (LISTENERS_PDATA_S*)((*obj)->pData);
-    
-    pData->ctx        = NULL;
-    pData->controlObj = NULL;
-    
-    free(pData);
-    pData = NULL;
+    (*obj)->params.ctx        = NULL;
+    (*obj)->params.controlObj = NULL;
     
     free(*obj);
     *obj = NULL;

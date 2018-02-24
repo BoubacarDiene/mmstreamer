@@ -20,57 +20,53 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   GraphicsListeners.c
-* \brief  TODO
+* \file GraphicsListeners.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Listeners.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "GraphicsListeners"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-LISTENERS_ERROR_E setGraphicsListeners_f  (LISTENERS_S *obj);
-LISTENERS_ERROR_E unsetGraphicsListeners_f(LISTENERS_S *obj);
-
-static void onGfxEventCb(GFX_EVENT_S *gfxEvent, void *userData);
+enum listeners_error_e setGraphicsListeners_f(struct listeners_s *obj);
+enum listeners_error_e unsetGraphicsListeners_f(struct listeners_s *obj);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+static void onGfxEventCb(struct gfx_event_s *gfxEvent, void *userData);
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                          FUNCTIONS                                           */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-LISTENERS_ERROR_E setGraphicsListeners_f(LISTENERS_S *obj)
+enum listeners_error_e setGraphicsListeners_f(struct listeners_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
     
-    LISTENERS_PDATA_S *pData        = (LISTENERS_PDATA_S*)(obj->pData);
-    GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
+    struct listeners_params_s *listenersParams = &obj->params;
+    struct graphics_infos_s *graphicsInfos     = &listenersParams->ctx->params.graphicsInfos;
     
     graphicsInfos->graphicsParams.onGfxEventCb = onGfxEventCb;
-    graphicsInfos->graphicsParams.userData     = pData;
+    graphicsInfos->graphicsParams.userData     = listenersParams;
     
     return LISTENERS_ERROR_NONE;
 }
@@ -78,12 +74,12 @@ LISTENERS_ERROR_E setGraphicsListeners_f(LISTENERS_S *obj)
 /*!
  *
  */
-LISTENERS_ERROR_E unsetGraphicsListeners_f(LISTENERS_S *obj)
+enum listeners_error_e unsetGraphicsListeners_f(struct listeners_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
     
-    LISTENERS_PDATA_S *pData        = (LISTENERS_PDATA_S*)(obj->pData);
-    GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
+    struct listeners_params_s *listenersParams = &obj->params;
+    struct graphics_infos_s *graphicsInfos     = &listenersParams->ctx->params.graphicsInfos;
     
     graphicsInfos->graphicsParams.onGfxEventCb = NULL;
     graphicsInfos->graphicsParams.userData     = NULL;
@@ -92,22 +88,24 @@ LISTENERS_ERROR_E unsetGraphicsListeners_f(LISTENERS_S *obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          CALLBACKS                                           */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static void onGfxEventCb(GFX_EVENT_S *gfxEvent, void *userData)
+static void onGfxEventCb(struct gfx_event_s *gfxEvent, void *userData)
 {
     assert(gfxEvent && userData);
     
-    LISTENERS_PDATA_S *pData = (LISTENERS_PDATA_S*)userData;
+    struct listeners_params_s *listenersParams = (struct listeners_params_s*)userData;
+    struct control_s *controlObj               = listenersParams->controlObj;
+    struct graphics_s *graphicsObj             = listenersParams->ctx->modules.graphicsObj;
     
     switch (gfxEvent->type) {
         case GFX_EVENT_TYPE_QUIT:
         case GFX_EVENT_TYPE_ESC:
-            pData->ctx->modules.graphicsObj->quit(pData->ctx->modules.graphicsObj);
+            graphicsObj->quit(graphicsObj);
             break;
             
         case GFX_EVENT_TYPE_FOCUS:
@@ -115,7 +113,7 @@ static void onGfxEventCb(GFX_EVENT_S *gfxEvent, void *userData)
             
         case GFX_EVENT_TYPE_CLICK:
         case GFX_EVENT_TYPE_ENTER:
-            pData->controlObj->handleClick(pData->controlObj, gfxEvent);
+            controlObj->handleClick(controlObj, gfxEvent);
             break;
             
         default:

@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Common.h
+* \file Common.h
 * \author Boubacar DIENE
 */
 
@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "graphics/Graphics.h"
@@ -45,102 +45,76 @@ extern "C" {
 #include "utils/Parser.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEFS                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-typedef enum   KEEP_ALIVE_METHOD_E KEEP_ALIVE_METHOD_E;
-typedef enum   MODULE_STATE_E      MODULE_STATE_E;
-
-typedef struct GRAPHICS_INFOS_S    GRAPHICS_INFOS_S;
-
-typedef struct VIDEO_DEVICE_S      VIDEO_DEVICE_S;
-typedef struct VIDEOS_INFOS_S      VIDEOS_INFOS_S;
-
-typedef struct SERVER_INFOS_S      SERVER_INFOS_S;
-typedef struct SERVERS_INFOS_S     SERVERS_INFOS_S;
-
-typedef struct CLIENT_INFOS_S      CLIENT_INFOS_S;
-typedef struct CLIENTS_INFOS_S     CLIENTS_INFOS_S;
-
-typedef struct LIBRARY_S           LIBRARY_S;
-
-typedef struct PARAMS_S            PARAMS_S;
-typedef struct MODULE_CONFIG_S     MODULE_CONFIG_S;
-typedef struct MODULES_S           MODULES_S;
-typedef struct INPUT_S             INPUT_S;
-typedef struct CONTEXT_S           CONTEXT_S;
-
-enum KEEP_ALIVE_METHOD_E {
+enum keep_alive_method_e {
     KEEP_ALIVE_EVENTS_BASED,
     KEEP_ALIVE_SEMAPHORE_BASED,
     KEEP_ALIVE_TIMER_BASED
 };
 
-enum MODULE_STATE_E {
+enum module_state_e {
     MODULE_STATE_STOPPED   = 1 << 0,
     MODULE_STATE_STARTED   = 1 << 1,
     MODULE_STATE_SUSPENDED = 1 << 2
 };
 
-struct GRAPHICS_INFOS_S {
-    MODULE_STATE_E    state;
+struct graphics_infos_s {
+    enum module_state_e      state;
 
-    char              *currentLanguage;
-    uint32_t          nbGfxElements;
-    GFX_ELEMENT_S     **gfxElements;
-    GRAPHICS_PARAMS_S graphicsParams;
+    char                     *currentLanguage;
+    uint32_t                 nbGfxElements;
+    struct gfx_element_s     **gfxElements;
+    struct graphics_params_s graphicsParams;
 };
 
-struct VIDEO_DEVICE_S {
-    MODULE_STATE_E    state;
+struct video_device_s {
+    enum module_state_e     state;
 
-    uint8_t           nbVideoListeners;
-    VIDEO_LISTENER_S  **videoListeners;
-    VIDEO_PARAMS_S    videoParams;
+    uint8_t                 nbVideoListeners;
+    struct video_listener_s **videoListeners;
+    struct video_params_s   videoParams;
 
-    char              *graphicsDest;
-    int8_t            graphicsIndex;
+    char                    *graphicsDest;
+    int8_t                  graphicsIndex;
 
-    char              *serverDest;
-    int8_t            serverIndex;
+    char                    *serverDest;
+    int8_t                  serverIndex;
 };
 
-struct VIDEOS_INFOS_S {
-    uint8_t        nbDevices;
-    VIDEO_DEVICE_S **devices;
+struct videos_infos_s {
+    uint8_t               nbDevices;
+    struct video_device_s **devices;
 };
 
-struct SERVER_INFOS_S {
-    MODULE_STATE_E    state;
-    SERVER_PARAMS_S   serverParams;
+struct server_infos_s {
+    enum module_state_e    state;
+    struct server_params_s serverParams;
 };
 
-struct SERVERS_INFOS_S {
-    uint8_t           nbServers;
-    SERVER_INFOS_S    **serverInfos;
+struct servers_infos_s {
+    uint8_t               nbServers;
+    struct server_infos_s **serverInfos;
 };
 
-struct CLIENT_INFOS_S {
-    MODULE_STATE_E    state;
-    CLIENT_PARAMS_S   clientParams;
+struct client_infos_s {
+    enum module_state_e    state;
+    struct client_params_s clientParams;
     
-    char              *graphicsDest;
-    int8_t            graphicsIndex;
+    char                   *graphicsDest;
+    int8_t                 graphicsIndex;
     
-    char              *serverDest;
-    int8_t            serverIndex;
+    char                   *serverDest;
+    int8_t                 serverIndex;
 };
 
-struct CLIENTS_INFOS_S {
-    uint8_t           nbClients;
-    CLIENT_INFOS_S    **clientInfos;
+struct clients_infos_s {
+    uint8_t               nbClients;
+    struct client_infos_s **clientInfos;
 };
 
-struct LIBRARY_S {
+struct library_s {
     char *path;
 
     char *initFn;
@@ -149,58 +123,54 @@ struct LIBRARY_S {
     char *onEventCb;
 };
 
-struct PARAMS_S {
-    GRAPHICS_INFOS_S graphicsInfos;
-    VIDEOS_INFOS_S   videosInfos;
-    SERVERS_INFOS_S  serversInfos;
-    CLIENTS_INFOS_S  clientsInfos;
+struct params_s {
+    struct graphics_infos_s graphicsInfos;
+    struct videos_infos_s   videosInfos;
+    struct servers_infos_s  serversInfos;
+    struct clients_infos_s  clientsInfos;
 };
 
-struct MODULE_CONFIG_S {
+struct module_config_s {
     uint8_t          enable;
     uint8_t          autoStart;
     char             *xml;
 };
 
-struct MODULES_S {
-    GRAPHICS_S *graphicsObj;
-    VIDEO_S    *videoObj;
-    SERVER_S   *serverObj;
-    CLIENT_S   *clientObj;
+struct modules_s {
+    struct graphics_s *graphicsObj;
+    struct video_s    *videoObj;
+    struct server_s   *serverObj;
+    struct client_s   *clientObj;
 };
 
-struct INPUT_S {
-    char            *appDataDir;
-    char            *resRootDir;
-    char            *libRootDir;
+struct input_s {
+    char                   *appDataDir;
+    char                   *resRootDir;
+    char                   *libRootDir;
     
-    uint8_t         keepAliveMethod;
-    uint32_t        timeout_s;
-    int32_t         maxBufferSize;
+    uint8_t                keepAliveMethod;
+    uint32_t               timeout_s;
+    int32_t                maxBufferSize;
 
-    uint8_t         nbCtrlLibs;
-    LIBRARY_S       *ctrlLibs;
-    uint8_t         ctrlLibsPrio;
+    uint8_t                nbCtrlLibs;
+    struct library_s       *ctrlLibs;
+    uint8_t                ctrlLibsPrio;
 
-    MODULE_CONFIG_S graphicsConfig;
-    MODULE_CONFIG_S videosConfig;
-    MODULE_CONFIG_S serversConfig;
-    MODULE_CONFIG_S clientsConfig;
+    struct module_config_s graphicsConfig;
+    struct module_config_s videosConfig;
+    struct module_config_s serversConfig;
+    struct module_config_s clientsConfig;
 };
 
-struct CONTEXT_S {
-    PARAMS_S   params;
-    MODULES_S  modules;
-    INPUT_S    input;
+struct context_s {
+    struct params_s  params;
+    struct modules_s modules;
+    struct input_s   input;
 
-    PARSER_S   *parserObj;
+    struct parser_s  *parserObj;
 
-    sem_t      keepAliveSem;
+    sem_t            keepAliveSem;
 };
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                           VARIABLES                                          */
-/* -------------------------------------------------------------------------------------------- */
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Handlers.h
+* \file Handlers.h
 * \author Boubacar DIENE
 */
 
@@ -32,13 +32,13 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Common.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #define HANDLERS_COMMAND_CLOSE_APPLICATION  "closeApplication"
@@ -69,26 +69,45 @@ extern "C" {
 #define HANDLERS_COMMAND_SEND_GFX_EVENT     "sendGfxEvent"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEFS                                           */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   HANDLERS_ERROR_E        HANDLERS_ERROR_E;
+enum handlers_error_e;
 
-typedef struct HANDLERS_COMMANDS_S     HANDLERS_COMMANDS_S;
-typedef struct HANDLERS_ID_S           HANDLERS_ID_S;
-typedef struct HANDLERS_PARAMS_S       HANDLERS_PARAMS_S;
-typedef struct HANDLERS_PRIVATE_DATA_S HANDLERS_PRIVATE_DATA_S;
-typedef struct HANDLERS_S              HANDLERS_S;
+struct handlers_commands_s;
+struct handlers_id_s;
+struct handlers_params_s;
+struct handlers_s;
 
-typedef void (*HANDLERS_ON_MODULE_STATE_CHANGED_CB)(void *userData, char *name, MODULE_STATE_E state);
+/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef HANDLERS_ERROR_E (*HANDLERS_COMMAND_F)(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+typedef void (*handlers_on_module_state_changed_cb)(void *userData, char *name,
+                                                    enum module_state_e state);
 
-typedef HANDLERS_ERROR_E (*HANDLERS_GET_COMMAND_HANDLER_F)(HANDLERS_S *obj, const char *handlerName, HANDLERS_COMMAND_F *out);
-typedef HANDLERS_ERROR_E (*HANDLERS_GET_ELEMENT_INDEX_F  )(HANDLERS_S *obj, char *elementName, uint32_t *index);
-typedef HANDLERS_ERROR_E (*HANDLERS_GET_SUBSTRING_F      )(HANDLERS_S *obj, const char *haystack, const char *needle, char *out, uint32_t *offset);
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-enum HANDLERS_ERROR_E {
+typedef enum handlers_error_e (*handlers_command_f)(struct handlers_s *obj, char *gfxElementName,
+                                                    void *gfxElementData, char *handlerData);
+
+typedef enum handlers_error_e (*handlers_get_command_handler_f)(struct handlers_s *obj,
+                                                                const char *handlerName,
+                                                                handlers_command_f *out);
+typedef enum handlers_error_e (*handlers_get_element_index_f)(struct handlers_s *obj,
+                                                              char *elementName, uint32_t *index);
+typedef enum handlers_error_e (*handlers_get_substring_f)(struct handlers_s *obj,
+                                                          const char * const haystack,
+                                                          const char * const needle,
+                                                          char *out, uint32_t *offset);
+
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum handlers_error_e {
     HANDLERS_ERROR_NONE,
     HANDLERS_ERROR_INIT,
     HANDLERS_ERROR_UNINIT,
@@ -98,48 +117,52 @@ enum HANDLERS_ERROR_E {
     HANDLERS_ERROR_IO
 };
 
-struct HANDLERS_COMMANDS_S {
+struct handlers_commands_s {
     char               *name;
     char               *data;
-    HANDLERS_COMMAND_F fct;
+    handlers_command_f fct;
 };
 
-struct HANDLERS_ID_S {
+struct handlers_id_s {
     char *name;
     char *data;
 };
 
-struct HANDLERS_PARAMS_S {
-    CONTEXT_S                           *ctx;
-    HANDLERS_ON_MODULE_STATE_CHANGED_CB onModuleStateChangedCb;
-
+struct handlers_params_s {
+    struct context_s                    *ctx;
+    handlers_on_module_state_changed_cb onModuleStateChangedCb;
     void                                *userData;
 };
 
-struct HANDLERS_PRIVATE_DATA_S {
-    HANDLERS_PARAMS_S   handlersParams;
+struct handlers_private_data_s {
+    struct handlers_params_s   handlersParams;
 
-    uint32_t            nbSingleInputHandlers;
-    HANDLERS_COMMANDS_S *singleInputHandlers;
+    uint32_t                   nbSingleInputHandlers;
+    struct handlers_commands_s *singleInputHandlers;
 
-    uint32_t            nbMultiInputsHandlers;
-    HANDLERS_COMMANDS_S *multiInputsHandlers;
-};
-
-struct HANDLERS_S {
-    HANDLERS_GET_COMMAND_HANDLER_F getCommandHandler;
-    HANDLERS_GET_ELEMENT_INDEX_F   getElementIndex;
-    HANDLERS_GET_SUBSTRING_F       getSubstring;
-
-    void                           *pData;
+    uint32_t                   nbMultiInputsHandlers;
+    struct handlers_commands_s *multiInputsHandlers;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           VARIABLES                                          */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-HANDLERS_ERROR_E Handlers_Init  (HANDLERS_S **obj, HANDLERS_PARAMS_S *handlersParams);
-HANDLERS_ERROR_E Handlers_UnInit(HANDLERS_S **obj);
+struct handlers_s {
+    handlers_get_command_handler_f getCommandHandler;
+    handlers_get_element_index_f   getElementIndex;
+    handlers_get_substring_f       getSubstring;
+
+    void *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum handlers_error_e Handlers_Init(struct handlers_s **obj,
+                                    struct handlers_params_s *handlersParams);
+enum handlers_error_e Handlers_UnInit(struct handlers_s **obj);
 
 #ifdef __cplusplus
 }

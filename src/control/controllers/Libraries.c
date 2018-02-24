@@ -20,13 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Libraries.c
-* \brief  TODO
+* \file Libraries.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <dlfcn.h>
@@ -34,7 +34,7 @@
 #include "control/Controllers.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -43,56 +43,63 @@
 #define LIBRARIES_TASK_NAME "librariesTask"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct LIBRARIES_LIST_ELEMENT_S {
-    time_t               seconds;
-    CONTROLLER_LIBRARY_S *library;
-} LIBRARIES_LIST_ELEMENT_S;
+struct libraries_list_element_s {
+    time_t                             seconds;
+    struct controller_library_s        *library;
+
+    controllers_library_action_done_cb actionDoneCb;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-CONTROLLERS_ERROR_E initLibsTask_f  (CONTROLLERS_S *obj);
-CONTROLLERS_ERROR_E uninitLibsTask_f(CONTROLLERS_S *obj);
-CONTROLLERS_ERROR_E startLibsTask_f (CONTROLLERS_S *obj);
-CONTROLLERS_ERROR_E stopLibsTask_f  (CONTROLLERS_S *obj);
+enum controllers_error_e initLibsTask_f(struct controllers_s *obj);
+enum controllers_error_e uninitLibsTask_f(struct controllers_s *obj);
+enum controllers_error_e startLibsTask_f(struct controllers_s *obj);
+enum controllers_error_e stopLibsTask_f(struct controllers_s *obj);
 
-void sendToLibrary_f(void *userData, CONTROLLER_LIBRARY_S *library);
+void sendToLibrary_f(void *userData, struct controller_library_s *library,
+                     controllers_library_action_done_cb actionDoneCb);
+extern void sendToEngine_f(void *userData, struct controller_command_s *command,
+                           controllers_command_action_done_cb actionDoneCb);
 
-CONTROLLERS_ERROR_E loadLibs_f  (CONTROLLERS_S *obj);
-CONTROLLERS_ERROR_E unloadLibs_f(CONTROLLERS_S *obj);
+enum controllers_error_e loadLibs_f(struct controllers_s *obj);
+enum controllers_error_e unloadLibs_f(struct controllers_s *obj);
 
-extern void registerEvents_f  (void *userData, int32_t eventsMask);
+extern void registerEvents_f(void *userData, int32_t eventsMask);
 extern void unregisterEvents_f(void *userData, int32_t eventsMask);
 
-extern void sendToEngine_f (void *userData, CONTROLLER_COMMAND_S *command);
-
-static void    taskFct_f(TASK_PARAMS_S *params);
-static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData);
-static void    releaseCb(LIST_S *obj, void *element);
-
 /* -------------------------------------------------------------------------------------------- */
-/*                                         VARIABLES                                            */
+/* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+static void taskFct_f(struct task_params_s *params);
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData);
+static void releaseCb(struct list_s *obj, void *element);
+
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-CONTROLLERS_ERROR_E initLibsTask_f(CONTROLLERS_S *obj)
+enum controllers_error_e initLibsTask_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *libsTask      = &pData->libsTask;
-    INPUT_S *input                    = &pData->params.ctx->input;
-    uint8_t priority                  = input->ctrlLibsPrio;
+    struct controllers_task_s *libsTask = &obj->tasksMngt[CONTROLLERS_TASK_LIBS].task;
+    struct input_s *input               = &obj->params.ctx->input;
+    uint8_t priority                    = input->ctrlLibsPrio;
 
     if (input->nbCtrlLibs == 0) {
         Logw("No library provided");
@@ -101,7 +108,7 @@ CONTROLLERS_ERROR_E initLibsTask_f(CONTROLLERS_S *obj)
 
     Logd("Initialize libsTask");
 
-    LIST_PARAMS_S listParams = { 0 };
+    struct list_params_s listParams = {0};
     listParams.compareCb = compareCb;
     listParams.releaseCb = releaseCb;
     listParams.browseCb  = NULL;
@@ -124,7 +131,7 @@ CONTROLLERS_ERROR_E initLibsTask_f(CONTROLLERS_S *obj)
     strcpy(libsTask->taskParams.name, LIBRARIES_TASK_NAME);
     libsTask->taskParams.priority = priority;
     libsTask->taskParams.fct      = taskFct_f;
-    libsTask->taskParams.fctData  = pData;
+    libsTask->taskParams.fctData  = obj;
     libsTask->taskParams.userData = NULL;
     libsTask->taskParams.atExit   = NULL;
 
@@ -151,13 +158,12 @@ listExit:
 /*!
  *
  */
-CONTROLLERS_ERROR_E uninitLibsTask_f(CONTROLLERS_S *obj)
+enum controllers_error_e uninitLibsTask_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *libsTask      = &pData->libsTask;
-    INPUT_S *input                    = &pData->params.ctx->input;
+    struct controllers_task_s *libsTask = &obj->tasksMngt[CONTROLLERS_TASK_LIBS].task;
+    struct input_s *input               = &obj->params.ctx->input;
 
     if (input->nbCtrlLibs == 0) {
         Logw("No library provided");
@@ -183,13 +189,12 @@ CONTROLLERS_ERROR_E uninitLibsTask_f(CONTROLLERS_S *obj)
 /*!
  *
  */
-CONTROLLERS_ERROR_E startLibsTask_f(CONTROLLERS_S *obj)
+enum controllers_error_e startLibsTask_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *libsTask      = &pData->libsTask;
-    INPUT_S *input                    = &pData->params.ctx->input;
+    struct controllers_task_s *libsTask = &obj->tasksMngt[CONTROLLERS_TASK_LIBS].task;
+    struct input_s *input               = &obj->params.ctx->input;
 
     if (input->nbCtrlLibs == 0) {
         Logw("No library provided");
@@ -209,13 +214,12 @@ CONTROLLERS_ERROR_E startLibsTask_f(CONTROLLERS_S *obj)
 /*!
  *
  */
-CONTROLLERS_ERROR_E stopLibsTask_f(CONTROLLERS_S *obj)
+enum controllers_error_e stopLibsTask_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *libsTask      = &pData->libsTask;
-    INPUT_S *input                    = &pData->params.ctx->input;
+    struct controllers_task_s *libsTask = &obj->tasksMngt[CONTROLLERS_TASK_LIBS].task;
+    struct input_s *input               = &obj->params.ctx->input;
 
     if (input->nbCtrlLibs == 0) {
         Logw("No library provided");
@@ -238,15 +242,16 @@ CONTROLLERS_ERROR_E stopLibsTask_f(CONTROLLERS_S *obj)
 /*!
  *
  */
-void sendToLibrary_f(void *userData, CONTROLLER_LIBRARY_S *library)
+void sendToLibrary_f(void *userData, struct controller_library_s *library,
+                     controllers_library_action_done_cb actionDoneCb)
 {
     assert(userData && library);
 
-    CONTROLLERS_LIB_S *lib            = (CONTROLLERS_LIB_S*)userData;
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(lib->pData);
-    CONTROLLERS_TASK_S *libsTask      = &pData->libsTask;
-    LIST_S *libsList                  = libsTask->list;
-    LIBRARIES_LIST_ELEMENT_S *element = NULL;
+    struct controllers_lib_s *lib            = (struct controllers_lib_s*)userData;
+    struct controllers_s *controllersObj     = (struct controllers_s*)(lib->pData);
+    struct controllers_task_s *libsTask      = &controllersObj->tasksMngt[CONTROLLERS_TASK_LIBS].task;
+    struct list_s *libsList                  = libsTask->list;
+    struct libraries_list_element_s *element = NULL;
 
     if (libsTask->quit) {
         Loge("Controllers are (being) stopped");
@@ -260,9 +265,10 @@ void sendToLibrary_f(void *userData, CONTROLLER_LIBRARY_S *library)
 
     Logd("Send to library : \"%s\"", library->name);
 
-    assert((element = calloc(1, sizeof(LIBRARIES_LIST_ELEMENT_S))));
-    element->seconds = time(NULL);
-    element->library = library;
+    assert((element = calloc(1, sizeof(struct libraries_list_element_s))));
+    element->seconds      = time(NULL);
+    element->library      = library;
+    element->actionDoneCb = actionDoneCb;
 
     (void)libsList->add(libsList, (void*)element);
 
@@ -274,35 +280,34 @@ void sendToLibrary_f(void *userData, CONTROLLER_LIBRARY_S *library)
 /*!
  *
  */
-CONTROLLERS_ERROR_E loadLibs_f(CONTROLLERS_S *obj)
+enum controllers_error_e loadLibs_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    INPUT_S *input                    = &pData->params.ctx->input;
-    LIBRARY_S *ctrlLibs               = input->ctrlLibs;
-    uint8_t priority                  = input->ctrlLibsPrio;
+    struct input_s *input      = &obj->params.ctx->input;
+    struct library_s *ctrlLibs = input->ctrlLibs;
+    uint8_t priority           = input->ctrlLibsPrio;
 
-    pData->nbLibs = input->nbCtrlLibs;
-    if (pData->nbLibs == 0) {
+    obj->nbLibs = input->nbCtrlLibs;
+    if (obj->nbLibs == 0) {
         Logw("No library provided");
         return CONTROLLERS_ERROR_NONE;
     }
 
-    Logd("Load \"%u\" controller(s)", pData->nbLibs);
+    Logd("Load \"%u\" controller(s)", obj->nbLibs);
 
-    assert((pData->libs = (CONTROLLERS_LIB_S*)calloc(pData->nbLibs, sizeof(CONTROLLERS_LIB_S))));
+    assert((obj->libs = calloc(obj->nbLibs, sizeof(struct controllers_lib_s))));
 
-    CONTROLLER_FUNCTIONS_S fcts;
+    struct controller_functions_s fcts;
     fcts.registerEvents   = registerEvents_f;
     fcts.unregisterEvents = unregisterEvents_f;
     fcts.sendToEngine     = sendToEngine_f;
     fcts.sendToLibrary    = sendToLibrary_f;
 
-    CONTROLLERS_LIB_S *lib;
+    struct controllers_lib_s *lib;
     uint8_t index, count;
-    for (index = 0; index < pData->nbLibs; ++index) {
-        lib = &pData->libs[index];
+    for (index = 0; index < obj->nbLibs; ++index) {
+        lib = &obj->libs[index];
 
         if (access(ctrlLibs[index].path, F_OK) != 0) {
             Loge("\"%s\" not found", ctrlLibs[index].path);
@@ -329,20 +334,20 @@ CONTROLLERS_ERROR_E loadLibs_f(CONTROLLERS_S *obj)
             goto libExit;
         }
 
-        lib->onCommand = dlsym(lib->handle, ctrlLibs[index].onCommandCb);
-        if (!lib->onCommand) {
+        lib->onCommandCb = dlsym(lib->handle, ctrlLibs[index].onCommandCb);
+        if (!lib->onCommandCb) {
             Loge("Failed to load onCommandCb \"%s\"", ctrlLibs[index].onCommandCb);
             goto libExit;
         }
 
-        lib->onEvent = dlsym(lib->handle, ctrlLibs[index].onEventCb);
-        if (!lib->onEvent) {
+        lib->onEventCb = dlsym(lib->handle, ctrlLibs[index].onEventCb);
+        if (!lib->onEventCb) {
             Loge("Failed to load onEventCb \"%s\"", ctrlLibs[index].onEventCb);
             goto libExit;
         }
 
-        lib->pData    = pData;
-        fcts.userData = lib;
+        lib->pData             = obj;
+        fcts.enginePrivateData = lib;
         if (lib->init(&lib->obj, &fcts) != CONTROLLER_ERROR_NONE) {
             Loge("\"%s\" failed", ctrlLibs[index].initFn);
             goto libExit;
@@ -354,16 +359,16 @@ CONTROLLERS_ERROR_E loadLibs_f(CONTROLLERS_S *obj)
 libExit:
     while (index > 0) {
         count = index - 1;
-        lib = &pData->libs[count];
+        lib = &obj->libs[count];
 
         lib->uninit(&lib->obj);
         lib->obj = NULL;
 
-        lib->init      = NULL;
-        lib->uninit    = NULL;
-        lib->onCommand = NULL;
-        lib->onEvent   = NULL;
-        lib->pData     = NULL;
+        lib->init        = NULL;
+        lib->uninit      = NULL;
+        lib->onCommandCb = NULL;
+        lib->onEventCb   = NULL;
+        lib->pData       = NULL;
 
         if (lib->handle) {
             dlclose(lib->handle);
@@ -378,39 +383,37 @@ libExit:
         --index;
     }
 
-    free(pData->libs);
-    pData->libs = NULL;
+    free(obj->libs);
+    obj->libs = NULL;
 
-    pData->nbLibs = 0;
+    obj->nbLibs = 0;
 
     return CONTROLLERS_ERROR_LIB;
 }
 
-CONTROLLERS_ERROR_E unloadLibs_f(CONTROLLERS_S *obj)
+enum controllers_error_e unloadLibs_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-
-    if (pData->nbLibs == 0) {
+    if (obj->nbLibs == 0) {
         goto exit;
     }
 
-    Logd("Unload \"%u\" controller(s)", pData->nbLibs);
+    Logd("Unload \"%u\" controller(s)", obj->nbLibs);
 
-    CONTROLLERS_LIB_S *lib;
+    struct controllers_lib_s *lib;
     uint8_t index;
-    for (index = 0; index < pData->nbLibs; ++index) {
-        lib = &pData->libs[index];
+    for (index = 0; index < obj->nbLibs; ++index) {
+        lib = &obj->libs[index];
 
         lib->uninit(&lib->obj);
         lib->obj = NULL;
 
-        lib->init      = NULL;
-        lib->uninit    = NULL;
-        lib->onCommand = NULL;
-        lib->onEvent   = NULL;
-        lib->pData     = NULL;
+        lib->init        = NULL;
+        lib->uninit      = NULL;
+        lib->onCommandCb = NULL;
+        lib->onEventCb   = NULL;
+        lib->pData       = NULL;
 
         if (lib->handle) {
             dlclose(lib->handle);
@@ -423,25 +426,25 @@ CONTROLLERS_ERROR_E unloadLibs_f(CONTROLLERS_S *obj)
         }
     }
 
-    free(pData->libs);
-    pData->libs = NULL;
+    free(obj->libs);
+    obj->libs = NULL;
 
 exit:
     return CONTROLLERS_ERROR_NONE;
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ///////////////////////////// PRIVATE FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static void taskFct_f(TASK_PARAMS_S *params)
+static void taskFct_f(struct task_params_s *params)
 {
     assert(params && params->fctData);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(params->fctData);
-    CONTROLLERS_TASK_S *libsTask      = &pData->libsTask;
-    LIST_S *libsList                  = libsTask->list;
-    LIBRARIES_LIST_ELEMENT_S *element = NULL;
+    struct controllers_s *controllersObj     = (struct controllers_s*)(params->fctData);
+    struct controllers_task_s *libsTask      = &controllersObj->tasksMngt[CONTROLLERS_TASK_LIBS].task;
+    struct list_s *libsList                  = libsTask->list;
+    struct libraries_list_element_s *element = NULL;
 
     if (libsTask->quit) {
         return;
@@ -465,20 +468,20 @@ static void taskFct_f(TASK_PARAMS_S *params)
 
     (void)libsList->unlock(libsList);
 
-    CONTROLLER_LIBRARY_S *library = element->library;
-    CONTROLLERS_LIB_S *lib        = NULL;
+    struct controller_library_s *library = element->library;
+    struct controllers_lib_s *lib        = NULL;
 
     uint8_t i;
-    for (i = 0; i < pData->nbLibs; ++i) {
-        lib = &pData->libs[i];
+    for (i = 0; i < controllersObj->nbLibs; ++i) {
+        lib = &controllersObj->libs[i];
         if (strstr(lib->path, library->name)) {
             Logd("\"%s\" found", library->name);
-            lib->onCommand(lib->obj, library->data);
+            lib->onCommandCb(lib->obj, library->data);
             break;
         }
     }
 
-    if (i == pData->nbLibs) {
+    if (i == controllersObj->nbLibs) {
         Loge("\"%s\" not found", library->name);
     }
 
@@ -495,28 +498,32 @@ lockExit:
     sem_post(&libsTask->sem); // Force retry
 }
 
-static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData)
+/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     assert(obj && elementToCheck && userData);
 
-    LIBRARIES_LIST_ELEMENT_S *element = (LIBRARIES_LIST_ELEMENT_S*)elementToCheck;
-    time_t secondsOfElementToRemove   = *((time_t*)userData);
+    struct libraries_list_element_s *element = (struct libraries_list_element_s*)elementToCheck;
+    time_t secondsOfElementToRemove          = *((time_t*)userData);
 
     return (element->seconds == secondsOfElementToRemove);
 }
 
-static void releaseCb(LIST_S *obj, void *element)
+static void releaseCb(struct list_s *obj, void *element)
 {
     assert(obj && element);
 
-    LIBRARIES_LIST_ELEMENT_S *elementToRemove = (LIBRARIES_LIST_ELEMENT_S*)element;
-    CONTROLLER_LIBRARY_S *library             = elementToRemove->library;
+    struct libraries_list_element_s *elementToRemove = (struct libraries_list_element_s*)element;
 
-    if (library->release) {
-        library->release((void*)library);
+    if (elementToRemove->actionDoneCb) {
+        elementToRemove->actionDoneCb(elementToRemove->library);
     }
 
-    elementToRemove->library = NULL;
+    elementToRemove->library      = NULL;
+    elementToRemove->actionDoneCb = NULL;
 
     free(elementToRemove);
     elementToRemove = NULL;

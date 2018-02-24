@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Core.h
+* \file Core.h
 * \author Boubacar DIENE
 */
 
@@ -32,41 +32,47 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Common.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum core_error_e;
+
+struct core_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum CORE_ERROR_E CORE_ERROR_E;
+typedef enum core_error_e (*core_load_all_params_f)(struct core_s *obj);
+typedef enum core_error_e (*core_unload_all_params_f)(struct core_s *obj);
 
-typedef struct CORE_S     CORE_S;
+typedef enum core_error_e (*core_load_graphics_params_f)(struct core_s *obj);
+typedef enum core_error_e (*core_unload_graphics_params_f)(struct core_s *obj);
 
-typedef CORE_ERROR_E (*CORE_LOAD_ALL_PARAMS_F  )(CORE_S *obj);
-typedef CORE_ERROR_E (*CORE_UNLOAD_ALL_PARAMS_F)(CORE_S *obj);
+typedef enum core_error_e (*core_load_videos_params_f)(struct core_s *obj);
+typedef enum core_error_e (*core_unload_videos_params_f)(struct core_s *obj);
 
-typedef CORE_ERROR_E (*CORE_LOAD_GRAPHICS_PARAMS_F  )(CORE_S *obj);
-typedef CORE_ERROR_E (*CORE_UNLOAD_GRAPHICS_PARAMS_F)(CORE_S *obj);
+typedef enum core_error_e (*core_load_servers_params_f)(struct core_s *obj);
+typedef enum core_error_e (*core_unload_servers_params_f)(struct core_s *obj);
 
-typedef CORE_ERROR_E (*CORE_LOAD_VIDEOS_PARAMS_F  )(CORE_S *obj);
-typedef CORE_ERROR_E (*CORE_UNLOAD_VIDEOS_PARAMS_F)(CORE_S *obj);
+typedef enum core_error_e (*core_load_clients_params_f)(struct core_s *obj);
+typedef enum core_error_e (*core_unload_clients_params_f)(struct core_s *obj);
 
-typedef CORE_ERROR_E (*CORE_LOAD_SERVERS_PARAMS_F  )(CORE_S *obj);
-typedef CORE_ERROR_E (*CORE_UNLOAD_SERVERS_PARAMS_F)(CORE_S *obj);
+typedef enum core_error_e (*core_keep_app_running_f)(struct core_s *obj,
+                                                     enum keep_alive_method_e method,
+                                                     uint32_t timeout_s);
 
-typedef CORE_ERROR_E (*CORE_LOAD_CLIENTS_PARAMS_F  )(CORE_S *obj);
-typedef CORE_ERROR_E (*CORE_UNLOAD_CLIENTS_PARAMS_F)(CORE_S *obj);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef CORE_ERROR_E (*CORE_KEEP_APP_RUNNING_F)(CORE_S *obj, KEEP_ALIVE_METHOD_E method, uint32_t timeout_s);
-
-enum CORE_ERROR_E {
+enum core_error_e {
     CORE_ERROR_NONE,
     CORE_ERROR_INIT,
     CORE_ERROR_UNINIT,
@@ -75,33 +81,37 @@ enum CORE_ERROR_E {
     CORE_ERROR_KEEP_ALIVE
 };
 
-struct CORE_S {
-    CORE_LOAD_ALL_PARAMS_F        loadAllParams;
-    CORE_UNLOAD_ALL_PARAMS_F      unloadAllParams;
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+struct core_s {
+    core_load_all_params_f        loadAllParams;
+    core_unload_all_params_f      unloadAllParams;
     
-    CORE_LOAD_GRAPHICS_PARAMS_F   loadGraphicsParams;
-    CORE_UNLOAD_GRAPHICS_PARAMS_F unloadGraphicsParams;
+    core_load_graphics_params_f   loadGraphicsParams;
+    core_unload_graphics_params_f unloadGraphicsParams;
     
-    CORE_LOAD_VIDEOS_PARAMS_F     loadVideosParams;
-    CORE_UNLOAD_VIDEOS_PARAMS_F   unloadVideosParams;
+    core_load_videos_params_f     loadVideosParams;
+    core_unload_videos_params_f   unloadVideosParams;
     
-    CORE_LOAD_SERVERS_PARAMS_F    loadServersParams;
-    CORE_UNLOAD_SERVERS_PARAMS_F  unloadServersParams;
+    core_load_servers_params_f    loadServersParams;
+    core_unload_servers_params_f  unloadServersParams;
     
-    CORE_LOAD_CLIENTS_PARAMS_F    loadClientsParams;
-    CORE_UNLOAD_CLIENTS_PARAMS_F  unloadClientsParams;
+    core_load_clients_params_f    loadClientsParams;
+    core_unload_clients_params_f  unloadClientsParams;
     
-    CORE_KEEP_APP_RUNNING_F       keepAppRunning;
+    core_keep_app_running_f       keepAppRunning;
     
-    void                          *pData;
+    void *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-CORE_ERROR_E Core_Init  (CORE_S **obj, CONTEXT_S *ctx);
-CORE_ERROR_E Core_UnInit(CORE_S **obj);
+enum core_error_e Core_Init(struct core_s **obj, struct context_s *ctx);
+enum core_error_e Core_UnInit(struct core_s **obj);
 
 #ifdef __cplusplus
 }

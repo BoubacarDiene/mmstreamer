@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Parser.h
+* \file Parser.h
 * \author Boubacar DIENE
 */
 
@@ -32,41 +32,52 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "utils/Common.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum parser_error_e;
+enum parser_encoding_e;
+enum parser_attr_type_e;
+
+struct parser_tags_handler_s;
+struct parser_attr_handler_s;
+struct parser_params_s;
+struct parser_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum PARSER_ERROR_E          PARSER_ERROR_E;
-typedef enum PARSER_ENCODING_E       PARSER_ENCODING_E;
-typedef enum PARSER_ATTR_TYPE_E      PARSER_ATTR_TYPE_E;
+typedef void (*parser_on_start_cb)(void *userData, const char **attrs);
+typedef void (*parser_on_end_cb)(void *userData);
+typedef void (*parser_on_data_cb)(void *userData, const char *value, int32_t len);
+typedef void (*parser_on_error_cb)(void *userData, int32_t errorCode, const char *errorStr);
 
-typedef struct PARSER_TAGS_HANDLER_S PARSER_TAGS_HANDLER_S;
-typedef struct PARSER_ATTR_HANDLER_S PARSER_ATTR_HANDLER_S;
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef struct PARSER_PARAMS_S       PARSER_PARAMS_S;
-typedef struct PARSER_S              PARSER_S;
+typedef enum parser_error_e (*parser_parse_f)(struct parser_s *obj,
+                                              struct parser_params_s *params);
+typedef enum parser_error_e (*parser_get_attributes_f)(struct parser_s *obj,
+                                                       struct parser_attr_handler_s *attrHandlers,
+                                                       const char **attrs);
+typedef enum parser_error_e (*parser_get_scalar_f)(struct parser_s *obj, void *attrValueOut,
+                                                   const char *attrValueIn);
+typedef enum parser_error_e (*parser_get_vector_f)(struct parser_s *obj, void **attrValueOut,
+                                                   const char *attrValueIn);
 
-typedef void (*ON_PARSER_START_CB)(void *userData, const char **attrs);
-typedef void (*ON_PARSER_END_CB  )(void *userData);
-typedef void (*ON_PARSER_DATA_CB )(void *userData, const char *value, int32_t len);
-typedef void (*ON_PARSER_ERROR_CB)(void *userData, int32_t errorCode, const char *errorStr);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef PARSER_ERROR_E (*PARSER_PARSE_F           )(PARSER_S *obj, PARSER_PARAMS_S *params);
-typedef PARSER_ERROR_E (*PARSER_GET_ATTRIBUTES_F  )(PARSER_S *obj, PARSER_ATTR_HANDLER_S *attrHandlers, const char **attrs);
-
-typedef PARSER_ERROR_E (*PARSER_GET_SCALAR_F)(PARSER_S *obj, void *attrValueOut, const char *attrValueIn);
-typedef PARSER_ERROR_E (*PARSER_GET_VECTOR_F)(PARSER_S *obj, void **attrValueOut, const char *attrValueIn);
-
-enum PARSER_ERROR_E {
+enum parser_error_e {
     PARSER_ERROR_NONE,
     PARSER_ERROR_INIT,
     PARSER_ERROR_UNINIT,
@@ -75,30 +86,30 @@ enum PARSER_ERROR_E {
     PARSER_ERROR_FILE
 };
 
-enum PARSER_ENCODING_E {
+enum parser_encoding_e {
     PARSER_ENCODING_US_ASCII,
     PARSER_ENCODING_UTF_8,
     PARSER_ENCODING_UTF_16,
     PARSER_ENCODING_ISO_8859_1
 };
 
-enum PARSER_ATTR_TYPE_E {
+enum parser_attr_type_e {
     PARSER_ATTR_TYPE_NONE,
     PARSER_ATTR_TYPE_SCALAR,
     PARSER_ATTR_TYPE_VECTOR
 };
 
-struct PARSER_TAGS_HANDLER_S {
-    char               *tagName;
+struct parser_tags_handler_s {
+    char *tagName;
     
-    ON_PARSER_START_CB onStartCb;
-    ON_PARSER_END_CB   onEndCb;
-    ON_PARSER_DATA_CB  onDataCb;
+    parser_on_start_cb onStartCb;
+    parser_on_end_cb   onEndCb;
+    parser_on_data_cb  onDataCb;
 };
 
-struct PARSER_ATTR_HANDLER_S {
+struct parser_attr_handler_s {
     char                    *attrName;
-    PARSER_ATTR_TYPE_E      attrType;
+    enum parser_attr_type_e attrType;
     
     union {
         void                *scalar;
@@ -106,50 +117,52 @@ struct PARSER_ATTR_HANDLER_S {
     } attrValue;
     
     union {
-        PARSER_GET_SCALAR_F scalar;
-        PARSER_GET_VECTOR_F vector;
+        parser_get_scalar_f scalar;
+        parser_get_vector_f vector;
     } attrGetter;
 };
 
-struct PARSER_PARAMS_S {
-    char                  path[MAX_PATH_SIZE];
-    
-    PARSER_ENCODING_E     encoding;
-    
-    PARSER_TAGS_HANDLER_S *tagsHandlers;
-    
-    ON_PARSER_ERROR_CB    onErrorCb;
-    
-    void                  *userData;
-};
+struct parser_params_s {
+    char                         path[MAX_PATH_SIZE];
+    enum parser_encoding_e       encoding;
+    struct parser_tags_handler_s *tagsHandlers;
 
-struct PARSER_S {
-    PARSER_PARSE_F          parse;
-    PARSER_GET_ATTRIBUTES_F getAttributes;
+    parser_on_error_cb           onErrorCb;
     
-    PARSER_GET_VECTOR_F     getString;
-
-    PARSER_GET_SCALAR_F     getInt8;
-    PARSER_GET_SCALAR_F     getUint8;
-    
-    PARSER_GET_SCALAR_F     getInt16;
-    PARSER_GET_SCALAR_F     getUint16;
-    
-    PARSER_GET_SCALAR_F     getInt32;
-    PARSER_GET_SCALAR_F     getUint32;
-    
-    PARSER_GET_SCALAR_F     getInt64;
-    PARSER_GET_SCALAR_F     getUint64;
-    
-    void                    *pData;
+    void                         *userData;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-PARSER_ERROR_E Parser_Init  (PARSER_S **obj);
-PARSER_ERROR_E Parser_UnInit(PARSER_S **obj);
+struct parser_s {
+    parser_parse_f          parse;
+    parser_get_attributes_f getAttributes;
+    
+    parser_get_vector_f     getString;
+
+    parser_get_scalar_f     getInt8;
+    parser_get_scalar_f     getUint8;
+
+    parser_get_scalar_f     getInt16;
+    parser_get_scalar_f     getUint16;
+
+    parser_get_scalar_f     getInt32;
+    parser_get_scalar_f     getUint32;
+
+    parser_get_scalar_f     getInt64;
+    parser_get_scalar_f     getUint64;
+    
+    void *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum parser_error_e Parser_Init(struct parser_s **obj);
+enum parser_error_e Parser_UnInit(struct parser_s **obj);
 
 #ifdef __cplusplus
 }

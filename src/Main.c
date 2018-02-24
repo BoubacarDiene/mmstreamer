@@ -20,8 +20,8 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Main.c
-* \brief  Main entry point of the application
+* \file Main.c
+* \brief Main entry point of the application
 * \author Boubacar DIENE
 *
 * This file is in charge of intializing all modules. To do so, it first parses the main config
@@ -30,7 +30,7 @@
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <getopt.h>
@@ -44,7 +44,7 @@
 #include "core/XmlDefines.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -58,40 +58,40 @@
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct OPTIONS_S {
+struct options_s {
     char    *mainXml;
     int32_t priority;
-} OPTIONS_S;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-static void onGeneralCb (void *userData, const char **attrs);
-static void onItemCb    (void *userData, const char **attrs);
+static void onGeneralCb(void *userData, const char **attrs);
+static void onItemCb(void *userData, const char **attrs);
 static void onGraphicsCb(void *userData, const char **attrs);
-static void onVideosCb  (void *userData, const char **attrs);
-static void onServersCb (void *userData, const char **attrs);
-static void onClientsCb (void *userData, const char **attrs);
+static void onVideosCb(void *userData, const char **attrs);
+static void onServersCb(void *userData, const char **attrs);
+static void onClientsCb(void *userData, const char **attrs);
 
 static void onControllersStartCb(void *userData, const char **attrs);
-static void onControllersEndCb  (void *userData);
+static void onControllersEndCb(void *userData);
 
 static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 
-static void usage       (const char * const program);
-static void parseOptions(int argc, char **argv, OPTIONS_S *out);
-static void setPriority (OPTIONS_S *in);
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static void usage(const char * const program);
+static void parseOptions(int argc, char **argv, struct options_s *out);
+static void setPriority(struct options_s *in);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           MAIN                                               */
+/* /////////////////////////////////////////// MAIN /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
@@ -99,21 +99,22 @@ static void setPriority (OPTIONS_S *in);
  */
 int main(int argc, char **argv)
 {
-    int32_t ret       = EXIT_FAILURE;
-    OPTIONS_S options = {
-                            .mainXml  = MAIN_XML_FILE,
-                            .priority = 0
-                        };
+    int32_t ret = EXIT_FAILURE;
+
+    struct options_s options = {
+        .mainXml  = MAIN_XML_FILE,
+        .priority = 0
+    };
 
     parseOptions(argc, argv, &options);
     setPriority(&options);
 
-    CONTEXT_S *mCtx;
-    assert((mCtx = calloc(1, sizeof(CONTEXT_S))));
+    struct context_s *mCtx;
+    assert((mCtx = calloc(1, sizeof(struct context_s))));
     
-    PARAMS_S *params   = &mCtx->params;
-    MODULES_S *modules = &mCtx->modules;
-    INPUT_S *input     = &mCtx->input;
+    struct params_s *params   = &mCtx->params;
+    struct modules_s *modules = &mCtx->modules;
+    struct input_s *input     = &mCtx->input;
     
     if (Parser_Init(&mCtx->parserObj) != PARSER_ERROR_NONE) {
         Loge("Parser_Init() failed");
@@ -122,18 +123,18 @@ int main(int argc, char **argv)
     
     Logd("Parsing main config file : \"%s\"", options.mainXml);
     
-    PARSER_TAGS_HANDLER_S tagsHandlers[] = {
-    	{ XML_TAG_GENERAL,        onGeneralCb,             NULL,                 NULL },
-    	{ XML_TAG_CONTROLLERS,    onControllersStartCb,    onControllersEndCb,   NULL },
-    	{ XML_TAG_ITEM,           onItemCb,                NULL,                 NULL },
-    	{ XML_TAG_GRAPHICS,       onGraphicsCb,            NULL,                 NULL },
-    	{ XML_TAG_VIDEOS,         onVideosCb,              NULL,                 NULL },
-    	{ XML_TAG_SERVERS,        onServersCb,             NULL,                 NULL },
-    	{ XML_TAG_CLIENTS,        onClientsCb,             NULL,                 NULL },
-    	{ NULL,                   NULL,                    NULL,                 NULL }
+    struct parser_tags_handler_s tagsHandlers[] = {
+    	{ XML_TAG_GENERAL,      onGeneralCb,           NULL,                NULL },
+    	{ XML_TAG_CONTROLLERS,  onControllersStartCb,  onControllersEndCb,  NULL },
+    	{ XML_TAG_ITEM,         onItemCb,              NULL,                NULL },
+    	{ XML_TAG_GRAPHICS,     onGraphicsCb,          NULL,                NULL },
+    	{ XML_TAG_VIDEOS,       onVideosCb,            NULL,                NULL },
+    	{ XML_TAG_SERVERS,      onServersCb,           NULL,                NULL },
+    	{ XML_TAG_CLIENTS,      onClientsCb,           NULL,                NULL },
+    	{ NULL,                 NULL,                  NULL,                NULL }
     };
     
-    PARSER_PARAMS_S parserParams;
+    struct parser_params_s parserParams;
     strncpy(parserParams.path, options.mainXml, sizeof(parserParams.path));
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
@@ -171,7 +172,7 @@ int main(int argc, char **argv)
         goto clientInitExit;
     }
     
-    CORE_S *coreObj = NULL;
+    struct core_s *coreObj = NULL;
     if (Core_Init(&coreObj, mCtx) != CORE_ERROR_NONE) {
         Loge("Core_Init() failed");
         goto coreInitExit;
@@ -180,7 +181,8 @@ int main(int argc, char **argv)
     Logd("Starting modules");
 
     uint32_t index;
-    GRAPHICS_INFOS_S *graphicsInfos = &params->graphicsInfos;
+    struct graphics_infos_s *graphicsInfos = &params->graphicsInfos;
+    enum graphics_error_e gfxError         = GRAPHICS_ERROR_NONE;
     
     if (modules->graphicsObj) {
         Logd("Loading graphics params");
@@ -193,17 +195,20 @@ int main(int argc, char **argv)
 
         if (input->graphicsConfig.autoStart) {
             Logd("Creating graphics drawer");
-            if (modules->graphicsObj->createDrawer(modules->graphicsObj, &graphicsInfos->graphicsParams) != GRAPHICS_ERROR_NONE) {
+            gfxError = modules->graphicsObj->createDrawer(modules->graphicsObj,
+                                                          &graphicsInfos->graphicsParams);
+            if (gfxError != GRAPHICS_ERROR_NONE) {
                 Loge("createDrawer() failed");
                 goto createDrawerExit;
             }
 
-            /* Drawer is created so graphics module's state must be updated here so as to destroy
-             * drawer when stopping the module */
+            /* Drawer is created so graphics module's state must be updated here so as to
+             * destroy drawer when stopping the module */
             graphicsInfos->state = MODULE_STATE_STARTED;
 
             Logd("Displaying %u graphics elements", graphicsInfos->nbGfxElements);
-            if (modules->graphicsObj->drawAllElements(modules->graphicsObj) != GRAPHICS_ERROR_NONE) {
+            gfxError = modules->graphicsObj->drawAllElements(modules->graphicsObj);
+            if (gfxError != GRAPHICS_ERROR_NONE) {
                 Loge("Failed to draw all elements");
                 goto destroyDrawerExit;
             }
@@ -211,12 +216,12 @@ int main(int argc, char **argv)
     }
 
     uint8_t videoIndex;
-
-    VIDEO_AREA_S videoArea        = { 0 };
-    VIDEOS_INFOS_S *videosInfos   = NULL;
-    VIDEO_DEVICE_S **videoDevices = NULL;
-    VIDEO_DEVICE_S *videoDevice   = NULL;
-    uint8_t nbDevices             = 0;
+    struct video_area_s videoArea        = {0};
+    struct videos_infos_s *videosInfos   = NULL;
+    struct video_device_s **videoDevices = NULL;
+    struct video_device_s *videoDevice   = NULL;
+    uint8_t nbDevices                    = 0;
+    enum video_error_e videoError        = VIDEO_ERROR_NONE;
     
     if (modules->videoObj) {
         Logd("Loading video params");
@@ -235,23 +240,33 @@ int main(int argc, char **argv)
 
             if (input->videosConfig.autoStart) {
                 Logd("Starting video capture on device \"%s\"", videoDevice->videoParams.name);
-                if (modules->videoObj->startDeviceCapture(modules->videoObj, &videoDevice->videoParams) != VIDEO_ERROR_NONE) {
+                videoError = modules->videoObj->startDeviceCapture(modules->videoObj,
+                                                                   &videoDevice->videoParams);
+                if (videoError != VIDEO_ERROR_NONE) {
                     Loge("startDeviceCapture() failed");
                     goto startDeviceCaptureExit;
                 }
 
-                (void)modules->videoObj->getFinalVideoArea(modules->videoObj, &videoDevice->videoParams, &videoArea);
-                Logd("Device \"%s\" : width = %u - height = %u", videoDevice->videoParams.name, videoArea.width, videoArea.height);
-
                 videoDevice->state = MODULE_STATE_STARTED;
+
+                videoError = modules->videoObj->getFinalVideoArea(modules->videoObj,
+                                                                  &videoDevice->videoParams,
+                                                                  &videoArea);
+                if (videoError != VIDEO_ERROR_NONE) {
+                    Loge("startDeviceCapture() failed");
+                    goto startDeviceCaptureExit;
+                }
+
+                Logd("Device \"%s\" : width = %u - height = %u",
+                        videoDevice->videoParams.name, videoArea.width, videoArea.height);
             }
         }
     }
 
-    size_t maxBufferSize          = 0;
-    uint8_t nbServers             = 0;
-    SERVER_INFOS_S *serverInfos   = NULL;
-    SERVER_PARAMS_S *serverParams = NULL;
+    size_t maxBufferSize                 = 0;
+    uint8_t nbServers                    = 0;
+    struct server_infos_s *serverInfos   = NULL;
+    struct server_params_s *serverParams = NULL;
 
     if (modules->serverObj) {
         Logd("Loading servers params");
@@ -273,10 +288,13 @@ int main(int argc, char **argv)
             if (serverParams->maxBufferSize == (size_t)-1) {
                 for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
                     videoDevice = videoDevices[videoIndex];
-                    if (!videoDevice->serverDest || (strcmp(videoDevice->serverDest, serverParams->name) != 0)) {
+                    if (!videoDevice->serverDest
+                        || (strcmp(videoDevice->serverDest, serverParams->name) != 0)) {
                         continue;
                     }
-                    (void)modules->videoObj->getMaxBufferSize(modules->videoObj, &videoDevice->videoParams, &maxBufferSize);
+                    (void)modules->videoObj->getMaxBufferSize(modules->videoObj,
+                                                              &videoDevice->videoParams,
+                                                              &maxBufferSize);
                     break;
                 }
 
@@ -284,10 +302,12 @@ int main(int argc, char **argv)
                 maxBufferSize = 0;
             }
 
-            Logd("Server \"%s\"'s max buffer size set to %lu bytes", serverParams->name, serverParams->maxBufferSize);
+            Logd("Server \"%s\"'s max buffer size set to %lu bytes",
+                    serverParams->name, serverParams->maxBufferSize);
 
             if (input->serversConfig.autoStart) {
-                if (modules->serverObj->start(modules->serverObj, serverParams) != SERVER_ERROR_NONE) {
+                if (modules->serverObj->start(modules->serverObj,
+                                              serverParams) != SERVER_ERROR_NONE) {
                     Loge("Failed to start server %s", serverParams->name);
                     goto stopServersExit;
                 }
@@ -296,9 +316,9 @@ int main(int argc, char **argv)
         }
     }
 
-    uint8_t nbClients             = 0;
-    CLIENT_INFOS_S *clientInfos   = NULL;
-    CLIENT_PARAMS_S *clientParams = NULL;
+    uint8_t nbClients                    = 0;
+    struct client_infos_s *clientInfos   = NULL;
+    struct client_params_s *clientParams = NULL;
 
     if (modules->clientObj) {
         Logd("Loading clients params");
@@ -315,11 +335,14 @@ int main(int argc, char **argv)
             clientParams       = &clientInfos->clientParams;
             clientInfos->state = MODULE_STATE_STOPPED;
 
-            clientParams->maxBufferSize = (input->maxBufferSize <= 0 ? MAX_BUFFER_SIZE : (size_t)input->maxBufferSize);
-            Logd("Client \"%s\"'s max buffer size set to %lu bytes", clientParams->name, clientParams->maxBufferSize);
+            clientParams->maxBufferSize = (input->maxBufferSize <= 0 ? MAX_BUFFER_SIZE
+                                                                     : (size_t)input->maxBufferSize);
+            Logd("Client \"%s\"'s max buffer size set to %lu bytes",
+                    clientParams->name, clientParams->maxBufferSize);
 
             if (input->clientsConfig.autoStart) {
-                if (modules->clientObj->start(modules->clientObj, clientParams) != CLIENT_ERROR_NONE) {
+                if (modules->clientObj->start(modules->clientObj,
+                                              clientParams) != CLIENT_ERROR_NONE) {
                     Loge("Failed to start client %s", clientParams->name);
                     //goto stopClientsExit;
                 }
@@ -330,8 +353,8 @@ int main(int argc, char **argv)
         }
     }
 
-    uint8_t nbVideoListeners           = 0;
-    VIDEO_LISTENER_S  **videoListeners = NULL;
+    uint8_t nbVideoListeners                  = 0;
+    struct video_listener_s  **videoListeners = NULL;
 
     if (modules->videoObj && input->videosConfig.autoStart) {
         for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
@@ -339,7 +362,8 @@ int main(int argc, char **argv)
             nbVideoListeners = videoDevice->nbVideoListeners;
             videoListeners   = videoDevice->videoListeners;
 
-            Logd("Registering %u video listeners on device \"%s\"", nbVideoListeners, videoDevice->videoParams.name);
+            Logd("Registering %u video listeners on device \"%s\"",
+                    nbVideoListeners, videoDevice->videoParams.name);
             for (index = 0; index < nbVideoListeners; index++) {
                 if (modules->videoObj->registerListener(modules->videoObj,
                                                         &videoDevice->videoParams,
@@ -351,7 +375,8 @@ int main(int argc, char **argv)
         }
     }
     
-    if (coreObj->keepAppRunning(coreObj, input->keepAliveMethod, input->timeout_s) != CORE_ERROR_NONE) {
+    if (coreObj->keepAppRunning(coreObj, input->keepAliveMethod,
+                                input->timeout_s) != CORE_ERROR_NONE) {
         Loge("Error occurred trying to keep app running");
     }
     else {
@@ -367,12 +392,16 @@ registerVideoListenersExit:
             nbVideoListeners = videoDevice->nbVideoListeners;
             videoListeners   = videoDevice->videoListeners;
 
-            Logd("State of \"%s\" at exit : %u", videoDevice->videoParams.name, videoDevice->state);
+            Logd("State of \"%s\" at exit : %u",
+                    videoDevice->videoParams.name, videoDevice->state);
 
             if (videoDevice->state == MODULE_STATE_STARTED) {
-                Logd("Unregistering %u video listeners on device \"%s\"", nbVideoListeners, videoDevice->videoParams.name);
+                Logd("Unregistering %u video listeners on device \"%s\"",
+                        nbVideoListeners, videoDevice->videoParams.name);
                 for (index = 0; index < nbVideoListeners; index++) {
-                    (void)modules->videoObj->unregisterListener(modules->videoObj, &videoDevice->videoParams, videoListeners[index]);
+                    (void)modules->videoObj->unregisterListener(modules->videoObj,
+                                                                &videoDevice->videoParams,
+                                                                videoListeners[index]);
                 }
             }
         }
@@ -425,11 +454,13 @@ startDeviceCaptureExit:
         for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
             videoDevice = videoDevices[videoIndex];
 
-            Logd("State of \"%s\" at exit : %u", videoDevice->videoParams.name, videoDevice->state);
+            Logd("State of \"%s\" at exit : %u",
+                    videoDevice->videoParams.name, videoDevice->state);
 
             if (videoDevice->state == MODULE_STATE_STARTED) {
                 Logd("Stopping video capture on device \"%s\"", videoDevice->videoParams.name);
-                (void)modules->videoObj->stopDeviceCapture(modules->videoObj, &videoDevice->videoParams);
+                (void)modules->videoObj->stopDeviceCapture(modules->videoObj,
+                                                           &videoDevice->videoParams);
             }
 
             videoDevice->state = MODULE_STATE_STOPPED;
@@ -442,7 +473,7 @@ startDeviceCaptureExit:
 loadVideosParamsExit:
 destroyDrawerExit:
     if (modules->graphicsObj) {
-        Logd("Destroying elements and drawer - state of graphics module at exit : %u", graphicsInfos->state);
+        Logd("Destroying elements and drawer - graphics module'state : %u", graphicsInfos->state);
         if (graphicsInfos->state == MODULE_STATE_STARTED) {
             (void)modules->graphicsObj->destroyDrawer(modules->graphicsObj);
         }
@@ -565,7 +596,7 @@ parserInitExit:
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           CALLBACKS                                          */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
@@ -575,11 +606,11 @@ static void onGeneralCb(void *userData, const char **attrs)
 {
     assert(userData);
 	
-    CONTEXT_S *ctx      = (CONTEXT_S*)userData;
-    PARSER_S *parserObj = ctx->parserObj;
-    INPUT_S   *input    = &ctx->input;
+    struct context_s *ctx      = (struct context_s*)userData;
+    struct parser_s *parserObj = ctx->parserObj;
+    struct input_s *input      = &ctx->input;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_APP_DATA_DIR,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -640,11 +671,11 @@ static void onControllersStartCb(void *userData, const char **attrs)
 
     Logd("Start parsing Controllers");
 
-    CONTEXT_S *ctx      = (CONTEXT_S*)userData;
-    PARSER_S *parserObj = ctx->parserObj;
-    INPUT_S   *input    = &ctx->input;
+    struct context_s *ctx      = (struct context_s*)userData;
+    struct parser_s *parserObj = ctx->parserObj;
+    struct input_s *input      = &ctx->input;
 
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
         {
             .attrName          = XML_ATTR_PRIORITY,
             .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -683,20 +714,20 @@ static void onItemCb(void *userData, const char **attrs)
 {
     assert(userData);
 
-    CONTEXT_S *ctx      = (CONTEXT_S*)userData;
-    PARSER_S *parserObj = ctx->parserObj;
-    INPUT_S   *input    = &ctx->input;
+    struct context_s *ctx      = (struct context_s*)userData;
+    struct parser_s *parserObj = ctx->parserObj;
+    struct input_s *input      = &ctx->input;
 
     Logd("Adding control library %u", (input->nbCtrlLibs + 1));
 
-    input->ctrlLibs = realloc(input->ctrlLibs, (input->nbCtrlLibs + 1) * sizeof(LIBRARY_S));
+    input->ctrlLibs = realloc(input->ctrlLibs, (input->nbCtrlLibs + 1) * sizeof(struct library_s));
     assert(input->ctrlLibs);
 
-    memset(&input->ctrlLibs[input->nbCtrlLibs], '\0', sizeof(LIBRARY_S));
+    memset(&input->ctrlLibs[input->nbCtrlLibs], '\0', sizeof(struct library_s));
 
-    LIBRARY_S *ctrlLib = &input->ctrlLibs[input->nbCtrlLibs];
+    struct library_s *ctrlLib = &input->ctrlLibs[input->nbCtrlLibs];
 
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
         {
             .attrName          = XML_ATTR_LIB_NAME,
             .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -769,11 +800,11 @@ static void onGraphicsCb(void *userData, const char **attrs)
 {
     assert(userData);
 
-    CONTEXT_S *ctx      = (CONTEXT_S*)userData;
-    PARSER_S *parserObj = ctx->parserObj;
-    INPUT_S   *input    = &ctx->input;
+    struct context_s *ctx      = (struct context_s*)userData;
+    struct parser_s *parserObj = ctx->parserObj;
+    struct input_s *input      = &ctx->input;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_ENABLE,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -812,11 +843,11 @@ static void onVideosCb(void *userData, const char **attrs)
 {
     assert(userData);
 
-    CONTEXT_S *ctx      = (CONTEXT_S*)userData;
-    PARSER_S *parserObj = ctx->parserObj;
-    INPUT_S   *input    = &ctx->input;
+    struct context_s *ctx      = (struct context_s*)userData;
+    struct parser_s *parserObj = ctx->parserObj;
+    struct input_s *input      = &ctx->input;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_ENABLE,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -855,11 +886,11 @@ static void onServersCb(void *userData, const char **attrs)
 {
     assert(userData);
 
-    CONTEXT_S *ctx      = (CONTEXT_S*)userData;
-    PARSER_S *parserObj = ctx->parserObj;
-    INPUT_S   *input    = &ctx->input;
+    struct context_s *ctx      = (struct context_s*)userData;
+    struct parser_s *parserObj = ctx->parserObj;
+    struct input_s *input      = &ctx->input;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_ENABLE,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -898,11 +929,11 @@ static void onClientsCb(void *userData, const char **attrs)
 {
     assert(userData);
 
-    CONTEXT_S *ctx      = (CONTEXT_S*)userData;
-    PARSER_S *parserObj = ctx->parserObj;
-    INPUT_S   *input    = &ctx->input;
+    struct context_s *ctx      = (struct context_s*)userData;
+    struct parser_s *parserObj = ctx->parserObj;
+    struct input_s *input      = &ctx->input;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_ENABLE,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -945,7 +976,7 @@ static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                              MISC                                            */
+/* ///////////////////////////// PRIVATE FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 static void usage(const char * const program)
@@ -959,7 +990,7 @@ static void usage(const char * const program)
 #endif
 }
 
-static void parseOptions(int argc, char **argv, OPTIONS_S *out)
+static void parseOptions(int argc, char **argv, struct options_s *out)
 {
     int opt = 0;
 
@@ -995,7 +1026,7 @@ static void parseOptions(int argc, char **argv, OPTIONS_S *out)
     }
 }
 
-static void setPriority(OPTIONS_S *in)
+static void setPriority(struct options_s *in)
 {
 #ifdef _POSIX_PRIORITY_SCHEDULING
     if ((in->priority < sched_get_priority_min(SCHED_POLICY))

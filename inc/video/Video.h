@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Video.h
+* \file Video.h
 * \author Boubacar DIENE
 */
 
@@ -32,41 +32,59 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "utils/Common.h"
 #include "video/V4l2.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum video_error_e;
+enum video_await_mode_e;
+
+struct video_buffer_s;
+struct video_listener_s;
+struct video_area_s;
+struct video_params_s;
+struct video_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   VIDEO_ERROR_E      VIDEO_ERROR_E;
-typedef enum   VIDEO_AWAIT_MODE_E VIDEO_AWAIT_MODE_E;
+typedef void (*video_on_buffer_available_cb)(struct video_buffer_s *videoBuffer, void *userData);
 
-typedef struct VIDEO_LISTENER_S   VIDEO_LISTENER_S;
-typedef struct VIDEO_AREA_S       VIDEO_AREA_S;
-typedef struct VIDEO_BUFFER_S     VIDEO_BUFFER_S;
-typedef struct VIDEO_PARAMS_S     VIDEO_PARAMS_S;
-typedef struct VIDEO_S            VIDEO_S;
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef void (*ON_VIDEO_BUFFER_AVAILABLE_CB)(VIDEO_BUFFER_S *videoBuffer, void *userData);
+typedef enum video_error_e (*video_register_listener_f)(struct video_s *obj,
+                                                        struct video_params_s *params,
+                                                        struct video_listener_s *listener);
+typedef enum video_error_e (*video_unregister_listener_f)(struct video_s *obj,
+                                                          struct video_params_s *params,
+                                                          struct video_listener_s *listener);
 
-typedef VIDEO_ERROR_E (*VIDEO_REGISTER_LISTENER_F  )(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_LISTENER_S *listener);
-typedef VIDEO_ERROR_E (*VIDEO_UNREGISTER_LISTENER_F)(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_LISTENER_S *listener);
+typedef enum video_error_e (*video_get_final_area_f)(struct video_s *obj,
+                                                     struct video_params_s *params,
+                                                     struct video_area_s *videoArea);
+typedef enum video_error_e (*video_get_max_buffer_size_f)(struct video_s *obj,
+                                                          struct video_params_s *params,
+                                                          size_t *size);
 
-typedef VIDEO_ERROR_E (*VIDEO_GET_FINAL_VIDEO_AREA_F)(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_AREA_S *videoArea);
-typedef VIDEO_ERROR_E (*VIDEO_GET_MAX_BUFFER_SIZE_F )(VIDEO_S *obj, VIDEO_PARAMS_S *params, size_t *size);
+typedef enum video_error_e (*video_start_device_capture_f)(struct video_s *obj,
+                                                           struct video_params_s *params);
+typedef enum video_error_e (*video_stop_device_capture_f)(struct video_s *obj,
+                                                          struct video_params_s *params);
 
-typedef VIDEO_ERROR_E (*VIDEO_START_DEVICE_CAPTURE_F)(VIDEO_S *obj, VIDEO_PARAMS_S *params);
-typedef VIDEO_ERROR_E (*VIDEO_STOP_DEVICE_CAPTURE_F )(VIDEO_S *obj, VIDEO_PARAMS_S *params);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-enum VIDEO_ERROR_E {
+enum video_error_e {
     VIDEO_ERROR_NONE,
     VIDEO_ERROR_INIT,
     VIDEO_ERROR_UNINIT,
@@ -77,80 +95,83 @@ enum VIDEO_ERROR_E {
     VIDEO_ERROR_PARAMS
 };
 
-enum VIDEO_AWAIT_MODE_E {
+enum video_await_mode_e {
     VIDEO_AWAIT_MODE_BLOCKING,
     VIDEO_AWAIT_MODE_NON_BLOCKING
 };
 
-struct VIDEO_LISTENER_S {
-    char                         name[MAX_NAME_SIZE];
-    ON_VIDEO_BUFFER_AVAILABLE_CB onVideoBufferAvailableCb;
-    
-    void                         *userData;
-};
-
-struct VIDEO_AREA_S {
-    uint32_t left;
-    uint32_t top;
-    uint32_t width;
-    uint32_t height;
-};
-
-struct VIDEO_BUFFER_S {
+struct video_buffer_s {
     uint32_t index;
     uint32_t offset;
     void     *data;
     size_t   length;
 };
 
-struct VIDEO_PARAMS_S {
-    char                 name[MAX_NAME_SIZE];
+struct video_listener_s {
+    char                         name[MAX_NAME_SIZE];
+
+    video_on_buffer_available_cb onVideoBufferAvailableCb;
+    void                         *userData;
+};
+
+struct video_area_s {
+    uint32_t left;
+    uint32_t top;
+    uint32_t width;
+    uint32_t height;
+};
+
+struct video_params_s {
+    char                    name[MAX_NAME_SIZE];
 
     /* Open device */
-    char                 path[MAX_PATH_SIZE];
-    uint32_t             caps;
+    char                    path[MAX_PATH_SIZE];
+    uint32_t                caps;
     
     /* Configure device */
-    enum v4l2_buf_type   type;
-    uint32_t             pixelformat;
-    enum v4l2_colorspace colorspace;
+    enum v4l2_buf_type      type;
+    uint32_t                pixelformat;
+    enum v4l2_colorspace    colorspace;
     
-    PRIORITY_E           priority;
-    uint32_t             desiredFps;
+    enum priority_e         priority;
+    uint32_t                desiredFps;
     
-    VIDEO_AREA_S         captureArea;
-    VIDEO_AREA_S         croppingArea;
-    VIDEO_AREA_S         composingArea;
+    struct video_area_s     captureArea;
+    struct video_area_s     croppingArea;
+    struct video_area_s     composingArea;
     
     /* Request buffers */
-    uint32_t             count;
-    enum v4l2_memory     memory;
+    uint32_t                count;
+    enum v4l2_memory        memory;
     
     /* Await data */
-    VIDEO_AWAIT_MODE_E   awaitMode;
-};
-
-struct VIDEO_S {
-    VIDEO_REGISTER_LISTENER_F    registerListener;
-    VIDEO_UNREGISTER_LISTENER_F  unregisterListener;
-    
-    VIDEO_GET_FINAL_VIDEO_AREA_F getFinalVideoArea;
-    VIDEO_GET_MAX_BUFFER_SIZE_F  getMaxBufferSize;
-    
-    VIDEO_START_DEVICE_CAPTURE_F startDeviceCapture;
-    VIDEO_STOP_DEVICE_CAPTURE_F  stopDeviceCapture;
-    
-    VIDEO_BUFFER_S               buffer;
-    
-    void                         *pData;
+    enum video_await_mode_e awaitMode;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-VIDEO_ERROR_E Video_Init  (VIDEO_S **obj);
-VIDEO_ERROR_E Video_UnInit(VIDEO_S **obj);
+struct video_s {
+    video_register_listener_f    registerListener;
+    video_unregister_listener_f  unregisterListener;
+
+    video_get_final_area_f       getFinalVideoArea;
+    video_get_max_buffer_size_f  getMaxBufferSize;
+
+    video_start_device_capture_f startDeviceCapture;
+    video_stop_device_capture_f  stopDeviceCapture;
+
+    struct video_buffer_s buffer;
+    void                  *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum video_error_e Video_Init(struct video_s **obj);
+enum video_error_e Video_UnInit(struct video_s **obj);
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Drawer.h
+* \file Drawer.h
 * \author Boubacar DIENE
 */
 
@@ -32,40 +32,52 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "utils/Common.h"
 #include "graphics/GfxCommon.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum drawer_error_e;
+
+struct drawer_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   DRAWER_ERROR_E   DRAWER_ERROR_E;
+typedef enum drawer_error_e (*drawer_init_screen_f)(struct drawer_s *obj,
+                                                    struct gfx_screen_s *screenParams);
+typedef enum drawer_error_e (*drawer_uninit_screen_f)(struct drawer_s *obj);
 
-typedef struct DRAWER_S         DRAWER_S;
+typedef enum drawer_error_e (*drawer_draw_video_f)(struct drawer_s *obj, struct gfx_rect_s *rect,
+                                                   struct buffer_s *buffer);
+typedef enum drawer_error_e (*drawer_draw_image_f)(struct drawer_s *obj, struct gfx_rect_s *rect,
+                                                   struct gfx_image_s *image);
+typedef enum drawer_error_e (*drawer_draw_text_f)(struct drawer_s *obj, struct gfx_rect_s *rect,
+                                                  struct gfx_text_s *text);
 
-typedef DRAWER_ERROR_E (*DRAWER_INIT_SCREEN_F  )(DRAWER_S *obj, GFX_SCREEN_S *screenParams);
-typedef DRAWER_ERROR_E (*DRAWER_UNINIT_SCREEN_F)(DRAWER_S *obj);
+typedef enum drawer_error_e (*drawer_set_bgcolor_f)(struct drawer_s *obj, struct gfx_rect_s *rect,
+                                                    struct gfx_color_s *color);
 
-typedef DRAWER_ERROR_E (*DRAWER_DRAW_VIDEO_F)(DRAWER_S *obj, GFX_RECT_S *rect, BUFFER_S *buffer);
-typedef DRAWER_ERROR_E (*DRAWER_DRAW_IMAGE_F)(DRAWER_S *obj, GFX_RECT_S *rect, GFX_IMAGE_S *image);
-typedef DRAWER_ERROR_E (*DRAWER_DRAW_TEXT_F )(DRAWER_S *obj, GFX_RECT_S *rect, GFX_TEXT_S *text);
+typedef enum drawer_error_e (*drawer_save_buffer_f)(struct drawer_s *obj, struct buffer_s *buffer,
+                                                    struct gfx_image_s *inOut);
+typedef enum drawer_error_e (*drawer_save_screen_f)(struct drawer_s *obj,
+                                                    struct gfx_image_s *inOut);
 
-typedef DRAWER_ERROR_E (*DRAWER_SET_BGCOLOR_F)(DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S *color);
+typedef enum drawer_error_e (*drawer_get_event_f)(struct drawer_s *obj,
+                                                  struct gfx_event_s *gfxEvent);
+typedef enum drawer_error_e (*drawer_stop_awaiting_event_f)(struct drawer_s *obj);
 
-typedef DRAWER_ERROR_E (*DRAWER_SAVE_BUFFER_F)(DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
-typedef DRAWER_ERROR_E (*DRAWER_SAVE_SCREEN_F)(DRAWER_S *obj, GFX_IMAGE_S *inOut);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef DRAWER_ERROR_E (*DRAWER_GET_EVENT_F          )(DRAWER_S *obj, GFX_EVENT_S *gfxEvent);
-typedef DRAWER_ERROR_E (*DRAWER_STOP_AWAITING_EVENT_F)(DRAWER_S *obj);
-
-enum DRAWER_ERROR_E {
+enum drawer_error_e {
     DRAWER_ERROR_NONE,
     DRAWER_ERROR_INIT,
     DRAWER_ERROR_UNINIT,
@@ -76,31 +88,35 @@ enum DRAWER_ERROR_E {
     DRAWER_ERROR_SAVE
 };
 
-struct DRAWER_S {
-    DRAWER_INIT_SCREEN_F         initScreen;
-    DRAWER_UNINIT_SCREEN_F       unInitScreen;
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+struct drawer_s {
+    drawer_init_screen_f         initScreen;
+    drawer_uninit_screen_f       uninitScreen;
     
-    DRAWER_DRAW_VIDEO_F          drawVideo;
-    DRAWER_DRAW_IMAGE_F          drawImage;
-    DRAWER_DRAW_TEXT_F           drawText;
+    drawer_draw_video_f          drawVideo;
+    drawer_draw_image_f          drawImage;
+    drawer_draw_text_f           drawText;
     
-    DRAWER_SET_BGCOLOR_F         setBgColor;
+    drawer_set_bgcolor_f         setBgColor;
     
-    DRAWER_SAVE_BUFFER_F         saveBuffer;
-    DRAWER_SAVE_SCREEN_F         saveScreen;
+    drawer_save_buffer_f         saveBuffer;
+    drawer_save_screen_f         saveScreen;
     
-    DRAWER_GET_EVENT_F           getEvent;
-    DRAWER_STOP_AWAITING_EVENT_F stopAwaitingEvent;
+    drawer_get_event_f           getEvent;
+    drawer_stop_awaiting_event_f stopAwaitingEvent;
     
-    void                         *pData;
+    void *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-DRAWER_ERROR_E Drawer_Init  (DRAWER_S **obj);
-DRAWER_ERROR_E Drawer_UnInit(DRAWER_S **obj);
+enum drawer_error_e Drawer_Init(struct drawer_s **obj);
+enum drawer_error_e Drawer_UnInit(struct drawer_s **obj);
 
 #ifdef __cplusplus
 }

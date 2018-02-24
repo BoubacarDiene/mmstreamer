@@ -20,13 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Commands.c
-* \brief  TODO
+* \file Commands.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <time.h>
@@ -34,7 +34,7 @@
 #include "control/Controllers.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -43,48 +43,55 @@
 #define COMMANDS_TASK_NAME "commandsTask"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct COMMANDS_LIST_ELEMENT_S {
-    time_t               seconds;
-    CONTROLLER_COMMAND_S *command;
-} COMMANDS_LIST_ELEMENT_S;
+struct commands_list_element_s {
+    time_t                             seconds;
+    struct controller_command_s        *command;
+
+    controllers_command_action_done_cb actionDoneCb;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-CONTROLLERS_ERROR_E initCmdsTask_f  (CONTROLLERS_S *obj);
-CONTROLLERS_ERROR_E uninitCmdsTask_f(CONTROLLERS_S *obj);
-CONTROLLERS_ERROR_E startCmdsTask_f (CONTROLLERS_S *obj);
-CONTROLLERS_ERROR_E stopCmdsTask_f  (CONTROLLERS_S *obj);
+enum controllers_error_e initCmdsTask_f(struct controllers_s *obj);
+enum controllers_error_e uninitCmdsTask_f(struct controllers_s *obj);
+enum controllers_error_e startCmdsTask_f(struct controllers_s *obj);
+enum controllers_error_e stopCmdsTask_f(struct controllers_s *obj);
 
-void sendToEngine_f(void *userData, CONTROLLER_COMMAND_S *command);
-
-static void    taskFct_f(TASK_PARAMS_S *params);
-static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData);
-static void    releaseCb(LIST_S *obj, void *element);
+void sendToEngine_f(void *userData, struct controller_command_s *command,
+                    controllers_command_action_done_cb actionDoneCb);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+static void taskFct_f(struct task_params_s *params);
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData);
+static void releaseCb(struct list_s *obj, void *element);
+
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-CONTROLLERS_ERROR_E initCmdsTask_f(CONTROLLERS_S *obj)
+enum controllers_error_e initCmdsTask_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *cmdsTask      = &pData->cmdsTask;
-    INPUT_S *input                    = &pData->params.ctx->input;
-    uint8_t priority                  = input->ctrlLibsPrio;
+    struct controllers_task_s *cmdsTask = &obj->tasksMngt[CONTROLLERS_TASK_CMDS].task;
+    struct input_s *input               = &obj->params.ctx->input;
+    uint8_t priority                    = input->ctrlLibsPrio;
 
     if (input->nbCtrlLibs == 0) {
         Logw("No library provided");
@@ -93,7 +100,7 @@ CONTROLLERS_ERROR_E initCmdsTask_f(CONTROLLERS_S *obj)
 
     Logd("Initialize cmdsTask");
 
-    LIST_PARAMS_S listParams = { 0 };
+    struct list_params_s listParams = {0};
     listParams.compareCb = compareCb;
     listParams.releaseCb = releaseCb;
     listParams.browseCb  = NULL;
@@ -116,7 +123,7 @@ CONTROLLERS_ERROR_E initCmdsTask_f(CONTROLLERS_S *obj)
     strcpy(cmdsTask->taskParams.name, COMMANDS_TASK_NAME);
     cmdsTask->taskParams.priority = priority;
     cmdsTask->taskParams.fct      = taskFct_f;
-    cmdsTask->taskParams.fctData  = pData;
+    cmdsTask->taskParams.fctData  = obj;
     cmdsTask->taskParams.userData = NULL;
     cmdsTask->taskParams.atExit   = NULL;
 
@@ -143,13 +150,12 @@ listExit:
 /*!
  *
  */
-CONTROLLERS_ERROR_E uninitCmdsTask_f(CONTROLLERS_S *obj)
+enum controllers_error_e uninitCmdsTask_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *cmdsTask      = &pData->cmdsTask;
-    INPUT_S *input                    = &pData->params.ctx->input;
+    struct controllers_task_s *cmdsTask = &obj->tasksMngt[CONTROLLERS_TASK_CMDS].task;
+    struct input_s *input               = &obj->params.ctx->input;
 
     if (input->nbCtrlLibs == 0) {
         Logw("No library provided");
@@ -175,13 +181,12 @@ CONTROLLERS_ERROR_E uninitCmdsTask_f(CONTROLLERS_S *obj)
 /*!
  *
  */
-CONTROLLERS_ERROR_E startCmdsTask_f(CONTROLLERS_S *obj)
+enum controllers_error_e startCmdsTask_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *cmdsTask      = &pData->cmdsTask;
-    INPUT_S *input                    = &pData->params.ctx->input;
+    struct controllers_task_s *cmdsTask = &obj->tasksMngt[CONTROLLERS_TASK_CMDS].task;
+    struct input_s *input               = &obj->params.ctx->input;
 
     if (input->nbCtrlLibs == 0) {
         Logw("No library provided");
@@ -201,13 +206,12 @@ CONTROLLERS_ERROR_E startCmdsTask_f(CONTROLLERS_S *obj)
 /*!
  *
  */
-CONTROLLERS_ERROR_E stopCmdsTask_f(CONTROLLERS_S *obj)
+enum controllers_error_e stopCmdsTask_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *cmdsTask      = &pData->cmdsTask;
-    INPUT_S *input                    = &pData->params.ctx->input;
+    struct controllers_task_s *cmdsTask = &obj->tasksMngt[CONTROLLERS_TASK_CMDS].task;
+    struct input_s *input               = &obj->params.ctx->input;
 
     if (input->nbCtrlLibs == 0) {
         Logw("No library provided");
@@ -230,15 +234,16 @@ CONTROLLERS_ERROR_E stopCmdsTask_f(CONTROLLERS_S *obj)
 /*!
  *+
  */
-void sendToEngine_f(void *userData, CONTROLLER_COMMAND_S *command)
+void sendToEngine_f(void *userData, struct controller_command_s *command,
+                    controllers_command_action_done_cb actionDoneCb)
 {
     assert(userData && command);
 
-    CONTROLLERS_LIB_S *lib            = (CONTROLLERS_LIB_S*)userData;
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(lib->pData);
-    CONTROLLERS_TASK_S *cmdsTask      = &pData->cmdsTask;
-    LIST_S *cmdsList                  = cmdsTask->list;
-    COMMANDS_LIST_ELEMENT_S *element  = NULL;
+    struct controllers_lib_s *lib            = (struct controllers_lib_s*)userData;
+    struct controllers_s *controllersObj     = (struct controllers_s*)(lib->pData);
+    struct controllers_task_s *cmdsTask      = &controllersObj->tasksMngt[CONTROLLERS_TASK_CMDS].task;
+    struct list_s *cmdsList                  = cmdsTask->list;
+    struct commands_list_element_s *element  = NULL;
 
     if (cmdsTask->quit) {
         Loge("Controllers are (being) stopped");
@@ -252,9 +257,10 @@ void sendToEngine_f(void *userData, CONTROLLER_COMMAND_S *command)
 
     Logd("Send command - id : \"%u\" / data : \"%s\"", command->id, command->data);
 
-    assert((element = calloc(1, sizeof(COMMANDS_LIST_ELEMENT_S))));
-    element->seconds = time(NULL);
-    element->command = command;
+    assert((element = calloc(1, sizeof(struct commands_list_element_s))));
+    element->seconds      = time(NULL);
+    element->command      = command;
+    element->actionDoneCb = actionDoneCb;
 
     (void)cmdsList->add(cmdsList, (void*)element);
 
@@ -264,17 +270,17 @@ void sendToEngine_f(void *userData, CONTROLLER_COMMAND_S *command)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ///////////////////////////// PRIVATE FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static void taskFct_f(TASK_PARAMS_S *params)
+static void taskFct_f(struct task_params_s *params)
 {
     assert(params && params->fctData);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(params->fctData);
-    CONTROLLERS_TASK_S *cmdsTask      = &pData->cmdsTask;
-    LIST_S *cmdsList                  = cmdsTask->list;
-    COMMANDS_LIST_ELEMENT_S *element  = NULL;
+    struct controllers_s *controllersObj    = (struct controllers_s*)(params->fctData);
+    struct controllers_task_s *cmdsTask     = &controllersObj->tasksMngt[CONTROLLERS_TASK_CMDS].task;
+    struct list_s *cmdsList                 = cmdsTask->list;
+    struct commands_list_element_s *element = NULL;
 
     if (cmdsTask->quit) {
         return;
@@ -298,13 +304,10 @@ static void taskFct_f(TASK_PARAMS_S *params)
 
     (void)cmdsList->unlock(cmdsList);
 
-    CONTROLLERS_ON_COMMAND_CB cb = pData->params.onCommandCb;
-    void *userData               = pData->params.userData;
-    CONTROLLER_COMMAND_S *cmd    = element->command;
-
-    if (cb) {
+    struct controller_command_s *cmd = element->command;
+    if (controllersObj->params.onCommandCb) {
         Logd("Handling cmd - id : \"%u\" / data : \"%s\"", cmd->id, cmd->data);
-        cb(userData, cmd);
+        controllersObj->params.onCommandCb(controllersObj->params.userData, cmd);
     }
 
     (void)cmdsList->lock(cmdsList);
@@ -320,28 +323,32 @@ lockExit:
     sem_post(&cmdsTask->sem); // Force retry
 }
 
-static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData)
+/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     assert(obj && elementToCheck && userData);
 
-    COMMANDS_LIST_ELEMENT_S *element = (COMMANDS_LIST_ELEMENT_S*)elementToCheck;
-    time_t secondsOfElementToRemove  = *((time_t*)userData);
+    struct commands_list_element_s *element = (struct commands_list_element_s*)elementToCheck;
+    time_t secondsOfElementToRemove         = *((time_t*)userData);
 
     return (element->seconds == secondsOfElementToRemove);
 }
 
-static void releaseCb(LIST_S *obj, void *element)
+static void releaseCb(struct list_s *obj, void *element)
 {
     assert(obj && element);
 
-    COMMANDS_LIST_ELEMENT_S *elementToRemove = (COMMANDS_LIST_ELEMENT_S*)element;
-    CONTROLLER_COMMAND_S *command            = elementToRemove->command;
+    struct commands_list_element_s *elementToRemove = (struct commands_list_element_s*)element;
 
-    if (command->release) {
-        command->release((void*)command);
+    if (elementToRemove->actionDoneCb) {
+        elementToRemove->actionDoneCb(elementToRemove->command);
     }
 
-    elementToRemove->command = NULL;
+    elementToRemove->command      = NULL;
+    elementToRemove->actionDoneCb = NULL;
 
     free(elementToRemove);
     elementToRemove = NULL;

@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   GfxCommon.h
+* \file GfxCommon.h
 * \author Boubacar DIENE
 */
 
@@ -32,45 +32,27 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "utils/Common.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
-/* -------------------------------------------------------------------------------------------- */
-
-typedef enum   GFX_ELEMENT_TYPE_E  GFX_ELEMENT_TYPE_E;
-typedef enum   GFX_VIDEO_FORMAT_E  GFX_VIDEO_FORMAT_E;
-typedef enum   GFX_EVENT_TYPE_E    GFX_EVENT_TYPE_E;
-typedef enum   GFX_IMAGE_FORMAT_E  GFX_IMAGE_FORMAT_E;
-
-typedef struct GFX_COLOR_S         GFX_COLOR_S;
-typedef struct GFX_TEXT_S          GFX_TEXT_S;
-typedef struct GFX_IMAGE_S         GFX_IMAGE_S;
-typedef struct GFX_RECT_S          GFX_RECT_S;
-typedef struct GFX_NAV_S           GFX_NAV_S;
-typedef struct GFX_SCREEN_S        GFX_SCREEN_S;
-typedef struct GFX_ELEMENT_S       GFX_ELEMENT_S;
-typedef struct GFX_EVENT_S         GFX_EVENT_S;
-
-enum GFX_ELEMENT_TYPE_E {
+enum gfx_element_type_e {
     GFX_ELEMENT_TYPE_VIDEO,
     GFX_ELEMENT_TYPE_IMAGE,
     GFX_ELEMENT_TYPE_TEXT
 };
 
-enum GFX_VIDEO_FORMAT_E {
+enum gfx_video_format_e {
     GFX_VIDEO_FORMAT_MJPEG,
     GFX_VIDEO_FORMAT_YVYU
 };
 
-enum GFX_EVENT_TYPE_E {
+enum gfx_event_type_e {
     GFX_EVENT_TYPE_MOVE_LEFT,
     GFX_EVENT_TYPE_MOVE_UP,
     GFX_EVENT_TYPE_MOVE_RIGHT,
@@ -84,104 +66,104 @@ enum GFX_EVENT_TYPE_E {
     GFX_EVENT_TYPE_COUNT
 };
 
-enum GFX_IMAGE_FORMAT_E {
+enum gfx_image_format_e {
     GFX_IMAGE_FORMAT_BMP,
     GFX_IMAGE_FORMAT_PNG,
     GFX_IMAGE_FORMAT_JPG
 };
 
-struct GFX_COLOR_S {
+struct gfx_color_s {
     uint8_t red;
     uint8_t green;
     uint8_t blue;
     uint8_t alpha;
 };
 
-struct GFX_TEXT_S {
-    char        str[MAX_STR_SIZE];
-    char        ttfFont[MAX_PATH_SIZE];
-    uint8_t     ttfFontSize;
-    GFX_COLOR_S color;
+struct gfx_text_s {
+    char               str[MAX_STR_SIZE];
+    char               ttfFont[MAX_PATH_SIZE];
+    uint8_t            ttfFontSize;
+    struct gfx_color_s color;
     
 };
 
-struct GFX_IMAGE_S {
-    char               path[MAX_PATH_SIZE];
-    GFX_IMAGE_FORMAT_E format;
-    GFX_COLOR_S        *hiddenColor; // NULL if nothing in image is transparent
+struct gfx_image_s {
+    char                    path[MAX_PATH_SIZE];
+    enum gfx_image_format_e format;
+    struct gfx_color_s      *hiddenColor; // NULL if nothing in image is transparent
 };
 
-struct GFX_RECT_S {
+struct gfx_rect_s {
     uint16_t x;
     uint16_t y;
     uint16_t w;
     uint16_t h;
 };
 
-struct GFX_NAV_S {
+struct gfx_nav_s {
     char left[MAX_NAME_SIZE];
     char up[MAX_NAME_SIZE];
     char right[MAX_NAME_SIZE];
     char down[MAX_NAME_SIZE];
 };
 
-struct GFX_SCREEN_S {
-    char               name[MAX_NAME_SIZE];
+struct gfx_screen_s {
+    char                    name[MAX_NAME_SIZE];
 
-    GFX_RECT_S         rect;
+    struct gfx_rect_s       rect;
 
-    char               fbDeviceName[MAX_NAME_SIZE]; // Framebuffer device name
-    uint8_t            bitsPerPixel;
+    char                    fbDeviceName[MAX_NAME_SIZE]; // Framebuffer device name
+    uint8_t                 bitsPerPixel;
     
-    uint8_t            isFullScreen;
-    uint8_t            showCursor;
+    uint8_t                 isFullScreen;
+    uint8_t                 showCursor;
     
-    uint8_t            isTitleBarUsed;        // 1 => Show / 0 => Hide (so caption and icon not used)
-    char               caption[MAX_STR_SIZE];
-    GFX_IMAGE_S        icon;
+    uint8_t                 isTitleBarUsed; // 1 => Show / 0 => Hide (i.e caption and icon not used)
+    char                    caption[MAX_STR_SIZE];
+    struct gfx_image_s      icon;
     
-    uint8_t            isBgImageUsed;         // 0 => color used / 1 => image used
+    uint8_t                 isBgImageUsed; // 0 => color used / 1 => image used
     union {
-        GFX_COLOR_S    color;
-        GFX_IMAGE_S    image;
+        struct gfx_color_s  color;
+        struct gfx_image_s  image;
     } background;
     
-    GFX_VIDEO_FORMAT_E videoFormat;
+    enum gfx_video_format_e videoFormat;
 };
 
-struct GFX_ELEMENT_S {
-    char               name[MAX_NAME_SIZE];
-    char               groupName[MAX_NAME_SIZE];
+struct gfx_element_s {
+    char                    name[MAX_NAME_SIZE];
+    char                    groupName[MAX_NAME_SIZE];
     
-    uint8_t            redrawGroup;
+    uint8_t                 redrawGroup;
     
-    GFX_ELEMENT_TYPE_E type;
+    enum gfx_element_type_e type;
     
     union {
-        BUFFER_S       buffer;
-        GFX_IMAGE_S    image;
-        GFX_TEXT_S     text;
+        struct buffer_s     buffer;
+        struct gfx_image_s  image;
+        struct gfx_text_s   text;
     } data;
     
-    GFX_RECT_S         rect;
+    struct gfx_rect_s       rect;
     
-    uint8_t            isVisible;
-    uint8_t            isClickable;
-    uint8_t            isFocusable;
-    uint8_t            hasFocus;
+    uint8_t                 isVisible;
+    uint8_t                 isClickable;
+    uint8_t                 isFocusable;
+    uint8_t                 hasFocus;
     
-    GFX_NAV_S          nav;
+    struct gfx_nav_s        nav;
 
-    uint8_t            surfaceUpdated; //reserved
+    uint8_t                 surfaceUpdated; //reserved
     
-    void               *pData;
+    void                    *pData;
 };
 
-struct GFX_EVENT_S {
-    GFX_EVENT_TYPE_E type;
-    GFX_RECT_S       rect;
-    char             *gfxElementName;
-    void             *gfxElementPData;
+struct gfx_event_s {
+    enum gfx_event_type_e type;
+    struct gfx_rect_s     rect;
+    char                  *gfxElementName;
+    void                  *gfxElementPData;
 };
 
 #ifdef __cplusplus

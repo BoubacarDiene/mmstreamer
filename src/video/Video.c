@@ -20,13 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Video.c
-* \brief  TODO
+* \file Video.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <pthread.h>
@@ -40,7 +40,7 @@
 #include "video/Video.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -50,87 +50,92 @@
 #define NOTIFICATION_TASK_NAME   "notificationTask"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct VIDEO_CONTEXT_S {
-    volatile uint8_t  quit;
+struct video_context_s {
+    volatile uint8_t      quit;
 
-    LIST_S            *listenersList;
-    TASK_S            *videoTask;
+    struct list_s         *listenersList;
+    struct task_s         *videoTask;
 
-    pthread_mutex_t   framesHandlerLock;
-    TASK_PARAMS_S     framesHandlerParams;
+    pthread_mutex_t       framesHandlerLock;
+    struct task_params_s  framesHandlerParams;
 
-    sem_t             notificationSem;
-    pthread_mutex_t   notificationLock;
-    TASK_PARAMS_S     notificationParams;
+    sem_t                 notificationSem;
+    pthread_mutex_t       notificationLock;
+    struct task_params_s  notificationParams;
 
-    pthread_mutex_t   bufferLock;
+    pthread_mutex_t       bufferLock;
 
-    VIDEO_PARAMS_S    params;
+    struct video_params_s params;
 
-    volatile uint64_t nbFramesLost;
+    volatile uint64_t     nbFramesLost;
 
-    V4L2_S            *v4l2;
+    struct v4l2_s         *v4l2;
 
-    VIDEO_AREA_S      finalVideoArea;
-} VIDEO_CONTEXT_S;
+    struct video_area_s   finalVideoArea;
+};
 
-typedef struct VIDEO_PRIVATE_DATA_S {
-    LIST_S            *videosList;
-} VIDEO_PRIVATE_DATA_S;
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
+struct video_private_data_s {
+    struct list_s *videosList;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static VIDEO_ERROR_E registerListener_f  (VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_LISTENER_S *listener);
-static VIDEO_ERROR_E unregisterListener_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_LISTENER_S *listener);
+static enum video_error_e registerListener_f(struct video_s *obj, struct video_params_s *params,
+                                             struct video_listener_s *listener);
+static enum video_error_e unregisterListener_f(struct video_s *obj, struct video_params_s *params,
+                                               struct video_listener_s *listener);
 
-static VIDEO_ERROR_E getFinalVideoArea_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_AREA_S *videoArea);
-static VIDEO_ERROR_E getMaxBufferSize_f (VIDEO_S *obj, VIDEO_PARAMS_S *params, size_t *size);
+static enum video_error_e getFinalVideoArea_f(struct video_s *obj, struct video_params_s *params,
+                                              struct video_area_s *videoArea);
+static enum video_error_e getMaxBufferSize_f(struct video_s *obj, struct video_params_s *params,
+                                             size_t *size);
 
-static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params);
-static VIDEO_ERROR_E stopDeviceCapture_f (VIDEO_S *obj, VIDEO_PARAMS_S *params);
-
-static VIDEO_ERROR_E lockBuffer_f  (VIDEO_S *obj, VIDEO_CONTEXT_S *ctx);
-static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj, VIDEO_CONTEXT_S *ctx);
-
-static VIDEO_ERROR_E initVideoContext_f(VIDEO_CONTEXT_S **ctx, VIDEO_PARAMS_S *params);
-static VIDEO_ERROR_E uninitVideoContext_f(VIDEO_CONTEXT_S **ctx);
-static VIDEO_ERROR_E getVideoContext_f(VIDEO_S *obj, char *videoName, VIDEO_CONTEXT_S **ctxOut);
-
-static void framesHandlerFct_f   (TASK_PARAMS_S *params);
-static void notificationFct_f    (TASK_PARAMS_S *params);
-static void framesHandlerAtExit_f(TASK_PARAMS_S *params);
-
-static uint8_t compareVideoCb(LIST_S *obj, void *elementToCheck, void *userData);
-static void    releaseVideoCb(LIST_S *obj, void *element);
-
-static uint8_t compareListenerCb(LIST_S *obj, void *elementToCheck, void *userData);
-static void    releaseListenerCb(LIST_S *obj, void *element);
+static enum video_error_e startDeviceCapture_f(struct video_s *obj, struct video_params_s *params);
+static enum video_error_e stopDeviceCapture_f(struct video_s *obj, struct video_params_s *params);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static enum video_error_e lockBuffer_f(struct video_s *obj, struct video_context_s *ctx);
+static enum video_error_e unlockBuffer_f(struct video_s *obj, struct video_context_s *ctx);
+
+static enum video_error_e initVideoContext_f(struct video_context_s **ctx,
+                                             struct video_params_s *params);
+static enum video_error_e uninitVideoContext_f(struct video_context_s **ctx);
+static enum video_error_e getVideoContext_f(struct video_s *obj, char *videoName,
+                                            struct video_context_s **ctxOut);
+
+static void framesHandlerFct_f(struct task_params_s *params);
+static void notificationFct_f(struct task_params_s *params);
+static void framesHandlerAtExit_f(struct task_params_s *params);
+
+static uint8_t compareVideoCb(struct list_s *obj, void *elementToCheck, void *userData);
+static void releaseVideoCb(struct list_s *obj, void *element);
+
+static uint8_t compareListenerCb(struct list_s *obj, void *elementToCheck, void *userData);
+static void releaseListenerCb(struct list_s *obj, void *element);
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-VIDEO_ERROR_E Video_Init(VIDEO_S **obj)
+enum video_error_e Video_Init(struct video_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(VIDEO_S))));
+    assert(obj && (*obj = calloc(1, sizeof(struct video_s))));
 
-    VIDEO_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(VIDEO_PRIVATE_DATA_S))));
+    struct video_private_data_s *pData;
+    assert((pData = calloc(1, sizeof(struct video_private_data_s))));
 
-    LIST_PARAMS_S listParams;
-    memset(&listParams, '\0', sizeof(LIST_PARAMS_S));
+    struct list_params_s listParams = {0};
     listParams.compareCb = compareVideoCb;
     listParams.releaseCb = releaseVideoCb;
     listParams.browseCb  = NULL;
@@ -147,7 +152,7 @@ VIDEO_ERROR_E Video_Init(VIDEO_S **obj)
     (*obj)->startDeviceCapture = startDeviceCapture_f;
     (*obj)->stopDeviceCapture  = stopDeviceCapture_f;
 
-    (*obj)->pData = (void*)pData;
+    (*obj)->pData = pData;
 
     return VIDEO_ERROR_NONE;
 
@@ -164,16 +169,15 @@ exit:
 /*!
  *
  */
-VIDEO_ERROR_E Video_UnInit(VIDEO_S **obj)
+enum video_error_e Video_UnInit(struct video_s **obj)
 {
     assert(obj && *obj && (*obj)->pData);
 
-    VIDEO_PRIVATE_DATA_S *pData = (VIDEO_PRIVATE_DATA_S*)((*obj)->pData);
+    struct video_private_data_s *pData = (*obj)->pData;
 
     (void)List_UnInit(&pData->videosList);
 
     free(pData);
-    pData = NULL;
 
     free(*obj);
     *obj = NULL;
@@ -182,13 +186,14 @@ VIDEO_ERROR_E Video_UnInit(VIDEO_S **obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static VIDEO_ERROR_E registerListener_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_LISTENER_S *listener)
+static enum video_error_e registerListener_f(struct video_s *obj, struct video_params_s *params,
+                                             struct video_listener_s *listener)
 {
     assert(obj && obj->pData && params);
 
@@ -197,15 +202,15 @@ static VIDEO_ERROR_E registerListener_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, VI
         return VIDEO_ERROR_PARAMS;
     }
 
-    VIDEO_CONTEXT_S *ctx = NULL;
-    VIDEO_ERROR_E ret    = VIDEO_ERROR_NONE;
+    struct video_context_s *ctx = NULL;
+    enum video_error_e ret      = VIDEO_ERROR_NONE;
 
     if ((ret = getVideoContext_f(obj, params->name, &ctx)) != VIDEO_ERROR_NONE) {
         Loge("Failed to retrieve %s's context", params->name);
         goto exit;
     }
 
-    LIST_S *list = ctx->listenersList;
+    struct list_s *list = ctx->listenersList;
 
     if (!list) {
         Loge("listeners' list not initialized yet");
@@ -219,8 +224,8 @@ static VIDEO_ERROR_E registerListener_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, VI
         goto exit;
     }
 
-    VIDEO_LISTENER_S *newListener;
-    assert((newListener = calloc(1, sizeof(VIDEO_LISTENER_S))));
+    struct video_listener_s *newListener;
+    assert((newListener = calloc(1, sizeof(struct video_listener_s))));
 
     strncpy(newListener->name, listener->name, sizeof(newListener->name));
     newListener->onVideoBufferAvailableCb = listener->onVideoBufferAvailableCb;
@@ -239,7 +244,8 @@ exit:
 /*!
  *
  */
-static VIDEO_ERROR_E unregisterListener_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_LISTENER_S *listener)
+static enum video_error_e unregisterListener_f(struct video_s *obj, struct video_params_s *params,
+                                               struct video_listener_s *listener)
 {
     assert(obj && obj->pData && params);
 
@@ -248,15 +254,15 @@ static VIDEO_ERROR_E unregisterListener_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, 
         return VIDEO_ERROR_PARAMS;
     }
 
-    VIDEO_CONTEXT_S *ctx = NULL;
-    VIDEO_ERROR_E ret    = VIDEO_ERROR_NONE;
+    struct video_context_s *ctx = NULL;
+    enum video_error_e ret      = VIDEO_ERROR_NONE;
 
     if ((ret = getVideoContext_f(obj, params->name, &ctx)) != VIDEO_ERROR_NONE) {
         Loge("Failed to retrieve %s's context", params->name);
         goto exit;
     }
 
-    LIST_S *list = ctx->listenersList;
+    struct list_s *list = ctx->listenersList;
 
     if (!list) {
         Loge("listeners' list not initialized yet");
@@ -283,19 +289,20 @@ exit:
 /*!
  *
  */
-static VIDEO_ERROR_E getFinalVideoArea_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, VIDEO_AREA_S *videoArea)
+static enum video_error_e getFinalVideoArea_f(struct video_s *obj, struct video_params_s *params,
+                                              struct video_area_s *videoArea)
 {
     assert(obj && obj->pData && params && videoArea);
 
-    VIDEO_CONTEXT_S *ctx = NULL;
-    VIDEO_ERROR_E ret    = VIDEO_ERROR_NONE;
+    struct video_context_s *ctx = NULL;
+    enum video_error_e ret      = VIDEO_ERROR_NONE;
 
     if ((ret = getVideoContext_f(obj, params->name, &ctx)) != VIDEO_ERROR_NONE) {
         Loge("Failed to retrieve %s's context", params->name);
         goto exit;
     }
 
-    memcpy(videoArea, &ctx->finalVideoArea, sizeof(VIDEO_AREA_S));
+    memcpy(videoArea, &ctx->finalVideoArea, sizeof(struct video_area_s));
 
     ret = VIDEO_ERROR_NONE;
 
@@ -306,12 +313,13 @@ exit:
 /*!
  *
  */
-static VIDEO_ERROR_E getMaxBufferSize_f(VIDEO_S *obj, VIDEO_PARAMS_S *params, size_t *size)
+static enum video_error_e getMaxBufferSize_f(struct video_s *obj, struct video_params_s *params,
+                                             size_t *size)
 {
     assert(obj && obj->pData && params && size);
 
-    VIDEO_CONTEXT_S *ctx = NULL;
-    VIDEO_ERROR_E ret    = VIDEO_ERROR_NONE;
+    struct video_context_s *ctx = NULL;
+    enum video_error_e ret      = VIDEO_ERROR_NONE;
 
     if ((ret = getVideoContext_f(obj, params->name, &ctx)) != VIDEO_ERROR_NONE) {
         Loge("Failed to retrieve %s's context", params->name);
@@ -335,11 +343,11 @@ exit:
 /*!
  *
  */
-static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
+static enum video_error_e startDeviceCapture_f(struct video_s *obj, struct video_params_s *params)
 {
     assert(obj && obj->pData && params);
 
-    VIDEO_CONTEXT_S *ctx = NULL;
+    struct video_context_s *ctx = NULL;
 
     /* Check if video capture has already been started */
     if (getVideoContext_f(obj, params->name, &ctx) == VIDEO_ERROR_NONE) {
@@ -354,7 +362,7 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     }
 
     /* Add video ctx to list */
-    VIDEO_PRIVATE_DATA_S *pData = (VIDEO_PRIVATE_DATA_S*)(obj->pData);
+    struct video_private_data_s *pData = (struct video_private_data_s*)(obj->pData);
 
     if (!pData->videosList || (pData->videosList->lock(pData->videosList) != LIST_ERROR_NONE)) {
         Loge("Failed to lock videosList");
@@ -364,8 +372,7 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     (void)pData->videosList->unlock(pData->videosList);
 
     /* Open device */
-    V4L2_OPEN_DEVICE_PARAMS_S openDeviceParams;
-    memset(&openDeviceParams, '\0', sizeof(V4L2_OPEN_DEVICE_PARAMS_S));
+    struct v4l2_open_device_params_s openDeviceParams = {0};
     strncpy(openDeviceParams.path, params->path, sizeof(params->path));
     openDeviceParams.caps = params->caps;
 
@@ -375,8 +382,7 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     }
 
     /* Configure device */
-    V4L2_CONFIGURE_DEVICE_PARAMS_S configureDeviceParams;
-    memset(&configureDeviceParams, '\0', sizeof(V4L2_CONFIGURE_DEVICE_PARAMS_S));
+    struct v4l2_configure_device_params_s configureDeviceParams = {0};
     configureDeviceParams.type        = params->type;
     configureDeviceParams.pixelformat = params->pixelformat;
     configureDeviceParams.colorspace  = params->colorspace;
@@ -392,14 +398,14 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     ctx->finalVideoArea.width  = ctx->v4l2->format.fmt.pix.width;
     ctx->finalVideoArea.height = ctx->v4l2->format.fmt.pix.height;
 
-    uint8_t selectionApiSupported       = 0;
-    V4L2_SELECTION_PARAMS_S cropRect    = { 0 };
-    V4L2_SELECTION_PARAMS_S composeRect = { 0 };
+    uint8_t selectionApiSupported              = 0;
+    struct v4l2_selection_params_s cropRect    = {0};
+    struct v4l2_selection_params_s composeRect = {0};
 
-    memcpy(&cropRect, &params->croppingArea, sizeof(V4L2_SELECTION_PARAMS_S));
+    memcpy(&cropRect, &params->croppingArea, sizeof(struct v4l2_selection_params_s));
 
     if (ctx->v4l2->setCroppingArea(ctx->v4l2, &cropRect) == V4L2_ERROR_NONE) {
-        memcpy(&composeRect, &params->composingArea, sizeof(V4L2_SELECTION_PARAMS_S));
+        memcpy(&composeRect, &params->composingArea, sizeof(struct v4l2_selection_params_s));
 
         if (ctx->v4l2->setComposingArea(ctx->v4l2, &composeRect) != V4L2_ERROR_NONE) {
             Loge("Failed to set composing area");
@@ -428,8 +434,7 @@ static VIDEO_ERROR_E startDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     }
 
     /* Request buffers */
-    V4L2_REQUEST_BUFFERS_PARAMS_S requestBuffersParams;
-    memset(&requestBuffersParams, '\0', sizeof(V4L2_REQUEST_BUFFERS_PARAMS_S));
+    struct v4l2_request_buffers_params_s requestBuffersParams = {0};
     requestBuffersParams.count  = params->count;
     requestBuffersParams.memory = params->memory;
 
@@ -514,12 +519,12 @@ exit:
 /*!
  *
  */
-static VIDEO_ERROR_E stopDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
+static enum video_error_e stopDeviceCapture_f(struct video_s *obj, struct video_params_s *params)
 {
     assert(obj && obj->pData && params);
 
-    VIDEO_CONTEXT_S *ctx = NULL;
-    VIDEO_ERROR_E ret    = VIDEO_ERROR_NONE;
+    struct video_context_s *ctx = NULL;
+    enum video_error_e ret      = VIDEO_ERROR_NONE;
 
     /* Check if video context exists */
     if ((ret = getVideoContext_f(obj, params->name, &ctx)) != VIDEO_ERROR_NONE) {
@@ -558,7 +563,7 @@ static VIDEO_ERROR_E stopDeviceCapture_f(VIDEO_S *obj, VIDEO_PARAMS_S *params)
     }
 
     /* Remove video ctx */
-    VIDEO_PRIVATE_DATA_S *pData = (VIDEO_PRIVATE_DATA_S*)(obj->pData);
+    struct video_private_data_s *pData = (struct video_private_data_s*)(obj->pData);
 
     if (!pData->videosList || (pData->videosList->lock(pData->videosList) != LIST_ERROR_NONE)) {
         Loge("Failed to lock videosList");
@@ -571,10 +576,14 @@ exit:
     return ret;
 }
 
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////// PRIVATE FUNCTIONS IMPLEMENTATION ///////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
 /*!
  *
  */
-static VIDEO_ERROR_E lockBuffer_f(VIDEO_S *obj, VIDEO_CONTEXT_S *ctx)
+static enum video_error_e lockBuffer_f(struct video_s *obj, struct video_context_s *ctx)
 {
     assert(obj && obj->pData && ctx);
 
@@ -589,7 +598,7 @@ static VIDEO_ERROR_E lockBuffer_f(VIDEO_S *obj, VIDEO_CONTEXT_S *ctx)
 /*!
  *
  */
-static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj, VIDEO_CONTEXT_S *ctx)
+static enum video_error_e unlockBuffer_f(struct video_s *obj, struct video_context_s *ctx)
 {
     assert(obj && obj->pData && ctx);
 
@@ -604,15 +613,15 @@ static VIDEO_ERROR_E unlockBuffer_f(VIDEO_S *obj, VIDEO_CONTEXT_S *ctx)
 /*!
  *
  */
-static VIDEO_ERROR_E initVideoContext_f(VIDEO_CONTEXT_S **ctx, VIDEO_PARAMS_S *params)
+static enum video_error_e initVideoContext_f(struct video_context_s **ctx,
+                                             struct video_params_s *params)
 {
     assert(ctx && params);
-    assert((*ctx = calloc(1, sizeof(VIDEO_CONTEXT_S))));
+    assert((*ctx = calloc(1, sizeof(struct video_context_s))));
 
-    memcpy(&(*ctx)->params, params, sizeof(VIDEO_PARAMS_S));
+    memcpy(&(*ctx)->params, params, sizeof(struct video_params_s));
 
-    LIST_PARAMS_S listParams;
-    memset(&listParams, '\0', sizeof(LIST_PARAMS_S));
+    struct list_params_s listParams = {0};
     listParams.compareCb = compareListenerCb;
     listParams.releaseCb = releaseListenerCb;
     listParams.browseCb  = NULL;
@@ -684,11 +693,11 @@ list_exit:
 /*!
  *
  */
-static VIDEO_ERROR_E uninitVideoContext_f(VIDEO_CONTEXT_S **ctx)
+static enum video_error_e uninitVideoContext_f(struct video_context_s **ctx)
 {
     assert(ctx && *ctx);
 
-    VIDEO_ERROR_E ret = VIDEO_ERROR_NONE;
+    enum video_error_e ret = VIDEO_ERROR_NONE;
 
     if (V4l2_UnInit(&(*ctx)->v4l2) != V4L2_ERROR_NONE) {
         Loge("V4l2_UnInit() failed");
@@ -734,18 +743,19 @@ static VIDEO_ERROR_E uninitVideoContext_f(VIDEO_CONTEXT_S **ctx)
 /*!
  *
  */
-static VIDEO_ERROR_E getVideoContext_f(VIDEO_S *obj, char *videoName, VIDEO_CONTEXT_S **ctxOut)
+static enum video_error_e getVideoContext_f(struct video_s *obj, char *videoName,
+                                            struct video_context_s **ctxOut)
 {
     assert(obj && obj->pData && videoName && ctxOut);
 
-    VIDEO_PRIVATE_DATA_S *pData = (VIDEO_PRIVATE_DATA_S*)(obj->pData);
+    struct video_private_data_s *pData = (struct video_private_data_s*)(obj->pData);
 
     if (!pData->videosList) {
         Loge("There is currently no element in list");
         return VIDEO_ERROR_LIST;
     }
 
-    VIDEO_ERROR_E ret = VIDEO_ERROR_NONE;
+    enum video_error_e ret = VIDEO_ERROR_NONE;
 
     if (pData->videosList->lock(pData->videosList) != LIST_ERROR_NONE) {
         Loge("Failed to lock videosList");
@@ -788,12 +798,12 @@ exit:
 /*!
  * Capture video frames and wake up notification task
  */
-static void framesHandlerFct_f(TASK_PARAMS_S *params)
+static void framesHandlerFct_f(struct task_params_s *params)
 {
     assert(params && params->fctData && params->userData);
     
-    VIDEO_S *video       = (VIDEO_S*)params->fctData;
-    VIDEO_CONTEXT_S *ctx = (VIDEO_CONTEXT_S*)params->userData;
+    struct video_s *video       = (struct video_s*)params->fctData;
+    struct video_context_s *ctx = (struct video_context_s*)params->userData;
     
     uint32_t i;
     int32_t timeout_ms = -1;
@@ -853,12 +863,12 @@ static void framesHandlerFct_f(TASK_PARAMS_S *params)
 /*!
  * Wait for new video frames then notify listeners
  */
-static void notificationFct_f(TASK_PARAMS_S *params)
+static void notificationFct_f(struct task_params_s *params)
 {
     assert(params && params->fctData && params->userData);
     
-    VIDEO_S *video       = (VIDEO_S*)params->fctData;
-    VIDEO_CONTEXT_S *ctx = (VIDEO_CONTEXT_S*)params->userData;
+    struct video_s *video       = (struct video_s*)params->fctData;
+    struct video_context_s *ctx = (struct video_context_s*)params->userData;
     
     if (ctx->quit) {
         return;
@@ -870,7 +880,7 @@ static void notificationFct_f(TASK_PARAMS_S *params)
         return;
     }
     
-    LIST_S *list = ctx->listenersList;
+    struct list_s *list = ctx->listenersList;
 
     (void)lockBuffer_f(video, ctx);
     
@@ -881,7 +891,7 @@ static void notificationFct_f(TASK_PARAMS_S *params)
     
     uint32_t nbClients;
     if (list->getNbElements(list, &nbClients) == LIST_ERROR_NONE) {
-        VIDEO_LISTENER_S *listener = NULL;
+        struct video_listener_s *listener = NULL;
         while (nbClients > 0) {
             nbClients--;
             
@@ -889,7 +899,7 @@ static void notificationFct_f(TASK_PARAMS_S *params)
                 break;
             }
             
-            /* IMPORTANT: Listener has to handle buffer very quickly so no heavy operation please!! */
+            /* IMPORTANT: Buffer must be handled very quickly so no heavy operation please!! */
             listener->onVideoBufferAvailableCb(&video->buffer, listener->userData);
         }
     }
@@ -905,12 +915,12 @@ exit:
 /*!
  * Called when stopping framesHandler task
  */
-static void framesHandlerAtExit_f(TASK_PARAMS_S *params)
+static void framesHandlerAtExit_f(struct task_params_s *params)
 {
     assert(params && params->fctData && params->userData);
     
-    VIDEO_S *video       = (VIDEO_S*)params->fctData;
-    VIDEO_CONTEXT_S *ctx = (VIDEO_CONTEXT_S*)params->userData;
+    struct video_s *video       = (struct video_s*)params->fctData;
+    struct video_context_s *ctx = (struct video_context_s*)params->userData;
     
     /* Release buffer */
     (void)lockBuffer_f(video, ctx);
@@ -926,11 +936,11 @@ static void framesHandlerAtExit_f(TASK_PARAMS_S *params)
 /*!
  *
  */
-static uint8_t compareVideoCb(LIST_S *obj, void *elementToCheck, void *userData)
+static uint8_t compareVideoCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     assert(obj && elementToCheck && userData);
 
-    VIDEO_CONTEXT_S *ctx        = (VIDEO_CONTEXT_S*)elementToCheck;
+    struct video_context_s *ctx = (struct video_context_s*)elementToCheck;
     char *nameOfElementToRemove = (char*)userData;
 
     return (!strcmp(nameOfElementToRemove, ctx->params.name));
@@ -939,11 +949,11 @@ static uint8_t compareVideoCb(LIST_S *obj, void *elementToCheck, void *userData)
 /*!
  *
  */
-static void releaseVideoCb(LIST_S *obj, void *element)
+static void releaseVideoCb(struct list_s *obj, void *element)
 {
     assert(obj && element);
 
-    VIDEO_CONTEXT_S **ctx = (VIDEO_CONTEXT_S**)&element;
+    struct video_context_s **ctx = (struct video_context_s**)&element;
 
     (void)uninitVideoContext_f(ctx);
 }
@@ -951,11 +961,11 @@ static void releaseVideoCb(LIST_S *obj, void *element)
 /*!
  *
  */
-static uint8_t compareListenerCb(LIST_S *obj, void *elementToCheck, void *userData)
+static uint8_t compareListenerCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     assert(obj && elementToCheck && userData);
     
-    VIDEO_LISTENER_S *listener  = (VIDEO_LISTENER_S*)elementToCheck;
+    struct video_listener_s *listener  = (struct video_listener_s*)elementToCheck;
     char *nameOfElementToRemove = (char*)userData;
         
     return (strncmp(listener->name, nameOfElementToRemove, strlen(listener->name)) == 0);
@@ -964,11 +974,11 @@ static uint8_t compareListenerCb(LIST_S *obj, void *elementToCheck, void *userDa
 /*!
  *
  */
-static void releaseListenerCb(LIST_S *obj, void *element)
+static void releaseListenerCb(struct list_s *obj, void *element)
 {
     assert(obj && element);
     
-    VIDEO_LISTENER_S *listener = (VIDEO_LISTENER_S*)element;
+    struct video_listener_s *listener = (struct video_listener_s*)element;
     
     listener->userData = NULL;
     

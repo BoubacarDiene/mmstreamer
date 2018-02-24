@@ -20,13 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Drawer2.c
-* \brief  Graphics elements drawer based on SDLv2
+* \file Drawer2.c
+* \brief Graphics elements drawer based on SDLv2
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <fcntl.h>
@@ -42,83 +42,84 @@
 #include "graphics/Drawer.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "Drawer"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct DRAWER_PRIVATE_DATA_S {
-    GFX_SCREEN_S      screenParams;
+struct drawer_private_data_s {
+    struct gfx_screen_s screenParams;
     
-    int32_t           videoFmt;
+    int32_t             videoFmt;
     
-    SDL_Rect          rect;
+    SDL_Rect            rect;
     
-    SDL_Window        *screenWindow;
-    SDL_Surface       *screenSurface;
-    SDL_Renderer      *renderer;
-    SDL_Texture       *texture;
+    SDL_Window          *screenWindow;
+    SDL_Surface         *screenSurface;
+    SDL_Renderer        *renderer;
+    SDL_Texture         *texture;
 
-    SDL_RWops         *rwops;
+    SDL_RWops           *rwops;
     union {
-        SDL_Surface   *mjpeg;
-        SDL_Texture   *overlay;
+        SDL_Surface     *mjpeg;
+        SDL_Texture     *overlay;
     } video;
-    SDL_Surface       *image;
-    SDL_Surface       *text;
+    SDL_Surface         *image;
+    SDL_Surface         *text;
     
-    SDL_Color         textColor;
-    TTF_Font          *textFont;
+    SDL_Color           textColor;
+    TTF_Font            *textFont;
     
-    SDL_Event         event;
+    SDL_Event           event;
     
-    SDL_mutex         *lock;
-} DRAWER_PRIVATE_DATA_S;
+    SDL_mutex           *lock;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/*                                 PUBLIC FUNCTIONS PROTOTYPES                                  */
 /* -------------------------------------------------------------------------------------------- */
 
+static enum drawer_error_e initScreen_f(struct drawer_s *obj, struct gfx_screen_s *screenParams);
+static enum drawer_error_e uninitScreen_f(struct drawer_s *obj);
+
+static enum drawer_error_e drawVideo_f(struct drawer_s *obj, struct gfx_rect_s *rect,
+                                       struct buffer_s *buffer);
+static enum drawer_error_e drawImage_f(struct drawer_s *obj, struct gfx_rect_s *rect,
+                                       struct gfx_image_s *image);
+static enum drawer_error_e drawText_f(struct drawer_s *obj, struct gfx_rect_s *rect,
+                                      struct gfx_text_s *text);
+
+static enum drawer_error_e setBgColor_f(struct drawer_s *obj, struct gfx_rect_s *rect,
+                                        struct gfx_color_s *color);
+
+static enum drawer_error_e saveBuffer_f(struct drawer_s *obj, struct buffer_s *buffer,
+                                        struct gfx_image_s *inOut);
+static enum drawer_error_e saveScreen_f(struct drawer_s *obj, struct gfx_image_s *inOut);
+
+static enum drawer_error_e getEvent_f(struct drawer_s *obj, struct gfx_event_s *gfxEvent);
+static enum drawer_error_e stopAwaitingEvent_f(struct drawer_s *obj);
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-static DRAWER_ERROR_E initScreen_f  (DRAWER_S *obj, GFX_SCREEN_S *screenParams);
-static DRAWER_ERROR_E unInitScreen_f(DRAWER_S *obj);
-
-static DRAWER_ERROR_E drawVideo_f(DRAWER_S *obj, GFX_RECT_S *rect, BUFFER_S *buffer);
-static DRAWER_ERROR_E drawImage_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_IMAGE_S *image);
-static DRAWER_ERROR_E drawText_f (DRAWER_S *obj, GFX_RECT_S *rect, GFX_TEXT_S *text);
-
-static DRAWER_ERROR_E setBgColor_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S *color);
-
-static DRAWER_ERROR_E saveBuffer_f(DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
-static DRAWER_ERROR_E saveScreen_f(DRAWER_S *obj, GFX_IMAGE_S *inOut);
-
-static DRAWER_ERROR_E getEvent_f         (DRAWER_S *obj, GFX_EVENT_S *gfxEvent);
-static DRAWER_ERROR_E stopAwaitingEvent_f(DRAWER_S *obj);
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-DRAWER_ERROR_E Drawer_Init(DRAWER_S **obj)
+enum drawer_error_e Drawer_Init(struct drawer_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(DRAWER_S))));
+    assert(obj && (*obj = calloc(1, sizeof(struct drawer_s))));
     
-    DRAWER_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(DRAWER_PRIVATE_DATA_S))));
+    struct drawer_private_data_s *pData;
+    assert((pData = calloc(1, sizeof(struct drawer_private_data_s))));
     
     (*obj)->initScreen        = initScreen_f;
-    (*obj)->unInitScreen      = unInitScreen_f;
+    (*obj)->uninitScreen      = uninitScreen_f;
     
     (*obj)->drawVideo         = drawVideo_f;
     (*obj)->drawImage         = drawImage_f;
@@ -142,11 +143,11 @@ DRAWER_ERROR_E Drawer_Init(DRAWER_S **obj)
 /*!
  *
  */
-DRAWER_ERROR_E Drawer_UnInit(DRAWER_S **obj)
+enum drawer_error_e Drawer_UnInit(struct drawer_s **obj)
 {
     assert(obj && *obj && (*obj)->pData);
     
-    DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)((*obj)->pData);
+    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)((*obj)->pData);
     
     SDL_DestroyMutex(pData->lock);
     
@@ -157,22 +158,22 @@ DRAWER_ERROR_E Drawer_UnInit(DRAWER_S **obj)
     *obj = NULL;
     
     return DRAWER_ERROR_NONE;
-}	
+}
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static DRAWER_ERROR_E initScreen_f(DRAWER_S *obj, GFX_SCREEN_S *screenParams)
+static enum drawer_error_e initScreen_f(struct drawer_s *obj, struct gfx_screen_s *screenParams)
 {
     assert(obj && obj->pData && screenParams);
     
-    DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)(obj->pData);
+    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
     
-    memcpy(&pData->screenParams, screenParams, sizeof(GFX_SCREEN_S));
+    memcpy(&pData->screenParams, screenParams, sizeof(struct gfx_screen_s));
     
     // Init components
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -252,13 +253,15 @@ static DRAWER_ERROR_E initScreen_f(DRAWER_S *obj, GFX_SCREEN_S *screenParams)
 
     // Set screen background
     if (!screenParams->isBgImageUsed) {
-        if (setBgColor_f(obj, &screenParams->rect, &screenParams->background.color) != DRAWER_ERROR_NONE) {
+        if (setBgColor_f(obj, &screenParams->rect,
+                              &screenParams->background.color) != DRAWER_ERROR_NONE) {
             Loge("Setting screen's background color has failed");
             goto exit;
         }
     }
     else {
-        if (drawImage_f(obj, &screenParams->rect, &screenParams->background.image) != DRAWER_ERROR_NONE) {
+        if (drawImage_f(obj, &screenParams->rect,
+                             &screenParams->background.image) != DRAWER_ERROR_NONE) {
             Loge("Setting screen's background image has failed");
             goto exit;
         }
@@ -311,10 +314,10 @@ static DRAWER_ERROR_E initScreen_f(DRAWER_S *obj, GFX_SCREEN_S *screenParams)
     }
     
     pData->texture = SDL_CreateTexture(pData->renderer,
-                                        pData->videoFmt,
-                                        SDL_TEXTUREACCESS_STREAMING,
-                                        screenParams->rect.w,
-                                        screenParams->rect.h);
+                                       pData->videoFmt,
+                                       SDL_TEXTUREACCESS_STREAMING,
+                                       screenParams->rect.w,
+                                       screenParams->rect.h);
 
     if (!pData->texture) {
         Loge("SDL_CreateTexture() failed - %s", SDL_GetError());
@@ -326,7 +329,7 @@ static DRAWER_ERROR_E initScreen_f(DRAWER_S *obj, GFX_SCREEN_S *screenParams)
     return DRAWER_ERROR_NONE;
     
 exit:
-    unInitScreen_f(obj);
+    uninitScreen_f(obj);
     
     return DRAWER_ERROR_DRAW;
 }
@@ -334,14 +337,14 @@ exit:
 /*!
  *
  */
-static DRAWER_ERROR_E unInitScreen_f(DRAWER_S *obj)
+static enum drawer_error_e uninitScreen_f(struct drawer_s *obj)
 {
     assert(obj && obj->pData);
     
-    DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)(obj->pData);
+    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
 
     // Clear screen (double buffering enabled => 2 flip necessary to clear both buffers)
-    GFX_COLOR_S black = { 0 };
+    struct gfx_color_s black = {0};
     setBgColor_f(obj, NULL, &black);
     setBgColor_f(obj, NULL, &black);
 
@@ -371,7 +374,8 @@ static DRAWER_ERROR_E unInitScreen_f(DRAWER_S *obj)
 /*!
  *
  */
-static DRAWER_ERROR_E drawVideo_f(DRAWER_S *obj, GFX_RECT_S *rect, BUFFER_S *buffer)
+static enum drawer_error_e drawVideo_f(struct drawer_s *obj, struct gfx_rect_s *rect,
+                                       struct buffer_s *buffer)
 {
     assert(obj && obj->pData);
     
@@ -380,8 +384,8 @@ static DRAWER_ERROR_E drawVideo_f(DRAWER_S *obj, GFX_RECT_S *rect, BUFFER_S *buf
         return DRAWER_ERROR_PARAMS;
     }
     
-    DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)(obj->pData);
-    DRAWER_ERROR_E ret           = DRAWER_ERROR_DRAW;
+    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
+    enum drawer_error_e ret             = DRAWER_ERROR_DRAW;
     
     if (SDL_LockMutex(pData->lock) != 0) {
         Loge("Failed to lock mutex");
@@ -406,7 +410,8 @@ static DRAWER_ERROR_E drawVideo_f(DRAWER_S *obj, GFX_RECT_S *rect, BUFFER_S *buf
     }
     
     if (pData->video.overlay) {
-        if (SDL_UpdateTexture(pData->video.overlay, NULL, buffer->data, buffer->length / pData->rect.h) < 0) {
+        if (SDL_UpdateTexture(pData->video.overlay, NULL, buffer->data,
+                                                    buffer->length / pData->rect.h) < 0) {
             Loge("SDL_UpdateTexture() failed - %s", SDL_GetError());
             goto exit;
         }
@@ -442,7 +447,8 @@ exit:
 /*!
  *
  */
-static DRAWER_ERROR_E drawImage_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_IMAGE_S *image)
+static enum drawer_error_e drawImage_f(struct drawer_s *obj, struct gfx_rect_s *rect,
+                                       struct gfx_image_s *image)
 {
     assert(obj && obj->pData);
     
@@ -461,8 +467,8 @@ static DRAWER_ERROR_E drawImage_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_IMAGE_S *
         return DRAWER_ERROR_DRAW;
     }
     
-    DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)(obj->pData);
-    DRAWER_ERROR_E ret           = DRAWER_ERROR_DRAW;
+    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
+    enum drawer_error_e ret             = DRAWER_ERROR_DRAW;
     
     if (SDL_LockMutex(pData->lock) != 0) {
         Loge("Failed to lock mutex");
@@ -521,7 +527,8 @@ exit:
 /*!
  *
  */
-static DRAWER_ERROR_E drawText_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_TEXT_S *text)
+static enum drawer_error_e drawText_f(struct drawer_s *obj, struct gfx_rect_s *rect,
+                                      struct gfx_text_s *text)
 {
     assert(obj && obj->pData);
     
@@ -530,8 +537,8 @@ static DRAWER_ERROR_E drawText_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_TEXT_S *te
         return DRAWER_ERROR_PARAMS;
     }
     
-    DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)(obj->pData);
-    DRAWER_ERROR_E ret           = DRAWER_ERROR_DRAW;
+    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
+    enum drawer_error_e ret             = DRAWER_ERROR_DRAW;
     
     if (access(text->ttfFont, F_OK) != 0) {
         Loge("Font file \"%s\" not found", text->ttfFont);
@@ -601,7 +608,8 @@ exit:
 /*!
  *
  */
-static DRAWER_ERROR_E setBgColor_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S *color)
+static enum drawer_error_e setBgColor_f(struct drawer_s *obj, struct gfx_rect_s *rect,
+                                        struct gfx_color_s *color)
 {
     assert(obj && obj->pData);
     
@@ -610,8 +618,8 @@ static DRAWER_ERROR_E setBgColor_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S 
         return DRAWER_ERROR_PARAMS;
     }
     
-    DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)obj->pData;
-    DRAWER_ERROR_E ret           = DRAWER_ERROR_DRAW;
+    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)obj->pData;
+    enum drawer_error_e ret             = DRAWER_ERROR_DRAW;
     
     if (SDL_LockMutex(pData->lock) != 0) {
         Loge("Failed to lock mutex");
@@ -625,7 +633,8 @@ static DRAWER_ERROR_E setBgColor_f(DRAWER_S *obj, GFX_RECT_S *rect, GFX_COLOR_S 
         pData->rect.h = rect->h;
     }
 
-    if (SDL_SetRenderDrawColor(pData->renderer, color->red, color->green, color->blue, color->alpha) < 0) {
+    if (SDL_SetRenderDrawColor(pData->renderer, color->red, color->green,
+                                                color->blue, color->alpha) < 0) {
         Loge("SDL_SetRenderDrawColor() failed - %s", SDL_GetError());
         goto exit;
     }
@@ -648,7 +657,8 @@ exit:
 /*!
  *
  */
-static DRAWER_ERROR_E saveBuffer_f(DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut)
+static enum drawer_error_e saveBuffer_f(struct drawer_s *obj, struct buffer_s *buffer,
+                                        struct gfx_image_s *inOut)
 {
     assert(obj && obj->pData && buffer && inOut);
 
@@ -657,9 +667,9 @@ static DRAWER_ERROR_E saveBuffer_f(DRAWER_S *obj, BUFFER_S *buffer, GFX_IMAGE_S 
         return DRAWER_ERROR_PARAMS;
     }
 
-    DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)(obj->pData);
-    DRAWER_ERROR_E ret           = DRAWER_ERROR_SAVE;
-    int32_t jpeg                 = -1;
+    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
+    enum drawer_error_e ret             = DRAWER_ERROR_SAVE;
+    int32_t jpeg                        = -1;
     
     if (SDL_LockMutex(pData->lock) != 0) {
         Loge("Failed to lock mutex");
@@ -726,11 +736,11 @@ exit:
 /*!
  *
  */
-static DRAWER_ERROR_E saveScreen_f(DRAWER_S *obj, GFX_IMAGE_S *inOut)
+static enum drawer_error_e saveScreen_f(struct drawer_s *obj, struct gfx_image_s *inOut)
 {
     assert(obj && obj->pData && inOut);
 
-    DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)(obj->pData);
+    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
 
     if (SDL_LockMutex(pData->lock) != 0) {
         Loge("Failed to lock mutex");
@@ -766,11 +776,11 @@ static DRAWER_ERROR_E saveScreen_f(DRAWER_S *obj, GFX_IMAGE_S *inOut)
 /*!
  *
  */
-static DRAWER_ERROR_E getEvent_f(DRAWER_S *obj, GFX_EVENT_S *gfxEvent)
+static enum drawer_error_e getEvent_f(struct drawer_s *obj, struct gfx_event_s *gfxEvent)
 {
     assert(obj && obj->pData && gfxEvent);
     
-    DRAWER_PRIVATE_DATA_S *pData = (DRAWER_PRIVATE_DATA_S*)(obj->pData);
+    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
     
     gfxEvent->type = GFX_EVENT_TYPE_COUNT;
     
@@ -829,7 +839,7 @@ static DRAWER_ERROR_E getEvent_f(DRAWER_S *obj, GFX_EVENT_S *gfxEvent)
 /*!
  *
  */
-static DRAWER_ERROR_E stopAwaitingEvent_f(DRAWER_S *obj)
+static enum drawer_error_e stopAwaitingEvent_f(struct drawer_s *obj)
 {
     assert(obj && obj->pData);
 

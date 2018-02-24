@@ -20,13 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   List.c
-* \brief  Lists management
+* \file List.c
+* \brief Lists management
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <pthread.h>
@@ -35,66 +35,60 @@
 #include "utils/List.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "List"
-    
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct LIST_ELEMENT_S {
+struct list_element_s {
     void                  *element;
-    struct LIST_ELEMENT_S *next;
-} LIST_ELEMENT_S;
+    struct list_element_s *next;
+};
 
-typedef struct LIST_PRIVATE_DATA_S {
-    uint32_t           nbElements;
-    LIST_ELEMENT_S     *list;
-    LIST_ELEMENT_S     *current;
-    pthread_mutex_t    lock;
-} LIST_PRIVATE_DATA_S;
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
+struct list_private_data_s {
+    uint32_t              nbElements;
+    struct list_element_s *list;
+    struct list_element_s *current;
+    pthread_mutex_t       lock;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/*                                 PUBLIC FUNCTIONS PROTOTYPES                                  */
 /* -------------------------------------------------------------------------------------------- */
 
-static LIST_ERROR_E add_f      (LIST_S *obj, void *element);
-static LIST_ERROR_E remove_f   (LIST_S *obj, void *userData);
-static LIST_ERROR_E removeAll_f(LIST_S *obj);
+static enum list_error_e add_f(struct list_s *obj, void *element);
+static enum list_error_e remove_f(struct list_s *obj, void *userData);
+static enum list_error_e removeAll_f(struct list_s *obj);
 
-static LIST_ERROR_E getNbElements_f (LIST_S *obj, uint32_t *nbElements);
-static LIST_ERROR_E getElement_f    (LIST_S *obj, void **element);
-static LIST_ERROR_E browseElements_f(LIST_S *obj, void *userData);
+static enum list_error_e getNbElements_f(struct list_s *obj, uint32_t *nbElements);
+static enum list_error_e getElement_f(struct list_s *obj, void **element);
+static enum list_error_e browseElements_f(struct list_s *obj, void *userData);
 
-static LIST_ERROR_E lock_f  (LIST_S *obj);
-static LIST_ERROR_E unlock_f(LIST_S *obj);
+static enum list_error_e lock_f(struct list_s *obj);
+static enum list_error_e unlock_f(struct list_s *obj);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/*                                         INITIALIZER                                          */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-LIST_ERROR_E List_Init(LIST_S **obj, LIST_PARAMS_S *params)
+enum list_error_e List_Init(struct list_s **obj, struct list_params_s *params)
 {
     assert(obj && params);
     
-    assert((*obj = calloc(1, sizeof(LIST_S))));
+    assert((*obj = calloc(1, sizeof(struct list_s))));
     
-    (*obj)->params.compareCb = params->compareCb;
-    (*obj)->params.releaseCb = params->releaseCb;
-    (*obj)->params.browseCb  = params->browseCb;
+    (*obj)->params = *params;
     
-    LIST_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(LIST_PRIVATE_DATA_S))));
+    struct list_private_data_s *pData;
+    assert((pData = calloc(1, sizeof(struct list_private_data_s))));
     
     if (pthread_mutex_init(&pData->lock, NULL) != 0) {
         Loge("pthread_mutex_init() failed");
@@ -127,12 +121,12 @@ exit:
 /*!
  *
  */
-LIST_ERROR_E List_UnInit(LIST_S **obj)
+enum list_error_e List_UnInit(struct list_s **obj)
 {
     assert(obj && *obj && (*obj)->pData);
     
-    LIST_ERROR_E        ret    = LIST_ERROR_NONE;
-    LIST_PRIVATE_DATA_S *pData = (LIST_PRIVATE_DATA_S*)((*obj)->pData);
+    enum list_error_e ret             = LIST_ERROR_NONE;
+    struct list_private_data_s *pData = (struct list_private_data_s*)((*obj)->pData);
     
     if (pthread_mutex_destroy(&pData->lock) != 0) {
         Loge("pthread_mutex_destroy() failed");
@@ -149,25 +143,25 @@ LIST_ERROR_E List_UnInit(LIST_S **obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/*                               PUBLIC FUNCTIONS IMPLEMENTATION                                */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static LIST_ERROR_E add_f(LIST_S *obj, void *element)
+static enum list_error_e add_f(struct list_s *obj, void *element)
 {
     assert(obj && obj->pData && element);
     
-    LIST_ELEMENT_S *newElement = NULL;
-    LIST_PRIVATE_DATA_S *pData = (LIST_PRIVATE_DATA_S*)obj->pData;
+    struct list_element_s *newElement = NULL;
+    struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
-    assert((newElement = calloc(1, sizeof(LIST_ELEMENT_S))));
+    assert((newElement = calloc(1, sizeof(struct list_element_s))));
     
     newElement->element = element;
     newElement->next    = NULL;
     
-    LIST_ELEMENT_S *list = NULL;
+    struct list_element_s *list = NULL;
     
     if (!pData->list) {
         pData->list = newElement;
@@ -188,18 +182,18 @@ static LIST_ERROR_E add_f(LIST_S *obj, void *element)
 /*!
  *
  */
-static LIST_ERROR_E remove_f(LIST_S *obj, void *userData)
+static enum list_error_e remove_f(struct list_s *obj, void *userData)
 {
     assert(obj && obj->pData && userData);
     
-    LIST_PRIVATE_DATA_S *pData = (LIST_PRIVATE_DATA_S*)obj->pData;
+    struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
     if (!pData->list) {
         return LIST_ERROR_PARAMS;
     }
     
-    LIST_ELEMENT_S *previous = NULL;
-    LIST_ELEMENT_S *current  = pData->list;
+    struct list_element_s *previous = NULL;
+    struct list_element_s *current  = pData->list;
     
     while (current) {
         if (obj->params.compareCb(obj, current->element, userData)) {
@@ -225,27 +219,24 @@ static LIST_ERROR_E remove_f(LIST_S *obj, void *userData)
 /*!
  *
  */
-static LIST_ERROR_E removeAll_f(LIST_S *obj)
+static enum list_error_e removeAll_f(struct list_s *obj)
 {
     assert(obj && obj->pData);
     
-    LIST_PRIVATE_DATA_S *pData = (LIST_PRIVATE_DATA_S*)obj->pData;
+    struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
     if (!pData->list) {
         return LIST_ERROR_PARAMS;
     }
     
-    LIST_ELEMENT_S *current  = pData->list;
-    LIST_ELEMENT_S *next     = current->next;
+    struct list_element_s *current = pData->list;
+    struct list_element_s *next    = current->next;
     
     while (current) {
         obj->params.releaseCb(obj, current->element);
         free(current);
         if ((current = next)) {
             next = current->next;
-        }
-        else {
-            next = NULL;
         }
     }
     
@@ -258,11 +249,11 @@ static LIST_ERROR_E removeAll_f(LIST_S *obj)
 /*!
  *
  */
-static LIST_ERROR_E getNbElements_f(LIST_S *obj, uint32_t *nbElements)
+static enum list_error_e getNbElements_f(struct list_s *obj, uint32_t *nbElements)
 {
     assert(obj && obj->pData && nbElements);
     
-    LIST_PRIVATE_DATA_S *pData = (LIST_PRIVATE_DATA_S*)obj->pData;
+    struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
     *nbElements = pData->nbElements;
     
@@ -272,11 +263,11 @@ static LIST_ERROR_E getNbElements_f(LIST_S *obj, uint32_t *nbElements)
 /*!
  *
  */
-static LIST_ERROR_E getElement_f(LIST_S *obj, void **element)
+static enum list_error_e getElement_f(struct list_s *obj, void **element)
 {
     assert(obj && obj->pData && element);
     
-    LIST_PRIVATE_DATA_S *pData = (LIST_PRIVATE_DATA_S*)obj->pData;
+    struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
     if (!pData->current) {
         pData->current = pData->list;
@@ -290,13 +281,13 @@ static LIST_ERROR_E getElement_f(LIST_S *obj, void **element)
 /*!
  *
  */
-static LIST_ERROR_E browseElements_f(LIST_S *obj, void *userData)
+static enum list_error_e browseElements_f(struct list_s *obj, void *userData)
 {
     assert(obj && obj->pData);
     
-    LIST_PRIVATE_DATA_S *pData = (LIST_PRIVATE_DATA_S*)obj->pData;
+    struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
-    LIST_ELEMENT_S *current  = pData->list;
+    struct list_element_s *current = pData->list;
     
     while (current) {
         obj->params.browseCb(obj, current->element, userData);
@@ -309,11 +300,11 @@ static LIST_ERROR_E browseElements_f(LIST_S *obj, void *userData)
 /*!
  *
  */
-static LIST_ERROR_E lock_f(LIST_S *obj)
+static enum list_error_e lock_f(struct list_s *obj)
 {
     assert(obj && obj->pData);
     
-    LIST_PRIVATE_DATA_S *pData = (LIST_PRIVATE_DATA_S*)obj->pData;
+    struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
     if (pData && (pthread_mutex_lock(&pData->lock) != 0)) {
         Loge("pthread_mutex_lock() failed");
@@ -328,11 +319,11 @@ static LIST_ERROR_E lock_f(LIST_S *obj)
 /*!
  *
  */
-static LIST_ERROR_E unlock_f(LIST_S *obj)
+static enum list_error_e unlock_f(struct list_s *obj)
 {
     assert(obj && obj->pData);
     
-    LIST_PRIVATE_DATA_S *pData = (LIST_PRIVATE_DATA_S*)obj->pData;
+    struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
     if (pData && (pthread_mutex_unlock(&pData->lock) != 0)) {
         Loge("pthread_mutex_unlock() failed");

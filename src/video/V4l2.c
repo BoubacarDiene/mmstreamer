@@ -20,13 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   V4l2.c
-* \brief  Implement V4L2 API
+* \file V4l2.c
+* \brief Implement V4L2 API
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <fcntl.h>
@@ -37,62 +37,60 @@
 #include "video/V4l2.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "v4l2"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
+static enum v4l2_error_e openDevice_f(struct v4l2_s *obj,
+                                       struct v4l2_open_device_params_s *params);
+static enum v4l2_error_e closeDevice_f(struct v4l2_s *obj);
+
+static enum v4l2_error_e configureDevice_f(struct v4l2_s *obj,
+                                           struct v4l2_configure_device_params_s *params);
+static enum v4l2_error_e setCroppingArea_f(struct v4l2_s *obj,
+                                           struct v4l2_selection_params_s *cropRectInOut);
+static enum v4l2_error_e setComposingArea_f(struct v4l2_s *obj,
+                                            struct v4l2_selection_params_s *composeRectInOut);
+
+static enum v4l2_error_e requestBuffers_f(struct v4l2_s *obj,
+                                          struct v4l2_request_buffers_params_s *params);
+static enum v4l2_error_e releaseBuffers_f(struct v4l2_s *obj);
+
+static enum v4l2_error_e startCapture_f(struct v4l2_s *obj);
+static enum v4l2_error_e stopCapture_f(struct v4l2_s *obj);
+
+static enum v4l2_error_e awaitData_f(struct v4l2_s *obj, int32_t timeout_ms);
+static enum v4l2_error_e stopAwaitingData_f(struct v4l2_s *obj);
+
+static enum v4l2_error_e queueBuffer_f(struct v4l2_s *obj, uint32_t index);
+static enum v4l2_error_e dequeueBuffer_f(struct v4l2_s *obj);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static V4L2_ERROR_E openDevice_f (V4L2_S *obj, V4L2_OPEN_DEVICE_PARAMS_S *params);
-static V4L2_ERROR_E closeDevice_f(V4L2_S *obj);
-
-static V4L2_ERROR_E configureDevice_f (V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_S *params);
-static V4L2_ERROR_E setCroppingArea_f (V4L2_S *obj, V4L2_SELECTION_PARAMS_S *cropRectInOut);
-static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *composeRectInOut);
-                                      
-static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S *params);
-static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj);
-
-static V4L2_ERROR_E startCapture_f(V4L2_S *obj);
-static V4L2_ERROR_E stopCapture_f (V4L2_S *obj);
-
-static V4L2_ERROR_E awaitData_f       (V4L2_S *obj, int32_t timeout_ms);
-static V4L2_ERROR_E stopAwaitingData_f(V4L2_S *obj);
-
-static V4L2_ERROR_E queueBuffer_f  (V4L2_S *obj, uint32_t index);
-static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj);
-
-static V4L2_ERROR_E v4l2Ioctl_f(int32_t fd, uint64_t req, void *args);
+static enum v4l2_error_e v4l2Ioctl_f(int32_t fd, uint64_t req, void *args);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
- * \fn             V4L2_ERROR_E V4l2_Init(V4L2_S **obj)
- * \brief          Create an instance of V4l2 module
+ * \fn enum v4l2_error_e V4l2_Init(struct v4l2_s **obj)
+ * \brief Create an instance of V4l2 module
  * \param[in, out] obj
- * \return         V4L2_ERROR_NONE on success
- *                 V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-V4L2_ERROR_E V4l2_Init(V4L2_S **obj)
+enum v4l2_error_e V4l2_Init(struct v4l2_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(V4L2_S))));
-    
-    (*obj)->deviceFd  = -1;
-    (*obj)->map       = NULL;
+    assert(obj && (*obj = calloc(1, sizeof(struct v4l2_s))));
     
     (*obj)->openDevice       = openDevice_f;
     (*obj)->closeDevice      = closeDevice_f;
@@ -113,17 +111,19 @@ V4L2_ERROR_E V4l2_Init(V4L2_S **obj)
     (*obj)->queueBuffer      = queueBuffer_f;
     (*obj)->dequeueBuffer    = dequeueBuffer_f;
     
+    (*obj)->deviceFd = -1;
+    
     return V4L2_ERROR_NONE;
 }
 
 /*!
- * \fn             V4L2_ERROR_E V4l2_UnInit(V4L2_S **obj)
- * \brief          Destroy object created using V4l2_Init()
+ * \fn enum v4l2_error_e V4l2_UnInit(struct v4l2_s **obj)
+ * \brief Destroy object created using V4l2_Init()
  * \param[in, out] obj
- * \return         V4L2_ERROR_NONE on success
- *                 V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-V4L2_ERROR_E V4l2_UnInit(V4L2_S **obj)
+enum v4l2_error_e V4l2_UnInit(struct v4l2_s **obj)
 {
     assert(obj && *obj);
     
@@ -134,22 +134,24 @@ V4L2_ERROR_E V4l2_UnInit(V4L2_S **obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
- * \fn        static V4L2_ERROR_E openDevice_f(V4L2_S *obj, V4L2_OPEN_DEVICE_PARAMS_S *params)
- * \brief     Open video device
+ * \fn static enum v4l2_error_e openDevice_f(struct v4l2_s *obj,
+ *                                           struct v4l2_open_device_params_s *params)
+ * \brief Open video device
  * \param[in] obj
  * \param[in] params
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-static V4L2_ERROR_E openDevice_f(V4L2_S *obj, V4L2_OPEN_DEVICE_PARAMS_S *params)
+static enum v4l2_error_e openDevice_f(struct v4l2_s *obj,
+                                      struct v4l2_open_device_params_s *params)
 {
     assert(obj && params);
     
-    V4L2_ERROR_E ret = V4L2_ERROR_NONE;
+    enum v4l2_error_e ret = V4L2_ERROR_NONE;
     
     if (access(params->path, F_OK) != 0) {
         Loge("\"%s\" does not exist", params->path);
@@ -200,13 +202,13 @@ exit:
 }
 
 /*!
- * \fn        static V4L2_ERROR_E closeDevice_f(V4L2_S *obj)
- * \brief     Close video device
+ * \fn static enum v4l2_error_e closeDevice_f(struct v4l2_s *obj)
+ * \brief Close video device
  * \param[in] obj
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-static V4L2_ERROR_E closeDevice_f(V4L2_S *obj)
+static enum v4l2_error_e closeDevice_f(struct v4l2_s *obj)
 {
     assert(obj);
     
@@ -224,18 +226,20 @@ static V4L2_ERROR_E closeDevice_f(V4L2_S *obj)
 }
 
 /*!
- * \fn        static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_S *params)
- * \brief     Configure video device
+ * \fn static enum v4l2_error_e configureDevice_f(struct v4l2_s *obj,
+ *                                                struct v4l2_configure_device_params_s *params)
+ * \brief Configure video device
  * \param[in] obj
  * \param[in] params
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_S *params)
+static enum v4l2_error_e configureDevice_f(struct v4l2_s *obj,
+                                           struct v4l2_configure_device_params_s *params)
 {
     assert(obj && (obj->deviceFd != -1) && params);
     
-    V4L2_ERROR_E ret = V4L2_ERROR_NONE;
+    enum v4l2_error_e ret = V4L2_ERROR_NONE;
 
     /* Set format */
     obj->format.type = params->type;
@@ -255,8 +259,7 @@ static V4L2_ERROR_E configureDevice_f(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_
     }
     
     /* Set framerate */
-    struct v4l2_streamparm streamparm;
-    memset(&streamparm, '\0', sizeof(struct v4l2_streamparm));
+    struct v4l2_streamparm streamparm = {0};
     streamparm.type = params->type;
     if ((ret = v4l2Ioctl_f(obj->deviceFd, VIDIOC_G_PARM, &streamparm)) != V4L2_ERROR_NONE) {
         Loge("Failed to get current framerate");
@@ -292,20 +295,23 @@ exit:
 }
 
 /*!
- * \fn        static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *cropRectInOut)
- * \brief     Set cropping area
+ * \fn static enum v4l2_error_e setCroppingArea_f(struct v4l2_s *obj,
+ *                                                struct v4l2_selection_params_s *cropRectInOut)
+ * \brief Set cropping area
  * \param[in] obj
  * \param[in] cropRectInOut
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *cropRectInOut)
+static enum v4l2_error_e setCroppingArea_f(struct v4l2_s *obj,
+                                           struct v4l2_selection_params_s *cropRectInOut)
 {
     assert(obj && (obj->deviceFd != -1) && cropRectInOut);
     
-    V4L2_ERROR_E ret = V4L2_ERROR_NONE;
+    enum v4l2_error_e ret = V4L2_ERROR_NONE;
 
-    Logd("Requested : left = %d /  top = %d / width = %u / height = %u", cropRectInOut->left, cropRectInOut->top, cropRectInOut->width, cropRectInOut->height);
+    Logd("Requested : left = %d /  top = %d / width = %u / height = %u",
+            cropRectInOut->left, cropRectInOut->top, cropRectInOut->width, cropRectInOut->height);
 
     struct v4l2_selection sel = {
         .type   = obj->format.type,
@@ -317,18 +323,21 @@ static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *crop
         return ret;
     }
 
-    Logd("Default : left = %d / top = %d / width = %u / height = %u", sel.r.left, sel.r.top, sel.r.width, sel.r.height);
+    Logd("Default : left = %d / top = %d / width = %u / height = %u",
+            sel.r.left, sel.r.top, sel.r.width, sel.r.height);
 
     struct v4l2_rect r;
 
-    if ((cropRectInOut->left >= sel.r.left) && (cropRectInOut->left <= sel.r.left + (int32_t)sel.r.width)) {
+    if ((cropRectInOut->left >= sel.r.left)
+        && (cropRectInOut->left <= sel.r.left + (int32_t)sel.r.width)) {
         r.left = cropRectInOut->left;
     }
     else {
         r.left = sel.r.left;
     }
 
-    if ((cropRectInOut->top >= sel.r.top) && (cropRectInOut->top <= sel.r.top + (int32_t)sel.r.height)) {
+    if ((cropRectInOut->top >= sel.r.top)
+        && (cropRectInOut->top <= sel.r.top + (int32_t)sel.r.height)) {
         r.top = cropRectInOut->top;
     }
     else {
@@ -349,7 +358,8 @@ static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *crop
         r.height = (int32_t)sel.r.height + sel.r.top - r.top;
     }
 
-    Logd("Setting active cropping area to : left = %d /  top = %d / width = %u / height = %u", r.left, r.top, r.width, r.height);
+    Logd("Setting active cropping area to : left = %d /  top = %d / width = %u / height = %u",
+            r.left, r.top, r.width, r.height);
 
     sel.r      = r;
     sel.target = V4L2_SEL_TGT_CROP_ACTIVE;
@@ -364,26 +374,31 @@ static V4L2_ERROR_E setCroppingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *crop
     cropRectInOut->width  = r.width;
     cropRectInOut->height = r.height;
 
-    Logd("Active cropping area updated : left = %d /  top = %d / width = %u / height = %u", sel.r.left, sel.r.top, sel.r.width, sel.r.height);
+    Logd("Active cropping area updated : left = %d /  top = %d / width = %u / height = %u",
+            sel.r.left, sel.r.top, sel.r.width, sel.r.height);
 	
     return ret;
 }
 
 /*!
- * \fn        static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *composeRectInOut)
- * \brief     Set composing area
+ * \fn static enum v4l2_error_e setComposingArea_f(struct v4l2_s *obj,
+ *                                                 struct v4l2_selection_params_s *composeRectInOut)
+ * \brief Set composing area
  * \param[in] obj
  * \param[in] composeRectInOut
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *composeRectInOut)
+static enum v4l2_error_e setComposingArea_f(struct v4l2_s *obj,
+                                            struct v4l2_selection_params_s *composeRectInOut)
 {
     assert(obj && (obj->deviceFd != -1) && composeRectInOut);
     
-    V4L2_ERROR_E ret = V4L2_ERROR_NONE;
+    enum v4l2_error_e ret = V4L2_ERROR_NONE;
 
-    Logd("Requested : left = %d /  top = %d / width = %u / height = %u", composeRectInOut->left, composeRectInOut->top, composeRectInOut->width, composeRectInOut->height);
+    Logd("Requested : left = %d /  top = %d / width = %u / height = %u",
+            composeRectInOut->left, composeRectInOut->top,
+            composeRectInOut->width, composeRectInOut->height);
 
     struct v4l2_selection sel = {
         .type   = obj->format.type,
@@ -395,18 +410,21 @@ static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *com
         return ret;
     }
 
-    Logd("Default : left = %d / top = %d / width = %u / height = %u", sel.r.left, sel.r.top, sel.r.width, sel.r.height);
+    Logd("Default : left = %d / top = %d / width = %u / height = %u",
+            sel.r.left, sel.r.top, sel.r.width, sel.r.height);
 
     struct v4l2_rect r;
 
-    if ((composeRectInOut->left >= sel.r.left) && (composeRectInOut->left <= sel.r.left + (int32_t)sel.r.width)) {
+    if ((composeRectInOut->left >= sel.r.left)
+        && (composeRectInOut->left <= sel.r.left + (int32_t)sel.r.width)) {
         r.left = composeRectInOut->left;
     }
     else {
         r.left = sel.r.left;
     }
 
-    if ((composeRectInOut->top >= sel.r.top) && (composeRectInOut->top <= sel.r.top + (int32_t)sel.r.height)) {
+    if ((composeRectInOut->top >= sel.r.top)
+        && (composeRectInOut->top <= sel.r.top + (int32_t)sel.r.height)) {
         r.top = composeRectInOut->top;
     }
     else {
@@ -427,7 +445,8 @@ static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *com
         r.height = (int32_t)sel.r.height + sel.r.top - r.top;
     }
 
-    Logd("Setting active composing area to : left = %d /  top = %d / width = %u / height = %u", r.left, r.top, r.width, r.height);
+    Logd("Setting active composing area to : left = %d /  top = %d / width = %u / height = %u",
+            r.left, r.top, r.width, r.height);
 
     sel.r      = r;
     sel.target = V4L2_SEL_TGT_COMPOSE_ACTIVE;
@@ -443,32 +462,33 @@ static V4L2_ERROR_E setComposingArea_f(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *com
     composeRectInOut->width  = r.width;
     composeRectInOut->height = r.height;
 
-    Logd("Active composing area updated : left = %d /  top = %d / width = %u / height = %u", sel.r.left, sel.r.top, sel.r.width, sel.r.height);
+    Logd("Active composing area updated : left = %d /  top = %d / width = %u / height = %u",
+            sel.r.left, sel.r.top, sel.r.width, sel.r.height);
 	
     return ret;
 }
 
 /*!
- * \fn        static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S *params)
- * \brief     Request video buffers
+ * \fn static enum v4l2_error_e requestBuffers_f(struct v4l2_s *obj,
+ *                                               struct v4l2_request_buffers_params_s *params)
+ * \brief Request video buffers
  * \param[in] obj
  * \param[in] params
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S *params)
+static enum v4l2_error_e requestBuffers_f(struct v4l2_s *obj,
+                                          struct v4l2_request_buffers_params_s *params)
 {
     assert(obj && (obj->deviceFd != -1) && params);
     
-    V4L2_ERROR_E ret = V4L2_ERROR_NONE;
-    
-    uint32_t i;
-    struct v4l2_requestbuffers req;
-    struct v4l2_buffer buf;
+    enum v4l2_error_e ret = V4L2_ERROR_NONE;
 
-    obj->memory = params->memory;
+    struct v4l2_requestbuffers req = {0};
+    struct v4l2_buffer buf         = {0};
 
-    memset(&req, '\0', sizeof(struct v4l2_requestbuffers));
+    obj->memory        = params->memory;
+    obj->maxBufferSize = 0;
 
     req.count  = params->count;
     req.type   = obj->format.type;
@@ -486,12 +506,10 @@ static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S 
     }
     
     obj->nbBuffers = req.count;
-    assert((obj->map = calloc(obj->nbBuffers, sizeof(V4L2_MAPPING_BUFFER_S))));
+    assert((obj->map = calloc(obj->nbBuffers, sizeof(struct v4l2_mapping_buffer_s))));
 
-    obj->maxBufferSize = 0;
+    uint32_t i;
     for (i = 0; i < obj->nbBuffers; i++) {
-        memset(&buf, '\0', sizeof(struct v4l2_buffer));
-
         buf.type   = req.type;
         buf.memory = req.memory;
         buf.index  = i;
@@ -532,6 +550,8 @@ static V4L2_ERROR_E requestBuffers_f(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S 
         if (obj->maxBufferSize < buf.length) {
             obj->maxBufferSize = buf.length;
         }
+
+        memset(&buf, 0, sizeof(struct v4l2_buffer));
     }
     
     return V4L2_ERROR_NONE;
@@ -543,24 +563,24 @@ exit:
 }
 
 /*!
- * \fn        static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj)
- * \brief     Release allocated video buffers
+ * \fn static enum v4l2_error_e releaseBuffers_f(struct v4l2_s *obj)
+ * \brief Release allocated video buffers
  * \param[in] obj
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj)
+static enum v4l2_error_e releaseBuffers_f(struct v4l2_s *obj)
 {
     assert(obj && (obj->deviceFd != -1));
-    
-    uint32_t i;
-    struct v4l2_requestbuffers req;
-    
+
     if (obj->map) {
+        uint32_t i;
+
         switch (obj->memory) {
             case V4L2_MEMORY_MMAP:
                 for (i = 0; i < obj->nbBuffers; i++) {
-                    if (obj->map[i].start && munmap(obj->map[i].start, obj->map[i].length) < 0) {
+                    if (obj->map[i].start
+                        && munmap(obj->map[i].start, obj->map[i].length) < 0) {
                         Loge("munmap() failed");
                     }
                 }
@@ -581,10 +601,9 @@ static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj)
         free(obj->map);
         obj->map = NULL;
     }
-    
-    memset(&req, '\0', sizeof(struct v4l2_requestbuffers));
-    req.count = 0;
-    req.type = obj->format.type;
+
+    struct v4l2_requestbuffers req = {0};
+    req.type   = obj->format.type;
     req.memory = obj->memory;
     
     if (v4l2Ioctl_f(obj->deviceFd, VIDIOC_REQBUFS, &req) != V4L2_ERROR_NONE) {
@@ -595,13 +614,13 @@ static V4L2_ERROR_E releaseBuffers_f(V4L2_S *obj)
 }
 
 /*!
- * \fn        static V4L2_ERROR_E startCapture_f(V4L2_S *obj)
- * \brief     Start video capture
+ * \fn static enum v4l2_error_e startCapture_f(struct v4l2_s *obj)
+ * \brief Start video capture
  * \param[in] obj
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-static V4L2_ERROR_E startCapture_f(V4L2_S *obj)
+static enum v4l2_error_e startCapture_f(struct v4l2_s *obj)
 {
     assert(obj && (obj->deviceFd != -1));
     
@@ -614,13 +633,13 @@ static V4L2_ERROR_E startCapture_f(V4L2_S *obj)
 }
 
 /*!
- * \fn        static V4L2_ERROR_E stopCapture_f(V4L2_S *obj)
- * \brief     Stop video capture
+ * \fn static enum v4l2_error_e stopCapture_f(struct v4l2_s *obj)
+ * \brief Stop video capture
  * \param[in] obj
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-static V4L2_ERROR_E stopCapture_f(V4L2_S *obj)
+static enum v4l2_error_e stopCapture_f(struct v4l2_s *obj)
 {
     assert(obj && (obj->deviceFd != -1));
     
@@ -633,28 +652,28 @@ static V4L2_ERROR_E stopCapture_f(V4L2_S *obj)
 }
 
 /*!
- * \fn        static V4L2_ERROR_E awaitData_f(V4L2_S *obj, int32_t timeout_ms)
- * \brief     Wait a given duration
+ * \fn static enum v4l2_error_e awaitData_f(struct v4l2_s *obj, int32_t timeout_ms)
+ * \brief Wait a given duration
  * \param[in] obj
  * \param[in] timeout_ms : Time in ms to wait before returning / -1 => not used
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-static V4L2_ERROR_E awaitData_f(V4L2_S *obj, int32_t timeout_ms)
+static enum v4l2_error_e awaitData_f(struct v4l2_s *obj, int32_t timeout_ms)
 {
     assert(obj && (obj->deviceFd != -1));
     
     int32_t selectRetval;
-    int32_t selectMaxFd;
+    int32_t maxFd;
     fd_set fds;
-    struct timeval *tv = NULL;
-    V4L2_ERROR_E ret   = V4L2_ERROR_NONE;
+    struct timeval *tv    = NULL;
+    enum v4l2_error_e ret = V4L2_ERROR_NONE;
 
     FD_ZERO(&fds);
     FD_SET(obj->deviceFd, &fds);
     FD_SET(obj->quitFd[PIPE_READ], &fds);
 
-    selectMaxFd = (obj->deviceFd > obj->quitFd[PIPE_READ] ? obj->deviceFd : obj->quitFd[PIPE_READ]);
+    maxFd = (obj->deviceFd > obj->quitFd[PIPE_READ] ? obj->deviceFd : obj->quitFd[PIPE_READ]);
 
     if (timeout_ms > 0) {
         assert((tv = calloc(1, sizeof(struct timeval))));
@@ -662,7 +681,7 @@ static V4L2_ERROR_E awaitData_f(V4L2_S *obj, int32_t timeout_ms)
         tv->tv_usec = timeout_ms * 1000;
     }
 
-    selectRetval = select(selectMaxFd + 1, &fds, NULL, NULL, tv);
+    selectRetval = select(maxFd + 1, &fds, NULL, NULL, tv);
     
     if (tv) {
         free(tv);
@@ -685,13 +704,13 @@ exit:
 }
 
 /*!
- * \fn        static V4L2_ERROR_E stopAwaitingData_f(V4L2_S *obj)
- * \brief     Avoid deadlock in awaitData()
+ * \fn static enum v4l2_error_e stopAwaitingData_f(struct v4l2_s *obj)
+ * \brief Avoid deadlock in awaitData()
  * \param[in] obj
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_IO on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_IO on error
  */
-static V4L2_ERROR_E stopAwaitingData_f(V4L2_S *obj)
+static enum v4l2_error_e stopAwaitingData_f(struct v4l2_s *obj)
 {
     assert(obj && (obj->quitFd[PIPE_WRITE] != -1));
 
@@ -704,20 +723,18 @@ static V4L2_ERROR_E stopAwaitingData_f(V4L2_S *obj)
 }
 
 /*!
- * \fn        static V4L2_ERROR_E queueBuffer_f(V4L2_S *obj, uint32_t index)
- * \brief     Queue video buffer
+ * \fn static enum v4l2_error_e queueBuffer_f(struct v4l2_s *obj, uint32_t index)
+ * \brief Queue video buffer
  * \param[in] obj
  * \param[in] index
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-static V4L2_ERROR_E queueBuffer_f(V4L2_S *obj, uint32_t index)
+static enum v4l2_error_e queueBuffer_f(struct v4l2_s *obj, uint32_t index)
 {
     assert(obj && (obj->deviceFd != -1));
     
-    struct v4l2_buffer buffer;
-    
-    memset(&buffer, '\0', sizeof(struct v4l2_buffer));
+    struct v4l2_buffer buffer = {0};
 
     buffer.type   = obj->format.type;
     buffer.memory = obj->memory;
@@ -732,20 +749,17 @@ static V4L2_ERROR_E queueBuffer_f(V4L2_S *obj, uint32_t index)
 }
 
 /*!
- * \fn        static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj)
- * \brief     Dequeue video buffer
+ * \fn static enum v4l2_error_e dequeueBuffer_f(struct v4l2_s *obj)
+ * \brief Dequeue video buffer
  * \param[in] obj
- * \return    V4L2_ERROR_NONE on success
- *            V4L2_ERROR_INIT on error
+ * \return V4L2_ERROR_NONE on success
+ * \return V4L2_ERROR_INIT on error
  */
-static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj)
+static enum v4l2_error_e dequeueBuffer_f(struct v4l2_s *obj)
 {
     assert(obj && (obj->deviceFd != -1));
     
-    struct v4l2_buffer buffer;
-    uint32_t i;
-    
-    memset(&buffer, '\0', sizeof(struct v4l2_buffer));
+    struct v4l2_buffer buffer = {0};
 
     buffer.type   = obj->format.type;
     buffer.memory = obj->memory;
@@ -755,6 +769,7 @@ static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj)
         return V4L2_ERROR_IO;
     }
 
+    uint32_t i = 0;
     switch (buffer.memory) {
         case V4L2_MEMORY_MMAP:
             i = buffer.index;
@@ -762,7 +777,8 @@ static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj)
             
         case V4L2_MEMORY_USERPTR:
             for (i = 0; i < obj->nbBuffers; i++) {
-                if ((buffer.m.userptr == (uint64_t)obj->map[i].start) && (buffer.length == obj->map[i].length)) {
+                if ((buffer.m.userptr == (uint64_t)obj->map[i].start)
+                    && (buffer.length == obj->map[i].length)) {
                     break;
                 }
             }
@@ -777,10 +793,14 @@ static V4L2_ERROR_E dequeueBuffer_f(V4L2_S *obj)
     return V4L2_ERROR_NONE;
 }
 
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////// PRIVATE FUNCTIONS IMPLEMENTATION ///////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
 /*!
  * Custom ioctl with retries when interrupted
  */
-static V4L2_ERROR_E v4l2Ioctl_f(int32_t fd, uint64_t req, void *args)
+static enum v4l2_error_e v4l2Ioctl_f(int32_t fd, uint64_t req, void *args)
 {
     int32_t ret;
 

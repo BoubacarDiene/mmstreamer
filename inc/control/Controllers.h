@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Controllers.h
+* \file Controllers.h
 * \author Boubacar DIENE
 */
 
@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Common.h"
@@ -40,35 +40,46 @@ extern "C" {
 #include "export/Controller.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum controllers_error_e;
+
+struct controllers_command_s;
+struct controllers_lib_s;
+struct controllers_task_s;
+struct controllers_params_s;
+struct controllers_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEFS                                           */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   CONTROLLERS_ERROR_E        CONTROLLERS_ERROR_E;
+typedef void (*controllers_on_command_cb)(void *userData, struct controller_command_s *command);
 
-typedef struct CONTROLLERS_COMMAND_S      CONTROLLERS_COMMAND_S;
-typedef struct CONTROLLERS_LIB_S          CONTROLLERS_LIB_S;
-typedef struct CONTROLLERS_TASK_S         CONTROLLERS_TASK_S;
-typedef struct CONTROLLERS_PARAMS_S       CONTROLLERS_PARAMS_S;
-typedef struct CONTROLLERS_PRIVATE_DATA_S CONTROLLERS_PRIVATE_DATA_S;
-typedef struct CONTROLLERS_S              CONTROLLERS_S;
+typedef void (*controllers_command_action_done_cb)(struct controller_command_s *command);
+typedef void (*controllers_library_action_done_cb)(struct controller_library_s *library);
 
-typedef void (*CONTROLLERS_ON_COMMAND_CB)(void *userData, CONTROLLER_COMMAND_S *command);
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_LOAD_LIBS_F  )(CONTROLLERS_S *obj);
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_UNLOAD_LIBS_F)(CONTROLLERS_S *obj);
+typedef enum controllers_error_e (*controllers_load_libs_f)(struct controllers_s *obj);
+typedef enum controllers_error_e (*controllers_unload_libs_f)(struct controllers_s *obj);
 
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_INIT_TASK_F  )(CONTROLLERS_S *obj);
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_UNINIT_TASK_F)(CONTROLLERS_S *obj);
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_START_TASK_F )(CONTROLLERS_S *obj);
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_STOP_TASK_F  )(CONTROLLERS_S *obj);
+typedef enum controllers_error_e (*controllers_init_task_f)(struct controllers_s *obj);
+typedef enum controllers_error_e (*controllers_uninit_task_f)(struct controllers_s *obj);
+typedef enum controllers_error_e (*controllers_start_task_f)(struct controllers_s *obj);
+typedef enum controllers_error_e (*controllers_stop_task_f)(struct controllers_s *obj);
 
-typedef CONTROLLERS_ERROR_E (*CONTROLLERS_NOTIFY_F)(CONTROLLERS_S *obj, CONTROLLER_EVENT_S *event);
+typedef enum controllers_error_e (*controllers_notify_f)(struct controllers_s *obj,
+                                                         struct controller_event_s *event);
 
-enum CONTROLLERS_ERROR_E {
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum controllers_error_e {
     CONTROLLERS_ERROR_NONE,
     CONTROLLERS_ERROR_INIT,
     CONTROLLERS_ERROR_UNINIT,
@@ -79,91 +90,93 @@ enum CONTROLLERS_ERROR_E {
     CONTROLLERS_ERROR_LIB
 };
 
-struct CONTROLLERS_COMMAND_S {
-    CONTROLLER_COMMAND_E id;
-
-    char                 *gfxElementName;
-    void                 *gfxElementData;
-
-    char                 *handlerName;
-    char                 *handlerData;
+enum controllers_task_e {
+    CONTROLLERS_TASK_CMDS,
+    CONTROLLERS_TASK_EVTS,
+    CONTROLLERS_TASK_LIBS,
+    CONTROLLERS_TASK_COUNT
 };
 
-struct CONTROLLERS_LIB_S {
-    char                        *path;
+struct controllers_command_s {
+    enum controller_command_e id;
 
-    CONTROLLER_S                *obj;
-    void                        *handle;
+    char                      *gfxElementName;
+    void                      *gfxElementData;
 
-    CONTROLLER_INIT_LIBRARY_F   init;
-    CONTROLLER_UNINIT_LIBRARY_F uninit;
-    CONTROLLER_ON_COMMAND_CB    onCommand;
-    CONTROLLER_ON_EVENT_CB      onEvent;
-
-    int32_t                     eventsMask;
-
-    void                        *pData;
+    char                      *handlerName;
+    char                      *handlerData;
 };
 
-struct CONTROLLERS_TASK_S {
-    volatile uint8_t quit;
+struct controllers_lib_s {
+    char                     *path;
 
-    LIST_S           *list;
+    struct controller_s      *obj;
+    void                     *handle;
 
-    TASK_S           *task;
-    TASK_PARAMS_S    taskParams;
+    controller_init_f        init;
+    controller_uninit_f      uninit;
 
-    pthread_mutex_t  lock;
-    sem_t            sem;
+    controller_on_command_cb onCommandCb;
+    controller_on_event_cb   onEventCb;
+
+    int32_t                  eventsMask;
+
+    void                     *pData;
 };
 
-struct CONTROLLERS_PARAMS_S {
-    CONTEXT_S                 *ctx;
-    CONTROLLERS_ON_COMMAND_CB onCommandCb;
+struct controllers_task_s {
+    volatile uint8_t     quit;
+
+    struct list_s        *list;
+
+    struct task_s        *task;
+    struct task_params_s taskParams;
+
+    pthread_mutex_t      lock;
+    sem_t                sem;
+};
+
+struct controllers_tasks_mngt_s {
+    controllers_init_task_f   init;
+    controllers_uninit_task_f uninit;
+    controllers_start_task_f  start;
+    controllers_stop_task_f   stop;
+
+    struct controllers_task_s task;
+};
+
+struct controllers_params_s {
+    struct context_s          *ctx;
+    controllers_on_command_cb onCommandCb;
     void                      *userData;
 };
 
-struct CONTROLLERS_PRIVATE_DATA_S {
-    CONTROLLERS_PARAMS_S params;
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-    uint8_t              nbLibs;
-    CONTROLLERS_LIB_S    *libs;
+struct controllers_s {
+    controllers_load_libs_f   loadLibs;
+    controllers_unload_libs_f unloadLibs;
 
-    CONTROLLERS_TASK_S   cmdsTask;
-    CONTROLLERS_TASK_S   evtsTask;
-    CONTROLLERS_TASK_S   libsTask;
-};
+    controllers_notify_f      notify;
 
-struct CONTROLLERS_S {
-    CONTROLLERS_LOAD_LIBS_F    loadLibs;
-    CONTROLLERS_UNLOAD_LIBS_F  unloadLibs;
+    struct controllers_tasks_mngt_s tasksMngt[CONTROLLERS_TASK_COUNT];
+    struct controllers_params_s     params;
 
-    CONTROLLERS_INIT_TASK_F    initCmdsTask;
-    CONTROLLERS_UNINIT_TASK_F  uninitCmdsTask;
-    CONTROLLERS_START_TASK_F   startCmdsTask;
-    CONTROLLERS_STOP_TASK_F    stopCmdsTask;
+    uint8_t                         nbLibs;
+    struct controllers_lib_s        *libs;
 
-    CONTROLLERS_INIT_TASK_F    initEvtsTask;
-    CONTROLLERS_UNINIT_TASK_F  uninitEvtsTask;
-    CONTROLLERS_START_TASK_F   startEvtsTask;
-    CONTROLLERS_STOP_TASK_F    stopEvtsTask;
-
-    CONTROLLERS_INIT_TASK_F    initLibsTask;
-    CONTROLLERS_UNINIT_TASK_F  uninitLibsTask;
-    CONTROLLERS_START_TASK_F   startLibsTask;
-    CONTROLLERS_STOP_TASK_F    stopLibsTask;
-
-    CONTROLLERS_NOTIFY_F       notify;
-
-    CONTROLLERS_PRIVATE_DATA_S *pData;
+    void                            *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           VARIABLES                                          */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-CONTROLLERS_ERROR_E Controllers_Init  (CONTROLLERS_S **obj, CONTROLLERS_PARAMS_S *params);
-CONTROLLERS_ERROR_E Controllers_UnInit(CONTROLLERS_S **obj);
+enum controllers_error_e Controllers_Init(struct controllers_s **obj,
+                                          struct controllers_params_s *params);
+enum controllers_error_e Controllers_UnInit(struct controllers_s **obj);
 
 #ifdef __cplusplus
 }

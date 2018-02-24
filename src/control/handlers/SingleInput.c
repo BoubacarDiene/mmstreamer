@@ -20,107 +20,128 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   SingleInput.c
-* \brief  TODO
+* \file SingleInput.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "control/Control.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "SingleInput"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+static enum handlers_error_e closeApplication(struct handlers_s *obj, char *gfxElementName,
+                                              void *gfxElementData, char *handlerData);
+static enum handlers_error_e changeLanguage(struct handlers_s *obj, char *gfxElementName,
+                                            void *gfxElementData, char *handlerData);
+
+static enum handlers_error_e hideElement(struct handlers_s *obj, char *gfxElementName,
+                                         void *gfxElementData, char *handlerData);
+static enum handlers_error_e showElement(struct handlers_s *obj, char *gfxElementName,
+                                         void *gfxElementData, char *handlerData);
+
+static enum handlers_error_e hideGroup(struct handlers_s *obj, char *gfxElementName,
+                                       void *gfxElementData, char *handlerData);
+static enum handlers_error_e showGroup(struct handlers_s *obj, char *gfxElementName,
+                                       void *gfxElementData, char *handlerData);
+
+static enum handlers_error_e setFocus(struct handlers_s *obj, char *gfxElementName,
+                                      void *gfxElementData, char *handlerData);
+
+static enum handlers_error_e saveVideoElement(struct handlers_s *obj, char *gfxElementName,
+                                              void *gfxElementData, char *handlerData);
+static enum handlers_error_e takeScreenshot(struct handlers_s *obj, char *gfxElementName,
+                                            void *gfxElementData, char *handlerData);
+
+static enum handlers_error_e setClickable(struct handlers_s *obj, char *gfxElementName,
+                                          void *gfxElementData, char *handlerData);
+static enum handlers_error_e setNotClickable(struct handlers_s *obj, char *gfxElementName,
+                                             void *gfxElementData, char *handlerData);
+
+static enum handlers_error_e stopGraphics(struct handlers_s *obj, char *gfxElementName,
+                                          void *gfxElementData, char *handlerData);
+static enum handlers_error_e startGraphics(struct handlers_s *obj, char *gfxElementName,
+                                           void *gfxElementData, char *handlerData);
+
+static enum handlers_error_e stopVideo(struct handlers_s *obj, char *gfxElementName,
+                                       void *gfxElementData, char *handlerData);
+static enum handlers_error_e startVideo(struct handlers_s *obj, char *gfxElementName,
+                                        void *gfxElementData, char *handlerData);
+
+static enum handlers_error_e stopServer(struct handlers_s *obj, char *gfxElementName,
+                                        void *gfxElementData, char *handlerData);
+static enum handlers_error_e startServer(struct handlers_s *obj, char *gfxElementName,
+                                         void *gfxElementData, char *handlerData);
+
+static enum handlers_error_e suspendServer(struct handlers_s *obj, char *gfxElementName,
+                                           void *gfxElementData, char *handlerData);
+static enum handlers_error_e resumeServer(struct handlers_s *obj, char *gfxElementName,
+                                          void *gfxElementData, char *handlerData);
+
+static enum handlers_error_e stopCient(struct handlers_s *obj, char *gfxElementName,
+                                       void *gfxElementData, char *handlerData);
+static enum handlers_error_e startClient(struct handlers_s *obj, char *gfxElementName,
+                                         void *gfxElementData, char *handlerData);
+
+static enum handlers_error_e multiInputs(struct handlers_s *obj, char *gfxElementName,
+                                         void *gfxElementData, char *handlerData);
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* ///////////////////////////////////// GLOBAL VARIABLES ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static HANDLERS_ERROR_E closeApplication(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static HANDLERS_ERROR_E changeLanguage  (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
+struct handlers_commands_s gSingleInputHandlers[] = {
+	{ HANDLERS_COMMAND_CLOSE_APPLICATION,   NULL,  closeApplication },
+	{ HANDLERS_COMMAND_CHANGE_LANGUAGE,     NULL,  changeLanguage   },
+	{ HANDLERS_COMMAND_SAVE_VIDEO_ELEMENT,  NULL,  saveVideoElement },
+	{ HANDLERS_COMMAND_TAKE_SCREENSHOT,     NULL,  takeScreenshot   },
+	{ HANDLERS_COMMAND_HIDE_ELEMENT,        NULL,  hideElement      },
+	{ HANDLERS_COMMAND_SHOW_ELEMENT,        NULL,  showElement      },
+	{ HANDLERS_COMMAND_SET_FOCUS,           NULL,  setFocus         },
+	{ HANDLERS_COMMAND_HIDE_GROUP,          NULL,  hideGroup        },
+	{ HANDLERS_COMMAND_SHOW_GROUP,          NULL,  showGroup        },
+	{ HANDLERS_COMMAND_SET_CLICKABLE,       NULL,  setClickable     },
+	{ HANDLERS_COMMAND_SET_NOT_CLICKABLE,   NULL,  setNotClickable  },
+	{ HANDLERS_COMMAND_STOP_GRAPHICS,       NULL,  stopGraphics     },
+	{ HANDLERS_COMMAND_START_GRAPHICS,      NULL,  startGraphics    },
+	{ HANDLERS_COMMAND_STOP_VIDEO,          NULL,  stopVideo        },
+	{ HANDLERS_COMMAND_START_VIDEO,         NULL,  startVideo       },
+	{ HANDLERS_COMMAND_STOP_SERVER,         NULL,  stopServer       },
+	{ HANDLERS_COMMAND_START_SERVER,        NULL,  startServer      },
+	{ HANDLERS_COMMAND_SUSPEND_SERVER,      NULL,  suspendServer    },
+	{ HANDLERS_COMMAND_RESUME_SERVER,       NULL,  resumeServer     },
+	{ HANDLERS_COMMAND_STOP_CLIENT,         NULL,  stopCient        },
+	{ HANDLERS_COMMAND_START_CLIENT,        NULL,  startClient      },
 
-static HANDLERS_ERROR_E hideElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static HANDLERS_ERROR_E showElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-static HANDLERS_ERROR_E hideGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static HANDLERS_ERROR_E showGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-static HANDLERS_ERROR_E setFocus(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-static HANDLERS_ERROR_E saveVideoElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static HANDLERS_ERROR_E takeScreenshot  (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-static HANDLERS_ERROR_E setClickable   (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static HANDLERS_ERROR_E setNotClickable(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-static HANDLERS_ERROR_E stopGraphics (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static HANDLERS_ERROR_E startGraphics(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-static HANDLERS_ERROR_E stopVideo (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static HANDLERS_ERROR_E startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-static HANDLERS_ERROR_E stopServer (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static HANDLERS_ERROR_E startServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-static HANDLERS_ERROR_E suspendServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static HANDLERS_ERROR_E resumeServer (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-static HANDLERS_ERROR_E stopCient  (HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-static HANDLERS_ERROR_E startClient(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-static HANDLERS_ERROR_E multiInputs(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData);
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-HANDLERS_COMMANDS_S gSingleInputHandlers[] = {
-	{ HANDLERS_COMMAND_CLOSE_APPLICATION,           NULL,             closeApplication },
-	{ HANDLERS_COMMAND_CHANGE_LANGUAGE,             NULL,             changeLanguage   },
-	{ HANDLERS_COMMAND_SAVE_VIDEO_ELEMENT,          NULL,             saveVideoElement },
-	{ HANDLERS_COMMAND_TAKE_SCREENSHOT,             NULL,             takeScreenshot   },
-	{ HANDLERS_COMMAND_HIDE_ELEMENT,                NULL,             hideElement      },
-	{ HANDLERS_COMMAND_SHOW_ELEMENT,                NULL,             showElement      },
-	{ HANDLERS_COMMAND_SET_FOCUS,                   NULL,             setFocus         },
-	{ HANDLERS_COMMAND_HIDE_GROUP,                  NULL,             hideGroup        },
-	{ HANDLERS_COMMAND_SHOW_GROUP,                  NULL,             showGroup        },
-	{ HANDLERS_COMMAND_SET_CLICKABLE,               NULL,             setClickable     },
-	{ HANDLERS_COMMAND_SET_NOT_CLICKABLE,           NULL,             setNotClickable  },
-	{ HANDLERS_COMMAND_STOP_GRAPHICS,               NULL,             stopGraphics     },
-	{ HANDLERS_COMMAND_START_GRAPHICS,              NULL,             startGraphics    },
-	{ HANDLERS_COMMAND_STOP_VIDEO,                  NULL,             stopVideo        },
-	{ HANDLERS_COMMAND_START_VIDEO,                 NULL,             startVideo       },
-	{ HANDLERS_COMMAND_STOP_SERVER,                 NULL,             stopServer       },
-	{ HANDLERS_COMMAND_START_SERVER,                NULL,             startServer      },
-	{ HANDLERS_COMMAND_SUSPEND_SERVER,              NULL,             suspendServer    },
-	{ HANDLERS_COMMAND_RESUME_SERVER,               NULL,             resumeServer     },
-	{ HANDLERS_COMMAND_STOP_CLIENT,                 NULL,             stopCient        },
-	{ HANDLERS_COMMAND_START_CLIENT,                NULL,             startClient      },
-
-	{ HANDLERS_COMMAND_MULTI_INPUTS,                NULL,             multiInputs      },
-	{ NULL,                                         NULL,             NULL             }
+	{ HANDLERS_COMMAND_MULTI_INPUTS,        NULL,  multiInputs      },
+	{ NULL,                                 NULL,  NULL             }
 };
 
-uint32_t gNbSingleInputHandlers = (uint32_t)(sizeof(gSingleInputHandlers) / sizeof(gSingleInputHandlers[0]));
+uint32_t gNbSingleInputHandlers = (uint32_t)(sizeof(gSingleInputHandlers)
+                                           / sizeof(gSingleInputHandlers[0]));
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                       COMMAND HANDLERS                                       */
+/* ///////////////////////////// PRIVATE FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
+
 
 /*!
  *
  */
-static HANDLERS_ERROR_E closeApplication(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e closeApplication(struct handlers_s *obj, char *gfxElementName,
+                                              void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -130,11 +151,11 @@ static HANDLERS_ERROR_E closeApplication(HANDLERS_S *obj, char *gfxElementName, 
 
     Logd("Closing application");
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
-    GRAPHICS_S *graphicsObj        = ctx->modules.graphicsObj;
-    INPUT_S *input                 = &ctx->input;
-    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                 = pData->handlersParams.ctx;
+    struct graphics_s *graphicsObj        = ctx->modules.graphicsObj;
+    struct input_s *input                 = &ctx->input;
+    enum handlers_error_e ret             = HANDLERS_ERROR_NONE;
 
     switch (input->keepAliveMethod) {
         case KEEP_ALIVE_EVENTS_BASED:
@@ -162,30 +183,32 @@ static HANDLERS_ERROR_E closeApplication(HANDLERS_S *obj, char *gfxElementName, 
 /*!
  *
  */
-static HANDLERS_ERROR_E changeLanguage(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e changeLanguage(struct handlers_s *obj, char *gfxElementName,
+                                            void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData && gfxElementData);
 
     (void)gfxElementName;
 
-    HANDLERS_PRIVATE_DATA_S *pData      = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                      = pData->handlersParams.ctx;
-    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxElementData;
-    GRAPHICS_S *graphicsObj             = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos     = &ctx->params.graphicsInfos;
-    uint32_t nbGfxElements              = graphicsInfos->nbGfxElements;
-    GFX_ELEMENT_S **gfxElements         = graphicsInfos->gfxElements;
-    HANDLERS_ERROR_E ret                = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData      = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                      = pData->handlersParams.ctx;
+    struct control_element_data_s *elementData = (struct control_element_data_s*)gfxElementData;
+    struct graphics_s *graphicsObj             = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos     = &ctx->params.graphicsInfos;
+    uint32_t nbGfxElements                     = graphicsInfos->nbGfxElements;
+    struct gfx_element_s **gfxElements         = graphicsInfos->gfxElements;
+    enum handlers_error_e ret                  = HANDLERS_ERROR_NONE;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
         Logw("Graphics module is not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
     
-    char nextLanguage[MIN_STR_SIZE] = { 0 };
+    char nextLanguage[MIN_STR_SIZE] = {0};
 
-    if (!handlerData || (strlen(handlerData) == 0)) {
-        elementData->getters.getLanguage(elementData->getters.userData, graphicsInfos->currentLanguage, nextLanguage);
+    if (!handlerData || (handlerData[0] == '\0')) {
+        elementData->getters.getLanguage(elementData->getters.userData,
+                                         graphicsInfos->currentLanguage, nextLanguage);
     }
     else {
         strncpy(nextLanguage, handlerData, sizeof(nextLanguage));
@@ -199,21 +222,23 @@ static HANDLERS_ERROR_E changeLanguage(HANDLERS_S *obj, char *gfxElementName, vo
     Logd("Changing language from \"%s\" to \"%s\"", graphicsInfos->currentLanguage, nextLanguage);
     
     uint32_t index;
-    GFX_TEXT_S text;
-    CONTROL_ELEMENT_DATA_S *data;
+    struct gfx_text_s text;
+    struct control_element_data_s *data;
     
     for (index = 0; index < nbGfxElements; index++) {
         if (gfxElements[index]->type != GFX_ELEMENT_TYPE_TEXT) {
             continue;
         }
         
-        data = (CONTROL_ELEMENT_DATA_S*)gfxElements[index]->pData;
+        data = (struct control_element_data_s*)gfxElements[index]->pData;
         
-        memcpy(&text, &gfxElements[index]->data.text, sizeof(GFX_TEXT_S));
+        memcpy(&text, &gfxElements[index]->data.text, sizeof(struct gfx_text_s));
         memset(text.str, '\0', sizeof(text.str));
-        elementData->getters.getString(elementData->getters.userData, data->ids.text.stringId, nextLanguage, text.str);
+        elementData->getters.getString(elementData->getters.userData, data->ids.text.stringId,
+                                                                      nextLanguage, text.str);
         
-        if (graphicsObj->setData(graphicsObj, gfxElements[index]->name, (void*)&text) != GRAPHICS_ERROR_NONE) {
+        if (graphicsObj->setData(graphicsObj, gfxElements[index]->name,
+                                              (void*)&text) != GRAPHICS_ERROR_NONE) {
             Loge("setData() failed for element \"%s\"", gfxElements[index]->name);
             ret = HANDLERS_ERROR_COMMAND;
             break;
@@ -229,7 +254,8 @@ static HANDLERS_ERROR_E changeLanguage(HANDLERS_S *obj, char *gfxElementName, vo
 /*!
  *
  */
-static HANDLERS_ERROR_E hideElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e hideElement(struct handlers_s *obj, char *gfxElementName,
+                                         void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -243,10 +269,10 @@ static HANDLERS_ERROR_E hideElement(HANDLERS_S *obj, char *gfxElementName, void 
 
     Logd("Hiding element \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
-    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    struct handlers_private_data_s *pData  = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                  = pData->handlersParams.ctx;
+    struct graphics_s *graphicsObj         = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos = &ctx->params.graphicsInfos;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
         Logw("Graphics module not started - current state : %u", graphicsInfos->state);
@@ -264,7 +290,8 @@ static HANDLERS_ERROR_E hideElement(HANDLERS_S *obj, char *gfxElementName, void 
 /*!
  *
  */
-static HANDLERS_ERROR_E showElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e showElement(struct handlers_s *obj, char *gfxElementName,
+                                         void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -278,10 +305,10 @@ static HANDLERS_ERROR_E showElement(HANDLERS_S *obj, char *gfxElementName, void 
 
     Logd("Showing element \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
-    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    struct handlers_private_data_s *pData  = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                  = pData->handlersParams.ctx;
+    struct graphics_s *graphicsObj         = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos = &ctx->params.graphicsInfos;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
         Logw("Graphics module not started - current state : %u", graphicsInfos->state);
@@ -299,7 +326,8 @@ static HANDLERS_ERROR_E showElement(HANDLERS_S *obj, char *gfxElementName, void 
 /*!
  *
  */
-static HANDLERS_ERROR_E hideGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e hideGroup(struct handlers_s *obj, char *gfxElementName,
+                                       void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -313,13 +341,13 @@ static HANDLERS_ERROR_E hideGroup(HANDLERS_S *obj, char *gfxElementName, void *g
 
     Logd("Hiding group \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
-    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
-    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
-    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
-    HANDLERS_ERROR_E ret            = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData  = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                  = pData->handlersParams.ctx;
+    struct graphics_s *graphicsObj         = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos = &ctx->params.graphicsInfos;
+    uint32_t nbGfxElements                 = graphicsInfos->nbGfxElements;
+    struct gfx_element_s **gfxElements     = graphicsInfos->gfxElements;
+    enum handlers_error_e ret              = HANDLERS_ERROR_NONE;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
         Logw("Graphics module not started - current state : %u", graphicsInfos->state);
@@ -328,11 +356,13 @@ static HANDLERS_ERROR_E hideGroup(HANDLERS_S *obj, char *gfxElementName, void *g
     
     uint32_t index;
     for (index = 0; index < nbGfxElements; index++) {
-        if (strncmp(gfxElements[index]->groupName, handlerData, sizeof(gfxElements[index]->groupName)) != 0) {
+        if (strncmp(gfxElements[index]->groupName, handlerData,
+                                                   sizeof(gfxElements[index]->groupName)) != 0) {
             continue;
         }
 
-        if (graphicsObj->setVisible(graphicsObj, gfxElements[index]->name, 0) != GRAPHICS_ERROR_NONE) {
+        if (graphicsObj->setVisible(graphicsObj,
+                                    gfxElements[index]->name, 0) != GRAPHICS_ERROR_NONE) {
             Loge("setVisible() failed for element \"%s\"", gfxElements[index]->name);
             ret = HANDLERS_ERROR_COMMAND;
             break;
@@ -345,7 +375,8 @@ static HANDLERS_ERROR_E hideGroup(HANDLERS_S *obj, char *gfxElementName, void *g
 /*!
  *
  */
-static HANDLERS_ERROR_E showGroup(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e showGroup(struct handlers_s *obj, char *gfxElementName,
+                                       void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -359,13 +390,13 @@ static HANDLERS_ERROR_E showGroup(HANDLERS_S *obj, char *gfxElementName, void *g
 
     Logd("Showing group \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
-    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
-    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
-    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
-    HANDLERS_ERROR_E ret            = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData  = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                  = pData->handlersParams.ctx;
+    struct graphics_s *graphicsObj         = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos = &ctx->params.graphicsInfos;
+    uint32_t nbGfxElements                 = graphicsInfos->nbGfxElements;
+    struct gfx_element_s **gfxElements     = graphicsInfos->gfxElements;
+    enum handlers_error_e ret              = HANDLERS_ERROR_NONE;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
         Logw("Graphics module not started - current state : %u", graphicsInfos->state);
@@ -374,11 +405,13 @@ static HANDLERS_ERROR_E showGroup(HANDLERS_S *obj, char *gfxElementName, void *g
 
     uint32_t index;
     for (index = 0; index < nbGfxElements; index++) {
-        if (strncmp(gfxElements[index]->groupName, handlerData, sizeof(gfxElements[index]->groupName)) != 0) {
+        if (strncmp(gfxElements[index]->groupName, handlerData,
+                                                   sizeof(gfxElements[index]->groupName)) != 0) {
             continue;
         }
 
-        if (graphicsObj->setVisible(graphicsObj, gfxElements[index]->name, 1) != GRAPHICS_ERROR_NONE) {
+        if (graphicsObj->setVisible(graphicsObj,
+                                    gfxElements[index]->name, 1) != GRAPHICS_ERROR_NONE) {
             Loge("setVisible() failed for element \"%s\"", gfxElements[index]->name);
             ret = HANDLERS_ERROR_COMMAND;
             break;
@@ -391,7 +424,8 @@ static HANDLERS_ERROR_E showGroup(HANDLERS_S *obj, char *gfxElementName, void *g
 /*!
  *
  */
-static HANDLERS_ERROR_E setFocus(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e setFocus(struct handlers_s *obj, char *gfxElementName,
+                                      void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -405,10 +439,10 @@ static HANDLERS_ERROR_E setFocus(HANDLERS_S *obj, char *gfxElementName, void *gf
 
     Logd("Giving focus to element \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
-    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    struct handlers_private_data_s *pData  = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                  = pData->handlersParams.ctx;
+    struct graphics_s *graphicsObj         = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos = &ctx->params.graphicsInfos;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
         Logw("Graphics module not started - current state : %u", graphicsInfos->state);
@@ -426,7 +460,8 @@ static HANDLERS_ERROR_E setFocus(HANDLERS_S *obj, char *gfxElementName, void *gf
 /*!
  *
  */
-static HANDLERS_ERROR_E saveVideoElement(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e saveVideoElement(struct handlers_s *obj, char *gfxElementName,
+                                              void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -440,18 +475,18 @@ static HANDLERS_ERROR_E saveVideoElement(HANDLERS_S *obj, char *gfxElementName, 
 
     Logd("Saving video element \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
-    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
-    INPUT_S *input                  = &ctx->input;
+    struct handlers_private_data_s *pData  = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                  = pData->handlersParams.ctx;
+    struct graphics_s *graphicsObj         = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos = &ctx->params.graphicsInfos;
+    struct input_s *input                  = &ctx->input;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
         Logw("Graphics module not started - current state : %u", graphicsInfos->state);
         return HANDLERS_ERROR_STATE;
     }
 
-    GFX_IMAGE_S image;
+    struct gfx_image_s image;
     struct stat st;
 
     if (stat(input->appDataDir, &st) < 0) {
@@ -476,7 +511,8 @@ static HANDLERS_ERROR_E saveVideoElement(HANDLERS_S *obj, char *gfxElementName, 
 /*!
  *
  */
-static HANDLERS_ERROR_E takeScreenshot(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e takeScreenshot(struct handlers_s *obj, char *gfxElementName,
+                                            void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -490,11 +526,11 @@ static HANDLERS_ERROR_E takeScreenshot(HANDLERS_S *obj, char *gfxElementName, vo
 
     Logd("Taking screnshot - Image format : \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
-    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
-    INPUT_S *input                  = &ctx->input;
+    struct handlers_private_data_s *pData  = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                  = pData->handlersParams.ctx;
+    struct graphics_s *graphicsObj         = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos = &ctx->params.graphicsInfos;
+    struct input_s *input                  = &ctx->input;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
         Logw("Graphics module not started - current state : %u", graphicsInfos->state);
@@ -502,7 +538,7 @@ static HANDLERS_ERROR_E takeScreenshot(HANDLERS_S *obj, char *gfxElementName, vo
     }
 
     uint32_t imageFormat = (uint32_t)atoi(handlerData);
-    GFX_IMAGE_S image;
+    struct gfx_image_s image;
     struct stat st;
 
     if (stat(input->appDataDir, &st) < 0) {
@@ -540,7 +576,8 @@ static HANDLERS_ERROR_E takeScreenshot(HANDLERS_S *obj, char *gfxElementName, vo
 /*!
  *
  */
-static HANDLERS_ERROR_E setClickable(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e setClickable(struct handlers_s *obj, char *gfxElementName,
+                                          void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -554,10 +591,10 @@ static HANDLERS_ERROR_E setClickable(HANDLERS_S *obj, char *gfxElementName, void
 
     Logd("Setting element \"%s\" as clickable", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
-    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    struct handlers_private_data_s *pData  = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                  = pData->handlersParams.ctx;
+    struct graphics_s *graphicsObj         = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos = &ctx->params.graphicsInfos;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
         Logw("Graphics module not started - current state : %u", graphicsInfos->state);
@@ -575,7 +612,8 @@ static HANDLERS_ERROR_E setClickable(HANDLERS_S *obj, char *gfxElementName, void
 /*!
  *
  */
-static HANDLERS_ERROR_E setNotClickable(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e setNotClickable(struct handlers_s *obj, char *gfxElementName,
+                                             void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -589,10 +627,10 @@ static HANDLERS_ERROR_E setNotClickable(HANDLERS_S *obj, char *gfxElementName, v
 
     Logd("Setting element \"%s\" as not clickable", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                  = pData->handlersParams.ctx;
-    GRAPHICS_S *graphicsObj         = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &ctx->params.graphicsInfos;
+    struct handlers_private_data_s *pData  = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                  = pData->handlersParams.ctx;
+    struct graphics_s *graphicsObj         = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos = &ctx->params.graphicsInfos;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
         Logw("Graphics module not started - current state : %u", graphicsInfos->state);
@@ -610,7 +648,8 @@ static HANDLERS_ERROR_E setNotClickable(HANDLERS_S *obj, char *gfxElementName, v
 /*!
  *
  */
-static HANDLERS_ERROR_E stopGraphics(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e stopGraphics(struct handlers_s *obj, char *gfxElementName,
+                                          void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -620,11 +659,12 @@ static HANDLERS_ERROR_E stopGraphics(HANDLERS_S *obj, char *gfxElementName, void
 
     Logd("Stopping graphics module");
 
-    HANDLERS_PRIVATE_DATA_S *pData    = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                    = pData->handlersParams.ctx;
-    GRAPHICS_S *graphicsObj           = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos   = &ctx->params.graphicsInfos;
-    GRAPHICS_PARAMS_S *graphicsParams = &ctx->params.graphicsInfos.graphicsParams;
+    struct handlers_private_data_s *pData    = (struct handlers_private_data_s*)(obj->pData);
+    struct handlers_params_s *hParams        = &pData->handlersParams;
+    struct context_s *ctx                    = hParams->ctx;
+    struct graphics_s *graphicsObj           = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos   = &ctx->params.graphicsInfos;
+    struct graphics_params_s *graphicsParams = &ctx->params.graphicsInfos.graphicsParams;
 
     if (graphicsInfos->state != MODULE_STATE_STARTED) {
         Logw("Graphics module not started - current state : %u", graphicsInfos->state);
@@ -638,11 +678,10 @@ static HANDLERS_ERROR_E stopGraphics(HANDLERS_S *obj, char *gfxElementName, void
 
     graphicsInfos->state = MODULE_STATE_STOPPED;
 
-    HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
-    void *userData                         = pData->handlersParams.userData;
-
-    if (cb) {
-        cb(userData, graphicsParams->screenParams.name, graphicsInfos->state);
+    if (hParams->onModuleStateChangedCb) {
+        hParams->onModuleStateChangedCb(hParams->userData,
+                                        graphicsParams->screenParams.name,
+                                        graphicsInfos->state);
     }
 
     return HANDLERS_ERROR_NONE;
@@ -651,7 +690,8 @@ static HANDLERS_ERROR_E stopGraphics(HANDLERS_S *obj, char *gfxElementName, void
 /*!
  *
  */
-static HANDLERS_ERROR_E startGraphics(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e startGraphics(struct handlers_s *obj, char *gfxElementName,
+                                           void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -661,12 +701,13 @@ static HANDLERS_ERROR_E startGraphics(HANDLERS_S *obj, char *gfxElementName, voi
 
     Logd("Starting graphics module");
 
-    HANDLERS_PRIVATE_DATA_S *pData    = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                    = pData->handlersParams.ctx;
-    GRAPHICS_S *graphicsObj           = ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos   = &ctx->params.graphicsInfos;
-    GRAPHICS_PARAMS_S *graphicsParams = &ctx->params.graphicsInfos.graphicsParams;
-    HANDLERS_ERROR_E ret              = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData    = (struct handlers_private_data_s*)(obj->pData);
+    struct handlers_params_s *hParams        = &pData->handlersParams;
+    struct context_s *ctx                    = hParams->ctx;
+    struct graphics_s *graphicsObj           = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos   = &ctx->params.graphicsInfos;
+    struct graphics_params_s *graphicsParams = &ctx->params.graphicsInfos.graphicsParams;
+    enum handlers_error_e ret                = HANDLERS_ERROR_NONE;
 
     if (graphicsInfos->state == MODULE_STATE_STARTED) {
         Logw("Graphics module is already started");
@@ -687,11 +728,10 @@ static HANDLERS_ERROR_E startGraphics(HANDLERS_S *obj, char *gfxElementName, voi
         ret = HANDLERS_ERROR_COMMAND;
     }
 
-    HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
-    void *userData                         = pData->handlersParams.userData;
-
-    if (cb) {
-        cb(userData, graphicsParams->screenParams.name, graphicsInfos->state);
+    if (hParams->onModuleStateChangedCb) {
+        hParams->onModuleStateChangedCb(hParams->userData,
+                                        graphicsParams->screenParams.name,
+                                        graphicsInfos->state);
     }
 
     return ret;
@@ -700,7 +740,8 @@ static HANDLERS_ERROR_E startGraphics(HANDLERS_S *obj, char *gfxElementName, voi
 /*!
  *
  */
-static HANDLERS_ERROR_E stopVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e stopVideo(struct handlers_s *obj, char *gfxElementName,
+                                       void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -714,17 +755,18 @@ static HANDLERS_ERROR_E stopVideo(HANDLERS_S *obj, char *gfxElementName, void *g
 
     Logd("Stopping video \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
-    VIDEO_S *videoObj              = ctx->modules.videoObj;
-    VIDEOS_INFOS_S *videosInfos    = &ctx->params.videosInfos;
-    VIDEO_DEVICE_S **videoDevices  = videosInfos->devices;
-    uint8_t nbDevices              = videosInfos->nbDevices;
-    VIDEO_DEVICE_S *videoDevice    = NULL;
-    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
+    struct handlers_params_s *hParams     = &pData->handlersParams;
+    struct context_s *ctx                 = hParams->ctx;
+    struct video_s *videoObj              = ctx->modules.videoObj;
+    struct videos_infos_s *videosInfos    = &ctx->params.videosInfos;
+    struct video_device_s **videoDevices  = videosInfos->devices;
+    uint8_t nbDevices                     = videosInfos->nbDevices;
+    struct video_device_s *videoDevice    = NULL;
+    enum handlers_error_e ret             = HANDLERS_ERROR_NONE;
 
-    uint8_t nbVideoListeners           = 0;
-    VIDEO_LISTENER_S  **videoListeners = NULL;
+    uint8_t nbVideoListeners                  = 0;
+    struct video_listener_s  **videoListeners = NULL;
 
     uint32_t videoIndex, listenerIndex;
     for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
@@ -742,13 +784,17 @@ static HANDLERS_ERROR_E stopVideo(HANDLERS_S *obj, char *gfxElementName, void *g
             videoListeners   = videoDevice->videoListeners;
 
             for (listenerIndex = 0; listenerIndex < nbVideoListeners; listenerIndex++) {
-                if (videoObj->unregisterListener(videoObj, &videoDevice->videoParams, videoListeners[listenerIndex]) != VIDEO_ERROR_NONE) {
-                    Loge("unregisterListener() failed - \"%s\"", (videoListeners[listenerIndex])->name);
+                if (videoObj->unregisterListener(videoObj, &videoDevice->videoParams,
+                                                           videoListeners[listenerIndex])
+                                                           != VIDEO_ERROR_NONE) {
+                    Loge("unregisterListener() failed - \"%s\"",
+                            (videoListeners[listenerIndex])->name);
                     ret = HANDLERS_ERROR_COMMAND;
                 }
             }
 
-            if (videoObj->stopDeviceCapture(videoObj, &videoDevice->videoParams) != VIDEO_ERROR_NONE) {
+            if (videoObj->stopDeviceCapture(videoObj,
+                                            &videoDevice->videoParams) != VIDEO_ERROR_NONE) {
                 Loge("stopDeviceCapture() failed - \"%s\"", videoDevice->videoParams.name);
                 ret = HANDLERS_ERROR_COMMAND;
             }
@@ -756,11 +802,10 @@ static HANDLERS_ERROR_E stopVideo(HANDLERS_S *obj, char *gfxElementName, void *g
             if (ret == HANDLERS_ERROR_NONE) {
                 videoDevice->state = MODULE_STATE_STOPPED;
 
-                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
-                void *userData                         = pData->handlersParams.userData;
-
-                if (cb) {
-                    cb(userData, videoDevice->videoParams.name, videoDevice->state);
+                if (hParams->onModuleStateChangedCb) {
+                    hParams->onModuleStateChangedCb(hParams->userData,
+                                                    videoDevice->videoParams.name,
+                                                    videoDevice->state);
                 }
             }
             break;
@@ -773,7 +818,8 @@ static HANDLERS_ERROR_E stopVideo(HANDLERS_S *obj, char *gfxElementName, void *g
 /*!
  *
  */
-static HANDLERS_ERROR_E startVideo(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e startVideo(struct handlers_s *obj, char *gfxElementName,
+                                        void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -787,20 +833,21 @@ static HANDLERS_ERROR_E startVideo(HANDLERS_S *obj, char *gfxElementName, void *
 
     Logd("Starting video \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
-    VIDEO_S *videoObj              = ctx->modules.videoObj;
-    VIDEOS_INFOS_S *videosInfos    = &ctx->params.videosInfos;
-    VIDEO_DEVICE_S **videoDevices  = videosInfos->devices;
-    uint8_t nbDevices              = videosInfos->nbDevices;
-    VIDEO_DEVICE_S *videoDevice    = NULL;
-    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
+    struct handlers_params_s *hParams     = &pData->handlersParams;
+    struct context_s *ctx                 = hParams->ctx;
+    struct video_s *videoObj              = ctx->modules.videoObj;
+    struct videos_infos_s *videosInfos    = &ctx->params.videosInfos;
+    struct video_device_s **videoDevices  = videosInfos->devices;
+    uint8_t nbDevices                     = videosInfos->nbDevices;
+    struct video_device_s *videoDevice    = NULL;
+    enum handlers_error_e ret             = HANDLERS_ERROR_NONE;
 
-    size_t maxBufferSize           = -1;
-    VIDEO_AREA_S videoArea         = { 0 };
+    size_t maxBufferSize          = -1;
+    struct video_area_s videoArea = {0};
 
-    uint8_t nbVideoListeners           = 0;
-    VIDEO_LISTENER_S  **videoListeners = NULL;
+    uint8_t nbVideoListeners                  = 0;
+    struct video_listener_s  **videoListeners = NULL;
 
     uint32_t videoIndex, listenerIndex;
     for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
@@ -814,7 +861,8 @@ static HANDLERS_ERROR_E startVideo(HANDLERS_S *obj, char *gfxElementName, void *
                 break;
             }
 
-            if (videoObj->startDeviceCapture(videoObj, &videoDevice->videoParams) != VIDEO_ERROR_NONE) {
+            if (videoObj->startDeviceCapture(videoObj,
+                                             &videoDevice->videoParams) != VIDEO_ERROR_NONE) {
                 Loge("startDeviceCapture() failed - \"%s\"", videoDevice->videoParams.name);
                 return HANDLERS_ERROR_COMMAND;
             }
@@ -826,23 +874,26 @@ static HANDLERS_ERROR_E startVideo(HANDLERS_S *obj, char *gfxElementName, void *
             (void)videoObj->getMaxBufferSize(videoObj, &videoDevice->videoParams, &maxBufferSize);
             (void)videoObj->getFinalVideoArea(videoObj, &videoDevice->videoParams, &videoArea);
 
-            Logd("maxBufferSize = %lu bytes / width = %u - height = %u", maxBufferSize, videoArea.width, videoArea.height);
+            Logd("maxBufferSize = %lu bytes / width = %u - height = %u",
+                    maxBufferSize, videoArea.width, videoArea.height);
 
             nbVideoListeners = videoDevice->nbVideoListeners;
             videoListeners   = videoDevice->videoListeners;
 
             for (listenerIndex = 0; listenerIndex < nbVideoListeners; listenerIndex++) {
-                if (videoObj->registerListener(videoObj, &videoDevice->videoParams, videoListeners[listenerIndex]) != VIDEO_ERROR_NONE) {
-                    Loge("Failed to register listener \"%s\"", (videoListeners[listenerIndex])->name);
+                if (videoObj->registerListener(videoObj,
+                                               &videoDevice->videoParams,
+                                               videoListeners[listenerIndex]) != VIDEO_ERROR_NONE) {
+                    Loge("Failed to register listener \"%s\"",
+                            (videoListeners[listenerIndex])->name);
                     ret = HANDLERS_ERROR_COMMAND;
                 }
             }
 
-            HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
-            void *userData                         = pData->handlersParams.userData;
-
-            if (cb) {
-                cb(userData, videoDevice->videoParams.name, videoDevice->state);
+            if (hParams->onModuleStateChangedCb) {
+                hParams->onModuleStateChangedCb(hParams->userData,
+                                                videoDevice->videoParams.name,
+                                                videoDevice->state);
             }
             break;
         }
@@ -854,7 +905,8 @@ static HANDLERS_ERROR_E startVideo(HANDLERS_S *obj, char *gfxElementName, void *
 /*!
  *
  */
-static HANDLERS_ERROR_E stopServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e stopServer(struct handlers_s *obj, char *gfxElementName,
+                                        void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -868,12 +920,13 @@ static HANDLERS_ERROR_E stopServer(HANDLERS_S *obj, char *gfxElementName, void *
 
     Logd("Starting server \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
-    SERVER_S *serverObj            = ctx->modules.serverObj;
-    SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
-    SERVER_INFOS_S *serverInfos    = NULL;
-    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
+    struct handlers_params_s *hParams     = &pData->handlersParams;
+    struct context_s *ctx                 = hParams->ctx;
+    struct server_s *serverObj            = ctx->modules.serverObj;
+    struct servers_infos_s *serversInfos  = &ctx->params.serversInfos;
+    struct server_infos_s *serverInfos    = NULL;
+    enum handlers_error_e ret             = HANDLERS_ERROR_NONE;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
@@ -895,11 +948,10 @@ static HANDLERS_ERROR_E stopServer(HANDLERS_S *obj, char *gfxElementName, void *
             if (ret == HANDLERS_ERROR_NONE) {
                 serverInfos->state = MODULE_STATE_STOPPED;
 
-                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
-                void *userData                         = pData->handlersParams.userData;
-
-                if (cb) {
-                    cb(userData, serverInfos->serverParams.name, serverInfos->state);
+                if (hParams->onModuleStateChangedCb) {
+                    hParams->onModuleStateChangedCb(hParams->userData,
+                                                    serverInfos->serverParams.name,
+                                                    serverInfos->state);
                 }
             }
             break;
@@ -912,7 +964,8 @@ static HANDLERS_ERROR_E stopServer(HANDLERS_S *obj, char *gfxElementName, void *
 /*!
  *
  */
-static HANDLERS_ERROR_E startServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e startServer(struct handlers_s *obj, char *gfxElementName,
+                                         void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -926,12 +979,13 @@ static HANDLERS_ERROR_E startServer(HANDLERS_S *obj, char *gfxElementName, void 
 
     Logd("Starting server \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
-    SERVER_S *serverObj            = ctx->modules.serverObj;
-    SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
-    SERVER_INFOS_S *serverInfos    = NULL;
-    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
+    struct handlers_params_s *hParams     = &pData->handlersParams;
+    struct context_s *ctx                 = hParams->ctx;
+    struct server_s *serverObj            = ctx->modules.serverObj;
+    struct servers_infos_s *serversInfos  = &ctx->params.serversInfos;
+    struct server_infos_s *serverInfos    = NULL;
+    enum handlers_error_e ret             = HANDLERS_ERROR_NONE;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
@@ -953,11 +1007,10 @@ static HANDLERS_ERROR_E startServer(HANDLERS_S *obj, char *gfxElementName, void 
             if (ret == HANDLERS_ERROR_NONE) {
                 serverInfos->state = MODULE_STATE_STARTED;
 
-                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
-                void *userData                         = pData->handlersParams.userData;
-
-                if (cb) {
-                    cb(userData, serverInfos->serverParams.name, serverInfos->state);
+                if (hParams->onModuleStateChangedCb) {
+                    hParams->onModuleStateChangedCb(hParams->userData,
+                                                    serverInfos->serverParams.name,
+                                                    serverInfos->state);
                 }
             }
             break;
@@ -970,7 +1023,8 @@ static HANDLERS_ERROR_E startServer(HANDLERS_S *obj, char *gfxElementName, void 
 /*!
  *
  */
-static HANDLERS_ERROR_E suspendServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e suspendServer(struct handlers_s *obj, char *gfxElementName,
+                                           void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -984,12 +1038,13 @@ static HANDLERS_ERROR_E suspendServer(HANDLERS_S *obj, char *gfxElementName, voi
 
     Logd("Suspending server \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
-    SERVER_S *serverObj            = ctx->modules.serverObj;
-    SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
-    SERVER_INFOS_S *serverInfos    = NULL;
-    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
+    struct handlers_params_s *hParams     = &pData->handlersParams;
+    struct context_s *ctx                 = hParams->ctx;
+    struct server_s *serverObj            = ctx->modules.serverObj;
+    struct servers_infos_s *serversInfos  = &ctx->params.serversInfos;
+    struct server_infos_s *serverInfos    = NULL;
+    enum handlers_error_e ret             = HANDLERS_ERROR_NONE;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
@@ -1008,7 +1063,8 @@ static HANDLERS_ERROR_E suspendServer(HANDLERS_S *obj, char *gfxElementName, voi
                 break;
             }
 
-            if (serverObj->suspendSender(serverObj, &serverInfos->serverParams) != SERVER_ERROR_NONE) {
+            if (serverObj->suspendSender(serverObj,
+                                         &serverInfos->serverParams) != SERVER_ERROR_NONE) {
                 Loge("Failed to suspend server \"%s\"", serverInfos->serverParams.name);
                 ret = HANDLERS_ERROR_COMMAND;
             }
@@ -1016,11 +1072,10 @@ static HANDLERS_ERROR_E suspendServer(HANDLERS_S *obj, char *gfxElementName, voi
             if (ret == HANDLERS_ERROR_NONE) {
                 serverInfos->state = MODULE_STATE_SUSPENDED;
 
-                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
-                void *userData                         = pData->handlersParams.userData;
-
-                if (cb) {
-                    cb(userData, serverInfos->serverParams.name, serverInfos->state);
+                if (hParams->onModuleStateChangedCb) {
+                    hParams->onModuleStateChangedCb(hParams->userData,
+                                                    serverInfos->serverParams.name,
+                                                    serverInfos->state);
                 }
             }
             break;
@@ -1033,7 +1088,8 @@ static HANDLERS_ERROR_E suspendServer(HANDLERS_S *obj, char *gfxElementName, voi
 /*!
  *
  */
-static HANDLERS_ERROR_E resumeServer(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e resumeServer(struct handlers_s *obj, char *gfxElementName,
+                                          void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -1047,12 +1103,13 @@ static HANDLERS_ERROR_E resumeServer(HANDLERS_S *obj, char *gfxElementName, void
 
     Logd("Resuming server \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
-    SERVER_S *serverObj            = ctx->modules.serverObj;
-    SERVERS_INFOS_S *serversInfos  = &ctx->params.serversInfos;
-    SERVER_INFOS_S *serverInfos    = NULL;
-    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
+    struct handlers_params_s *hParams     = &pData->handlersParams;
+    struct context_s *ctx                 = hParams->ctx;
+    struct server_s *serverObj            = ctx->modules.serverObj;
+    struct servers_infos_s *serversInfos  = &ctx->params.serversInfos;
+    struct server_infos_s *serverInfos    = NULL;
+    enum handlers_error_e ret             = HANDLERS_ERROR_NONE;
 
     uint32_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
@@ -1071,7 +1128,8 @@ static HANDLERS_ERROR_E resumeServer(HANDLERS_S *obj, char *gfxElementName, void
                 break;
             }
 
-            if (serverObj->resumeSender(serverObj, &serverInfos->serverParams) != SERVER_ERROR_NONE) {
+            if (serverObj->resumeSender(serverObj,
+                                        &serverInfos->serverParams) != SERVER_ERROR_NONE) {
                 Loge("Failed to resume server \"%s\"", serverInfos->serverParams.name);
                 ret = HANDLERS_ERROR_COMMAND;
             }
@@ -1079,11 +1137,10 @@ static HANDLERS_ERROR_E resumeServer(HANDLERS_S *obj, char *gfxElementName, void
             if (ret == HANDLERS_ERROR_NONE) {
                 serverInfos->state = MODULE_STATE_STARTED;
 
-                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
-                void *userData                         = pData->handlersParams.userData;
-
-                if (cb) {
-                    cb(userData, serverInfos->serverParams.name, serverInfos->state);
+                if (hParams->onModuleStateChangedCb) {
+                    hParams->onModuleStateChangedCb(hParams->userData,
+                                                    serverInfos->serverParams.name,
+                                                    serverInfos->state);
                 }
             }
             break;
@@ -1096,7 +1153,8 @@ static HANDLERS_ERROR_E resumeServer(HANDLERS_S *obj, char *gfxElementName, void
 /*!
  *
  */
-static HANDLERS_ERROR_E stopCient(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e stopCient(struct handlers_s *obj, char *gfxElementName,
+                                       void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -1110,12 +1168,13 @@ static HANDLERS_ERROR_E stopCient(HANDLERS_S *obj, char *gfxElementName, void *g
 
     Logd("Stopping client \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
-    CLIENT_S *clientObj            = ctx->modules.clientObj;
-    CLIENTS_INFOS_S *clientsInfos  = &ctx->params.clientsInfos;
-    CLIENT_INFOS_S *clientInfos    = NULL;
-    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
+    struct handlers_params_s *hParams     = &pData->handlersParams;
+    struct context_s *ctx                 = hParams->ctx;
+    struct client_s *clientObj            = ctx->modules.clientObj;
+    struct clients_infos_s *clientsInfos  = &ctx->params.clientsInfos;
+    struct client_infos_s *clientInfos    = NULL;
+    enum handlers_error_e ret             = HANDLERS_ERROR_NONE;
 
     uint32_t index;
     for (index = 0; index < clientsInfos->nbClients; index++) {
@@ -1137,11 +1196,10 @@ static HANDLERS_ERROR_E stopCient(HANDLERS_S *obj, char *gfxElementName, void *g
             if (ret == HANDLERS_ERROR_NONE) {
                 clientInfos->state = MODULE_STATE_STOPPED;
 
-                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
-                void *userData                         = pData->handlersParams.userData;
-
-                if (cb) {
-                    cb(userData, clientInfos->clientParams.name, clientInfos->state);
+                if (hParams->onModuleStateChangedCb) {
+                    hParams->onModuleStateChangedCb(hParams->userData,
+                                                    clientInfos->clientParams.name,
+                                                    clientInfos->state);
                 }
             }
             break;
@@ -1154,7 +1212,8 @@ static HANDLERS_ERROR_E stopCient(HANDLERS_S *obj, char *gfxElementName, void *g
 /*!
  *
  */
-static HANDLERS_ERROR_E startClient(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e startClient(struct handlers_s *obj, char *gfxElementName,
+                                         void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -1168,12 +1227,13 @@ static HANDLERS_ERROR_E startClient(HANDLERS_S *obj, char *gfxElementName, void 
 
     Logd("Starting client \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
-    CLIENT_S *clientObj            = ctx->modules.clientObj;
-    CLIENTS_INFOS_S *clientsInfos  = &ctx->params.clientsInfos;
-    CLIENT_INFOS_S *clientInfos    = NULL;
-    HANDLERS_ERROR_E ret           = HANDLERS_ERROR_NONE;
+    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
+    struct handlers_params_s *hParams     = &pData->handlersParams;
+    struct context_s *ctx                 = hParams->ctx;
+    struct client_s *clientObj            = ctx->modules.clientObj;
+    struct clients_infos_s *clientsInfos  = &ctx->params.clientsInfos;
+    struct client_infos_s *clientInfos    = NULL;
+    enum handlers_error_e ret             = HANDLERS_ERROR_NONE;
 
     uint32_t index;
     for (index = 0; index < clientsInfos->nbClients; index++) {
@@ -1194,11 +1254,10 @@ static HANDLERS_ERROR_E startClient(HANDLERS_S *obj, char *gfxElementName, void 
             if (ret == HANDLERS_ERROR_NONE) {
                 clientInfos->state = MODULE_STATE_STARTED;
 
-                HANDLERS_ON_MODULE_STATE_CHANGED_CB cb = pData->handlersParams.onModuleStateChangedCb;
-                void *userData                         = pData->handlersParams.userData;
-
-                if (cb) {
-                    cb(userData, clientInfos->clientParams.name, clientInfos->state);
+                if (hParams->onModuleStateChangedCb) {
+                    hParams->onModuleStateChangedCb(hParams->userData,
+                                                    clientInfos->clientParams.name,
+                                                    clientInfos->state);
                 }
             }
             break;
@@ -1211,7 +1270,8 @@ static HANDLERS_ERROR_E startClient(HANDLERS_S *obj, char *gfxElementName, void 
 /*!
  *
  */
-static HANDLERS_ERROR_E multiInputs(HANDLERS_S *obj, char *gfxElementName, void *gfxElementData, char *handlerData)
+static enum handlers_error_e multiInputs(struct handlers_s *obj, char *gfxElementName,
+                                         void *gfxElementData, char *handlerData)
 {
     assert(obj && obj->pData);
 
@@ -1225,12 +1285,12 @@ static HANDLERS_ERROR_E multiInputs(HANDLERS_S *obj, char *gfxElementName, void 
 
     Logd("Handling multi inputs request - data : \"%s\"", handlerData);
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx                 = pData->handlersParams.ctx;
+    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                 = pData->handlersParams.ctx;
 
     uint32_t offset                  = 0;
-    char functionName[MAX_NAME_SIZE] = { 0 };
-    char targetName[MAX_NAME_SIZE]   = { 0 };
+    char functionName[MAX_NAME_SIZE] = {0};
+    char targetName[MAX_NAME_SIZE]   = {0};
 
     if (obj->getSubstring(obj, handlerData, ";", functionName, &offset) != HANDLERS_ERROR_NONE) {
         Loge("Bad format. Expected: customFunctionName;targetName;param1;param2;...");

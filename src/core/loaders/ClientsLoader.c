@@ -20,68 +20,66 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   ClientsLoader.c
-* \brief  TODO
+* \file ClientsLoader.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Loaders.h"
 #include "core/XmlDefines.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "ClientsLoader"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
+enum loaders_error_e loadClientsXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                      struct xml_clients_s *xmlClients);
+enum loaders_error_e unloadClientsXml_f(struct loaders_s *obj, struct xml_clients_s *xmlClients);
 
-LOADERS_ERROR_E loadClientsXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_CLIENTS_S *xmlClients);
-LOADERS_ERROR_E unloadClientsXml_f(LOADERS_S *obj, XML_CLIENTS_S *xmlClients);
+/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
 static void onClientStartCb(void *userData, const char **attrs);
-static void onClientEndCb  (void *userData);
+static void onClientEndCb(void *userData);
 
-static void onGeneralCb    (void *userData, const char **attrs);
-static void onInetCb       (void *userData, const char **attrs);
-static void onUnixCb       (void *userData, const char **attrs);
+static void onGeneralCb(void *userData, const char **attrs);
+static void onInetCb(void *userData, const char **attrs);
+static void onUnixCb(void *userData, const char **attrs);
 
 static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          FUNCTIONS                                           */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-LOADERS_ERROR_E loadClientsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_CLIENTS_S *xmlClients)
+enum loaders_error_e loadClientsXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                      struct xml_clients_s *xmlClients)
 {
     assert(obj && ctx && xmlClients);
     
-    PARSER_S *parserObj = ctx->parserObj;
-    INPUT_S *input      = &ctx->input;
+    struct parser_s *parserObj = ctx->parserObj;
+    struct input_s *input      = &ctx->input;
     
     xmlClients->reserved = ctx;
     
     Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->clientsConfig.xml);
     
-    PARSER_TAGS_HANDLER_S tagsHandlers[] = {
+    struct parser_tags_handler_s tagsHandlers[] = {
     	{ XML_TAG_CLIENT,   onClientStartCb,  onClientEndCb,  NULL },
     	{ XML_TAG_GENERAL,  onGeneralCb,      NULL,           NULL },
     	{ XML_TAG_INET,     onInetCb,         NULL,           NULL },
@@ -89,8 +87,9 @@ LOADERS_ERROR_E loadClientsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_CLIENTS_S *
     	{ NULL,             NULL,             NULL,           NULL }
     };
     
-    PARSER_PARAMS_S parserParams;
-    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->resRootDir, input->clientsConfig.xml);
+    struct parser_params_s parserParams;
+    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s",
+                                input->resRootDir, input->clientsConfig.xml);
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
     parserParams.onErrorCb    = onErrorCb;
@@ -108,12 +107,12 @@ LOADERS_ERROR_E loadClientsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_CLIENTS_S *
 /*!
  *
  */
-LOADERS_ERROR_E unloadClientsXml_f(LOADERS_S *obj, XML_CLIENTS_S *xmlClients)
+enum loaders_error_e unloadClientsXml_f(struct loaders_s *obj, struct xml_clients_s *xmlClients)
 {
     assert(obj && xmlClients);
     
     uint8_t index;
-    XML_CLIENT_S *client;
+    struct xml_client_s *client;
     
     for (index = 0; index < xmlClients->nbClients; index++) {
         client = &xmlClients->clients[index];
@@ -156,7 +155,7 @@ LOADERS_ERROR_E unloadClientsXml_f(LOADERS_S *obj, XML_CLIENTS_S *xmlClients)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           CALLBACKS                                          */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
@@ -168,14 +167,15 @@ static void onClientStartCb(void *userData, const char **attrs)
     
     (void)attrs;
     
-    XML_CLIENTS_S *xmlClients = (XML_CLIENTS_S*)userData;
+    struct xml_clients_s *xmlClients = (struct xml_clients_s*)userData;
     
     Logd("Adding client %u", (xmlClients->nbClients + 1));
     
-    xmlClients->clients = realloc(xmlClients->clients, (xmlClients->nbClients + 1) * sizeof(XML_CLIENT_S));
+    xmlClients->clients = realloc(xmlClients->clients,
+                                  (xmlClients->nbClients + 1) * sizeof(struct xml_client_s));
     assert(xmlClients->clients);
     
-    memset(&xmlClients->clients[xmlClients->nbClients], '\0', sizeof(XML_CLIENT_S));
+    memset(&xmlClients->clients[xmlClients->nbClients], 0, sizeof(struct xml_client_s));
 }
 
 /*!
@@ -185,7 +185,7 @@ static void onClientEndCb(void *userData)
 {
     assert(userData);
     
-    XML_CLIENTS_S *xmlClients = (XML_CLIENTS_S*)userData;
+    struct xml_clients_s *xmlClients = (struct xml_clients_s*)userData;
 
     xmlClients->nbClients++;
     
@@ -199,12 +199,12 @@ static void onGeneralCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_CLIENTS_S *xmlClients = (XML_CLIENTS_S*)userData;
-    XML_CLIENT_S *client      = &xmlClients->clients[xmlClients->nbClients];
-    CONTEXT_S *ctx            = (CONTEXT_S*)xmlClients->reserved;
-    PARSER_S *parserObj       = ctx->parserObj;
+    struct xml_clients_s *xmlClients = (struct xml_clients_s*)userData;
+    struct xml_client_s *client      = &xmlClients->clients[xmlClients->nbClients];
+    struct context_s *ctx            = (struct context_s*)xmlClients->reserved;
+    struct parser_s *parserObj       = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_NAME,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -259,12 +259,12 @@ static void onGeneralCb(void *userData, const char **attrs)
     	Loge("Failed to retrieve attributes in \"General\" tag");
     }
     
-    if (client->graphicsDest && (strlen(client->graphicsDest) == 0)) {
+    if (client->graphicsDest && ((client->graphicsDest)[0] == '\0')) {
         free(client->graphicsDest);
         client->graphicsDest = NULL;
     }
     
-    if (client->serverDest && (strlen(client->serverDest) == 0)) {
+    if (client->serverDest && ((client->serverDest)[0] == '\0')) {
         free(client->serverDest);
         client->serverDest = NULL;
     }
@@ -277,12 +277,12 @@ static void onInetCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_CLIENTS_S *xmlClients = (XML_CLIENTS_S*)userData;
-    XML_CLIENT_S *client      = &xmlClients->clients[xmlClients->nbClients];
-    CONTEXT_S *ctx            = (CONTEXT_S*)xmlClients->reserved;
-    PARSER_S *parserObj       = ctx->parserObj;
+    struct xml_clients_s *xmlClients = (struct xml_clients_s*)userData;
+    struct xml_client_s *client      = &xmlClients->clients[xmlClients->nbClients];
+    struct context_s *ctx            = (struct context_s*)xmlClients->reserved;
+    struct parser_s *parserObj       = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_HOST,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -321,12 +321,12 @@ static void onUnixCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_CLIENTS_S *xmlClients = (XML_CLIENTS_S*)userData;
-    XML_CLIENT_S *client      = &xmlClients->clients[xmlClients->nbClients];
-    CONTEXT_S *ctx            = (CONTEXT_S*)xmlClients->reserved;
-    PARSER_S *parserObj       = ctx->parserObj;
+    struct xml_clients_s *xmlClients = (struct xml_clients_s*)userData;
+    struct xml_client_s *client      = &xmlClients->clients[xmlClients->nbClients];
+    struct context_s *ctx            = (struct context_s*)xmlClients->reserved;
+    struct parser_s *parserObj       = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_SERVER_SOCKET_NAME,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,

@@ -20,13 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Task.c
-* \brief  Tasks management
+* \file Task.c
+* \brief Tasks management
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <pthread.h>
@@ -39,65 +39,63 @@
 #include "utils/Task.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "Task"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct TASK_PRIVATE_DATA_S {
-    uint32_t  nbTasks;
-} TASK_PRIVATE_DATA_S;
+struct task_private_data_s {
+    uint32_t nbTasks;
+};
 
-typedef struct TASK_RESERVED_DATA_S {
+struct task_reserved_data_s {
     sem_t     semQuit;
 
     sem_t     semStart;
     pthread_t taskId;
-} TASK_RESERVED_DATA_S;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
+static enum task_error_e create_f(struct task_s *obj, struct task_params_s *params);
+static enum task_error_e destroy_f(struct task_s *obj, struct task_params_s *params);
 
-static TASK_ERROR_E create_f (TASK_S *obj, TASK_PARAMS_S *params);
-static TASK_ERROR_E destroy_f(TASK_S *obj, TASK_PARAMS_S *params);
+static enum task_error_e start_f(struct task_s *obj, struct task_params_s *params);
+static enum task_error_e stop_f(struct task_s *obj, struct task_params_s *params);
 
-static TASK_ERROR_E start_f(TASK_S *obj, TASK_PARAMS_S *params);
-static TASK_ERROR_E stop_f (TASK_S *obj, TASK_PARAMS_S *params);
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
 static void* loop(void *args);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-TASK_ERROR_E Task_Init(TASK_S **obj)
+enum task_error_e Task_Init(struct task_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(TASK_S))));
+    assert(obj && (*obj = calloc(1, sizeof(struct task_s))));
     
-    TASK_PRIVATE_DATA_S *pData;
-    assert((pData   = calloc(1, sizeof(TASK_PRIVATE_DATA_S))));
+    struct task_private_data_s *pData;
+    assert((pData = calloc(1, sizeof(struct task_private_data_s))));
     
     /* Initialize obj */
     (*obj)->create  = create_f;
     (*obj)->destroy = destroy_f;
     (*obj)->start   = start_f;
     (*obj)->stop    = stop_f;
-    
-    pData->nbTasks  = 0;
-    
+
     (*obj)->pData   = (void*)pData;
     
     return TASK_ERROR_NONE;
@@ -106,11 +104,11 @@ TASK_ERROR_E Task_Init(TASK_S **obj)
 /*!
  *
  */
-TASK_ERROR_E Task_UnInit(TASK_S **obj)
+enum task_error_e Task_UnInit(struct task_s **obj)
 {
     assert(obj && *obj && (*obj)->pData);
     
-    TASK_PRIVATE_DATA_S *pData = (TASK_PRIVATE_DATA_S*)((*obj)->pData);
+    struct task_private_data_s *pData = (struct task_private_data_s*)((*obj)->pData);
     
     if (pData->nbTasks != 0) {
         Loge("%u still alive", pData->nbTasks);
@@ -127,18 +125,18 @@ TASK_ERROR_E Task_UnInit(TASK_S **obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static TASK_ERROR_E create_f(TASK_S *obj, TASK_PARAMS_S *params)
+static enum task_error_e create_f(struct task_s *obj, struct task_params_s *params)
 {
     assert(obj && obj->pData && params);
     
-    TASK_RESERVED_DATA_S *reserved;
-    assert((reserved = calloc(1, sizeof(TASK_RESERVED_DATA_S))));
+    struct task_reserved_data_s *reserved;
+    assert((reserved = calloc(1, sizeof(struct task_reserved_data_s))));
     
     if (sem_init(&reserved->semQuit, 0, 0) != 0) {
         Loge("sem_init() failed - %s", strerror(errno));
@@ -181,10 +179,10 @@ static TASK_ERROR_E create_f(TASK_S *obj, TASK_PARAMS_S *params)
     }
     
     if (updateParams) {
-        if (pthread_attr_setschedparam(&attr, &schedParam) < 0) { /* Set new sched_param */
+        if (pthread_attr_setschedparam(&attr, &schedParam) < 0) {
             Loge("pthread_attr_setschedparam() failed - %s", strerror(errno));
         }
-        if (pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED) < 0) { /* Required to make attr taken into account */
+        if (pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED) < 0) {
             Loge("pthread_attr_setinheritsched() failed - %s", strerror(errno));
         }
     }
@@ -204,7 +202,7 @@ static TASK_ERROR_E create_f(TASK_S *obj, TASK_PARAMS_S *params)
     }
 #endif
     
-    ((TASK_PRIVATE_DATA_S*)(obj->pData))->nbTasks++;
+    ((struct task_private_data_s*)(obj->pData))->nbTasks++;
     
     return TASK_ERROR_NONE;
 
@@ -224,11 +222,11 @@ semQuitExit:
 /*!
  *
  */
-static TASK_ERROR_E destroy_f(TASK_S *obj, TASK_PARAMS_S *params)
+static enum task_error_e destroy_f(struct task_s *obj, struct task_params_s *params)
 {
     assert(obj && obj->pData && params && params->reserved);
     
-    TASK_RESERVED_DATA_S *reserved = (TASK_RESERVED_DATA_S*)(params->reserved);
+    struct task_reserved_data_s *reserved = (struct task_reserved_data_s*)(params->reserved);
     
     if (sem_destroy(&reserved->semStart) != 0) {
         return TASK_ERROR_DESTROY;
@@ -245,7 +243,7 @@ static TASK_ERROR_E destroy_f(TASK_S *obj, TASK_PARAMS_S *params)
         params->atExit(params);
     }
     
-    ((TASK_PRIVATE_DATA_S*)(obj->pData))->nbTasks--;
+    ((struct task_private_data_s*)(obj->pData))->nbTasks--;
     
     return TASK_ERROR_NONE;
 }
@@ -253,11 +251,11 @@ static TASK_ERROR_E destroy_f(TASK_S *obj, TASK_PARAMS_S *params)
 /*!
  *
  */
-static TASK_ERROR_E start_f(TASK_S *obj, TASK_PARAMS_S *params)
+static enum task_error_e start_f(struct task_s *obj, struct task_params_s *params)
 {
     assert(obj && obj->pData && params && params->reserved);
     
-    sem_post(&((TASK_RESERVED_DATA_S*)(params->reserved))->semStart);
+    sem_post(&((struct task_reserved_data_s*)(params->reserved))->semStart);
     
     return TASK_ERROR_NONE;
 }
@@ -265,11 +263,11 @@ static TASK_ERROR_E start_f(TASK_S *obj, TASK_PARAMS_S *params)
 /*!
  *
  */
-static TASK_ERROR_E stop_f(TASK_S *obj, TASK_PARAMS_S *params)
+static enum task_error_e stop_f(struct task_s *obj, struct task_params_s *params)
 {
     assert(obj && obj->pData && params && params->reserved);
     
-    TASK_RESERVED_DATA_S *reserved = (TASK_RESERVED_DATA_S*)(params->reserved);
+    struct task_reserved_data_s *reserved = (struct task_reserved_data_s*)(params->reserved);
     
     sem_post(&reserved->semQuit);
     
@@ -281,6 +279,10 @@ static TASK_ERROR_E stop_f(TASK_S *obj, TASK_PARAMS_S *params)
     return TASK_ERROR_NONE;
 }
 
+/* -------------------------------------------------------------------------------------------- */
+/*                               PRIVATE FUNCTIONS IMPLEMENTATION                               */
+/* -------------------------------------------------------------------------------------------- */
+
 /*!
  *
  */
@@ -288,13 +290,13 @@ static void* loop(void *args)
 {
     assert(args);
     
-    TASK_PARAMS_S *params          = (TASK_PARAMS_S*)args;
-    TASK_RESERVED_DATA_S *reserved = (TASK_RESERVED_DATA_S*)(params->reserved);
+    struct task_params_s *params          = (struct task_params_s*)args;
+    struct task_reserved_data_s *reserved = (struct task_reserved_data_s*)(params->reserved);
     
     assert(reserved);
     
     /* Set task's name */
-    if (strlen(params->name) != 0) {
+    if ((params->name)[0] != '\0') {
         Logd("Task : \"%s\"", params->name);
         prctl(PR_SET_NAME, params->name, 0, 0, 0);
     }

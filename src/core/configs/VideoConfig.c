@@ -20,13 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   VideoConfig.c
-* \brief  TODO
+* \file VideoConfig.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "utils/Log.h"
@@ -34,118 +34,123 @@
 #include "core/Configs.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "VideoConfig"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct CONFIGS_VIDEO_CAPABILITY_S {
+struct configs_video_capability_s {
     char     *str;
     uint32_t value;
-} CONFIGS_VIDEO_CAPABILITY_S;
+};
 
-typedef struct CONFIGS_VIDEO_BUFFER_TYPE_S {
+struct configs_video_buffer_type_s {
     char               *str;
     enum v4l2_buf_type value;
-} CONFIGS_VIDEO_BUFFER_TYPE_S;
+};
 
-typedef struct CONFIGS_VIDEO_PIXEL_FORMAT_S {
+struct configs_video_pixel_format_s {
     char     *str;
     uint32_t value;
-} CONFIGS_VIDEO_PIXEL_FORMAT_S;
+};
 
-typedef struct CONFIGS_VIDEO_COLORSPACE_S {
+struct configs_video_colorspace_s {
     char                 *str;
     enum v4l2_colorspace value;
-} CONFIGS_VIDEO_COLORSPACE_S;
+};
 
-typedef struct CONFIGS_VIDEO_MEMORY_S {
+struct configs_video_memory_s {
     char             *str;
     enum v4l2_memory value;
-} CONFIGS_VIDEO_MEMORY_S;
+};
 
-typedef struct CONFIGS_VIDEO_AWAIT_MODE_S {
-    char               *str;
-    VIDEO_AWAIT_MODE_E value;
-} CONFIGS_VIDEO_AWAIT_MODE_S;
+struct configs_video_await_mode_s {
+    char                    *str;
+    enum video_await_mode_e value;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-CONFIGS_VIDEO_CAPABILITY_S gVideoCaps[] = {
-	{ "V4L2_CAP_VIDEO_CAPTURE",             V4L2_CAP_VIDEO_CAPTURE },
-	{ "V4L2_CAP_STREAMING",                 V4L2_CAP_STREAMING     },
-	{ NULL,                                 V4L2_CAP_VIDEO_CAPTURE }
+enum configs_error_e getVideoConfig_f(struct configs_s *obj, struct video_config_s *config,
+                                      struct video_config_choice_s *configChoice);
+
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////////////// GLOBAL VARIABLES ///////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+struct configs_video_capability_s gVideoCaps[] = {
+	{ "V4L2_CAP_VIDEO_CAPTURE",  V4L2_CAP_VIDEO_CAPTURE },
+	{ "V4L2_CAP_STREAMING",      V4L2_CAP_STREAMING     },
+	{ NULL,                      V4L2_CAP_VIDEO_CAPTURE }
 };
 
 uint32_t gNbVideoCaps = (uint32_t)(sizeof(gVideoCaps) / sizeof(gVideoCaps[0]));
 
-/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////////////////////////////////////////////////////////// */
 
-CONFIGS_VIDEO_BUFFER_TYPE_S gVideoBufferTypes[] = {
-	{ "V4L2_BUF_TYPE_VIDEO_CAPTURE",        V4L2_BUF_TYPE_VIDEO_CAPTURE },
-	{ NULL,                                 V4L2_BUF_TYPE_VIDEO_CAPTURE }
+struct configs_video_buffer_type_s gVideoBufferTypes[] = {
+	{ "V4L2_BUF_TYPE_VIDEO_CAPTURE",  V4L2_BUF_TYPE_VIDEO_CAPTURE },
+	{ NULL,                           V4L2_BUF_TYPE_VIDEO_CAPTURE }
 };
 
-uint32_t gNbVideoBufferTypes = (uint32_t)(sizeof(gVideoBufferTypes) / sizeof(gVideoBufferTypes[0]));
+uint32_t gNbVideoBufferTypes = (uint32_t)(sizeof(gVideoBufferTypes)
+                                        / sizeof(gVideoBufferTypes[0]));
 
-/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////////////////////////////////////////////////////////// */
 
-CONFIGS_VIDEO_PIXEL_FORMAT_S gVideoPixelFormats[] = {
-	{ "V4L2_PIX_FMT_MJPEG",                 V4L2_PIX_FMT_MJPEG },
-	{ "V4L2_PIX_FMT_YVYU",                  V4L2_PIX_FMT_YVYU  },
-	{ NULL,                                 V4L2_PIX_FMT_MJPEG }
+struct configs_video_pixel_format_s gVideoPixelFormats[] = {
+	{ "V4L2_PIX_FMT_MJPEG",  V4L2_PIX_FMT_MJPEG },
+	{ "V4L2_PIX_FMT_YVYU",   V4L2_PIX_FMT_YVYU  },
+	{ NULL,                  V4L2_PIX_FMT_MJPEG }
 };
 
-uint32_t gNbVideoPixelFormats = (uint32_t)(sizeof(gVideoPixelFormats) / sizeof(gVideoPixelFormats[0]));
+uint32_t gNbVideoPixelFormats = (uint32_t)(sizeof(gVideoPixelFormats)
+                                         / sizeof(gVideoPixelFormats[0]));
 
-/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////////////////////////////////////////////////////////// */
 
-CONFIGS_VIDEO_COLORSPACE_S gVideoColorspaces[] = {
-	{ "V4L2_COLORSPACE_JPEG",               V4L2_COLORSPACE_JPEG      },
-	{ "V4L2_COLORSPACE_SMPTE170M",          V4L2_COLORSPACE_SMPTE170M },
-	{ NULL,                                 V4L2_COLORSPACE_JPEG      }
+struct configs_video_colorspace_s gVideoColorspaces[] = {
+	{ "V4L2_COLORSPACE_JPEG",       V4L2_COLORSPACE_JPEG      },
+	{ "V4L2_COLORSPACE_SMPTE170M",  V4L2_COLORSPACE_SMPTE170M },
+	{ NULL,                         V4L2_COLORSPACE_JPEG      }
 };
 
-uint32_t gNbVideoColorspaces = (uint32_t)(sizeof(gVideoColorspaces) / sizeof(gVideoColorspaces[0]));
+uint32_t gNbVideoColorspaces = (uint32_t)(sizeof(gVideoColorspaces)
+                                        / sizeof(gVideoColorspaces[0]));
 
-/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////////////////////////////////////////////////////////// */
 
-CONFIGS_VIDEO_MEMORY_S gVideoMemories[] = {
-	{ "V4L2_MEMORY_MMAP",                   V4L2_MEMORY_MMAP    },
-	{ "V4L2_MEMORY_USERPTR",                V4L2_MEMORY_USERPTR },
-	{ NULL,                                 V4L2_MEMORY_MMAP    }
+struct configs_video_memory_s gVideoMemories[] = {
+	{ "V4L2_MEMORY_MMAP",     V4L2_MEMORY_MMAP    },
+	{ "V4L2_MEMORY_USERPTR",  V4L2_MEMORY_USERPTR },
+	{ NULL,                   V4L2_MEMORY_MMAP    }
 };
 
 uint32_t gNbVideoMemories = (uint32_t)(sizeof(gVideoMemories) / sizeof(gVideoMemories[0]));
 
-/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////////////////////////////////////////////////////////// */
 
-CONFIGS_VIDEO_AWAIT_MODE_S gVideoAwaitModes[] = {
-	{ "VIDEO_AWAIT_MODE_BLOCKING",          VIDEO_AWAIT_MODE_BLOCKING     },
-	{ "VIDEO_AWAIT_MODE_NON_BLOCKING",      VIDEO_AWAIT_MODE_NON_BLOCKING },
-	{ NULL,                                 VIDEO_AWAIT_MODE_BLOCKING     }
+struct configs_video_await_mode_s gVideoAwaitModes[] = {
+	{ "VIDEO_AWAIT_MODE_BLOCKING",      VIDEO_AWAIT_MODE_BLOCKING     },
+	{ "VIDEO_AWAIT_MODE_NON_BLOCKING",  VIDEO_AWAIT_MODE_NON_BLOCKING },
+	{ NULL,                             VIDEO_AWAIT_MODE_BLOCKING     }
 };
 
 uint32_t gNbVideoAwaitModes = (uint32_t)(sizeof(gVideoAwaitModes) / sizeof(gVideoAwaitModes[0]));
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, VIDEO_CONFIG_CHOICE_S *configChoice);
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
-/* -------------------------------------------------------------------------------------------- */
-
-CONFIGS_ERROR_E getVideoConfig_f(CONFIGS_S *obj, VIDEO_CONFIG_S *config, VIDEO_CONFIG_CHOICE_S *configChoice)
+enum configs_error_e getVideoConfig_f(struct configs_s *obj, struct video_config_s *config,
+                                      struct video_config_choice_s *configChoice)
 {
     assert(obj && config && configChoice);
 

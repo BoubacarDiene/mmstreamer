@@ -20,63 +20,73 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   ClientsListeners.c
-* \brief  TODO
+* \file ClientsListeners.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Listeners.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "ClientsListeners"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-LISTENERS_ERROR_E setClientsListeners_f  (LISTENERS_S *obj);
-LISTENERS_ERROR_E unsetClientsListeners_f(LISTENERS_S *obj);
-
-static void onClientDataCb(CLIENT_PARAMS_S *params, BUFFER_S *buffer, void *userData);
-static void onClientLinkCb(CLIENT_PARAMS_S *params, void *userData);
+struct clients_listeners_private_data_s {
+    struct buffer_s           buffer;
+    struct listeners_params_s *listenersParams;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum listeners_error_e setClientsListeners_f(struct listeners_s *obj);
+enum listeners_error_e unsetClientsListeners_f(struct listeners_s *obj);
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                          FUNCTIONS                                           */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static void onClientDataCb(struct client_params_s *params, struct buffer_s *buffer,
+                           void *userData);
+static void onClientLinkCb(struct client_params_s *params, void *userData);
+
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-LISTENERS_ERROR_E setClientsListeners_f(LISTENERS_S *obj)
+enum listeners_error_e setClientsListeners_f(struct listeners_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
     
-    LISTENERS_PDATA_S *pData = (LISTENERS_PDATA_S*)(obj->pData);
-    INPUT_S *input           = &pData->ctx->input;
+    struct listeners_params_s *listenersParams = &obj->params;
+    struct input_s *input                      = &listenersParams->ctx->input;
     
     if (!input->graphicsConfig.enable && !input->serversConfig.enable) {
         Logw("At least servers or graphics module must be enabled");
     }
     else {
-        CLIENTS_INFOS_S *clientsInfos = &pData->ctx->params.clientsInfos;
-        CLIENT_PARAMS_S *clientParams = NULL;
+        struct clients_infos_s *clientsInfos = &listenersParams->ctx->params.clientsInfos;
+        struct client_params_s *clientParams = NULL;
         uint8_t index;
+        
+        struct clients_listeners_private_data_s *pData;
+        assert((pData = calloc(1, sizeof(struct clients_listeners_private_data_s))));
+        pData->listenersParams = listenersParams;
         
         for (index = 0; index < clientsInfos->nbClients; index++) {
             clientParams = &(clientsInfos->clientInfos[index])->clientParams;
@@ -93,41 +103,53 @@ LISTENERS_ERROR_E setClientsListeners_f(LISTENERS_S *obj)
 /*!
  *
  */
-LISTENERS_ERROR_E unsetClientsListeners_f(LISTENERS_S *obj)
+enum listeners_error_e unsetClientsListeners_f(struct listeners_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
     
-    LISTENERS_PDATA_S *pData      = (LISTENERS_PDATA_S*)(obj->pData);
-    CLIENTS_INFOS_S *clientsInfos = &pData->ctx->params.clientsInfos;
+    struct listeners_params_s *listenersParams     = &obj->params;
+    struct clients_infos_s *clientsInfos           = &listenersParams->ctx->params.clientsInfos;
+    struct client_params_s *clientParams           = NULL;
+    struct clients_listeners_private_data_s *pData = NULL;
     
     uint8_t index;
     for (index = 0; index < clientsInfos->nbClients; index++) {
-        (clientsInfos->clientInfos[index])->clientParams.userData = NULL;
+        clientParams = &(clientsInfos->clientInfos[index])->clientParams;
+        pData = (struct clients_listeners_private_data_s*)(clientParams->userData);
+        clientParams->userData = NULL;
+    }
+    
+    if (pData) {
+        pData->listenersParams = NULL;
+        pData->buffer.data     = NULL;
+        free(pData);
     }
     
     return LISTENERS_ERROR_NONE;
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          CALLBACKS                                           */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static void onClientDataCb(CLIENT_PARAMS_S *params, BUFFER_S *buffer, void *userData)
+static void onClientDataCb(struct client_params_s *params,
+                           struct buffer_s *buffer, void *userData)
 {
     assert(params && buffer && userData);
     
-    LISTENERS_PDATA_S *pData        = (LISTENERS_PDATA_S*)userData;
-    INPUT_S *input                  = &pData->ctx->input;
-    GRAPHICS_S *graphicsObj         = pData->ctx->modules.graphicsObj;
-    SERVER_S *serverObj             = pData->ctx->modules.serverObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
-    SERVERS_INFOS_S *serversInfos   = &pData->ctx->params.serversInfos;
-    SERVER_INFOS_S *serverInfos     = NULL;
-    CLIENTS_INFOS_S *clientsInfos   = &pData->ctx->params.clientsInfos;
-    CLIENT_INFOS_S *clientInfos     = NULL;
+    struct clients_listeners_private_data_s *pData = (struct clients_listeners_private_data_s*)userData;
+    struct context_s *ctx                          = pData->listenersParams->ctx;
+    struct input_s *input                          = &ctx->input;
+    struct graphics_s *graphicsObj                 = ctx->modules.graphicsObj;
+    struct server_s *serverObj                     = ctx->modules.serverObj;
+    struct graphics_infos_s *graphicsInfos         = &ctx->params.graphicsInfos;
+    struct servers_infos_s *serversInfos           = &ctx->params.serversInfos;
+    struct server_infos_s *serverInfos             = NULL;
+    struct clients_infos_s *clientsInfos           = &ctx->params.clientsInfos;
+    struct client_infos_s *clientInfos             = NULL;
     
     uint8_t i, j;
     for (i = 0; i < clientsInfos->nbClients; i++) {
@@ -199,7 +221,7 @@ static void onClientDataCb(CLIENT_PARAMS_S *params, BUFFER_S *buffer, void *user
 /*!
  *
  */
-static void onClientLinkCb(CLIENT_PARAMS_S *params, void *userData)
+static void onClientLinkCb(struct client_params_s *params, void *userData)
 {
     assert(params && userData);
     

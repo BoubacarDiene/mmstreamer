@@ -20,62 +20,59 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   ServersListeners.c
-* \brief  TODO
+* \file ServersListeners.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Listeners.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "ServersListeners"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-LISTENERS_ERROR_E setServersListeners_f  (LISTENERS_S *obj);
-LISTENERS_ERROR_E unsetServersListeners_f(LISTENERS_S *obj);
-
-static void onClientStateChangedCb(SERVER_PARAMS_S *params, LINK_S *client, STATE_E state, void *userData);
+enum listeners_error_e setServersListeners_f(struct listeners_s *obj);
+enum listeners_error_e unsetServersListeners_f(struct listeners_s *obj);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+static void onClientStateChangedCb(struct server_params_s *params, struct link_s *client,
+                                   enum state_e state, void *userData);
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                          FUNCTIONS                                           */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-LISTENERS_ERROR_E setServersListeners_f(LISTENERS_S *obj)
+enum listeners_error_e setServersListeners_f(struct listeners_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
     
-    LISTENERS_PDATA_S *pData      = (LISTENERS_PDATA_S*)(obj->pData);
-    SERVERS_INFOS_S *serversInfos = &pData->ctx->params.serversInfos;
-    SERVER_PARAMS_S *serverParams = NULL;
+    struct listeners_params_s *listenersParams = &obj->params;
+    struct servers_infos_s *serversInfos       = &listenersParams->ctx->params.serversInfos;
+    struct server_params_s *serverParams       = NULL;
     
     uint8_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
         serverParams = &(serversInfos->serverInfos[index])->serverParams;
 
         serverParams->onClientStateChangedCb = onClientStateChangedCb;
-        serverParams->userData               = pData;
+        serverParams->userData               = listenersParams;
     }
     
     return LISTENERS_ERROR_NONE;
@@ -84,13 +81,13 @@ LISTENERS_ERROR_E setServersListeners_f(LISTENERS_S *obj)
 /*!
  *
  */
-LISTENERS_ERROR_E unsetServersListeners_f(LISTENERS_S *obj)
+enum listeners_error_e unsetServersListeners_f(struct listeners_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
     
-    LISTENERS_PDATA_S *pData      = (LISTENERS_PDATA_S*)(obj->pData);
-    SERVERS_INFOS_S *serversInfos = &pData->ctx->params.serversInfos;
-    SERVER_PARAMS_S *serverParams = NULL;
+    struct listeners_params_s *listenersParams = &obj->params;
+    struct servers_infos_s *serversInfos       = &listenersParams->ctx->params.serversInfos;
+    struct server_params_s *serverParams       = NULL;
     
     uint8_t index;
     for (index = 0; index < serversInfos->nbServers; index++) {
@@ -102,13 +99,14 @@ LISTENERS_ERROR_E unsetServersListeners_f(LISTENERS_S *obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          CALLBACKS                                           */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static void onClientStateChangedCb(SERVER_PARAMS_S *params, LINK_S *client, STATE_E state, void *userData)
+static void onClientStateChangedCb(struct server_params_s *params, struct link_s *client,
+                                   enum state_e state, void *userData)
 {
     assert(params && client && userData);
     

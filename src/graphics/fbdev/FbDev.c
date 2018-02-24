@@ -20,13 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   FbDev.c
-* \brief  Framebuffer management
+* \file FbDev.c
+* \brief Framebuffer management
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <fcntl.h>
@@ -40,7 +40,7 @@
 #include "graphics/FbDev.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -50,51 +50,47 @@
 #define FBDEV_PATH_PREFIX   "/dev/"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct FBDEV_PRIVATE_DATA_S {
-    FBDEV_VSCREENINFO vinfo;
-    FBDEV_FSCREENINFO finfo;
+struct fbdev_private_data_s {
+    struct fb_var_screeninfo vinfo;
+    struct fb_fix_screeninfo finfo;
 
-    char              path[FBDEV_MAX_PATH_SIZE];
-    int32_t           fd;
-    char              *map;
+    char                     path[FBDEV_MAX_PATH_SIZE];
+    int32_t                  fd;
+    char                     *map;
 
-    volatile uint8_t  opened;
-} FBDEV_PRIVATE_DATA_S;
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
+    volatile uint8_t         opened;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static FBDEV_ERROR_E open_f    (FBDEV_S *obj, const char *fbName);
-static FBDEV_ERROR_E isOpened_f(FBDEV_S *obj, uint8_t *opened);
-static FBDEV_ERROR_E close_f   (FBDEV_S *obj);
+static enum fbdev_error_e open_f(struct fbdev_s *obj, const char *fbName);
+static enum fbdev_error_e isOpened_f(struct fbdev_s *obj, uint8_t *opened);
+static enum fbdev_error_e close_f(struct fbdev_s *obj);
 
-static FBDEV_ERROR_E getInfos_f(FBDEV_S *obj, FBDEV_INFOS_S *fbInfos);
-static FBDEV_ERROR_E setDepth_f(FBDEV_S *obj, uint32_t depth);
+static enum fbdev_error_e getInfos_f(struct fbdev_s *obj, struct fbdev_infos_s *fbInfos);
+static enum fbdev_error_e setDepth_f(struct fbdev_s *obj, uint32_t depth);
 
-static FBDEV_ERROR_E clear_f  (FBDEV_S *obj);
-static FBDEV_ERROR_E restore_f(FBDEV_S *obj);
+static enum fbdev_error_e clear_f(struct fbdev_s *obj);
+static enum fbdev_error_e restore_f(struct fbdev_s *obj);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-FBDEV_ERROR_E FbDev_Init(FBDEV_S **obj)
+enum fbdev_error_e FbDev_Init(struct fbdev_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(FBDEV_S))));
+    assert(obj && (*obj = calloc(1, sizeof(struct fbdev_s))));
 
-    FBDEV_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(FBDEV_PRIVATE_DATA_S))));
+    struct fbdev_private_data_s *pData;
+    assert((pData = calloc(1, sizeof(struct fbdev_private_data_s))));
 
     (*obj)->open     = open_f;
     (*obj)->isOpened = isOpened_f;
@@ -114,11 +110,11 @@ FBDEV_ERROR_E FbDev_Init(FBDEV_S **obj)
 /*!
  *
  */
-FBDEV_ERROR_E FbDev_UnInit(FBDEV_S **obj)
+enum fbdev_error_e FbDev_UnInit(struct fbdev_s **obj)
 {
     assert(obj && *obj && (*obj)->pData);
     
-    FBDEV_PRIVATE_DATA_S *pData = (FBDEV_PRIVATE_DATA_S*)((*obj)->pData);
+    struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)((*obj)->pData);
     
     free(pData);
     pData = NULL;
@@ -127,20 +123,20 @@ FBDEV_ERROR_E FbDev_UnInit(FBDEV_S **obj)
     *obj = NULL;
     
     return FBDEV_ERROR_NONE;
-}	
+}
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static FBDEV_ERROR_E open_f(FBDEV_S *obj, const char *fbName)
+static enum fbdev_error_e open_f(struct fbdev_s *obj, const char *fbName)
 {
     assert(obj && obj->pData && fbName);
 
-    FBDEV_PRIVATE_DATA_S *pData = (FBDEV_PRIVATE_DATA_S*)(obj->pData);
+    struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
     sprintf(pData->path, "%s%s", FBDEV_PATH_PREFIX, fbName);
 
@@ -160,11 +156,11 @@ static FBDEV_ERROR_E open_f(FBDEV_S *obj, const char *fbName)
 /*!
  *
  */
-static FBDEV_ERROR_E isOpened_f(FBDEV_S *obj, uint8_t *opened)
+static enum fbdev_error_e isOpened_f(struct fbdev_s *obj, uint8_t *opened)
 {
     assert(obj && obj->pData && opened);
 
-    FBDEV_PRIVATE_DATA_S *pData = (FBDEV_PRIVATE_DATA_S*)(obj->pData);
+    struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
     *opened = pData->opened;
 
@@ -174,11 +170,11 @@ static FBDEV_ERROR_E isOpened_f(FBDEV_S *obj, uint8_t *opened)
 /*!
  *
  */
-static FBDEV_ERROR_E close_f(FBDEV_S *obj)
+static enum fbdev_error_e close_f(struct fbdev_s *obj)
 {
     assert(obj && obj->pData);
 
-    FBDEV_PRIVATE_DATA_S *pData = (FBDEV_PRIVATE_DATA_S*)(obj->pData);
+    struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
     if (!pData->opened) {
         Loge("No framebuffer device opened yet");
@@ -196,11 +192,11 @@ static FBDEV_ERROR_E close_f(FBDEV_S *obj)
 /*!
  *
  */
-static FBDEV_ERROR_E getInfos_f(FBDEV_S *obj, FBDEV_INFOS_S *fbInfos)
+static enum fbdev_error_e getInfos_f(struct fbdev_s *obj, struct fbdev_infos_s *fbInfos)
 {
     assert(obj && obj->pData && fbInfos);
 
-    FBDEV_PRIVATE_DATA_S *pData = (FBDEV_PRIVATE_DATA_S*)(obj->pData);
+    struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
     if (!pData->opened) {
         Loge("No framebuffer device opened yet");
@@ -218,7 +214,8 @@ static FBDEV_ERROR_E getInfos_f(FBDEV_S *obj, FBDEV_INFOS_S *fbInfos)
     }
 
     Logd("size : %u / width : %u / height : %u / depth : %u",
-            pData->finfo.smem_len, pData->vinfo.xres, pData->vinfo.yres, pData->vinfo.bits_per_pixel);
+            pData->finfo.smem_len, pData->vinfo.xres, pData->vinfo.yres,
+            pData->vinfo.bits_per_pixel);
 
     fbInfos->width  = pData->vinfo.xres;
     fbInfos->height = pData->vinfo.yres;
@@ -230,11 +227,11 @@ static FBDEV_ERROR_E getInfos_f(FBDEV_S *obj, FBDEV_INFOS_S *fbInfos)
 /*!
  *
  */
-static FBDEV_ERROR_E setDepth_f(FBDEV_S *obj, uint32_t depth)
+static enum fbdev_error_e setDepth_f(struct fbdev_s *obj, uint32_t depth)
 {
     assert(obj && obj->pData);
 
-    FBDEV_PRIVATE_DATA_S *pData = (FBDEV_PRIVATE_DATA_S*)(obj->pData);
+    struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
     if (!pData->opened) {
         Loge("No framebuffer device opened yet");
@@ -243,8 +240,8 @@ static FBDEV_ERROR_E setDepth_f(FBDEV_S *obj, uint32_t depth)
 
     Logd("Updating depth : current = %u / new = %u", pData->vinfo.bits_per_pixel, depth);
 
-    FBDEV_VSCREENINFO vinfo;
-    memcpy(&vinfo, &pData->vinfo, sizeof(FBDEV_VSCREENINFO));
+    struct fb_var_screeninfo vinfo;
+    memcpy(&vinfo, &pData->vinfo, sizeof(struct fb_var_screeninfo));
 
     vinfo.bits_per_pixel = depth;
     if (ioctl(pData->fd, FBIOPUT_VSCREENINFO, &vinfo) < 0) {
@@ -258,11 +255,11 @@ static FBDEV_ERROR_E setDepth_f(FBDEV_S *obj, uint32_t depth)
 /*!
  *
  */
-static FBDEV_ERROR_E clear_f(FBDEV_S *obj)
+static enum fbdev_error_e clear_f(struct fbdev_s *obj)
 {
     assert(obj && obj->pData);
 
-    FBDEV_PRIVATE_DATA_S *pData = (FBDEV_PRIVATE_DATA_S*)(obj->pData);
+    struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
     if (!pData->opened) {
         Loge("No framebuffer device opened yet");
@@ -271,8 +268,7 @@ static FBDEV_ERROR_E clear_f(FBDEV_S *obj)
 
     Logd("Clearing framebuffer device \"%s\"", pData->path);
 
-    pData->map = (char*)mmap(0,
-                                pData->finfo.smem_len,
+    pData->map = (char*)mmap(0, pData->finfo.smem_len,
                                 PROT_READ | PROT_WRITE,
                                 MAP_SHARED,
                                 pData->fd,
@@ -293,11 +289,11 @@ static FBDEV_ERROR_E clear_f(FBDEV_S *obj)
 /*!
  *
  */
-static FBDEV_ERROR_E restore_f(FBDEV_S *obj)
+static enum fbdev_error_e restore_f(struct fbdev_s *obj)
 {
     assert(obj && obj->pData);
 
-    FBDEV_PRIVATE_DATA_S *pData = (FBDEV_PRIVATE_DATA_S*)(obj->pData);
+    struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
     if (!pData->opened) {
         Loge("No framebuffer device opened yet");
@@ -306,7 +302,7 @@ static FBDEV_ERROR_E restore_f(FBDEV_S *obj)
 
     Logd("Restoring framebuffer device \"%s\"", pData->path);
 
-    FBDEV_VSCREENINFO vinfo;
+    struct fb_var_screeninfo vinfo;
     if (ioctl(pData->fd, FBIOGET_VSCREENINFO, &vinfo) < 0) {
         Loge("Failed to read framebuffer variable infos - %s", strerror(errno));
         return FBDEV_ERROR_IO;

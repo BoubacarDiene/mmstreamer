@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Client.h
+* \file Client.h
 * \author Boubacar DIENE
 */
 
@@ -32,33 +32,46 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "network/LinkHelper.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum client_error_e;
+
+struct client_params_s;
+struct client_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   CLIENT_ERROR_E  CLIENT_ERROR_E;
+typedef void (*client_on_data_received_cb)(struct client_params_s *params,
+                                           struct buffer_s *buffer, void *userData);
+typedef void (*client_on_link_broken_cb)(struct client_params_s *params, void *userData);
 
-typedef struct CLIENT_PARAMS_S CLIENT_PARAMS_S;
-typedef struct CLIENT_S        CLIENT_S;
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef void (*ON_DATA_RECEIVED_CB)(CLIENT_PARAMS_S *params, BUFFER_S *buffer, void *userData);
-typedef void (*ON_LINK_BROKEN_CB  )(CLIENT_PARAMS_S *params, void *userData);
+typedef enum client_error_e (*client_start_f)(struct client_s *obj,
+                                              struct client_params_s *params);
+typedef enum client_error_e (*client_stop_f)(struct client_s *obj,
+                                             struct client_params_s *params);
 
-typedef CLIENT_ERROR_E (*CLIENT_START_F)(CLIENT_S *obj, CLIENT_PARAMS_S *params);
-typedef CLIENT_ERROR_E (*CLIENT_STOP_F )(CLIENT_S *obj, CLIENT_PARAMS_S *params);
+typedef enum client_error_e (*client_send_data_f)(struct client_s *obj,
+                                                  struct client_params_s *params,
+                                                  struct buffer_s *buffer);
 
-typedef CLIENT_ERROR_E (*CLIENT_SEND_DATA_F)(CLIENT_S *obj, CLIENT_PARAMS_S *params, BUFFER_S *buffer);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-enum CLIENT_ERROR_E {
+enum client_error_e {
     CLIENT_ERROR_NONE,
     CLIENT_ERROR_INIT,
     CLIENT_ERROR_UNINIT,
@@ -69,42 +82,46 @@ enum CLIENT_ERROR_E {
     CLIENT_ERROR_LIST
 };
 
-struct CLIENT_PARAMS_S {
-    char                name[MAX_NAME_SIZE];
+struct client_params_s {
+    char                       name[MAX_NAME_SIZE];
     
-    STREAM_TYPE_E       type;
-    LINK_TYPE_E         link;
-    LINK_MODE_E         mode;
+    enum stream_type_e         type;
+    enum link_type_e           link;
+    enum link_mode_e           mode;
     
     union {
-        RECIPIENT_S     server;                          /* Used in connection-oriented mode */
-        char            serverSocketName[MAX_NAME_SIZE]; /* Used in connectionless mode */
+        struct recipient_s     server;                          // Connection-oriented mode
+        char                   serverSocketName[MAX_NAME_SIZE]; // Connectionless mode
     } recipient;
     
-    PRIORITY_E          priority;
-    size_t              maxBufferSize;
+    enum priority_e            priority;
+    size_t                     maxBufferSize;
     
-    ON_DATA_RECEIVED_CB onDataReceivedCb;
-    ON_LINK_BROKEN_CB   onLinkBrokenCb;
+    client_on_data_received_cb onDataReceivedCb;
+    client_on_link_broken_cb   onLinkBrokenCb;
     
-    void                *userData;
-};
-
-struct CLIENT_S {
-    CLIENT_START_F     start;
-    CLIENT_STOP_F      stop;
-    
-    CLIENT_SEND_DATA_F sendData;
-    
-    void               *pData;
+    void                       *userData;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-CLIENT_ERROR_E Client_Init  (CLIENT_S **obj);
-CLIENT_ERROR_E Client_UnInit(CLIENT_S **obj);
+struct client_s {
+    client_start_f     start;
+    client_stop_f      stop;
+
+    client_send_data_f sendData;
+    
+    void *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum client_error_e Client_Init(struct client_s **obj);
+enum client_error_e Client_UnInit(struct client_s **obj);
 
 #ifdef __cplusplus
 }

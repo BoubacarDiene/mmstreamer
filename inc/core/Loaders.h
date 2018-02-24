@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Loaders.h
+* \file Loaders.h
 * \author Boubacar DIENE
 */
 
@@ -32,194 +32,203 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Common.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum loaders_error_e;
+
+struct xml_color_s;
+struct xml_colors_s;
+struct xml_font_s;
+struct xml_fonts_s;
+struct xml_image_s;
+struct xml_images_s;
+struct xml_string_s;
+struct xml_strings_s;
+struct xml_capability_s;
+struct xml_config_s;
+struct xml_video_area_s;
+struct xml_video_s;
+struct xml_videos_s;
+struct xml_common_files_s;
+struct xml_common_s;
+struct xml_screen_s;
+struct xml_element_text_s;
+struct xml_element_image_s;
+struct xml_element_nav_s;
+struct xml_element_click_s;
+struct xml_element_s;
+struct xml_graphics_s;
+struct xml_server_s;
+struct xml_servers_s;
+struct xml_client_s;
+struct xml_clients_s;
+struct xml_s;
+struct loaders_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   LOADERS_ERROR_E     LOADERS_ERROR_E;
+typedef enum loaders_error_e (*loaders_load_graphics_xml_f)(struct loaders_s *obj,
+                                                            struct context_s *ctx,
+                                                            struct xml_graphics_s *xmlGraphics);
+typedef enum loaders_error_e (*loaders_unload_graphics_xml_f)(struct loaders_s *obj,
+                                                              struct xml_graphics_s *xmlGraphics);
 
-typedef struct XML_COLOR_S         XML_COLOR_S;
-typedef struct XML_COLORS_S        XML_COLORS_S;
+typedef enum loaders_error_e (*loaders_load_common_xml_f)(struct loaders_s *obj,
+                                                          struct context_s *ctx,
+                                                          struct xml_common_s *xmlCommon);
+typedef enum loaders_error_e (*loaders_unload_common_xml_f)(struct loaders_s *obj,
+                                                            struct xml_common_s *xmlCommon);
 
-typedef struct XML_FONT_S          XML_FONT_S;
-typedef struct XML_FONTS_S         XML_FONTS_S;
+typedef enum loaders_error_e (*loaders_load_videos_xml_f)(struct loaders_s *obj,
+                                                          struct context_s *ctx,
+                                                          struct xml_videos_s *xmlVideos);
+typedef enum loaders_error_e (*loaders_unload_videos_xml_f)(struct loaders_s *obj,
+                                                            struct xml_videos_s *xmlVideos);
 
-typedef struct XML_IMAGE_S         XML_IMAGE_S;
-typedef struct XML_IMAGES_S        XML_IMAGES_S;
+typedef enum loaders_error_e (*loaders_load_servers_xml_f)(struct loaders_s *obj,
+                                                           struct context_s *ctx,
+                                                           struct xml_servers_s *xmlServers);
+typedef enum loaders_error_e (*loaders_unload_servers_xml_f)(struct loaders_s *obj,
+                                                             struct xml_servers_s *xmlServers);
 
-typedef struct XML_STRING_S        XML_STRING_S;
-typedef struct XML_STRINGS_S       XML_STRINGS_S;
+typedef enum loaders_error_e (*loaders_load_clients_xml_f)(struct loaders_s *obj,
+                                                           struct context_s *ctx,
+                                                           struct xml_clients_s *xmlClients);
+typedef enum loaders_error_e (*loaders_unload_clients_xml_f)(struct loaders_s *obj,
+                                                             struct xml_clients_s *xmlClients);
 
-typedef struct XML_CAPABILITY_S    XML_CAPABILITY_S;
-typedef struct XML_CONFIG_S        XML_CONFIG_S;
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef struct XML_VIDEO_AREA_S    XML_VIDEO_AREA_S;
-typedef struct XML_VIDEO_S         XML_VIDEO_S;
-typedef struct XML_VIDEOS_S        XML_VIDEOS_S;
-
-typedef struct XML_COMMON_FILES_S  XML_COMMON_FILES_S;
-typedef struct XML_COMMON_S        XML_COMMON_S;
-typedef struct XML_SCREEN_S        XML_SCREEN_S;
-typedef struct XML_ELEMENT_TEXT_S  XML_ELEMENT_TEXT_S;
-typedef struct XML_ELEMENT_IMAGE_S XML_ELEMENT_IMAGE_S;
-typedef struct XML_ELEMENT_NAV_S   XML_ELEMENT_NAV_S;
-typedef struct XML_ELEMENT_CLICK_S XML_ELEMENT_CLICK_S;
-typedef struct XML_ELEMENT_S       XML_ELEMENT_S;
-typedef struct XML_GRAPHICS_S      XML_GRAPHICS_S;
-
-typedef struct XML_SERVER_S        XML_SERVER_S;
-typedef struct XML_SERVERS_S       XML_SERVERS_S;
-
-typedef struct XML_CLIENT_S        XML_CLIENT_S;
-typedef struct XML_CLIENTS_S       XML_CLIENTS_S;
-
-typedef struct XML_S               XML_S;
-
-typedef struct LOADERS_S           LOADERS_S;
-
-typedef LOADERS_ERROR_E (*LOADERS_LOAD_GRAPHICS_XML_F  )(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S *xmlGraphics);
-typedef LOADERS_ERROR_E (*LOADERS_UNLOAD_GRAPHICS_XML_F)(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics);
-
-typedef LOADERS_ERROR_E (*LOADERS_LOAD_COMMON_XML_F  )(LOADERS_S *obj, CONTEXT_S *ctx, XML_COMMON_S *xmlCommon);
-typedef LOADERS_ERROR_E (*LOADERS_UNLOAD_COMMON_XML_F)(LOADERS_S *obj, XML_COMMON_S *xmlCommon);
-
-typedef LOADERS_ERROR_E (*LOADERS_LOAD_VIDEOS_XML_F  )(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xmlVideos);
-typedef LOADERS_ERROR_E (*LOADERS_UNLOAD_VIDEOS_XML_F)(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos);
-
-typedef LOADERS_ERROR_E (*LOADERS_LOAD_SERVERS_XML_F  )(LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *xmlServers);
-typedef LOADERS_ERROR_E (*LOADERS_UNLOAD_SERVERS_XML_F)(LOADERS_S *obj, XML_SERVERS_S *xmlServers);
-
-typedef LOADERS_ERROR_E (*LOADERS_LOAD_CLIENTS_XML_F  )(LOADERS_S *obj, CONTEXT_S *ctx, XML_CLIENTS_S *xmlClients);
-typedef LOADERS_ERROR_E (*LOADERS_UNLOAD_CLIENTS_XML_F)(LOADERS_S *obj, XML_CLIENTS_S *xmlClients);
-
-enum LOADERS_ERROR_E {
+enum loaders_error_e {
     LOADERS_ERROR_NONE,
     LOADERS_ERROR_INIT,
     LOADERS_ERROR_UNINIT,
     LOADERS_ERROR_XML
 };
 
-struct XML_COLOR_S {
+struct xml_color_s {
     uint8_t red;
     uint8_t green;
     uint8_t blue;
     uint8_t alpha;
 };
 
-struct XML_COLORS_S {
-    uint32_t    nbColors;
-    XML_COLOR_S *colors;
+struct xml_colors_s {
+    uint32_t           nbColors;
+    struct xml_color_s *colors;
 };
 
-struct XML_FONT_S {
+struct xml_font_s {
     char *file;
 };
 
-struct XML_FONTS_S {
-    uint32_t   nbFonts;
-    XML_FONT_S *fonts;
+struct xml_fonts_s {
+    uint32_t          nbFonts;
+    struct xml_font_s *fonts;
 };
 
-struct XML_IMAGE_S {
+struct xml_image_s {
     char    *file;
     uint8_t format;
 };
 
-struct XML_IMAGES_S {
-    uint32_t    nbImages;
-    XML_IMAGE_S *images;
+struct xml_images_s {
+    uint32_t           nbImages;
+    struct xml_image_s *images;
 };
 
-struct XML_STRING_S {
+struct xml_string_s {
     char *str;
 };
 
-struct XML_STRINGS_S {
-    char         *language;
-    uint32_t     nbStrings;
-    XML_STRING_S *strings;
+struct xml_strings_s {
+    char                *language;
+    uint32_t            nbStrings;
+    struct xml_string_s *strings;
 };
 
-struct XML_CAPABILITY_S {
+struct xml_capability_s {
     char *item;
 };
 
-struct XML_CONFIG_S {
-    uint8_t          nbItems;
-    XML_CAPABILITY_S *capabilities;
+struct xml_config_s {
+    uint8_t                 nbItems;
+    struct xml_capability_s *capabilities;
 
-    char             *bufferType;
-    char             *pixelFormat;
-    char             *colorspace;
-    char             *memory;
-    char             *awaitMode;
+    char                    *bufferType;
+    char                    *pixelFormat;
+    char                    *colorspace;
+    char                    *memory;
+    char                    *awaitMode;
 };
 
-struct XML_VIDEO_AREA_S {
+struct xml_video_area_s {
     uint32_t left;
     uint32_t top;
     uint32_t width;
     uint32_t height;
 };
 
-struct XML_VIDEO_S {
-    uint8_t          priority;
-    uint32_t         configChoice;
-    char             *graphicsDest;
-    char             *serverDest;
+struct xml_video_s {
+    uint8_t                 priority;
+    uint32_t                configChoice;
+    char                    *graphicsDest;
+    char                    *serverDest;
 
-    char             *deviceName;
-    char             *deviceSrc;
+    char                    *deviceName;
+    char                    *deviceSrc;
 
-    XML_VIDEO_AREA_S deviceArea;
-    XML_VIDEO_AREA_S croppingArea;
-    XML_VIDEO_AREA_S composingArea;
+    struct xml_video_area_s deviceArea;
+    struct xml_video_area_s croppingArea;
+    struct xml_video_area_s composingArea;
     
-    uint8_t          nbBuffers;
-    uint8_t          desiredFps;
+    uint8_t                 nbBuffers;
+    uint8_t                 desiredFps;
 };
 
-struct XML_VIDEOS_S {
-    uint8_t      nbVideos;
-    XML_VIDEO_S  *videos;
+struct xml_videos_s {
+    uint8_t             nbVideos;
+    struct xml_video_s  *videos;
 
-    uint8_t      nbConfigs;
-    XML_CONFIG_S *configs;
+    uint8_t             nbConfigs;
+    struct xml_config_s *configs;
 
-    void         *reserved;
+    void                *reserved;
 };
 
-struct XML_COMMON_FILES_S {
+struct xml_common_files_s {
     char colors[MAX_PATH_SIZE];
     char images[MAX_PATH_SIZE];
     char fonts[MAX_PATH_SIZE];
     char strings[MAX_PATH_SIZE];
 };
 
-struct XML_COMMON_S {
-    uint32_t           nbLanguages;
-    char               defaultLanguage[MIN_STR_SIZE];
+struct xml_common_s {
+    uint32_t                  nbLanguages;
+    char                      defaultLanguage[MIN_STR_SIZE];
 
-    XML_COMMON_FILES_S files;
+    struct xml_common_files_s files;
     
-    XML_COLORS_S       xmlColors;
-    XML_FONTS_S        xmlFonts;
-    XML_IMAGES_S       xmlImages;
-    XML_STRINGS_S      *xmlStrings;
+    struct xml_colors_s       xmlColors;
+    struct xml_fonts_s        xmlFonts;
+    struct xml_images_s       xmlImages;
+    struct xml_strings_s      *xmlStrings;
 
-    void               *reserved;
+    void                      *reserved;
 };
 
-struct XML_SCREEN_S {
+struct xml_screen_s {
     char     *name;
     uint16_t width;
     uint16_t height;
@@ -241,77 +250,77 @@ struct XML_SCREEN_S {
     uint32_t videoFormat;
 };
 
-struct XML_ELEMENT_TEXT_S {
+struct xml_element_text_s {
     uint32_t stringId;
     uint32_t fontId;
     uint32_t colorId;
     uint8_t  size;
 };
 
-struct XML_ELEMENT_IMAGE_S {
+struct xml_element_image_s {
     uint32_t imageId;
     int32_t  hiddenColorId;
 };
 
-struct XML_ELEMENT_NAV_S {
+struct xml_element_nav_s {
     char *left;
     char *up;
     char *right;
     char *down;
 };
 
-struct XML_ELEMENT_CLICK_S {
+struct xml_element_click_s {
     char *name;
     char *data;
 };
 
-struct XML_ELEMENT_S {
-    char                *name;
-    char                *groupName;
+struct xml_element_s {
+    char                       *name;
+    char                       *groupName;
     
-    uint8_t             redrawGroup;
+    uint8_t                    redrawGroup;
     
-    uint8_t             type;
+    uint8_t                    type;
     
-    uint32_t            x;
-    uint32_t            y;
-    uint32_t            width;
-    uint32_t            height;
+    uint32_t                   x;
+    uint32_t                   y;
+    uint32_t                   width;
+    uint32_t                   height;
     
-    uint8_t             visible;
-    uint8_t             clickable;
-    uint8_t             focusable;
-    uint8_t             hasFocus;
+    uint8_t                    visible;
+    uint8_t                    clickable;
+    uint8_t                    focusable;
+    uint8_t                    hasFocus;
     
-    XML_ELEMENT_TEXT_S  *text;
-    XML_ELEMENT_IMAGE_S *image;
-    XML_ELEMENT_NAV_S   *nav;
+    struct xml_element_text_s  *text;
+    struct xml_element_image_s *image;
+    struct xml_element_nav_s   *nav;
 
-    uint32_t            nbClickHandlers;
-    XML_ELEMENT_CLICK_S *clickHandlers;
+    uint32_t                   nbClickHandlers;
+    struct xml_element_click_s *clickHandlers;
 };
 
-struct XML_GRAPHICS_S {
-    char               *defaultLanguage;
+struct xml_graphics_s {
+    char                 *defaultLanguage;
 
-    char               *colorsXmlFile;
-    char               *imagesXmlFile;
-    char               *fontsXmlFile;
-    char               *stringsXmlFile;
+    char                 *colorsXmlFile;
+    char                 *imagesXmlFile;
+    char                 *fontsXmlFile;
+    char                 *stringsXmlFile;
     
-    uint32_t           onFocusColorId;
-    uint32_t           onBlurColorId;
-    uint32_t           onResetColorId;
+    uint32_t             onFocusColorId;
+    uint32_t             onBlurColorId;
+    uint32_t             onResetColorId;
     
-    XML_SCREEN_S       screen;
+    struct xml_screen_s  screen;
     
-    uint32_t           nbElements;
-    XML_ELEMENT_S      *elements;
+    uint32_t             nbElements;
+    struct xml_element_s *elements;
     
-    void               *reserved;
+    void                 *reserved;
 };
 
-struct XML_SERVER_S {
+struct xml_server_s {
     char     *name;
     uint8_t  type;
     uint8_t  link;
@@ -328,14 +337,14 @@ struct XML_SERVER_S {
     char     *socketName;
 };
 
-struct XML_SERVERS_S {
-    uint8_t      nbServers;
-    XML_SERVER_S *servers;
+struct xml_servers_s {
+    uint8_t             nbServers;
+    struct xml_server_s *servers;
     
-    void         *reserved;
+    void                *reserved;
 };
 
-struct XML_CLIENT_S {
+struct xml_client_s {
     char    *name;
     uint8_t type;
     uint8_t link;
@@ -351,46 +360,50 @@ struct XML_CLIENT_S {
     char    *serverSocketName;
 };
 
-struct XML_CLIENTS_S {
-    uint8_t      nbClients;
-    XML_CLIENT_S *clients;
+struct xml_clients_s {
+    uint8_t             nbClients;
+    struct xml_client_s *clients;
     
-    void         *reserved;
+    void                *reserved;
 };
 
-struct XML_S {
-    XML_COMMON_S   xmlCommon;
-    XML_GRAPHICS_S xmlGraphics;
-    XML_VIDEOS_S   xmlVideos;
-    XML_SERVERS_S  xmlServers;
-    XML_CLIENTS_S  xmlClients;
-};
-
-struct LOADERS_S {
-    LOADERS_LOAD_GRAPHICS_XML_F   loadGraphicsXml;
-    LOADERS_UNLOAD_GRAPHICS_XML_F unloadGraphicsXml;
-    
-    LOADERS_LOAD_COMMON_XML_F     loadCommonXml;
-    LOADERS_UNLOAD_COMMON_XML_F   unloadCommonXml;
-    
-    LOADERS_LOAD_VIDEOS_XML_F     loadVideosXml;
-    LOADERS_UNLOAD_VIDEOS_XML_F   unloadVideosXml;
-    
-    LOADERS_LOAD_SERVERS_XML_F    loadServersXml;
-    LOADERS_UNLOAD_SERVERS_XML_F  unloadServersXml;
-    
-    LOADERS_LOAD_CLIENTS_XML_F    loadClientsXml;
-    LOADERS_UNLOAD_CLIENTS_XML_F  unloadClientsXml;
-    
-    void                          *pData;
+struct xml_s {
+    struct xml_common_s   xmlCommon;
+    struct xml_graphics_s xmlGraphics;
+    struct xml_videos_s   xmlVideos;
+    struct xml_servers_s  xmlServers;
+    struct xml_clients_s  xmlClients;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-LOADERS_ERROR_E Loaders_Init  (LOADERS_S **obj);
-LOADERS_ERROR_E Loaders_UnInit(LOADERS_S **obj);
+struct loaders_s {
+    loaders_load_graphics_xml_f   loadGraphicsXml;
+    loaders_unload_graphics_xml_f unloadGraphicsXml;
+    
+    loaders_load_common_xml_f     loadCommonXml;
+    loaders_unload_common_xml_f   unloadCommonXml;
+    
+    loaders_load_videos_xml_f     loadVideosXml;
+    loaders_unload_videos_xml_f   unloadVideosXml;
+    
+    loaders_load_servers_xml_f    loadServersXml;
+    loaders_unload_servers_xml_f  unloadServersXml;
+    
+    loaders_load_clients_xml_f    loadClientsXml;
+    loaders_unload_clients_xml_f  unloadClientsXml;
+    
+    void *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum loaders_error_e Loaders_Init(struct loaders_s **obj);
+enum loaders_error_e Loaders_UnInit(struct loaders_s **obj);
 
 #ifdef __cplusplus
 }

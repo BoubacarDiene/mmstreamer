@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Listeners.h
+* \file Listeners.h
 * \author Boubacar DIENE
 */
 
@@ -32,72 +32,80 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Common.h"
 #include "control/Control.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum listeners_error_e;
+
+struct listeners_params_s;
+struct listeners_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   LISTENERS_ERROR_E LISTENERS_ERROR_E;
+typedef enum listeners_error_e (*listeners_set_graphics_listeners_f)(struct listeners_s *obj);
+typedef enum listeners_error_e (*listeners_unset_graphics_listeners_f)(struct listeners_s *obj);
 
-typedef struct LISTENERS_PDATA_S LISTENERS_PDATA_S;
-typedef struct LISTENERS_S       LISTENERS_S;
+typedef enum listeners_error_e (*listeners_set_videos_listeners_f)(struct listeners_s *obj);
+typedef enum listeners_error_e (*listeners_unset_videos_listeners_f)(struct listeners_s *obj);
 
-typedef LISTENERS_ERROR_E (*LISTENERS_SET_GRAPHICS_LISTENERS_F  )(LISTENERS_S *obj);
-typedef LISTENERS_ERROR_E (*LISTENERS_UNSET_GRAPHICS_LISTENERS_F)(LISTENERS_S *obj);
+typedef enum listeners_error_e (*listeners_set_servers_listeners_f)(struct listeners_s *obj);
+typedef enum listeners_error_e (*listeners_unset_servers_listeners_f)(struct listeners_s *obj);
 
-typedef LISTENERS_ERROR_E (*LISTENERS_SET_VIDEOS_LISTENERS_F  )(LISTENERS_S *obj);
-typedef LISTENERS_ERROR_E (*LISTENERS_UNSET_VIDEOS_LISTENERS_F)(LISTENERS_S *obj);
+typedef enum listeners_error_e (*listeners_set_clients_listeners_f)(struct listeners_s *obj);
+typedef enum listeners_error_e (*listeners_unset_clients_listeners_f)(struct listeners_s *obj);
 
-typedef LISTENERS_ERROR_E (*LISTENERS_SET_SERVERS_LISTENERS_F  )(LISTENERS_S *obj);
-typedef LISTENERS_ERROR_E (*LISTENERS_UNSET_SERVERS_LISTENERS_F)(LISTENERS_S *obj);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef LISTENERS_ERROR_E (*LISTENERS_SET_CLIENTS_LISTENERS_F  )(LISTENERS_S *obj);
-typedef LISTENERS_ERROR_E (*LISTENERS_UNSET_CLIENTS_LISTENERS_F)(LISTENERS_S *obj);
-
-enum LISTENERS_ERROR_E {
+enum listeners_error_e {
     LISTENERS_ERROR_NONE,
     LISTENERS_ERROR_INIT,
     LISTENERS_ERROR_UNINIT,
     LISTENERS_ERROR_LISTENER
 };
 
-struct LISTENERS_PDATA_S {
-    CONTEXT_S  *ctx;
-    CONTROL_S  *controlObj;
-    BUFFER_S   buffer;
-};
-
-struct LISTENERS_S {
-    LISTENERS_SET_GRAPHICS_LISTENERS_F   setGraphicsListeners;
-    LISTENERS_UNSET_GRAPHICS_LISTENERS_F unsetGraphicsListeners;
-    
-    LISTENERS_SET_VIDEOS_LISTENERS_F     setVideosListeners;
-    LISTENERS_UNSET_VIDEOS_LISTENERS_F   unsetVideosListeners;
-    
-    LISTENERS_SET_SERVERS_LISTENERS_F    setServersListeners;
-    LISTENERS_UNSET_SERVERS_LISTENERS_F  unsetServersListeners;
-    
-    LISTENERS_SET_CLIENTS_LISTENERS_F    setClientsListeners;
-    LISTENERS_UNSET_CLIENTS_LISTENERS_F  unsetClientsListeners;
-    
-    LISTENERS_PDATA_S                    *pData;
+struct listeners_params_s {
+    struct context_s *ctx;
+    struct control_s *controlObj;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-LISTENERS_ERROR_E Listeners_Init  (LISTENERS_S **obj, CONTEXT_S *ctx, CONTROL_S *controlObj);
-LISTENERS_ERROR_E Listeners_UnInit(LISTENERS_S **obj);
+struct listeners_s {
+    listeners_set_graphics_listeners_f   setGraphicsListeners;
+    listeners_unset_graphics_listeners_f unsetGraphicsListeners;
+    
+    listeners_set_videos_listeners_f     setVideosListeners;
+    listeners_unset_videos_listeners_f   unsetVideosListeners;
+    
+    listeners_set_servers_listeners_f    setServersListeners;
+    listeners_unset_servers_listeners_f  unsetServersListeners;
+    
+    listeners_set_clients_listeners_f    setClientsListeners;
+    listeners_unset_clients_listeners_f  unsetClientsListeners;
+    
+    struct listeners_params_s params;
+    void                      *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum listeners_error_e Listeners_Init(struct listeners_s **obj, struct listeners_params_s *params);
+enum listeners_error_e Listeners_UnInit(struct listeners_s **obj);
 
 #ifdef __cplusplus
 }

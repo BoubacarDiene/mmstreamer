@@ -101,7 +101,7 @@
                      "VIDEO_AWAIT_MODE_BLOCKING"     => Waiting indefinitely until data are available for reading
                      "VIDEO_AWAIT_MODE_NON_BLOCKING" => Checking regularly (currently every 2s) if data are available
 
-    Note : Only the following 4 configs are tested for now!! 
+    Note : Only the following 4 configs have been tested for now!! 
   -->
   <Configs>
 

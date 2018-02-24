@@ -20,19 +20,19 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   VideosListeners.c
-* \brief  TODO
+* \file VideosListeners.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Listeners.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -42,48 +42,49 @@
 #define VIDEO_LISTENER4SERVER_NAME "videoListener4Server"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct VIDEOS_LISTENERS_INTERNAL_PDATA_S {
-    uint8_t           videoIndex;
-    LISTENERS_PDATA_S *listenersPdata;
-} VIDEOS_LISTENERS_INTERNAL_PDATA_S;
+struct videos_listeners_private_data_s {
+    uint8_t                   videoIndex;
+    struct buffer_s           buffer;
+    struct listeners_params_s *listenersParams;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-LISTENERS_ERROR_E setVideosListeners_f  (LISTENERS_S *obj);
-LISTENERS_ERROR_E unsetVideosListeners_f(LISTENERS_S *obj);
-
-static void onVideo4GfxCb   (VIDEO_BUFFER_S *videoBuffer, void *userData);
-static void onVideo4ServerCb(VIDEO_BUFFER_S *videoBuffer, void *userData);
+enum listeners_error_e setVideosListeners_f(struct listeners_s *obj);
+enum listeners_error_e unsetVideosListeners_f(struct listeners_s *obj);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+static void onVideo4GfxCb(struct video_buffer_s *videoBuffer, void *userData);
+static void onVideo4ServerCb(struct video_buffer_s *videoBuffer, void *userData);
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                          FUNCTIONS                                           */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-LISTENERS_ERROR_E setVideosListeners_f(LISTENERS_S *obj)
+enum listeners_error_e setVideosListeners_f(struct listeners_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
     
-    LISTENERS_PDATA_S *pData            = (LISTENERS_PDATA_S*)(obj->pData);
-    INPUT_S *input                      = &pData->ctx->input;
-    VIDEOS_INFOS_S *videosInfos         = &pData->ctx->params.videosInfos;
-    VIDEO_DEVICE_S ***videoDevices      = &videosInfos->devices;
-    VIDEO_DEVICE_S *videoDevice         = NULL;
-    uint8_t nbDevices                   = videosInfos->nbDevices;
-    uint8_t *nbVideoListeners           = NULL;
-    VIDEO_LISTENER_S  ***videoListeners = NULL;
-    VIDEO_LISTENER_S  *videoListener    = NULL;
+    struct listeners_params_s *listenersParams = &obj->params;
+    struct input_s *input                      = &listenersParams->ctx->input;
+    struct videos_infos_s *videosInfos         = &listenersParams->ctx->params.videosInfos;
+    struct video_device_s ***videoDevices      = &videosInfos->devices;
+    struct video_device_s *videoDevice         = NULL;
+    uint8_t nbDevices                          = videosInfos->nbDevices;
+    uint8_t *nbVideoListeners                  = NULL;
+    struct video_listener_s  ***videoListeners = NULL;
+    struct video_listener_s  *videoListener    = NULL;
 
     uint8_t videoIndex, listenerIndex;
     for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
@@ -102,34 +103,37 @@ LISTENERS_ERROR_E setVideosListeners_f(LISTENERS_S *obj)
         Logd("nbVideoListeners = %u", *nbVideoListeners);
     
         if (*nbVideoListeners > 0) {
-            VIDEOS_LISTENERS_INTERNAL_PDATA_S *internalPdata;
+            struct videos_listeners_private_data_s *pData;
 
-            assert((*videoListeners = (VIDEO_LISTENER_S**)calloc(*nbVideoListeners, sizeof(VIDEO_LISTENER_S*))));
-            assert((internalPdata = (VIDEOS_LISTENERS_INTERNAL_PDATA_S*)calloc(1, sizeof(VIDEOS_LISTENERS_INTERNAL_PDATA_S))));
+            assert((*videoListeners = calloc(*nbVideoListeners,
+                                             sizeof(struct video_listener_s*))));
+            assert((pData = calloc(1, sizeof(struct videos_listeners_private_data_s))));
 
-            internalPdata->videoIndex     = videoIndex;
-            internalPdata->listenersPdata = pData;
+            pData->videoIndex      = videoIndex;
+            pData->listenersParams = listenersParams;
 
             listenerIndex = 0;
 
             if (input->graphicsConfig.enable && videoDevice->graphicsDest) {
-                assert(((*videoListeners)[listenerIndex] = calloc(1, sizeof(VIDEO_LISTENER_S))));
-                videoListener = (*videoListeners)[listenerIndex];
+                (*videoListeners)[listenerIndex] = calloc(1, sizeof(struct video_listener_s));
+                assert((*videoListeners)[listenerIndex]);
 
+                videoListener = (*videoListeners)[listenerIndex];
                 strcpy(videoListener->name, VIDEO_LISTENER4GFX_NAME);
                 videoListener->onVideoBufferAvailableCb = onVideo4GfxCb;
-                videoListener->userData                 = internalPdata;
+                videoListener->userData                 = pData;
             
                 listenerIndex++;
             }
         
             if (input->serversConfig.enable && videoDevice->serverDest) {
-                assert(((*videoListeners)[listenerIndex] = calloc(1, sizeof(VIDEO_LISTENER_S))));
-                videoListener = (*videoListeners)[listenerIndex];
+                (*videoListeners)[listenerIndex] = calloc(1, sizeof(struct video_listener_s));
+                assert((*videoListeners)[listenerIndex]);
 
+                videoListener = (*videoListeners)[listenerIndex];
                 strcpy(videoListener->name, VIDEO_LISTENER4SERVER_NAME);
                 videoListener->onVideoBufferAvailableCb = onVideo4ServerCb;
-                videoListener->userData                 = internalPdata;
+                videoListener->userData                 = pData;
             }
         }
     }
@@ -140,19 +144,19 @@ LISTENERS_ERROR_E setVideosListeners_f(LISTENERS_S *obj)
 /*!
  *
  */
-LISTENERS_ERROR_E unsetVideosListeners_f(LISTENERS_S *obj)
+enum listeners_error_e unsetVideosListeners_f(struct listeners_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
     
-    LISTENERS_PDATA_S *pData                         = (LISTENERS_PDATA_S*)(obj->pData);
-    VIDEOS_INFOS_S *videosInfos                      = &pData->ctx->params.videosInfos;
-    VIDEO_DEVICE_S ***videoDevices                   = &videosInfos->devices;
-    VIDEO_DEVICE_S *videoDevice                      = NULL;
-    uint8_t nbDevices                                = videosInfos->nbDevices;
-    uint8_t nbVideoListeners                         = 0;
-    VIDEO_LISTENER_S  ***videoListeners              = NULL;
-    VIDEO_LISTENER_S  **videoListener                = NULL;
-    VIDEOS_LISTENERS_INTERNAL_PDATA_S *internalPdata = NULL;
+    struct listeners_params_s *listenersParams = &obj->params;
+    struct videos_infos_s *videosInfos         = &listenersParams->ctx->params.videosInfos;
+    struct video_device_s ***videoDevices      = &videosInfos->devices;
+    struct video_device_s *videoDevice         = NULL;
+    uint8_t nbDevices                          = videosInfos->nbDevices;
+    uint8_t nbVideoListeners                   = 0;
+    struct video_listener_s  ***videoListeners = NULL;
+    struct video_listener_s  **videoListener   = NULL;
+    struct videos_listeners_private_data_s *pData     = NULL;
 
     uint8_t videoIndex, listenerIndex;
     for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
@@ -162,17 +166,17 @@ LISTENERS_ERROR_E unsetVideosListeners_f(LISTENERS_S *obj)
 
         for (listenerIndex = 0; listenerIndex < nbVideoListeners; listenerIndex++) {
             videoListener              = &(*videoListeners)[listenerIndex];
-            internalPdata              = (VIDEOS_LISTENERS_INTERNAL_PDATA_S*)((*videoListener)->userData);
+            pData                      = (struct videos_listeners_private_data_s*)((*videoListener)->userData);
             (*videoListener)->userData = NULL;
 
             free(*videoListener);
             *videoListener = NULL;
         }
 
-        if (internalPdata) {
-            internalPdata->listenersPdata = NULL;
-            free(internalPdata);
-            internalPdata = NULL;
+        if (pData) {
+            pData->listenersParams = NULL;
+            pData->buffer.data     = NULL;
+            free(pData);
         }
 
         free(*videoListeners);
@@ -183,34 +187,35 @@ LISTENERS_ERROR_E unsetVideosListeners_f(LISTENERS_S *obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          CALLBACKS                                           */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static void onVideo4GfxCb(VIDEO_BUFFER_S *videoBuffer, void *userData)
+static void onVideo4GfxCb(struct video_buffer_s *videoBuffer, void *userData)
 {
     assert(videoBuffer && userData);
     
-    VIDEOS_LISTENERS_INTERNAL_PDATA_S *internalPdata = (VIDEOS_LISTENERS_INTERNAL_PDATA_S*)userData;
-    LISTENERS_PDATA_S *listenersPdata                = (LISTENERS_PDATA_S*)internalPdata->listenersPdata;
-    GRAPHICS_S *graphicsObj                          = listenersPdata->ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos                  = &listenersPdata->ctx->params.graphicsInfos;
-    VIDEOS_INFOS_S *videosInfos                      = &listenersPdata->ctx->params.videosInfos;
-    VIDEO_DEVICE_S *videoDevice                      = videosInfos->devices[internalPdata->videoIndex];
+    struct videos_listeners_private_data_s *pData = (struct videos_listeners_private_data_s*)userData;
+    struct context_s *ctx                         = pData->listenersParams->ctx;
+    struct graphics_s *graphicsObj                = ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos        = &ctx->params.graphicsInfos;
+    struct videos_infos_s *videosInfos            = &ctx->params.videosInfos;
+    struct video_device_s *videoDevice            = videosInfos->devices[pData->videoIndex];
     
     if (graphicsObj
         && videoDevice->graphicsDest
         && (graphicsInfos->state == MODULE_STATE_STARTED)) {
 
-        listenersPdata->buffer.data   = videoBuffer->data;
-        listenersPdata->buffer.length = videoBuffer->length;
+        pData->buffer.data   = videoBuffer->data;
+        pData->buffer.length = videoBuffer->length;
         
         if (videoDevice->graphicsIndex == -1) {
             uint32_t index;
             for (index = 0; index < graphicsInfos->nbGfxElements; index++) {
-                if (strcmp(graphicsInfos->gfxElements[index]->name, videoDevice->graphicsDest) == 0) {
+                if (strcmp(graphicsInfos->gfxElements[index]->name,
+                           videoDevice->graphicsDest) == 0) {
                     Logd("Element \"%s\" found at index \"%u\"", videoDevice->graphicsDest, index);
                     break;
                 }
@@ -224,28 +229,28 @@ static void onVideo4GfxCb(VIDEO_BUFFER_S *videoBuffer, void *userData)
             }
         }
         
-        (void)graphicsObj->setData(graphicsObj, videoDevice->graphicsDest, &listenersPdata->buffer);
+        (void)graphicsObj->setData(graphicsObj, videoDevice->graphicsDest, &pData->buffer);
     }
 }
 
 /*!
  *
  */
-static void onVideo4ServerCb(VIDEO_BUFFER_S *videoBuffer, void *userData)
+static void onVideo4ServerCb(struct video_buffer_s *videoBuffer, void *userData)
 {
     assert(videoBuffer && userData);
     
-    VIDEOS_LISTENERS_INTERNAL_PDATA_S *internalPdata = (VIDEOS_LISTENERS_INTERNAL_PDATA_S*)userData;
-    LISTENERS_PDATA_S *listenersPdata                = (LISTENERS_PDATA_S*)internalPdata->listenersPdata;
-    GRAPHICS_S *graphicsObj                          = listenersPdata->ctx->modules.graphicsObj;
-    SERVER_S *serverObj                              = listenersPdata->ctx->modules.serverObj;
-    SERVERS_INFOS_S *serversInfos                    = &listenersPdata->ctx->params.serversInfos;
-    SERVER_INFOS_S *serverInfos                      = NULL;
-    VIDEOS_INFOS_S *videosInfos                      = &listenersPdata->ctx->params.videosInfos;
-    VIDEO_DEVICE_S *videoDevice                      = videosInfos->devices[internalPdata->videoIndex];
+    struct videos_listeners_private_data_s *pData = (struct videos_listeners_private_data_s*)userData;
+    struct context_s *ctx                         = pData->listenersParams->ctx;
+    struct graphics_s *graphicsObj                = ctx->modules.graphicsObj;
+    struct server_s *serverObj                    = ctx->modules.serverObj;
+    struct servers_infos_s *serversInfos          = &ctx->params.serversInfos;
+    struct server_infos_s *serverInfos            = NULL;
+    struct videos_infos_s *videosInfos            = &ctx->params.videosInfos;
+    struct video_device_s *videoDevice            = videosInfos->devices[pData->videoIndex];
 
-    listenersPdata->buffer.data   = videoBuffer->data;
-    listenersPdata->buffer.length = videoBuffer->length;
+    pData->buffer.data   = videoBuffer->data;
+    pData->buffer.length = videoBuffer->length;
     
     if (serverObj && videoDevice->serverDest) {
         if (videoDevice->serverIndex == -1) {
@@ -271,7 +276,7 @@ static void onVideo4ServerCb(VIDEO_BUFFER_S *videoBuffer, void *userData)
         }
 
         if (serverInfos->state == MODULE_STATE_STARTED) {
-            (void)serverObj->sendData(serverObj, &serverInfos->serverParams, &listenersPdata->buffer);
+            (void)serverObj->sendData(serverObj, &serverInfos->serverParams, &pData->buffer);
         }
     }
 }

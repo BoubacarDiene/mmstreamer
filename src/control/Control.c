@@ -20,139 +20,152 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Control.c
-* \brief  TODO
+* \file Control.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "control/Control.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "Control"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct CONTROL_COMMANDS_LIST_S {
-    CONTROLLER_COMMAND_E id;
-    char                 *str;
-} CONTROL_COMMANDS_LIST_S;
+struct control_commands_list_s {
+    enum controller_command_e id;
+    char                      *str;
+    uint8_t                   gfxElementRequired;
+    uint8_t                   dataContainsElementName;
+};
 
-typedef struct CONTROL_PRIVATE_DATA_S {
-    CONTEXT_S       *ctx;
+struct control_private_data_s {
+    struct context_s     *ctx;
     
-    pthread_mutex_t lock;
+    pthread_mutex_t      lock;
     
-    HANDLERS_S      *handlersObj;
-    CONTROLLERS_S   *controllersObj;
-} CONTROL_PRIVATE_DATA_S;
+    struct handlers_s    *handlersObj;
+    struct controllers_s *controllersObj;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static CONTROL_COMMANDS_LIST_S gCommandsList[] = {
-                                                    { CONTROLLER_COMMAND_CLOSE_APPLICATION,   HANDLERS_COMMAND_CLOSE_APPLICATION  },
-                                                    { CONTROLLER_COMMAND_CHANGE_LANGUAGE,     HANDLERS_COMMAND_CHANGE_LANGUAGE    },
-                                                    { CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT,  HANDLERS_COMMAND_SAVE_VIDEO_ELEMENT },
-                                                    { CONTROLLER_COMMAND_TAKE_SCREENSHOT,     HANDLERS_COMMAND_TAKE_SCREENSHOT    },
-                                                    { CONTROLLER_COMMAND_HIDE_ELEMENT,        HANDLERS_COMMAND_HIDE_ELEMENT       },
-                                                    { CONTROLLER_COMMAND_SHOW_ELEMENT,        HANDLERS_COMMAND_SHOW_ELEMENT       },
-                                                    { CONTROLLER_COMMAND_SET_FOCUS,           HANDLERS_COMMAND_SET_FOCUS          },
-                                                    { CONTROLLER_COMMAND_HIDE_GROUP,          HANDLERS_COMMAND_HIDE_GROUP         },
-                                                    { CONTROLLER_COMMAND_SHOW_GROUP,          HANDLERS_COMMAND_SHOW_GROUP         },
-                                                    { CONTROLLER_COMMAND_SET_CLICKABLE,       HANDLERS_COMMAND_SET_CLICKABLE      },
-                                                    { CONTROLLER_COMMAND_SET_NOT_CLICKABLE,   HANDLERS_COMMAND_SET_NOT_CLICKABLE  },
-                                                    { CONTROLLER_COMMAND_STOP_GRAPHICS,       HANDLERS_COMMAND_STOP_GRAPHICS      },
-                                                    { CONTROLLER_COMMAND_START_GRAPHICS,      HANDLERS_COMMAND_START_GRAPHICS     },
-                                                    { CONTROLLER_COMMAND_STOP_VIDEO,          HANDLERS_COMMAND_STOP_VIDEO         },
-                                                    { CONTROLLER_COMMAND_START_VIDEO,         HANDLERS_COMMAND_START_VIDEO        },
-                                                    { CONTROLLER_COMMAND_STOP_SERVER,         HANDLERS_COMMAND_STOP_SERVER        },
-                                                    { CONTROLLER_COMMAND_START_SERVER,        HANDLERS_COMMAND_START_SERVER       },
-                                                    { CONTROLLER_COMMAND_SUSPEND_SERVER,      HANDLERS_COMMAND_SUSPEND_SERVER     },
-                                                    { CONTROLLER_COMMAND_RESUME_SERVER,       HANDLERS_COMMAND_RESUME_SERVER      },
-                                                    { CONTROLLER_COMMAND_STOP_CLIENT,         HANDLERS_COMMAND_STOP_CLIENT        },
-                                                    { CONTROLLER_COMMAND_START_CLIENT,        HANDLERS_COMMAND_START_CLIENT       },
-                                                    { CONTROLLER_COMMAND_UPDATE_TEXT,         HANDLERS_COMMAND_UPDATE_TEXT        },
-                                                    { CONTROLLER_COMMAND_UPDATE_IMAGE,        HANDLERS_COMMAND_UPDATE_IMAGE       },
-                                                    { CONTROLLER_COMMAND_UPDATE_NAV,          HANDLERS_COMMAND_UPDATE_NAV         },
-                                                    { CONTROLLER_COMMAND_SEND_GFX_EVENT,      HANDLERS_COMMAND_SEND_GFX_EVENT     }
-                                                 };
+static enum control_error_e initElementData_f(struct control_s *obj, void **data);
+static enum control_error_e uninitElementData_f(struct control_s *obj, void **data);
+
+static enum control_error_e setElementGetters_f(struct control_s *obj, void *data,
+                                                struct control_getters_s *getters);
+static enum control_error_e unsetElementGetters_f(struct control_s *obj, void *data);
+
+static enum control_error_e setElementTextIds_f(struct control_s *obj, void *data,
+                                                struct control_text_ids_s *textIds);
+static enum control_error_e unsetElementTextIds_f(struct control_s *obj, void *data);
+
+static enum control_error_e setElementImageIds_f(struct control_s *obj, void *data,
+                                                 struct control_image_ids_s *imageIds);
+static enum control_error_e unsetElementImageIds_f(struct control_s *obj, void *data);
+
+static enum control_error_e setCommandHandlers_f(struct control_s *obj, void *data,
+                                                 struct handlers_id_s *handlers,
+                                                 uint32_t nbHandlers, uint32_t index);
+static enum control_error_e unsetCommandHandlers_f(struct control_s *obj, void *data);
+
+static enum control_error_e loadControllers_f(struct control_s *obj);
+static enum control_error_e unloadControllers_f(struct control_s *obj);
+
+static enum control_error_e handleClick_f(struct control_s *obj,
+                                          struct gfx_event_s *gfxEvent);
+static enum control_error_e handleCommand_f(struct control_s *obj,
+                                            struct controllers_command_s *command);
+
+/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static void onCommandCb(void *userData, struct controller_command_s *command);
+static void onModuleStateChangedCb(void *userData, char *name, enum module_state_e state);
+
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////////////// GLOBAL VARIABLES ///////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static struct control_commands_list_s gCommandsList[] = {
+    { CONTROLLER_COMMAND_CLOSE_APPLICATION,   HANDLERS_COMMAND_CLOSE_APPLICATION,   0,  0 },
+    { CONTROLLER_COMMAND_CHANGE_LANGUAGE,     HANDLERS_COMMAND_CHANGE_LANGUAGE,     1,  0 },
+    { CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT,  HANDLERS_COMMAND_SAVE_VIDEO_ELEMENT,  0,  0 },
+    { CONTROLLER_COMMAND_TAKE_SCREENSHOT,     HANDLERS_COMMAND_TAKE_SCREENSHOT,     0,  0 },
+    { CONTROLLER_COMMAND_HIDE_ELEMENT,        HANDLERS_COMMAND_HIDE_ELEMENT,        0,  0 },
+    { CONTROLLER_COMMAND_SHOW_ELEMENT,        HANDLERS_COMMAND_SHOW_ELEMENT,        0,  0 },
+    { CONTROLLER_COMMAND_SET_FOCUS,           HANDLERS_COMMAND_SET_FOCUS,           0,  0 },
+    { CONTROLLER_COMMAND_HIDE_GROUP,          HANDLERS_COMMAND_HIDE_GROUP,          0,  0 },
+    { CONTROLLER_COMMAND_SHOW_GROUP,          HANDLERS_COMMAND_SHOW_GROUP,          0,  0 },
+    { CONTROLLER_COMMAND_SET_CLICKABLE,       HANDLERS_COMMAND_SET_CLICKABLE,       0,  0 },
+    { CONTROLLER_COMMAND_SET_NOT_CLICKABLE,   HANDLERS_COMMAND_SET_NOT_CLICKABLE,   0,  0 },
+    { CONTROLLER_COMMAND_STOP_GRAPHICS,       HANDLERS_COMMAND_STOP_GRAPHICS,       0,  0 },
+    { CONTROLLER_COMMAND_START_GRAPHICS,      HANDLERS_COMMAND_START_GRAPHICS,      0,  0 },
+    { CONTROLLER_COMMAND_STOP_VIDEO,          HANDLERS_COMMAND_STOP_VIDEO,          0,  0 },
+    { CONTROLLER_COMMAND_START_VIDEO,         HANDLERS_COMMAND_START_VIDEO,         0,  0 },
+    { CONTROLLER_COMMAND_STOP_SERVER,         HANDLERS_COMMAND_STOP_SERVER,         0,  0 },
+    { CONTROLLER_COMMAND_START_SERVER,        HANDLERS_COMMAND_START_SERVER,        0,  0 },
+    { CONTROLLER_COMMAND_SUSPEND_SERVER,      HANDLERS_COMMAND_SUSPEND_SERVER,      0,  0 },
+    { CONTROLLER_COMMAND_RESUME_SERVER,       HANDLERS_COMMAND_RESUME_SERVER,       0,  0 },
+    { CONTROLLER_COMMAND_STOP_CLIENT,         HANDLERS_COMMAND_STOP_CLIENT,         0,  0 },
+    { CONTROLLER_COMMAND_START_CLIENT,        HANDLERS_COMMAND_START_CLIENT,        0,  0 },
+    { CONTROLLER_COMMAND_UPDATE_TEXT,         HANDLERS_COMMAND_UPDATE_TEXT,         0,  1 },
+    { CONTROLLER_COMMAND_UPDATE_IMAGE,        HANDLERS_COMMAND_UPDATE_IMAGE,        0,  1 },
+    { CONTROLLER_COMMAND_UPDATE_NAV,          HANDLERS_COMMAND_UPDATE_NAV,          0,  1 },
+    { CONTROLLER_COMMAND_SEND_GFX_EVENT,      HANDLERS_COMMAND_SEND_GFX_EVENT,      0,  0 }
+};
 
 uint32_t gNbCommands = (uint32_t)(sizeof(gCommandsList) / sizeof(gCommandsList[0]));
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-static CONTROL_ERROR_E initElementData_f  (CONTROL_S *obj, void **data);
-static CONTROL_ERROR_E uninitElementData_f(CONTROL_S *obj, void **data);
-
-static CONTROL_ERROR_E setElementGetters_f  (CONTROL_S *obj, void *data, CONTROL_GETTERS_S *getters);
-static CONTROL_ERROR_E unsetElementGetters_f(CONTROL_S *obj, void *data);
-
-static CONTROL_ERROR_E setElementTextIds_f  (CONTROL_S *obj, void *data, CONTROL_TEXT_IDS_S *textIds);
-static CONTROL_ERROR_E unsetElementTextIds_f(CONTROL_S *obj, void *data);
-
-static CONTROL_ERROR_E setElementImageIds_f  (CONTROL_S *obj, void *data, CONTROL_IMAGE_IDS_S *imageIds);
-static CONTROL_ERROR_E unsetElementImageIds_f(CONTROL_S *obj, void *data);
-
-static CONTROL_ERROR_E setCommandHandlers_f  (CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index);
-static CONTROL_ERROR_E unsetCommandHandlers_f(CONTROL_S *obj, void *data);
-
-static CONTROL_ERROR_E loadControllers_f  (CONTROL_S *obj);
-static CONTROL_ERROR_E unloadControllers_f(CONTROL_S *obj);
-
-static CONTROL_ERROR_E handleClick_f  (CONTROL_S *obj, GFX_EVENT_S *gfxEvent);
-static CONTROL_ERROR_E handleCommand_f(CONTROL_S *obj, CONTROLLERS_COMMAND_S *command);
-
-static void onCommandCb           (void *userData, CONTROLLER_COMMAND_S *command);
-static void onModuleStateChangedCb(void *userData, char *name, MODULE_STATE_E state);
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-CONTROL_ERROR_E Control_Init(CONTROL_S **obj, CONTEXT_S *ctx)
+enum control_error_e Control_Init(struct control_s **obj, struct context_s *ctx)
 {
-    assert(obj && ctx && (*obj = calloc(1, sizeof(CONTROL_S))));
+    assert(obj && ctx && (*obj = calloc(1, sizeof(struct control_s))));
 
-    CONTROL_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(CONTROL_PRIVATE_DATA_S))));
+    struct control_private_data_s *pData;
+    assert((pData = calloc(1, sizeof(struct control_private_data_s))));
 
     if (pthread_mutex_init(&pData->lock, NULL) != 0) {
         Loge("pthread_mutex_init() failed");
         goto lockExit;
     }
 
-    HANDLERS_PARAMS_S handlersParams = {
-                                            .ctx                    = ctx,
-                                            .onModuleStateChangedCb = onModuleStateChangedCb,
-                                            .userData               = *obj
-                                       };
+    struct handlers_params_s handlersParams = {
+        .ctx                    = ctx,
+        .onModuleStateChangedCb = onModuleStateChangedCb,
+        .userData               = *obj
+    };
 
     if (Handlers_Init(&pData->handlersObj, &handlersParams) != HANDLERS_ERROR_NONE) {
         Loge("Handlers_Init() failed");
         goto HandlersInitExit;
     }
 
-    CONTROLLERS_PARAMS_S params = {
-                                       .ctx         = ctx,
-                                       .onCommandCb = onCommandCb,
-                                       .userData    = *obj
-                                  };
+    struct controllers_params_s params = {
+        .ctx         = ctx,
+        .onCommandCb = onCommandCb,
+        .userData    = *obj
+    };
 
     if (Controllers_Init(&pData->controllersObj, &params) != CONTROLLERS_ERROR_NONE) {
         Loge("Controllers_Init() failed");
@@ -205,11 +218,11 @@ lockExit:
 /*!
  *
  */
-CONTROL_ERROR_E Control_UnInit(CONTROL_S **obj)
+enum control_error_e Control_UnInit(struct control_s **obj)
 {
     assert(obj && *obj && (*obj)->pData);
 
-    CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)((*obj)->pData);
+    struct control_private_data_s *pData = (struct control_private_data_s*)((*obj)->pData);
 
     (void)Controllers_UnInit(&pData->controllersObj);
     (void)Handlers_UnInit(&pData->handlersObj);
@@ -228,18 +241,18 @@ CONTROL_ERROR_E Control_UnInit(CONTROL_S **obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-CONTROL_ERROR_E initElementData_f(CONTROL_S *obj, void **data)
+enum control_error_e initElementData_f(struct control_s *obj, void **data)
 {
     assert(obj && data);
 
-    CONTROL_ELEMENT_DATA_S *elementData;
-    assert((elementData = calloc(1, sizeof(CONTROL_ELEMENT_DATA_S))));
+    struct control_element_data_s *elementData;
+    assert((elementData = calloc(1, sizeof(struct control_element_data_s))));
 
     *data = elementData;
 
@@ -249,11 +262,11 @@ CONTROL_ERROR_E initElementData_f(CONTROL_S *obj, void **data)
 /*!
  *
  */
-CONTROL_ERROR_E uninitElementData_f(CONTROL_S *obj, void **data)
+enum control_error_e uninitElementData_f(struct control_s *obj, void **data)
 {
     assert(obj && data && *data);
 
-    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)(*data);
+    struct control_element_data_s *elementData = (struct control_element_data_s*)(*data);
 
     free(elementData);
     elementData = NULL;
@@ -264,19 +277,12 @@ CONTROL_ERROR_E uninitElementData_f(CONTROL_S *obj, void **data)
 /*!
  *
  */
-CONTROL_ERROR_E setElementGetters_f(CONTROL_S *obj, void *data, CONTROL_GETTERS_S *getters)
+enum control_error_e setElementGetters_f(struct control_s *obj, void *data,
+                                         struct control_getters_s *getters)
 {
     assert(obj && data && getters);
 
-    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
-
-    elementData->getters.getString   = getters->getString;
-    elementData->getters.getColor    = getters->getColor;
-    elementData->getters.getFont     = getters->getFont;
-    elementData->getters.getImage    = getters->getImage;
-    elementData->getters.getLanguage = getters->getLanguage;
-
-    elementData->getters.userData    = getters->userData;
+    ((struct control_element_data_s*)data)->getters = *getters;
 
     return CONTROL_ERROR_NONE;
 }
@@ -284,13 +290,11 @@ CONTROL_ERROR_E setElementGetters_f(CONTROL_S *obj, void *data, CONTROL_GETTERS_
 /*!
  *
  */
-CONTROL_ERROR_E unsetElementGetters_f(CONTROL_S *obj, void *data)
+enum control_error_e unsetElementGetters_f(struct control_s *obj, void *data)
 {
     assert(obj && data);
 
-    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
-
-    elementData->getters.userData = NULL;
+    ((struct control_element_data_s*)data)->getters.userData = NULL;
 
     return CONTROL_ERROR_NONE;
 }
@@ -298,15 +302,12 @@ CONTROL_ERROR_E unsetElementGetters_f(CONTROL_S *obj, void *data)
 /*!
  *
  */
-CONTROL_ERROR_E setElementTextIds_f(CONTROL_S *obj, void *data, CONTROL_TEXT_IDS_S *textIds)
+enum control_error_e setElementTextIds_f(struct control_s *obj, void *data,
+                                         struct control_text_ids_s *textIds)
 {
     assert(obj && data && textIds);
 
-    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
-
-    elementData->ids.text.stringId = textIds->stringId;
-    elementData->ids.text.fontId   = textIds->fontId;
-    elementData->ids.text.colorId  = textIds->colorId;
+    ((struct control_element_data_s*)data)->ids.text = *textIds;
 
     return CONTROL_ERROR_NONE;
 }
@@ -314,7 +315,7 @@ CONTROL_ERROR_E setElementTextIds_f(CONTROL_S *obj, void *data, CONTROL_TEXT_IDS
 /*!
  *
  */
-CONTROL_ERROR_E unsetElementTextIds_f(CONTROL_S *obj, void *data)
+enum control_error_e unsetElementTextIds_f(struct control_s *obj, void *data)
 {
     assert(obj && data);
 
@@ -324,14 +325,12 @@ CONTROL_ERROR_E unsetElementTextIds_f(CONTROL_S *obj, void *data)
 /*!
  *
  */
-CONTROL_ERROR_E setElementImageIds_f(CONTROL_S *obj, void *data, CONTROL_IMAGE_IDS_S *imageIds)
+enum control_error_e setElementImageIds_f(struct control_s *obj, void *data,
+                                          struct control_image_ids_s *imageIds)
 {
     assert(obj && data && imageIds);
 
-    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
-
-    elementData->ids.image.imageId       = imageIds->imageId;
-    elementData->ids.image.hiddenColorId = imageIds->hiddenColorId;
+    ((struct control_element_data_s*)data)->ids.image = *imageIds;
 
     return CONTROL_ERROR_NONE;
 }
@@ -339,7 +338,7 @@ CONTROL_ERROR_E setElementImageIds_f(CONTROL_S *obj, void *data, CONTROL_IMAGE_I
 /*!
  *
  */
-CONTROL_ERROR_E unsetElementImageIds_f(CONTROL_S *obj, void *data)
+enum control_error_e unsetElementImageIds_f(struct control_s *obj, void *data)
 {
     assert(obj && data);
 
@@ -349,12 +348,14 @@ CONTROL_ERROR_E unsetElementImageIds_f(CONTROL_S *obj, void *data)
 /*!
  *
  */
-CONTROL_ERROR_E setCommandHandlers_f(CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index)
+enum control_error_e setCommandHandlers_f(struct control_s *obj, void *data,
+                                          struct handlers_id_s *handlers,
+                                          uint32_t nbHandlers, uint32_t index)
 {
     assert(obj && obj->pData && data);
 
-    CONTROL_PRIVATE_DATA_S *pData       = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
-    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
+    struct control_private_data_s *pData       = (struct control_private_data_s*)(obj->pData);
+    struct control_element_data_s *elementData = (struct control_element_data_s*)data;
 
     elementData->index             = index;
     elementData->nbCommandHandlers = nbHandlers;
@@ -363,17 +364,17 @@ CONTROL_ERROR_E setCommandHandlers_f(CONTROL_S *obj, void *data, HANDLERS_ID_S *
         return CONTROL_ERROR_PARAMS;
     }
 
-    assert((elementData->commandHandlers = calloc(1, nbHandlers * sizeof(HANDLERS_COMMANDS_S))));
+    elementData->commandHandlers = calloc(1, nbHandlers * sizeof(struct handlers_commands_s));
+    assert(elementData->commandHandlers);
 
     uint32_t i;
     for (i = 0; i < nbHandlers; i++) {
         (elementData->commandHandlers[i]).name = strdup((handlers[i]).name);
         (elementData->commandHandlers[i]).data = strdup((handlers[i]).data);
 
-        (void)pData->handlersObj->getCommandHandler(
-                                                    pData->handlersObj,
-                                                    (handlers[i]).name, &(elementData->commandHandlers[i]).fct
-                                                   );
+        (void)pData->handlersObj->getCommandHandler(pData->handlersObj,
+                                                    (handlers[i]).name,
+                                                    &(elementData->commandHandlers[i]).fct);
     }
 
     return CONTROL_ERROR_NONE;
@@ -382,11 +383,11 @@ CONTROL_ERROR_E setCommandHandlers_f(CONTROL_S *obj, void *data, HANDLERS_ID_S *
 /*!
  *
  */
-CONTROL_ERROR_E unsetCommandHandlers_f(CONTROL_S *obj, void *data)
+enum control_error_e unsetCommandHandlers_f(struct control_s *obj, void *data)
 {
     assert(obj && data);
 
-    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)data;
+    struct control_element_data_s *elementData = (struct control_element_data_s*)data;
 
     uint32_t i;
     for (i = 0; i < elementData->nbCommandHandlers; i++) {
@@ -412,44 +413,52 @@ CONTROL_ERROR_E unsetCommandHandlers_f(CONTROL_S *obj, void *data)
 /*!
  *
  */
-static CONTROL_ERROR_E loadControllers_f(CONTROL_S *obj)
+static enum control_error_e loadControllers_f(struct control_s *obj)
 {
     assert(obj && obj->pData);
 
-    CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_S *controllersObj = pData->controllersObj;
+    struct control_private_data_s *pData      = (struct control_private_data_s*)(obj->pData);
+    struct controllers_s *controllersObj      = pData->controllersObj;
+    enum controllers_error_e controllersError = CONTROLLERS_ERROR_NONE;
 
-     if (controllersObj->initCmdsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->tasksMngt[CONTROLLERS_TASK_CMDS].init(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("initCmdsTask() failed");
         return CONTROL_ERROR_UNKNOWN;
     }
 
-    if (controllersObj->initEvtsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->tasksMngt[CONTROLLERS_TASK_EVTS].init(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("initEvtsTask() failed");
         goto initEvtsTaskExit;
     }
 
-    if (controllersObj->initLibsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->tasksMngt[CONTROLLERS_TASK_LIBS].init(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("initLibsTask() failed");
         goto initLibsTaskExit;
     }
 
-    if (controllersObj->loadLibs(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->loadLibs(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("loadLibs() failed");
         goto loadLibsExit;
     }
 
-    if (controllersObj->startCmdsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->tasksMngt[CONTROLLERS_TASK_CMDS].start(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("startCmdsTask() failed");
         goto startCmdsTaskExit;
     }
 
-    if (controllersObj->startEvtsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->tasksMngt[CONTROLLERS_TASK_EVTS].start(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("startEvtsTask() failed");
         goto startEvtsTaskExit;
     }
 
-    if (controllersObj->startLibsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->tasksMngt[CONTROLLERS_TASK_LIBS].start(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("startLibsTask() failed");
         goto startLibsTaskExit;
     }
@@ -457,22 +466,22 @@ static CONTROL_ERROR_E loadControllers_f(CONTROL_S *obj)
     return CONTROL_ERROR_NONE;
 
 startLibsTaskExit:
-	(void)controllersObj->stopEvtsTask(controllersObj);
+	(void)controllersObj->tasksMngt[CONTROLLERS_TASK_EVTS].stop(controllersObj);
 
 startEvtsTaskExit:
-    (void)controllersObj->stopCmdsTask(controllersObj);
+    (void)controllersObj->tasksMngt[CONTROLLERS_TASK_CMDS].stop(controllersObj);
 
 startCmdsTaskExit:
     (void)controllersObj->unloadLibs(controllersObj);
 
 loadLibsExit:
-	(void)controllersObj->uninitLibsTask(controllersObj);
+	(void)controllersObj->tasksMngt[CONTROLLERS_TASK_LIBS].uninit(controllersObj);
 
 initLibsTaskExit:
-    (void)controllersObj->uninitEvtsTask(controllersObj);
+    (void)controllersObj->tasksMngt[CONTROLLERS_TASK_EVTS].uninit(controllersObj);
 
 initEvtsTaskExit:
-    (void)controllersObj->uninitCmdsTask(controllersObj);
+    (void)controllersObj->tasksMngt[CONTROLLERS_TASK_CMDS].uninit(controllersObj);
 
     return CONTROL_ERROR_UNKNOWN;
 }
@@ -480,45 +489,53 @@ initEvtsTaskExit:
 /*!
  *
  */
-static CONTROL_ERROR_E unloadControllers_f(CONTROL_S *obj)
+static enum control_error_e unloadControllers_f(struct control_s *obj)
 {
     assert(obj && obj->pData);
 
-    CONTROL_ERROR_E ret           = CONTROL_ERROR_NONE;
-    CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_S *controllersObj = pData->controllersObj;
+    enum control_error_e ret                  = CONTROL_ERROR_NONE;
+    enum controllers_error_e controllersError = CONTROLLERS_ERROR_NONE;
+    struct control_private_data_s *pData      = (struct control_private_data_s*)(obj->pData);
+    struct controllers_s *controllersObj      = pData->controllersObj;
 
-    if (controllersObj->stopLibsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->tasksMngt[CONTROLLERS_TASK_LIBS].stop(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("stopLibsTask() failed");
         ret = CONTROL_ERROR_UNKNOWN;
     }
 
-    if (controllersObj->stopEvtsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->tasksMngt[CONTROLLERS_TASK_EVTS].stop(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("stopEvtsTask() failed");
         ret = CONTROL_ERROR_UNKNOWN;
     }
 
-    if (controllersObj->stopCmdsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->tasksMngt[CONTROLLERS_TASK_CMDS].stop(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("stopCmdsTask() failed");
         ret = CONTROL_ERROR_UNKNOWN;
     }
 
-    if (controllersObj->unloadLibs(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->unloadLibs(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("unloadLibs() failed");
         ret = CONTROL_ERROR_UNKNOWN;
     }
 
-    if (controllersObj->uninitLibsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->tasksMngt[CONTROLLERS_TASK_LIBS].uninit(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("uninitLibsTask() failed");
         ret = CONTROL_ERROR_UNKNOWN;
     }
 
-    if (controllersObj->uninitEvtsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->tasksMngt[CONTROLLERS_TASK_EVTS].uninit(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("uninitEvtsTask() failed");
         ret = CONTROL_ERROR_UNKNOWN;
     }
 
-    if (controllersObj->uninitCmdsTask(controllersObj) != CONTROLLERS_ERROR_NONE) {
+    controllersError = controllersObj->tasksMngt[CONTROLLERS_TASK_CMDS].uninit(controllersObj);
+    if (controllersError != CONTROLLERS_ERROR_NONE) {
         Loge("uninitCmdsTask() failed");
         ret = CONTROL_ERROR_UNKNOWN;
     }
@@ -529,14 +546,14 @@ static CONTROL_ERROR_E unloadControllers_f(CONTROL_S *obj)
 /*!
  *
  */
-CONTROL_ERROR_E handleClick_f(CONTROL_S *obj, GFX_EVENT_S *gfxEvent)
+enum control_error_e handleClick_f(struct control_s *obj, struct gfx_event_s *gfxEvent)
 {
     assert(obj && obj->pData && gfxEvent);
 
-    CONTROL_PRIVATE_DATA_S *pData       = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_S *controllersObj       = pData->controllersObj;
-    CONTROL_ELEMENT_DATA_S *elementData = (CONTROL_ELEMENT_DATA_S*)gfxEvent->gfxElementPData;
-    CONTEXT_S *ctx                      = pData->ctx;
+    struct control_private_data_s *pData       = (struct control_private_data_s*)(obj->pData);
+    struct controllers_s *controllersObj       = pData->controllersObj;
+    struct control_element_data_s *elementData = (struct control_element_data_s*)gfxEvent->gfxElementPData;
+    struct context_s *ctx                      = pData->ctx;
 
     if (!elementData) {
         return CONTROL_ERROR_PARAMS;
@@ -551,12 +568,14 @@ CONTROL_ERROR_E handleClick_f(CONTROL_S *obj, GFX_EVENT_S *gfxEvent)
     for (i = 0; i < elementData->nbCommandHandlers; i++) {
         if ((elementData->commandHandlers[i]).fct) {
             Logd("Calling command handler : %s", (elementData->commandHandlers[i]).name);
-            (void)(elementData->commandHandlers[i]).fct(pData->handlersObj, gfxEvent->gfxElementName,
-                                                        elementData, (elementData->commandHandlers[i]).data);
+            (void)(elementData->commandHandlers[i]).fct(pData->handlersObj,
+                                                        gfxEvent->gfxElementName,
+                                                        elementData,
+                                                        (elementData->commandHandlers[i]).data);
         }
     }
 
-    CONTROLLER_EVENT_S event = { 0 };
+    struct controller_event_s event = {0};
     event.id   = CONTROLLER_EVENT_CLICKED;
     event.name = gfxEvent->gfxElementName;
 
@@ -570,14 +589,15 @@ CONTROL_ERROR_E handleClick_f(CONTROL_S *obj, GFX_EVENT_S *gfxEvent)
 /*!
  *
  */
-static CONTROL_ERROR_E handleCommand_f(CONTROL_S *obj, CONTROLLERS_COMMAND_S *command)
+static enum control_error_e handleCommand_f(struct control_s *obj,
+                                            struct controllers_command_s *command)
 {
     assert(obj && obj->pData && command);
 
-    CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
-    HANDLERS_S *handlersObj       = pData->handlersObj;
-    HANDLERS_COMMAND_F handlerCmd = NULL;
-    CONTROL_ERROR_E ret           = CONTROL_ERROR_NONE;
+    struct control_private_data_s *pData = (struct control_private_data_s*)(obj->pData);
+    struct handlers_s *handlersObj       = pData->handlersObj;
+    handlers_command_f handlerCmd        = NULL;
+    enum control_error_e ret             = CONTROL_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->lock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -587,9 +607,9 @@ static CONTROL_ERROR_E handleCommand_f(CONTROL_S *obj, CONTROLLERS_COMMAND_S *co
     (void)handlersObj->getCommandHandler(handlersObj, command->handlerName, &handlerCmd);
     if (handlerCmd
         && (handlerCmd(handlersObj,
-                        command->gfxElementName,
-                        command->gfxElementData,
-                        command->handlerData) != HANDLERS_ERROR_NONE)) {
+                       command->gfxElementName,
+                       command->gfxElementData,
+                       command->handlerData) != HANDLERS_ERROR_NONE)) {
         ret = CONTROL_ERROR_UNKNOWN;
     }
 
@@ -599,36 +619,31 @@ static CONTROL_ERROR_E handleCommand_f(CONTROL_S *obj, CONTROLLERS_COMMAND_S *co
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                            CALLBACKS                                         */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static void onCommandCb(void *userData, CONTROLLER_COMMAND_S *command)
+static void onCommandCb(void *userData, struct controller_command_s *command)
 {
     assert(userData && command);
 
-    CONTROL_S *obj                  = (CONTROL_S*)userData;
-    CONTROL_PRIVATE_DATA_S *pData   = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_S *controllersObj   = pData->controllersObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
-    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
-    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
-    CONTROLLERS_COMMAND_S cmd       = { 0 };
+    struct control_s *obj                  = (struct control_s*)userData;
+    struct control_private_data_s *pData   = (struct control_private_data_s*)(obj->pData);
+    struct controllers_s *controllersObj   = pData->controllersObj;
+    struct graphics_infos_s *graphicsInfos = &pData->ctx->params.graphicsInfos;
+    uint32_t nbGfxElements                 = graphicsInfos->nbGfxElements;
+    struct gfx_element_s **gfxElements     = graphicsInfos->gfxElements;
+    struct controllers_command_s cmd       = {0};
 
-    char gfxElementName[MAX_NAME_SIZE] = { 0 };
-    char handlerName[MAX_NAME_SIZE]    = { 0 };
-    char handlerData[MIN_STR_SIZE]     = { 0 };
+    char gfxElementName[MAX_NAME_SIZE]     = {0};
+    char handlerName[MAX_NAME_SIZE]        = {0};
+    char handlerData[MIN_STR_SIZE]         = {0};
 
-    cmd.id = command->id;
-
-    /* handlerName */
-    uint32_t index;
-    if ((command->id < gNbCommands) && (gCommandsList[command->id].id == command->id)) {
-        strcpy(handlerName, gCommandsList[command->id].str);
-    }
-    else {
+    /* Get name of handler that will treat this request */
+    uint32_t index = command->id;
+    if ((command->id >= gNbCommands) || (gCommandsList[command->id].id != command->id)) {
         for (index = 0; index < gNbCommands; ++index) {
             if (gCommandsList[index].id != command->id) {
                 continue;
@@ -642,80 +657,66 @@ static void onCommandCb(void *userData, CONTROLLER_COMMAND_S *command)
             return;
         }
     }
+    snprintf(handlerName, sizeof(handlerName), "%s", gCommandsList[index].str);
 
-    /* handlerData */
-    switch (command->id) {
-        case CONTROLLER_COMMAND_CHANGE_LANGUAGE:
-            strcpy(gfxElementName, gfxElements[0]->name);
-            // No break
-        case CONTROLLER_COMMAND_TAKE_SCREENSHOT:
-        case CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT:
-        case CONTROLLER_COMMAND_HIDE_ELEMENT:
-        case CONTROLLER_COMMAND_SHOW_ELEMENT:
-        case CONTROLLER_COMMAND_SET_FOCUS:
-        case CONTROLLER_COMMAND_HIDE_GROUP:
-        case CONTROLLER_COMMAND_SHOW_GROUP:
-        case CONTROLLER_COMMAND_SET_CLICKABLE:
-        case CONTROLLER_COMMAND_SET_NOT_CLICKABLE:
-        case CONTROLLER_COMMAND_STOP_VIDEO:
-        case CONTROLLER_COMMAND_START_VIDEO:
-        case CONTROLLER_COMMAND_STOP_SERVER:
-        case CONTROLLER_COMMAND_START_SERVER:
-        case CONTROLLER_COMMAND_SUSPEND_SERVER:
-        case CONTROLLER_COMMAND_RESUME_SERVER:
-        case CONTROLLER_COMMAND_STOP_CLIENT:
-        case CONTROLLER_COMMAND_START_CLIENT:
-        case CONTROLLER_COMMAND_UPDATE_TEXT:
-        case CONTROLLER_COMMAND_UPDATE_IMAGE:
-        case CONTROLLER_COMMAND_UPDATE_NAV:
-        case CONTROLLER_COMMAND_SEND_GFX_EVENT:
-            strcpy(handlerData, command->data);
-            break;
+    cmd.id          = command->id;
+    cmd.handlerName = handlerName;
 
-        case CONTROLLER_COMMAND_CLOSE_APPLICATION:
-        case CONTROLLER_COMMAND_STOP_GRAPHICS:
-        case CONTROLLER_COMMAND_START_GRAPHICS:
-            break;
+    /* Prepare command */
+    uint32_t offset = 0;
+    if (gCommandsList[index].dataContainsElementName || gCommandsList[index].gfxElementRequired) {
+        // Set elementName
+        if (gCommandsList[index].dataContainsElementName) {
+            if (!command->data) {
+                Loge("data must be not NULL");
+                return;
+            }
+            enum handlers_error_e hError = pData->handlersObj->getSubstring(pData->handlersObj,
+                                                                            command->data,
+                                                                            ";",
+                                                                            gfxElementName,
+                                                                            &offset);
+            if (hError != HANDLERS_ERROR_NONE) {
+                Loge("Bad format. Expected: elementName;param1;param2;...");
+                return;
+            }
+        }
+        else {
+            snprintf(gfxElementName, sizeof(gfxElementName), "%s", gfxElements[0]->name);
+        }
 
-        default:
-            ;
-    }
-
-    /* gfxElementName && gfxElementData */
-    if (strlen(gfxElementName) != 0) {
+        // Find corresponding gfx element
         for (index = 0; index < nbGfxElements; ++index) {
             if (strcmp(gfxElements[index]->name, gfxElementName) != 0) {
                 continue;
             }
-
             cmd.gfxElementName = gfxElementName;
             cmd.gfxElementData = gfxElements[index]->pData;
             break;
         }
     }
 
-    cmd.handlerName = handlerName;
-
-    if (strlen(handlerData) != 0) {
+    if (command->data) {
+        snprintf(handlerData, sizeof(handlerData), "%s", command->data + offset);
         cmd.handlerData = handlerData;
     }
 
     /* Call handler */
-    (void)handleCommand_f((CONTROL_S*)userData, &cmd);
+    (void)handleCommand_f((struct control_s*)userData, &cmd);
 }
 
 /*!
  *
  */
-static void onModuleStateChangedCb(void *userData, char *name, MODULE_STATE_E state)
+static void onModuleStateChangedCb(void *userData, char *name, enum module_state_e state)
 {
     assert(userData && name);
 
-    CONTROL_S *obj                = (CONTROL_S*)userData;
-    CONTROL_PRIVATE_DATA_S *pData = (CONTROL_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_S *controllersObj = pData->controllersObj;
+    struct control_s *obj                = (struct control_s*)userData;
+    struct control_private_data_s *pData = (struct control_private_data_s*)(obj->pData);
+    struct controllers_s *controllersObj = pData->controllersObj;
 
-    CONTROLLER_EVENT_S event;
+    struct controller_event_s event;
     event.id   = state;
     event.name = name;
 

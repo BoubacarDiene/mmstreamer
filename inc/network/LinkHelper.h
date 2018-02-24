@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   LinkHelper.h
+* \file LinkHelper.h
 * \author Boubacar DIENE
 */
 
@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <arpa/inet.h>
@@ -51,7 +51,7 @@ extern "C" {
 #include "utils/Task.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #define NO              0
@@ -68,105 +68,121 @@ extern "C" {
 #define IPV6           "IPv6"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   LINK_TYPE_E            LINK_TYPE_E;
-typedef enum   LINK_MODE_E            LINK_MODE_E;
-typedef enum   STATE_E                STATE_E;
-typedef enum   STREAM_TYPE_E          STREAM_TYPE_E;
+enum link_type_e;
+enum link_mode_e;
+enum state_e;
+enum stream_type_e;
 
-typedef struct CUSTOM_HEADER_S        CUSTOM_HEADER_S;
-typedef struct CUSTOM_CONTENT_S       CUSTOM_CONTENT_S;
-typedef struct HTTP_GET_S             HTTP_GET_S;
-typedef struct HTTP_200_OK_S          HTTP_200_OK_S;
-typedef struct HTTP_400_BAD_REQUEST_S HTTP_400_BAD_REQUEST_S;
-typedef struct HTTP_404_NOT_FOUND_S   HTTP_404_NOT_FOUND_S;
-typedef struct HTTP_CONTENT_S         HTTP_CONTENT_S;
-typedef struct LINK_S                 LINK_S;
-typedef struct LINK_HELPER_S          LINK_HELPER_S;
+struct custom_header_s;
+struct custom_content_s;
+struct http_get_s;
+struct http_200_ok_s;
+struct http_400_bad_request_s;
+struct http_404_not_found_s;
+struct http_content_s;
+struct link_s;
+struct link_helper_s;
 
-typedef struct sockaddr_in            SOCKADDR_IN;
-typedef struct sockaddr_in6           SOCKADDR_IN6;
-typedef struct sockaddr_storage       SOCKADDR_STORAGE;
-typedef struct sockaddr_un            SOCKADDR_UN;
-typedef struct sockaddr               SOCKADDR;
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef struct addrinfo               ADDRINFO;
+typedef void (*link_helper_keep_me_alive_f)(struct link_helper_s *obj);
 
-typedef struct iovec                  IOVEC;
-typedef struct msghdr                 MSGHDR;
+typedef void (*link_helper_prepare_custom_header_f)(struct link_helper_s *obj,
+                                                    struct custom_header_s *inOut);
+typedef void (*link_helper_parse_custom_header_f)(struct link_helper_s *obj,
+                                                  struct custom_header_s *inOut);
 
-typedef int32_t                       SOCKET;
-typedef socklen_t                     SOCKLEN_T;
+typedef void (*link_helper_prepare_custom_content_f)(struct link_helper_s *obj,
+                                                     struct custom_content_s *inOut);
+typedef void (*link_helper_parse_custom_content_f)(struct link_helper_s *obj,
+                                                   struct custom_content_s *inOut);
 
-typedef void (*LINK_HELPER_KEEP_ME_ALIVE_F)(LINK_HELPER_S *obj);
+typedef void (*link_helper_prepare_http_get_f)(struct link_helper_s *obj,
+                                               struct http_get_s *inOut);
+typedef void (*link_helper_parse_http_get_f)(struct link_helper_s *obj,
+                                             struct http_get_s *inOut);
 
-typedef void (*LINK_HELPER_PREPARE_CUSTOM_HEADER_F)(LINK_HELPER_S *obj, CUSTOM_HEADER_S *inOut);
-typedef void (*LINK_HELPER_PARSE_CUSTOM_HEADER_F  )(LINK_HELPER_S *obj, CUSTOM_HEADER_S *inOut);
+typedef void (*link_helper_prepare_http_200_ok_f)(struct link_helper_s *obj,
+                                                  struct http_200_ok_s *inOut);
+typedef void (*link_helper_parse_http_200_ok_f)(struct link_helper_s *obj,
+                                                struct http_200_ok_s *inOut);
 
-typedef void (*LINK_HELPER_PREPARE_CUSTOM_CONTENT_F)(LINK_HELPER_S *obj, CUSTOM_CONTENT_S *inOut);
-typedef void (*LINK_HELPER_PARSE_CUSTOM_CONTENT_F  )(LINK_HELPER_S *obj, CUSTOM_CONTENT_S *inOut);
+typedef void (*link_helper_prepare_http_400_bad_request_f)(struct link_helper_s *obj,
+                                                           struct http_400_bad_request_s *inOut);
+typedef void (*link_helper_parse_http_400_bad_request_f)(struct link_helper_s *obj,
+                                                         struct http_400_bad_request_s *inOut);
 
-typedef void (*LINK_HELPER_PREPARE_HTTP_GET_F)(LINK_HELPER_S *obj, HTTP_GET_S *inOut);
-typedef void (*LINK_HELPER_PARSE_HTTP_GET_F  )(LINK_HELPER_S *obj, HTTP_GET_S *inOut);
+typedef void (*link_helper_prepare_http_404_not_found_f)(struct link_helper_s *obj,
+                                                         struct http_404_not_found_s *inOut);
+typedef void (*link_helper_parse_http_404_not_found_f)(struct link_helper_s *obj,
+                                                       struct http_404_not_found_s *inOut);
 
-typedef void (*LINK_HELPER_PREPARE_HTTP_200_OK_F)(LINK_HELPER_S *obj, HTTP_200_OK_S *inOut);
-typedef void (*LINK_HELPER_PARSE_HTTP_200_OK_F  )(LINK_HELPER_S *obj, HTTP_200_OK_S *inOut);
+typedef void (*link_helper_prepare_http_content_f)(struct link_helper_s *obj,
+                                                   struct http_content_s *inOut);
+typedef void (*link_helper_parse_http_content_f)(struct link_helper_s *obj,
+                                                 struct http_content_s *inOut);
 
-typedef void (*LINK_HELPER_PREPARE_HTTP_400_BAD_REQUEST_F)(LINK_HELPER_S *obj, HTTP_400_BAD_REQUEST_S *inOut);
-typedef void (*LINK_HELPER_PARSE_HTTP_400_BAD_REQUEST_F  )(LINK_HELPER_S *obj, HTTP_400_BAD_REQUEST_S *inOut);
+typedef int8_t (*link_helper_get_peer_name_f)(struct link_helper_s *obj, struct link_s *link,
+                                              struct recipient_s *result);
 
-typedef void (*LINK_HELPER_PREPARE_HTTP_404_NOT_FOUND_F)(LINK_HELPER_S *obj, HTTP_404_NOT_FOUND_S *inOut);
-typedef void (*LINK_HELPER_PARSE_HTTP_404_NOT_FOUND_F  )(LINK_HELPER_S *obj, HTTP_404_NOT_FOUND_S *inOut);
+typedef int8_t (*link_helper_set_blocking_f)(struct link_helper_s *obj, struct link_s *link,
+                                             uint8_t blocking);
+typedef uint8_t (*link_helper_is_ready_for_writing_f)(struct link_helper_s *obj,
+                                                      struct link_s *link, uint64_t timeout_ms);
+typedef uint8_t (*link_helper_is_ready_for_reading_f)(struct link_helper_s *obj,
+                                                      struct link_s *link, uint64_t timeout_ms);
 
-typedef void (*LINK_HELPER_PREPARE_HTTP_CONTENT_F)(LINK_HELPER_S *obj, HTTP_CONTENT_S *inOut);
-typedef void (*LINK_HELPER_PARSE_HTTP_CONTENT_F  )(LINK_HELPER_S *obj, HTTP_CONTENT_S *inOut);
+typedef int8_t (*link_helper_read_data_f)(struct link_helper_s *obj, struct link_s *src,
+                                          struct link_s *dst, struct buffer_s *buffer,
+                                          ssize_t *nbRead);
+typedef int8_t (*link_helper_write_data_f)(struct link_helper_s *obj, struct link_s *src,
+                                           struct link_s *dst, struct buffer_s *buffer,
+                                           ssize_t *nbWritten);
 
-typedef int8_t (*LINK_HELPER_GET_PEER_NAME_F)(LINK_HELPER_S *obj, LINK_S *link, RECIPIENT_S *result);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef int8_t  (*LINK_HELPER_SET_BLOCKING_F        )(LINK_HELPER_S *obj, LINK_S *link, uint8_t blocking);
-typedef uint8_t (*LINK_HELPER_IS_READY_FOR_WRITING_F)(LINK_HELPER_S *obj, LINK_S *link, uint64_t timeout_ms);
-typedef uint8_t (*LINK_HELPER_IS_READY_FOR_READING_F)(LINK_HELPER_S *obj, LINK_S *link, uint64_t timeout_ms);
-
-typedef int8_t (*LINK_HELPER_READ_DATA_F )(LINK_HELPER_S *obj, LINK_S *src, LINK_S *dst, BUFFER_S *buffer, ssize_t *nbRead);
-typedef int8_t (*LINK_HELPER_WRITE_DATA_F)(LINK_HELPER_S *obj, LINK_S *src, LINK_S *dst, BUFFER_S *buffer, ssize_t *nbWritten);
-
-enum LINK_TYPE_E {
+enum link_type_e {
     LINK_TYPE_INET_STREAM,
     LINK_TYPE_INET_DGRAM,
     LINK_TYPE_UNIX_STREAM,
     LINK_TYPE_UNIX_DGRAM
 };
 
-enum LINK_MODE_E {
-    LINK_MODE_STANDARD, // Standard
-    LINK_MODE_HTTP,     // Http
-    LINK_MODE_CUSTOM    // Custom
+enum link_mode_e {
+    LINK_MODE_STANDARD,
+    LINK_MODE_HTTP,
+    LINK_MODE_CUSTOM
 };
 
-enum STATE_E {
+enum state_e {
     STATE_DISCONNECTED,
     STATE_CONNECTED
 };
 
-enum STREAM_TYPE_E {
+enum stream_type_e {
     STREAM_TYPE_VIDEO,
     STREAM_TYPE_MAX
 };
 
-struct CUSTOM_HEADER_S {
-    char   str[MAX_HEADER_SIZE];
+struct custom_header_s {
+    char str[MAX_HEADER_SIZE];
 };
 
-struct CUSTOM_CONTENT_S {
+struct custom_content_s {
     char   mime[MAX_MIME_SIZE];
     size_t maxBufferSize;
     
     char   str[MAX_HEADER_SIZE];
 };
 
-struct HTTP_GET_S {
+struct http_get_s {
     uint8_t  isHttpGet;
     
     char     path[MAX_PATH_SIZE];
@@ -176,13 +192,13 @@ struct HTTP_GET_S {
     char     str[MAX_STR_SIZE];
 };
 
-struct HTTP_200_OK_S {
+struct http_200_ok_s {
     uint8_t  is200Ok;
     
     char     str[MAX_HEADER_SIZE];
 };
 
-struct HTTP_400_BAD_REQUEST_S {
+struct http_400_bad_request_s {
     uint8_t  is400BadRequest;
     
     char     ip[MAX_ADDRESS_SIZE];
@@ -192,7 +208,7 @@ struct HTTP_400_BAD_REQUEST_S {
     char     str[MAX_HEADER_SIZE];
 };
 
-struct HTTP_404_NOT_FOUND_S {
+struct http_404_not_found_s {
     uint8_t  is404NotFound;
     
     char     ip[MAX_ADDRESS_SIZE];
@@ -204,7 +220,7 @@ struct HTTP_404_NOT_FOUND_S {
     char     str[MAX_HEADER_SIZE];
 };
 
-struct HTTP_CONTENT_S {
+struct http_content_s {
     char    mime[MAX_MIME_SIZE];
     size_t  length;
     
@@ -213,67 +229,71 @@ struct HTTP_CONTENT_S {
     char    str[MAX_HEADER_SIZE];
 };
 
-struct LINK_S {
-    uint32_t             id;
+struct link_s {
+    uint32_t                    id;
     
-    SOCKET               sock;
-    int32_t              domain;
-    int32_t              type;
+    int32_t                     sock;
+    int32_t                     domain;
+    int32_t                     type;
     
     union {
-        SOCKADDR_STORAGE storage;
-        SOCKADDR_UN      sun;
+        struct sockaddr_storage storage;
+        struct sockaddr_un      sun;
     } addr;
     
-    uint8_t              useDestAddress;
-    SOCKADDR             *destAddress;
-    SOCKLEN_T            destAddressLength;
+    uint8_t                     useDestAddress;
+    struct sockaddr             *destAddress;
+    socklen_t                   destAddressLength;
     
-    void                 *pData;
-};
-
-struct LINK_HELPER_S {
-    LINK_HELPER_KEEP_ME_ALIVE_F                keepMeAlive;
-    
-    LINK_HELPER_PREPARE_CUSTOM_HEADER_F        prepareCustomHeader;
-    LINK_HELPER_PARSE_CUSTOM_HEADER_F          parseCustomHeader;
-    
-    LINK_HELPER_PREPARE_CUSTOM_CONTENT_F       prepareCustomContent;
-    LINK_HELPER_PARSE_CUSTOM_CONTENT_F         parseCustomContent;
-    
-    LINK_HELPER_PREPARE_HTTP_GET_F             prepareHttpGet;
-    LINK_HELPER_PARSE_HTTP_GET_F               parseHttpGet;
-    
-    LINK_HELPER_PREPARE_HTTP_200_OK_F          prepareHttp200Ok;
-    LINK_HELPER_PARSE_HTTP_200_OK_F            parseHttp200Ok;
-    
-    LINK_HELPER_PREPARE_HTTP_400_BAD_REQUEST_F prepareHttp400BadRequest;
-    LINK_HELPER_PARSE_HTTP_400_BAD_REQUEST_F   parseHttp400BadRequest;
-    
-    LINK_HELPER_PREPARE_HTTP_404_NOT_FOUND_F   prepareHttp404NotFound;
-    LINK_HELPER_PARSE_HTTP_404_NOT_FOUND_F     parseHttp404NotFound;
-    
-    LINK_HELPER_PREPARE_HTTP_CONTENT_F         prepareHttpContent;
-    LINK_HELPER_PARSE_HTTP_CONTENT_F           parseHttpContent;
-    
-    LINK_HELPER_GET_PEER_NAME_F                getPeerName;
-    
-    LINK_HELPER_SET_BLOCKING_F                 setBlocking;
-    LINK_HELPER_IS_READY_FOR_WRITING_F         isReadyForWriting;
-    LINK_HELPER_IS_READY_FOR_READING_F         isReadyForReading;
-    
-    LINK_HELPER_READ_DATA_F                    readData;
-    LINK_HELPER_WRITE_DATA_F                   writeData;
-    
-    void                                       *pData;
+    void                        *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-void LinkHelper_Init  (LINK_HELPER_S **obj);
-void LinkHelper_UnInit(LINK_HELPER_S **obj);
+struct link_helper_s {
+    link_helper_keep_me_alive_f                keepMeAlive;
+
+    link_helper_prepare_custom_header_f        prepareCustomHeader;
+    link_helper_parse_custom_header_f          parseCustomHeader;
+
+    link_helper_prepare_custom_content_f       prepareCustomContent;
+    link_helper_parse_custom_content_f         parseCustomContent;
+
+    link_helper_prepare_http_get_f             prepareHttpGet;
+    link_helper_parse_http_get_f               parseHttpGet;
+
+    link_helper_prepare_http_200_ok_f          prepareHttp200Ok;
+    link_helper_parse_http_200_ok_f            parseHttp200Ok;
+
+    link_helper_prepare_http_400_bad_request_f prepareHttp400BadRequest;
+    link_helper_parse_http_400_bad_request_f   parseHttp400BadRequest;
+
+    link_helper_prepare_http_404_not_found_f   prepareHttp404NotFound;
+    link_helper_parse_http_404_not_found_f     parseHttp404NotFound;
+
+    link_helper_prepare_http_content_f         prepareHttpContent;
+    link_helper_parse_http_content_f           parseHttpContent;
+
+    link_helper_get_peer_name_f                getPeerName;
+
+    link_helper_set_blocking_f                 setBlocking;
+    link_helper_is_ready_for_writing_f         isReadyForWriting;
+    link_helper_is_ready_for_reading_f         isReadyForReading;
+
+    link_helper_read_data_f                    readData;
+    link_helper_write_data_f                   writeData;
+    
+    void *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+void LinkHelper_Init(struct link_helper_s **obj);
+void LinkHelper_UnInit(struct link_helper_s **obj);
 
 #ifdef __cplusplus
 }

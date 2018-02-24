@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Control.h
+* \file Control.h
 * \author Boubacar DIENE
 */
 
@@ -32,58 +32,74 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "control/Controllers.h"
 #include "control/Handlers.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum control_error_e;
+
+struct control_getters_s;
+struct control_text_ids_s;
+struct control_image_ids_s;
+struct control_element_data_s;
+struct control_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEFS                                           */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   CONTROL_ERROR_E          CONTROL_ERROR_E;
+typedef void (*control_get_string_f)(void *userData, uint32_t stringId, char *language,
+                                     char *strOut);
+typedef void (*control_get_color_f)(void *userData, int32_t colorId,
+                                    struct gfx_color_s *colorOut);
+typedef void (*control_get_font_f)(void *userData, uint32_t fontId, char *ttfFontOut);
+typedef void (*control_get_image_f)(void *userData, uint32_t imageId,
+                                    struct gfx_image_s *imageOut);
+typedef void (*control_get_language_f)(void *userData, char *currentIn, char *nextOut);
 
-typedef struct CONTROL_GETTERS_S        CONTROL_GETTERS_S;
-typedef struct CONTROL_TEXT_IDS_S       CONTROL_TEXT_IDS_S;
-typedef struct CONTROL_IMAGE_IDS_S      CONTROL_IMAGE_IDS_S;
-typedef struct CONTROL_ELEMENT_DATA_S   CONTROL_ELEMENT_DATA_S;
-typedef struct CONTROL_S                CONTROL_S;
+typedef enum control_error_e (*control_init_element_data_f)(struct control_s *obj, void **data);
+typedef enum control_error_e (*control_uninit_element_data_f)(struct control_s *obj, void **data);
 
-typedef void (*CONTROL_CLICK_HANDLER_F)(CONTEXT_S *ctx, char *gfxElementName, void *gfxElementData, char *handlerData);
+typedef enum control_error_e (*control_set_element_getters_f)(struct control_s *obj, void *data,
+                                                              struct control_getters_s *getters);
+typedef enum control_error_e (*control_unset_element_getters_f)(struct control_s *obj, void *data);
 
-typedef void (*CONTROL_GET_STRING_F  )(void *userData, uint32_t stringId, char *language, char *strOut);
-typedef void (*CONTROL_GET_COLOR_F   )(void *userData, int32_t colorId, GFX_COLOR_S *colorOut);
-typedef void (*CONTROL_GET_FONT_F    )(void *userData, uint32_t fontId, char *ttfFontOut);
-typedef void (*CONTROL_GET_IMAGE_F   )(void *userData, uint32_t imageId, GFX_IMAGE_S *imageOut);
-typedef void (*CONTROL_GET_LANGUAGE_F)(void *userData, char *currentIn, char *nextOut);
+typedef enum control_error_e (*control_set_element_text_ids_f)(struct control_s *obj, void *data,
+                                                               struct control_text_ids_s *textIds);
+typedef enum control_error_e (*control_unset_element_text_ids_f)(struct control_s *obj,
+                                                                 void *data);
 
-typedef CONTROL_ERROR_E (*CONTROL_INIT_ELEMENT_DATA_F  )(CONTROL_S *obj, void **data);
-typedef CONTROL_ERROR_E (*CONTROL_UNINIT_ELEMENT_DATA_F)(CONTROL_S *obj, void **data);
+typedef enum control_error_e (*control_set_element_image_ids_f)(struct control_s *obj, void *data,
+                                                            struct control_image_ids_s *imageIds);
+typedef enum control_error_e (*control_unset_element_image_ids_f)(struct control_s *obj,
+                                                                  void *data);
 
-typedef CONTROL_ERROR_E (*CONTROL_SET_ELEMENT_GETTERS_F  )(CONTROL_S *obj, void *data, CONTROL_GETTERS_S *getters);
-typedef CONTROL_ERROR_E (*CONTROL_UNSET_ELEMENT_GETTERS_F)(CONTROL_S *obj, void *data);
+typedef enum control_error_e (*control_set_command_handlers_f)(struct control_s *obj, void *data,
+                                                               struct handlers_id_s *handlers,
+                                                               uint32_t nbHandlers,
+                                                               uint32_t index);
+typedef enum control_error_e (*control_unset_command_handlers_f)(struct control_s *obj,
+                                                                 void *data);
 
-typedef CONTROL_ERROR_E (*CONTROL_SET_ELEMENT_TEXT_IDS_F  )(CONTROL_S *obj, void *data, CONTROL_TEXT_IDS_S *textIds);
-typedef CONTROL_ERROR_E (*CONTROL_UNSET_ELEMENT_TEXT_IDS_F)(CONTROL_S *obj, void *data);
+typedef enum control_error_e (*control_load_controllers_f)(struct control_s *obj);
+typedef enum control_error_e (*control_unload_controllers_f)(struct control_s *obj);
 
-typedef CONTROL_ERROR_E (*CONTROL_SET_ELEMENT_IMAGE_IDS_F  )(CONTROL_S *obj, void *data, CONTROL_IMAGE_IDS_S *imageIds);
-typedef CONTROL_ERROR_E (*CONTROL_UNSET_ELEMENT_IMAGE_IDS_F)(CONTROL_S *obj, void *data);
+typedef enum control_error_e (*control_handle_click_f)(struct control_s *obj,
+                                                       struct gfx_event_s *gfxEvent);
+typedef enum control_error_e (*control_handle_command_f)(struct control_s *obj,
+                                                         struct controllers_command_s *command);
 
-typedef CONTROL_ERROR_E (*CONTROL_SET_COMMAND_HANDLERS_F  )(CONTROL_S *obj, void *data, HANDLERS_ID_S *handlers, uint32_t nbHandlers, uint32_t index);
-typedef CONTROL_ERROR_E (*CONTROL_UNSET_COMMAND_HANDLERS_F)(CONTROL_S *obj, void *data);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef CONTROL_ERROR_E (*CONTROL_LOAD_CONTROLLERS_F  )(CONTROL_S *obj);
-typedef CONTROL_ERROR_E (*CONTROL_UNLOAD_CONTROLLERS_F)(CONTROL_S *obj);
-
-typedef CONTROL_ERROR_E (*CONTROL_HANDLE_CLICK_F  )(CONTROL_S *obj, GFX_EVENT_S *gfxEvent);
-typedef CONTROL_ERROR_E (*CONTROL_HANDLE_COMMAND_F)(CONTROL_S *obj, CONTROLLERS_COMMAND_S *command);
-
-enum CONTROL_ERROR_E {
+enum control_error_e {
     CONTROL_ERROR_NONE,
     CONTROL_ERROR_INIT,
     CONTROL_ERROR_UNINIT,
@@ -92,72 +108,76 @@ enum CONTROL_ERROR_E {
     CONTROL_ERROR_UNKNOWN
 };
 
-struct CONTROL_GETTERS_S {
-    CONTROL_GET_STRING_F   getString;
-    CONTROL_GET_COLOR_F    getColor;
-    CONTROL_GET_FONT_F     getFont;
-    CONTROL_GET_IMAGE_F    getImage;
-    CONTROL_GET_LANGUAGE_F getLanguage;
+struct control_getters_s {
+    control_get_string_f   getString;
+    control_get_color_f    getColor;
+    control_get_font_f     getFont;
+    control_get_image_f    getImage;
+    control_get_language_f getLanguage;
     
-    void                   *userData;
+    void *userData;
 };
 
-struct CONTROL_TEXT_IDS_S {
+struct control_text_ids_s {
     uint32_t stringId;
     uint32_t fontId;
     uint32_t colorId;
 };
 
-struct CONTROL_IMAGE_IDS_S {
+struct control_image_ids_s {
     uint32_t imageId;
     int32_t  hiddenColorId;
 };
 
-struct CONTROL_ELEMENT_DATA_S {
-    uint32_t                index;
+struct control_element_data_s {
+    uint32_t                       index;
 
     union {
-        CONTROL_TEXT_IDS_S  text;
-        CONTROL_IMAGE_IDS_S image;
+        struct control_text_ids_s  text;
+        struct control_image_ids_s image;
     } ids;
 
-    uint32_t                nbCommandHandlers;
-    HANDLERS_COMMANDS_S     *commandHandlers;
+    uint32_t                       nbCommandHandlers;
+    struct handlers_commands_s     *commandHandlers;
 
-    CONTROL_GETTERS_S       getters;
-};
-
-struct CONTROL_S {
-    CONTROL_INIT_ELEMENT_DATA_F       initElementData;
-    CONTROL_UNINIT_ELEMENT_DATA_F     uninitElementData;
-
-    CONTROL_SET_ELEMENT_GETTERS_F     setElementGetters;
-    CONTROL_UNSET_ELEMENT_GETTERS_F   unsetElementGetters;
-
-    CONTROL_SET_ELEMENT_TEXT_IDS_F    setElementTextIds;
-    CONTROL_UNSET_ELEMENT_TEXT_IDS_F  unsetElementTextIds;
-
-    CONTROL_SET_ELEMENT_IMAGE_IDS_F   setElementImageIds;
-    CONTROL_UNSET_ELEMENT_IMAGE_IDS_F unsetElementImageIds;
-
-    CONTROL_SET_COMMAND_HANDLERS_F    setCommandHandlers;
-    CONTROL_UNSET_COMMAND_HANDLERS_F  unsetCommandHandlers;
-
-    CONTROL_LOAD_CONTROLLERS_F        loadControllers;
-    CONTROL_UNLOAD_CONTROLLERS_F      unloadControllers;
-
-    CONTROL_HANDLE_CLICK_F            handleClick;
-    CONTROL_HANDLE_COMMAND_F          handleCommand;
-
-    void                              *pData;
+    struct control_getters_s       getters;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           VARIABLES                                          */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-CONTROL_ERROR_E Control_Init  (CONTROL_S **obj, CONTEXT_S *ctx);
-CONTROL_ERROR_E Control_UnInit(CONTROL_S **obj);
+struct control_s {
+    control_init_element_data_f       initElementData;
+    control_uninit_element_data_f     uninitElementData;
+
+    control_set_element_getters_f     setElementGetters;
+    control_unset_element_getters_f   unsetElementGetters;
+
+    control_set_element_text_ids_f    setElementTextIds;
+    control_unset_element_text_ids_f  unsetElementTextIds;
+
+    control_set_element_image_ids_f   setElementImageIds;
+    control_unset_element_image_ids_f unsetElementImageIds;
+
+    control_set_command_handlers_f    setCommandHandlers;
+    control_unset_command_handlers_f  unsetCommandHandlers;
+
+    control_load_controllers_f        loadControllers;
+    control_unload_controllers_f      unloadControllers;
+
+    control_handle_click_f            handleClick;
+    control_handle_command_f          handleCommand;
+
+    void *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum control_error_e Control_Init(struct control_s **obj, struct context_s *ctx);
+enum control_error_e Control_UnInit(struct control_s **obj);
 
 #ifdef __cplusplus
 }

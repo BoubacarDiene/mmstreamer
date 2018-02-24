@@ -20,22 +20,21 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Parser.c
-* \brief  xml parser based on expat library
+* \file Parser.c
+* \brief xml parser based on expat library
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "expat.h"
 #include "utils/Log.h"
-
 #include "utils/Parser.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -47,66 +46,77 @@
 #define ENCODING_ISO_8859_1 "ISO-8859-1"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct PARSER_PRIVATE_DATA_S {
-    PARSER_PARAMS_S       params;
+struct parser_private_data_s {
+    struct parser_params_s       params;
 	
-    XML_Parser            parser;
-    char                  *xml;
-    FILE                  *fd;
-    struct stat           st;
+    XML_Parser                   parser;
+    char                         *xml;
+    FILE                         *fd;
+    struct stat                  st;
     
-    size_t                xmlBufferSize;
-    size_t                nbRead;
-    uint8_t               isFinal;
+    size_t                       xmlBufferSize;
+    size_t                       nbRead;
+    uint8_t                      isFinal;
     
-    PARSER_TAGS_HANDLER_S *openedTag;
-} PARSER_PRIVATE_DATA_S;
+    struct parser_tags_handler_s *openedTag;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+static enum parser_error_e parse_f(struct parser_s *obj, struct parser_params_s *params);
+static enum parser_error_e getAttributes_f(struct parser_s *obj,
+                                           struct parser_attr_handler_s *attrHandlers,
+                                           const char **attrs);
+
+static enum parser_error_e getString_f(struct parser_s *obj, void **attrValueOut,
+                                       const char *attrValueIn);
+
+static enum parser_error_e getInt8_f(struct parser_s *obj, void *attrValueOut,
+                                     const char *attrValueIn);
+static enum parser_error_e getUint8_f(struct parser_s *obj, void *attrValueOut,
+                                      const char *attrValueIn);
+
+static enum parser_error_e getInt16_f(struct parser_s *obj, void *attrValueOut,
+                                      const char *attrValueIn);
+static enum parser_error_e getUint16_f(struct parser_s *obj, void *attrValueOut,
+                                       const char *attrValueIn);
+
+static enum parser_error_e getInt32_f(struct parser_s *obj, void *attrValueOut,
+                                      const char *attrValueIn);
+static enum parser_error_e getUint32_f(struct parser_s *obj, void *attrValueOut,
+                                       const char *attrValueIn);
+
+static enum parser_error_e getInt64_f(struct parser_s *obj, void *attrValueOut,
+                                      const char *attrValueIn);
+static enum parser_error_e getUint64_f(struct parser_s *obj, void *attrValueOut,
+                                       const char *attrValueIn);
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
-
-static PARSER_ERROR_E parse_f        (PARSER_S *obj, PARSER_PARAMS_S *params);
-static PARSER_ERROR_E getAttributes_f(PARSER_S *obj, PARSER_ATTR_HANDLER_S *attrHandlers, const char **attrs);
-
-static PARSER_ERROR_E getString_f(PARSER_S *obj, void **attrValueOut, const char *attrValueIn);
-
-static PARSER_ERROR_E getInt8_f  (PARSER_S *obj, void *attrValueOut, const char *attrValueIn);
-static PARSER_ERROR_E getUint8_f (PARSER_S *obj, void *attrValueOut, const char *attrValueIn);
-
-static PARSER_ERROR_E getInt16_f (PARSER_S *obj, void *attrValueOut, const char *attrValueIn);
-static PARSER_ERROR_E getUint16_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn);
-
-static PARSER_ERROR_E getInt32_f (PARSER_S *obj, void *attrValueOut, const char *attrValueIn);
-static PARSER_ERROR_E getUint32_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn);
-
-static PARSER_ERROR_E getInt64_f (PARSER_S *obj, void *attrValueOut, const char *attrValueIn);
-static PARSER_ERROR_E getUint64_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn);
 
 static void XMLCALL startElementCb(void *userData, const char *name, const char **attrs);
-static void XMLCALL endElementCb  (void *userData, const char *name);
-static void XMLCALL dataCb        (void *userData, const char *value, int32_t len);
+static void XMLCALL endElementCb(void *userData, const char *name);
+static void XMLCALL dataCb(void *userData, const char *value, int32_t len);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-PARSER_ERROR_E Parser_Init(PARSER_S **obj)
+enum parser_error_e Parser_Init(struct parser_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(PARSER_S))));
+    assert(obj && (*obj = calloc(1, sizeof(struct parser_s))));
     
-    PARSER_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(PARSER_PRIVATE_DATA_S))));
+    struct parser_private_data_s *pData;
+    assert((pData = calloc(1, sizeof(struct parser_private_data_s))));
     
     (*obj)->parse         = parse_f;
     (*obj)->getAttributes = getAttributes_f;
@@ -133,7 +143,7 @@ PARSER_ERROR_E Parser_Init(PARSER_S **obj)
 /*!
  *
  */
-PARSER_ERROR_E Parser_UnInit(PARSER_S **obj)
+enum parser_error_e Parser_UnInit(struct parser_s **obj)
 {
     assert(obj && *obj && (*obj)->pData);
     
@@ -147,13 +157,13 @@ PARSER_ERROR_E Parser_UnInit(PARSER_S **obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static PARSER_ERROR_E parse_f(PARSER_S *obj, PARSER_PARAMS_S *params)
+static enum parser_error_e parse_f(struct parser_s *obj, struct parser_params_s *params)
 {
     assert(obj && obj->pData && params);
     
@@ -162,17 +172,10 @@ static PARSER_ERROR_E parse_f(PARSER_S *obj, PARSER_PARAMS_S *params)
         return PARSER_ERROR_FILE;
     }
     
-    PARSER_ERROR_E ret = PARSER_ERROR_PARSE;
+    enum parser_error_e ret = PARSER_ERROR_PARSE;
     
-    PARSER_PRIVATE_DATA_S *pData = (PARSER_PRIVATE_DATA_S*)(obj->pData);
-    
-    memset(&pData->params, '\0', sizeof(PARSER_PARAMS_S));
-    strncpy(pData->params.path, params->path, sizeof(pData->params.path));
-    
-    pData->params.encoding     = params->encoding;
-    pData->params.tagsHandlers = params->tagsHandlers;
-    pData->params.onErrorCb    = params->onErrorCb;
-    pData->params.userData     = params->userData;
+    struct parser_private_data_s *pData = (struct parser_private_data_s*)(obj->pData);
+    pData->params = *params;
     
     XML_Char *encoding = NULL;
     switch (pData->params.encoding) {
@@ -272,7 +275,9 @@ exit:
 /*!
  *
  */
-static PARSER_ERROR_E getAttributes_f(PARSER_S *obj, PARSER_ATTR_HANDLER_S *attrHandlers, const char **attrs)
+static enum parser_error_e getAttributes_f(struct parser_s *obj,
+                                           struct parser_attr_handler_s *attrHandlers,
+                                           const char **attrs)
 {
     assert(obj);
 
@@ -281,7 +286,7 @@ static PARSER_ERROR_E getAttributes_f(PARSER_S *obj, PARSER_ATTR_HANDLER_S *attr
         return PARSER_ERROR_ATTR;
     }
     
-    PARSER_PRIVATE_DATA_S *pData = (PARSER_PRIVATE_DATA_S*)(obj->pData);
+    struct parser_private_data_s *pData = (struct parser_private_data_s*)(obj->pData);
     uint32_t i, j;
 	
     if (pData->openedTag && pData->openedTag->tagName) {
@@ -291,16 +296,23 @@ static PARSER_ERROR_E getAttributes_f(PARSER_S *obj, PARSER_ATTR_HANDLER_S *attr
     i = 0;
     while (attrs[i]) {
         j = 0;
-        while (attrHandlers[j].attrName && (strcmp(attrHandlers[j].attrName, attrs[i]) != 0)) {
+        while (attrHandlers[j].attrName
+               && (strcmp(attrHandlers[j].attrName, attrs[i]) != 0)) {
             j++;
         }
 
         if (attrHandlers[j].attrName) {
-            if ((attrHandlers[j].attrType == PARSER_ATTR_TYPE_SCALAR) && attrHandlers[j].attrGetter.scalar) {
-                attrHandlers[j].attrGetter.scalar(obj, attrHandlers[j].attrValue.scalar, attrs[i + 1]);
+            if ((attrHandlers[j].attrType == PARSER_ATTR_TYPE_SCALAR)
+                 && attrHandlers[j].attrGetter.scalar) {
+                attrHandlers[j].attrGetter.scalar(obj,
+                                                  attrHandlers[j].attrValue.scalar,
+                                                  attrs[i + 1]);
             }
-            else if ((attrHandlers[j].attrType == PARSER_ATTR_TYPE_VECTOR) && attrHandlers[j].attrGetter.vector) {
-                attrHandlers[j].attrGetter.vector(obj, attrHandlers[j].attrValue.vector, attrs[i + 1]);
+            else if ((attrHandlers[j].attrType == PARSER_ATTR_TYPE_VECTOR)
+                      && attrHandlers[j].attrGetter.vector) {
+                attrHandlers[j].attrGetter.vector(obj,
+                                                  attrHandlers[j].attrValue.vector,
+                                                  attrs[i + 1]);
             }
             Logd("%s = \"%s\"", attrs[i], attrs[i + 1]);
         }
@@ -314,7 +326,8 @@ static PARSER_ERROR_E getAttributes_f(PARSER_S *obj, PARSER_ATTR_HANDLER_S *attr
 /*!
  *
  */
-static PARSER_ERROR_E getString_f(PARSER_S *obj, void **attrValueOut, const char *attrValueIn)
+static enum parser_error_e getString_f(struct parser_s *obj, void **attrValueOut,
+                                       const char *attrValueIn)
 {
     assert(obj);
 
@@ -335,7 +348,8 @@ static PARSER_ERROR_E getString_f(PARSER_S *obj, void **attrValueOut, const char
 /*!
  *
  */
-static PARSER_ERROR_E getInt8_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
+static enum parser_error_e getInt8_f(struct parser_s *obj, void *attrValueOut,
+                                     const char *attrValueIn)
 {
     assert(obj);
 
@@ -351,7 +365,8 @@ static PARSER_ERROR_E getInt8_f(PARSER_S *obj, void *attrValueOut, const char *a
 /*!
  *
  */
-static PARSER_ERROR_E getUint8_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
+static enum parser_error_e getUint8_f(struct parser_s *obj, void *attrValueOut,
+                                      const char *attrValueIn)
 {
     assert(obj);
 
@@ -367,7 +382,8 @@ static PARSER_ERROR_E getUint8_f(PARSER_S *obj, void *attrValueOut, const char *
 /*!
  *
  */
-static PARSER_ERROR_E getInt16_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
+static enum parser_error_e getInt16_f(struct parser_s *obj, void *attrValueOut,
+                                      const char *attrValueIn)
 {
     assert(obj);
 
@@ -383,7 +399,8 @@ static PARSER_ERROR_E getInt16_f(PARSER_S *obj, void *attrValueOut, const char *
 /*!
  *
  */
-static PARSER_ERROR_E getUint16_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
+static enum parser_error_e getUint16_f(struct parser_s *obj, void *attrValueOut,
+                                       const char *attrValueIn)
 {
     assert(obj);
 
@@ -399,7 +416,8 @@ static PARSER_ERROR_E getUint16_f(PARSER_S *obj, void *attrValueOut, const char 
 /*!
  *
  */
-static PARSER_ERROR_E getInt32_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
+static enum parser_error_e getInt32_f(struct parser_s *obj, void *attrValueOut,
+                                      const char *attrValueIn)
 {
     assert(obj);
 
@@ -415,7 +433,8 @@ static PARSER_ERROR_E getInt32_f(PARSER_S *obj, void *attrValueOut, const char *
 /*!
  *
  */
-static PARSER_ERROR_E getUint32_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
+static enum parser_error_e getUint32_f(struct parser_s *obj, void *attrValueOut,
+                                       const char *attrValueIn)
 {
     assert(obj);
 
@@ -431,7 +450,8 @@ static PARSER_ERROR_E getUint32_f(PARSER_S *obj, void *attrValueOut, const char 
 /*!
  *
  */
-static PARSER_ERROR_E getInt64_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
+static enum parser_error_e getInt64_f(struct parser_s *obj, void *attrValueOut,
+                                      const char *attrValueIn)
 {
     assert(obj);
 
@@ -447,7 +467,8 @@ static PARSER_ERROR_E getInt64_f(PARSER_S *obj, void *attrValueOut, const char *
 /*!
  *
  */
-static PARSER_ERROR_E getUint64_f(PARSER_S *obj, void *attrValueOut, const char *attrValueIn)
+static enum parser_error_e getUint64_f(struct parser_s *obj, void *attrValueOut,
+                                       const char *attrValueIn)
 {
     assert(obj);
 
@@ -461,7 +482,7 @@ static PARSER_ERROR_E getUint64_f(PARSER_S *obj, void *attrValueOut, const char 
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PARSER'S CALLBACKS                                       */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
@@ -471,13 +492,13 @@ static void XMLCALL startElementCb(void *userData, const char *name, const char 
 {
     assert(userData && name);
 	
-    PARSER_PRIVATE_DATA_S *pData = (PARSER_PRIVATE_DATA_S*)userData;
+    struct parser_private_data_s *pData = (struct parser_private_data_s*)userData;
 	
     Logd("Start tag : \"%s\"", name);
 	
     uint32_t index = 0;
     while (pData->params.tagsHandlers[index].tagName
-            && (strcmp(pData->params.tagsHandlers[index].tagName, name) != 0)) {
+           && (strcmp(pData->params.tagsHandlers[index].tagName, name) != 0)) {
         index++;
     }
 	
@@ -501,14 +522,14 @@ static void XMLCALL endElementCb(void *userData, const char *name)
 {
     assert(userData && name);
 	
-    PARSER_PRIVATE_DATA_S *pData = (PARSER_PRIVATE_DATA_S*)userData;
+    struct parser_private_data_s *pData = (struct parser_private_data_s*)userData;
 	
     Logd("End tag : \"%s\"", name);
 	
     if (!pData->openedTag || (strcmp(pData->openedTag->tagName, name) != 0)) {
         uint32_t index = 0;
         while (pData->params.tagsHandlers[index].tagName
-                && (strcmp(pData->params.tagsHandlers[index].tagName, name) != 0)) {
+               && (strcmp(pData->params.tagsHandlers[index].tagName, name) != 0)) {
             index++;
         }
 
@@ -539,7 +560,7 @@ static void XMLCALL dataCb(void *userData, const char *value, int32_t len)
         return;
     }
 	
-    PARSER_PRIVATE_DATA_S *pData = (PARSER_PRIVATE_DATA_S*)userData;
+    struct parser_private_data_s *pData = (struct parser_private_data_s*)userData;
 	
     if (pData->openedTag) {
         if (pData->openedTag->tagName) {

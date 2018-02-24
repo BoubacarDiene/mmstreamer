@@ -20,13 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Controllers.c
-* \brief  TODO
+* \file Events.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <time.h>
@@ -34,7 +34,7 @@
 #include "control/Controllers.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -43,49 +43,55 @@
 #define EVENTS_TASK_NAME "eventsTask"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct EVENTS_LIST_ELEMENT_S {
-    time_t             seconds;
-    CONTROLLER_EVENT_S event;
-} EVENTS_LIST_ELEMENT_S;
+struct events_list_element_s {
+    time_t                    seconds;
+    struct controller_event_s event;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-CONTROLLERS_ERROR_E initEvtsTask_f  (CONTROLLERS_S *obj);
-CONTROLLERS_ERROR_E uninitEvtsTask_f(CONTROLLERS_S *obj);
-CONTROLLERS_ERROR_E startEvtsTask_f (CONTROLLERS_S *obj);
-CONTROLLERS_ERROR_E stopEvtsTask_f  (CONTROLLERS_S *obj);
+enum controllers_error_e initEvtsTask_f(struct controllers_s *obj);
+enum controllers_error_e uninitEvtsTask_f(struct controllers_s *obj);
+enum controllers_error_e startEvtsTask_f(struct controllers_s *obj);
+enum controllers_error_e stopEvtsTask_f(struct controllers_s *obj);
 
-void registerEvents_f  (void *userData, int32_t eventsMask);
+enum controllers_error_e notify_f(struct controllers_s *obj, struct controller_event_s *event);
+
+void registerEvents_f(void *userData, int32_t eventsMask);
 void unregisterEvents_f(void *userData, int32_t eventsMask);
 
-static void    taskFct_f(TASK_PARAMS_S *params);
-static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData);
-static void    releaseCb(LIST_S *obj, void *element);
-
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
+/* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+static void taskFct_f(struct task_params_s *params);
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData);
+static void releaseCb(struct list_s *obj, void *element);
+
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-CONTROLLERS_ERROR_E initEvtsTask_f(CONTROLLERS_S *obj)
+enum controllers_error_e initEvtsTask_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *evtsTask      = &pData->evtsTask;
-    INPUT_S *input                    = &pData->params.ctx->input;
-    uint8_t priority                  = input->ctrlLibsPrio;
+    struct controllers_task_s *evtsTask = &obj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
+    struct input_s *input               = &obj->params.ctx->input;
+    uint8_t priority                    = input->ctrlLibsPrio;
 
     if (input->nbCtrlLibs == 0) {
         Logw("No library provided");
@@ -94,7 +100,7 @@ CONTROLLERS_ERROR_E initEvtsTask_f(CONTROLLERS_S *obj)
 
     Logd("Initialize evtsTask");
 
-    LIST_PARAMS_S listParams = { 0 };
+    struct list_params_s listParams = {0};
     listParams.compareCb = compareCb;
     listParams.releaseCb = releaseCb;
     listParams.browseCb  = NULL;
@@ -122,7 +128,7 @@ CONTROLLERS_ERROR_E initEvtsTask_f(CONTROLLERS_S *obj)
     strcpy(evtsTask->taskParams.name, EVENTS_TASK_NAME);
     evtsTask->taskParams.priority = priority;
     evtsTask->taskParams.fct      = taskFct_f;
-    evtsTask->taskParams.fctData  = pData;
+    evtsTask->taskParams.fctData  = obj;
     evtsTask->taskParams.userData = NULL;
     evtsTask->taskParams.atExit   = NULL;
 
@@ -152,13 +158,12 @@ listExit:
 /*!
  *
  */
-CONTROLLERS_ERROR_E uninitEvtsTask_f(CONTROLLERS_S *obj)
+enum controllers_error_e uninitEvtsTask_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *evtsTask      = &pData->evtsTask;
-    INPUT_S *input                    = &pData->params.ctx->input;
+    struct controllers_task_s *evtsTask = &obj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
+    struct input_s *input               = &obj->params.ctx->input;
 
     if (input->nbCtrlLibs == 0) {
         Logw("No library provided");
@@ -185,13 +190,12 @@ CONTROLLERS_ERROR_E uninitEvtsTask_f(CONTROLLERS_S *obj)
 /*!
  *
  */
-CONTROLLERS_ERROR_E startEvtsTask_f(CONTROLLERS_S *obj)
+enum controllers_error_e startEvtsTask_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *evtsTask      = &pData->evtsTask;
-    INPUT_S *input                    = &pData->params.ctx->input;
+    struct controllers_task_s *evtsTask = &obj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
+    struct input_s *input               = &obj->params.ctx->input;
 
     if (input->nbCtrlLibs == 0) {
         Logw("No library provided");
@@ -211,13 +215,12 @@ CONTROLLERS_ERROR_E startEvtsTask_f(CONTROLLERS_S *obj)
 /*!
  *
  */
-CONTROLLERS_ERROR_E stopEvtsTask_f(CONTROLLERS_S *obj)
+enum controllers_error_e stopEvtsTask_f(struct controllers_s *obj)
 {
-    assert(obj && obj->pData);
+    assert(obj);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *evtsTask      = &pData->evtsTask;
-    INPUT_S *input                    = &pData->params.ctx->input;
+    struct controllers_task_s *evtsTask = &obj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
+    struct input_s *input               = &obj->params.ctx->input;
 
     if (input->nbCtrlLibs == 0) {
         Logw("No library provided");
@@ -240,17 +243,16 @@ CONTROLLERS_ERROR_E stopEvtsTask_f(CONTROLLERS_S *obj)
 /*!
  *
  */
-CONTROLLERS_ERROR_E notify_f(CONTROLLERS_S *obj, CONTROLLER_EVENT_S *event)
+enum controllers_error_e notify_f(struct controllers_s *obj, struct controller_event_s *event)
 {
-    assert(obj && obj->pData && event);
+    assert(obj && event);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(obj->pData);
-    CONTROLLERS_TASK_S *evtsTask      = &pData->evtsTask;
-    LIST_S *evtsList                  = evtsTask->list;
-    EVENTS_LIST_ELEMENT_S *element    = NULL;
-    INPUT_S *input                    = &pData->params.ctx->input;
+    struct controllers_task_s *evtsTask   = &obj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
+    struct list_s *evtsList               = evtsTask->list;
+    struct events_list_element_s *element = NULL;
+    struct input_s *input                 = &obj->params.ctx->input;
 
-    if (pData->nbLibs == 0) {
+    if (obj->nbLibs == 0) {
         Logw("No library loaded");
         return CONTROLLERS_ERROR_NONE;
     }
@@ -267,7 +269,7 @@ CONTROLLERS_ERROR_E notify_f(CONTROLLERS_S *obj, CONTROLLER_EVENT_S *event)
 
     Logd("Notify contoller - event id : \"%u\"", event->id);
 
-    assert((element = calloc(1, sizeof(EVENTS_LIST_ELEMENT_S))));
+    assert((element = calloc(1, sizeof(struct events_list_element_s))));
     element->seconds    = time(NULL);
     element->event.id   = event->id;
     element->event.name = strdup(event->name);
@@ -288,9 +290,9 @@ void registerEvents_f(void *userData, int32_t eventsMask)
 {
     assert(userData);
 
-    CONTROLLERS_LIB_S *lib            = (CONTROLLERS_LIB_S*)userData;
-    CONTROLLERS_PRIVATE_DATA_S *pData = lib->pData;
-    CONTROLLERS_TASK_S *evtsTask      = &pData->evtsTask;
+    struct controllers_lib_s *lib        = (struct controllers_lib_s*)userData;
+    struct controllers_s *controllersObj = (struct controllers_s*)(lib->pData);
+    struct controllers_task_s *evtsTask  = &controllersObj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
 
     if (pthread_mutex_lock(&evtsTask->lock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -311,9 +313,9 @@ void unregisterEvents_f(void *userData, int32_t eventsMask)
 {
     assert(userData);
 
-    CONTROLLERS_LIB_S *lib            = (CONTROLLERS_LIB_S*)userData;
-    CONTROLLERS_PRIVATE_DATA_S *pData = lib->pData;
-    CONTROLLERS_TASK_S *evtsTask      = &pData->evtsTask;
+    struct controllers_lib_s *lib        = (struct controllers_lib_s*)userData;
+    struct controllers_s *controllersObj = (struct controllers_s*)(lib->pData);
+    struct controllers_task_s *evtsTask  = &controllersObj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
 
     if (pthread_mutex_lock(&evtsTask->lock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -328,17 +330,17 @@ void unregisterEvents_f(void *userData, int32_t eventsMask)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ///////////////////////////// PRIVATE FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static void taskFct_f(TASK_PARAMS_S *params)
+static void taskFct_f(struct task_params_s *params)
 {
     assert(params && params->fctData);
 
-    CONTROLLERS_PRIVATE_DATA_S *pData = (CONTROLLERS_PRIVATE_DATA_S*)(params->fctData);
-    CONTROLLERS_TASK_S *evtsTask      = &pData->evtsTask;
-    LIST_S *evtsList                  = evtsTask->list;
-    EVENTS_LIST_ELEMENT_S *element    = NULL;
+    struct controllers_s *controllersObj  = (struct controllers_s*)(params->fctData);
+    struct controllers_task_s *evtsTask   = &controllersObj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
+    struct list_s *evtsList               = evtsTask->list;
+    struct events_list_element_s *element = NULL;
 
     if (evtsTask->quit) {
         return;
@@ -367,13 +369,13 @@ static void taskFct_f(TASK_PARAMS_S *params)
         goto lockExit;
     }
 
-    CONTROLLERS_LIB_S *lib = NULL;
+    struct controllers_lib_s *lib = NULL;
     uint8_t i;
-    for (i = 0; i < pData->nbLibs; ++i) {
-        lib = &pData->libs[i];
+    for (i = 0; i < controllersObj->nbLibs; ++i) {
+        lib = &controllersObj->libs[i];
         if (element->event.id & lib->eventsMask) {
             (void)pthread_mutex_unlock(&evtsTask->lock);
-            lib->onEvent(lib->obj, &element->event);
+            lib->onEventCb(lib->obj, &element->event);
             (void)pthread_mutex_lock(&evtsTask->lock);
             break;
         }
@@ -394,22 +396,26 @@ lockExit:
     sem_post(&evtsTask->sem); // Force retry
 }
 
-static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData)
+/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     assert(obj && elementToCheck && userData);
 
-    EVENTS_LIST_ELEMENT_S *element  = (EVENTS_LIST_ELEMENT_S*)elementToCheck;
-    time_t secondsOfElementToRemove = *((time_t*)userData);
+    struct events_list_element_s *element = (struct events_list_element_s*)elementToCheck;
+    time_t secondsOfElementToRemove       = *((time_t*)userData);
 
     return (element->seconds == secondsOfElementToRemove);
 }
 
-static void releaseCb(LIST_S *obj, void *element)
+static void releaseCb(struct list_s *obj, void *element)
 {
     assert(obj && element);
 
-    EVENTS_LIST_ELEMENT_S *elementToRemove = (EVENTS_LIST_ELEMENT_S*)element;
-    CONTROLLER_EVENT_S *event              = &elementToRemove->event;
+    struct events_list_element_s *elementToRemove = (struct events_list_element_s*)element;
+    struct controller_event_s *event              = &elementToRemove->event;
 
     if (event->name) {
         free(event->name);

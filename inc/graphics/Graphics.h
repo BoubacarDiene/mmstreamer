@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Graphics.h
+* \file Graphics.h
 * \author Boubacar DIENE
 */
 
@@ -32,53 +32,77 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "utils/Common.h"
 #include "graphics/GfxCommon.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum graphics_error_e;
+
+struct graphics_params_s;
+struct graphics_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   GRAPHICS_ERROR_E  GRAPHICS_ERROR_E;
+typedef void (*graphics_on_gfx_event_cb)(struct gfx_event_s *gfxEvent, void *userData);
 
-typedef struct GRAPHICS_PARAMS_S GRAPHICS_PARAMS_S;
-typedef struct GRAPHICS_S        GRAPHICS_S;
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef void (*ON_GFX_EVENT_CB)(GFX_EVENT_S *gfxEvent, void *userData);
+typedef enum graphics_error_e (*graphics_create_drawer_f)(struct graphics_s *obj,
+                                                          struct graphics_params_s *params);
+typedef enum graphics_error_e (*graphics_destroy_drawer_f)(struct graphics_s *obj);
 
-typedef GRAPHICS_ERROR_E (*GRAPHICS_CREATE_DRAWER_F )(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *params);
-typedef GRAPHICS_ERROR_E (*GRAPHICS_DESTROY_DRAWER_F)(GRAPHICS_S *obj);
+typedef enum graphics_error_e (*graphics_create_element_f)(struct graphics_s *obj,
+                                                           struct gfx_element_s **newGfxElement);
+typedef enum graphics_error_e (*graphics_push_element_f)(struct graphics_s *obj,
+                                                         struct gfx_element_s *gfxElement);
+typedef enum graphics_error_e (*graphics_remove_element_f)(struct graphics_s *obj,
+                                                           char *gfxElementName);
+typedef enum graphics_error_e (*graphics_remove_all_f)(struct graphics_s *obj);
 
-typedef GRAPHICS_ERROR_E (*GRAPHICS_CREATE_ELEMENT_F)(GRAPHICS_S *obj, GFX_ELEMENT_S **newGfxElement);
-typedef GRAPHICS_ERROR_E (*GRAPHICS_PUSH_ELEMENT_F  )(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement);
-typedef GRAPHICS_ERROR_E (*GRAPHICS_REMOVE_ELEMENT_F)(GRAPHICS_S *obj, char *gfxElementName);
-typedef GRAPHICS_ERROR_E (*GRAPHICS_REMOVE_ALL_F    )(GRAPHICS_S *obj);
+typedef enum graphics_error_e (*graphics_set_visible_f)(struct graphics_s *obj,
+                                                        char *gfxElementName, uint8_t isVisible);
+typedef enum graphics_error_e (*graphics_set_focus_f)(struct graphics_s *obj,
+                                                      char *gfxElementName);
+typedef enum graphics_error_e (*graphics_set_clickable_f)(struct graphics_s *obj,
+                                                          char *gfxElementName,
+                                                          uint8_t isClickable);
+typedef enum graphics_error_e (*graphics_set_nav_f)(struct graphics_s *obj, char *gfxElementName,
+                                                    struct gfx_nav_s *nav);
+typedef enum graphics_error_e (*graphics_set_data_f)(struct graphics_s *obj, char *gfxElementName,
+                                                     void *data);
 
-typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_VISIBLE_F  )(GRAPHICS_S *obj, char *gfxElementName, uint8_t isVisible);
-typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_FOCUS_F    )(GRAPHICS_S *obj, char *gfxElementName);
-typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_CLICKABLE_F)(GRAPHICS_S *obj, char *gfxElementName, uint8_t isClickable);
-typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_NAV_F      )(GRAPHICS_S *obj, char *gfxElementName, GFX_NAV_S *nav);
-typedef GRAPHICS_ERROR_E (*GRAPHICS_SET_DATA_F     )(GRAPHICS_S *obj, char *gfxElementName, void *data);
+typedef enum graphics_error_e (*graphics_save_video_frame_f)(struct graphics_s *obj,
+                                                             struct buffer_s *buffer,
+                                                             struct gfx_image_s *inOut);
+typedef enum graphics_error_e (*graphics_save_video_element_f)(struct graphics_s *obj,
+                                                               char *gfxElementName,
+                                                               struct gfx_image_s *inOut);
+typedef enum graphics_error_e (*graphics_take_screenshot_f)(struct graphics_s *obj,
+                                                            struct gfx_image_s *inOut);
 
-typedef GRAPHICS_ERROR_E (*GRAPHICS_SAVE_VIDEO_FRAME_F  )(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
-typedef GRAPHICS_ERROR_E (*GRAPHICS_SAVE_VIDEO_ELEMENT_F)(GRAPHICS_S *obj, char *gfxElementName, GFX_IMAGE_S *inOut);
-typedef GRAPHICS_ERROR_E (*GRAPHICS_TAKE_SCREENSHOT_F   )(GRAPHICS_S *obj, GFX_IMAGE_S *inOut);
+typedef enum graphics_error_e (*graphics_draw_all_elements_f)(struct graphics_s *obj);
 
-typedef GRAPHICS_ERROR_E (*GRAPHICS_DRAW_ALL_ELEMENTS_F)(GRAPHICS_S *obj);
+typedef enum graphics_error_e (*graphics_simulate_gfx_event_f)(struct graphics_s *obj,
+                                                               struct gfx_event_s *gfxEvent);
+typedef enum graphics_error_e (*graphics_handle_gfx_events_f)(struct graphics_s *obj);
 
-typedef GRAPHICS_ERROR_E (*GRAPHICS_SIMULATE_GFX_EVENT_F)(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent);
-typedef GRAPHICS_ERROR_E (*GRAPHICS_HANDLE_GFX_EVENTS_F )(GRAPHICS_S *obj);
+typedef enum graphics_error_e (*graphics_quit_f)(struct graphics_s *obj);
 
-typedef GRAPHICS_ERROR_E (*GRAPHICS_QUIT_F)(GRAPHICS_S *obj);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-enum GRAPHICS_ERROR_E {
+enum graphics_error_e {
     GRAPHICS_ERROR_NONE,
     GRAPHICS_ERROR_INIT,
     GRAPHICS_ERROR_UNINIT,
@@ -88,53 +112,57 @@ enum GRAPHICS_ERROR_E {
     GRAPHICS_ERROR_PARAMS
 };
 
-struct GRAPHICS_PARAMS_S {
-    GFX_SCREEN_S    screenParams;
+struct graphics_params_s {
+    struct gfx_screen_s      screenParams;
     
-    GFX_COLOR_S     colorOnFocus;
-    GFX_COLOR_S     colorOnBlur;
-    GFX_COLOR_S     colorOnReset;
+    struct gfx_color_s       colorOnFocus;
+    struct gfx_color_s       colorOnBlur;
+    struct gfx_color_s       colorOnReset;
     
-    ON_GFX_EVENT_CB onGfxEventCb;
+    graphics_on_gfx_event_cb onGfxEventCb;
     
-    void            *userData;
-};
-
-struct GRAPHICS_S {
-    GRAPHICS_CREATE_DRAWER_F      createDrawer;
-    GRAPHICS_DESTROY_DRAWER_F     destroyDrawer;
-    
-    GRAPHICS_CREATE_ELEMENT_F     createElement;
-    GRAPHICS_PUSH_ELEMENT_F       pushElement;
-    GRAPHICS_REMOVE_ELEMENT_F     removeElement;
-    GRAPHICS_REMOVE_ALL_F         removeAll;
-    
-    GRAPHICS_SET_VISIBLE_F        setVisible;
-    GRAPHICS_SET_FOCUS_F          setFocus;
-    GRAPHICS_SET_CLICKABLE_F      setClickable;
-    GRAPHICS_SET_NAV_F            setNav;
-    GRAPHICS_SET_DATA_F           setData;
-    
-    GRAPHICS_SAVE_VIDEO_FRAME_F   saveVideoFrame;
-    GRAPHICS_SAVE_VIDEO_ELEMENT_F saveVideoElement;
-    GRAPHICS_TAKE_SCREENSHOT_F    takeScreenshot;
-    
-    GRAPHICS_DRAW_ALL_ELEMENTS_F  drawAllElements;
-
-    GRAPHICS_SIMULATE_GFX_EVENT_F simulateGfxEvent;
-    GRAPHICS_HANDLE_GFX_EVENTS_F  handleGfxEvents;
-    
-    GRAPHICS_QUIT_F               quit;
-    
-    void                          *pData;
+    void                     *userData;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-GRAPHICS_ERROR_E Graphics_Init  (GRAPHICS_S **obj);
-GRAPHICS_ERROR_E Graphics_UnInit(GRAPHICS_S **obj);
+struct graphics_s {
+    graphics_create_drawer_f      createDrawer;
+    graphics_destroy_drawer_f     destroyDrawer;
+    
+    graphics_create_element_f     createElement;
+    graphics_push_element_f       pushElement;
+    graphics_remove_element_f     removeElement;
+    graphics_remove_all_f         removeAll;
+    
+    graphics_set_visible_f        setVisible;
+    graphics_set_focus_f          setFocus;
+    graphics_set_clickable_f      setClickable;
+    graphics_set_nav_f            setNav;
+    graphics_set_data_f           setData;
+    
+    graphics_save_video_frame_f   saveVideoFrame;
+    graphics_save_video_element_f saveVideoElement;
+    graphics_take_screenshot_f    takeScreenshot;
+    
+    graphics_draw_all_elements_f  drawAllElements;
+
+    graphics_simulate_gfx_event_f simulateGfxEvent;
+    graphics_handle_gfx_events_f  handleGfxEvents;
+    
+    graphics_quit_f               quit;
+    
+    void *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum graphics_error_e Graphics_Init(struct graphics_s **obj);
+enum graphics_error_e Graphics_UnInit(struct graphics_s **obj);
 
 #ifdef __cplusplus
 }

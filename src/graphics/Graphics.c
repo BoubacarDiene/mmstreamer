@@ -20,13 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Graphics.c
-* \brief  Graphics elements management
+* \file Graphics.c
+* \brief Graphics elements management
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <pthread.h>
@@ -41,7 +41,7 @@
 #include "graphics/Graphics.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -50,108 +50,128 @@
 #define SIMULATE_EVENT_TASK_NAME "simulateEvtTask"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct GRAPHICS_LIST_ELEMENT_S {
-    time_t           seconds;
-    GFX_EVENT_S      event;
-} GRAPHICS_LIST_ELEMENT_S;
+struct graphics_list_element_s {
+    time_t             seconds;
+    struct gfx_event_s event;
+};
 
-typedef struct GRAPHICS_TASK_S {
-    volatile uint8_t  quit;
+struct graphics_task_s {
+    volatile uint8_t     quit;
 
-    LIST_S           *list;
+    struct list_s        *list;
 
-    TASK_S           *task;
-    TASK_PARAMS_S    taskParams;
+    struct task_s        *task;
+    struct task_params_s taskParams;
 
-    sem_t            sem;
-} GRAPHICS_TASK_S;
+    sem_t                sem;
+};
 
-typedef struct GRAPHICS_PRIVATE_DATA_S {
-    volatile uint8_t  quit;
+struct graphics_private_data_s {
+    volatile uint8_t         quit;
 
-    pthread_mutex_t   gfxLock;
-    pthread_mutex_t   evtLock;
+    pthread_mutex_t          gfxLock;
+    pthread_mutex_t          evtLock;
 
-    GRAPHICS_PARAMS_S params;
-    FBDEV_INFOS_S     fbInfos;
+    struct graphics_params_s params;
+    struct fbdev_infos_s     fbInfos;
 
-    LIST_S            *gfxElementsList;
+    struct list_s            *gfxElementsList;
 
-    GFX_ELEMENT_S     *focusedElement;
-    GFX_ELEMENT_S     *lastDrawnElement;
-    GFX_ELEMENT_S     *videoElement;
+    struct gfx_element_s     *focusedElement;
+    struct gfx_element_s     *lastDrawnElement;
+    struct gfx_element_s     *videoElement;
 
-    GRAPHICS_TASK_S   simulateEvtTask;
+    struct graphics_task_s   simulateEvtTask;
 
-    FBDEV_S           *fbDevObj;
-    DRAWER_S          *drawerObj;
-} GRAPHICS_PRIVATE_DATA_S;
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
+    struct fbdev_s           *fbDevObj;
+    struct drawer_s          *drawerObj;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static GRAPHICS_ERROR_E createDrawer_f (GRAPHICS_S *obj, GRAPHICS_PARAMS_S *params);
-static GRAPHICS_ERROR_E destroyDrawer_f(GRAPHICS_S *obj);
 
-static GRAPHICS_ERROR_E createElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S **newGfxElement);
-static GRAPHICS_ERROR_E pushElement_f  (GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement);
-static GRAPHICS_ERROR_E removeElement_f(GRAPHICS_S *obj, char *gfxElementName);
-static GRAPHICS_ERROR_E removeAll_f    (GRAPHICS_S *obj);
+static enum graphics_error_e createDrawer_f(struct graphics_s *obj,
+                                            struct graphics_params_s *params);
+static enum graphics_error_e destroyDrawer_f(struct graphics_s *obj);
 
-static GRAPHICS_ERROR_E setVisible_f  (GRAPHICS_S *obj, char *gfxElementName, uint8_t isVisible);
-static GRAPHICS_ERROR_E setFocus_f    (GRAPHICS_S *obj, char *gfxElementName);
-static GRAPHICS_ERROR_E setClickable_f(GRAPHICS_S *obj, char *gfxElementName, uint8_t isClickable);
-static GRAPHICS_ERROR_E setNav_f      (GRAPHICS_S *obj, char *gfxElementName, GFX_NAV_S *nav);
-static GRAPHICS_ERROR_E setData_f     (GRAPHICS_S *obj, char *gfxElementName, void *data);
+static enum graphics_error_e createElement_f(struct graphics_s *obj,
+                                             struct gfx_element_s **newGfxElement);
+static enum graphics_error_e pushElement_f(struct graphics_s *obj,
+                                           struct gfx_element_s *gfxElement);
+static enum graphics_error_e removeElement_f(struct graphics_s *obj, char *gfxElementName);
+static enum graphics_error_e removeAll_f(struct graphics_s *obj);
 
-static GRAPHICS_ERROR_E saveVideoFrame_f  (GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut);
-static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName, GFX_IMAGE_S *inOut);
-static GRAPHICS_ERROR_E takeScreenshot_f  (GRAPHICS_S *obj, GFX_IMAGE_S *inOut);
+static enum graphics_error_e setVisible_f(struct graphics_s *obj, char *gfxElementName,
+                                          uint8_t isVisible);
+static enum graphics_error_e setFocus_f(struct graphics_s *obj, char *gfxElementName);
+static enum graphics_error_e setClickable_f(struct graphics_s *obj, char *gfxElementName,
+                                            uint8_t isClickable);
+static enum graphics_error_e setNav_f(struct graphics_s *obj, char *gfxElementName,
+                                      struct gfx_nav_s *nav);
+static enum graphics_error_e setData_f(struct graphics_s *obj, char *gfxElementName, void *data);
 
-static GRAPHICS_ERROR_E drawAllElements_f(GRAPHICS_S *obj);
+static enum graphics_error_e saveVideoFrame_f(struct graphics_s *obj, struct buffer_s *buffer,
+                                              struct gfx_image_s *inOut);
+static enum graphics_error_e saveVideoElement_f(struct graphics_s *obj, char *gfxElementName,
+                                                struct gfx_image_s *inOut);
+static enum graphics_error_e takeScreenshot_f(struct graphics_s *obj, struct gfx_image_s *inOut);
 
-static GRAPHICS_ERROR_E simulateGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent);
-static GRAPHICS_ERROR_E handleGfxEvents_f (GRAPHICS_S *obj);
+static enum graphics_error_e drawAllElements_f(struct graphics_s *obj);
 
-static GRAPHICS_ERROR_E quit_f(GRAPHICS_S *obj);
+static enum graphics_error_e simulateGfxEvent_f(struct graphics_s *obj,
+                                                struct gfx_event_s *gfxEvent);
+static enum graphics_error_e handleGfxEvents_f(struct graphics_s *obj);
 
-
-static GRAPHICS_ERROR_E updateGroup_f      (GRAPHICS_S *obj, char *groupName, char *gfxElementToIgnore);
-static GRAPHICS_ERROR_E updateElement_f    (GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement);
-static GRAPHICS_ERROR_E drawElement_f      (GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement);
-static GRAPHICS_ERROR_E getElement_f       (GRAPHICS_S *obj, char *gfxElementName, GFX_ELEMENT_S **gfxElement);
-static GRAPHICS_ERROR_E getClickedElement_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent);
-static GRAPHICS_ERROR_E handleGfxEvent_f   (GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent);
-
-static uint8_t compareElementsCb(LIST_S *obj, void *elementToCheck, void *userData);
-static void    releaseElementCb (LIST_S *obj, void *element);
-static void    browseElementsCb (LIST_S *obj, void *element, void *dataProvidedToBrowseFunction);
-
-static void    taskFct_f(TASK_PARAMS_S *params);
-static uint8_t compareEventsCb(LIST_S *obj, void *elementToCheck, void *userData);
-static void    releaseEventCb (LIST_S *obj, void *element);
+static enum graphics_error_e quit_f(struct graphics_s *obj);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static enum graphics_error_e updateGroup_f(struct graphics_s *obj, char *groupName,
+                                           char *gfxElementToIgnore);
+static enum graphics_error_e updateElement_f(struct graphics_s *obj,
+                                             struct gfx_element_s *gfxElement);
+static enum graphics_error_e drawElement_f(struct graphics_s *obj,
+                                           struct gfx_element_s *gfxElement);
+static enum graphics_error_e getElement_f(struct graphics_s *obj, char *gfxElementName,
+                                          struct gfx_element_s **gfxElement);
+static enum graphics_error_e getClickedElement_f(struct graphics_s *obj,
+                                                 struct gfx_event_s *gfxEvent);
+static enum graphics_error_e handleGfxEvent_f(struct graphics_s *obj,
+                                              struct gfx_event_s *gfxEvent);
+
+static void taskFct_f(struct task_params_s *params);
+
+/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static uint8_t compareElementsCb(struct list_s *obj, void *elementToCheck, void *userData);
+static void releaseElementCb(struct list_s *obj, void *element);
+static void browseElementsCb(struct list_s *obj, void *element, void *userData);
+
+static uint8_t compareEventsCb(struct list_s *obj, void *elementToCheck, void *userData);
+static void releaseEventCb(struct list_s *obj, void *element);
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
+enum graphics_error_e Graphics_Init(struct graphics_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(GRAPHICS_S))));
+    assert(obj && (*obj = calloc(1, sizeof(struct graphics_s))));
     
-    GRAPHICS_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(GRAPHICS_PRIVATE_DATA_S))));
+    struct graphics_private_data_s *pData;
+    assert((pData = calloc(1, sizeof(struct graphics_private_data_s))));
 
     if (pthread_mutex_init(&pData->gfxLock, NULL) != 0) {
         Loge("pthread_mutex_init() failed");
@@ -163,9 +183,9 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
         goto evtLockExit;
     }
 
-    GRAPHICS_TASK_S *simulateEvtTask = &pData->simulateEvtTask;
+    struct graphics_task_s *simulateEvtTask = &pData->simulateEvtTask;
 
-    LIST_PARAMS_S elementsListParams = { 0 };
+    struct list_params_s elementsListParams = {0};
     elementsListParams.compareCb = compareElementsCb;
     elementsListParams.releaseCb = releaseElementCb;
     elementsListParams.browseCb  = browseElementsCb;
@@ -174,7 +194,7 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
         goto listExit;
     }
 
-    LIST_PARAMS_S eventsListParams = { 0 };
+    struct list_params_s eventsListParams = {0};
     eventsListParams.compareCb = compareEventsCb;
     eventsListParams.releaseCb = releaseEventCb;
     eventsListParams.browseCb  = NULL;
@@ -201,12 +221,14 @@ GRAPHICS_ERROR_E Graphics_Init(GRAPHICS_S **obj)
     simulateEvtTask->taskParams.userData = NULL;
     simulateEvtTask->taskParams.atExit   = NULL;
 
-    if (simulateEvtTask->task->create(simulateEvtTask->task, &simulateEvtTask->taskParams) != TASK_ERROR_NONE) {
+    if (simulateEvtTask->task->create(simulateEvtTask->task,
+                                      &simulateEvtTask->taskParams) != TASK_ERROR_NONE) {
         Loge("Failed to create simulateEvt task");
         goto simulateEvtTaskCreateExit;
     }
 
-    if (simulateEvtTask->task->start(simulateEvtTask->task, &simulateEvtTask->taskParams) != TASK_ERROR_NONE) {
+    if (simulateEvtTask->task->start(simulateEvtTask->task,
+                                     &simulateEvtTask->taskParams) != TASK_ERROR_NONE) {
         Loge("Failed to start simulateEvtTask");
         goto simulateEvtTaskStart;
     }
@@ -281,12 +303,12 @@ gfxLockExit:
 /*!
  *
  */
-GRAPHICS_ERROR_E Graphics_UnInit(GRAPHICS_S **obj)
+enum graphics_error_e Graphics_UnInit(struct graphics_s **obj)
 {
     assert(obj && *obj && (*obj)->pData);
     
-    GRAPHICS_PRIVATE_DATA_S *pData   = (GRAPHICS_PRIVATE_DATA_S*)((*obj)->pData);
-    GRAPHICS_TASK_S *simulateEvtTask = &pData->simulateEvtTask;
+    struct graphics_private_data_s *pData   = (struct graphics_private_data_s*)((*obj)->pData);
+    struct graphics_task_s *simulateEvtTask = &pData->simulateEvtTask;
 
     (void)FbDev_UnInit(&pData->fbDevObj);
 
@@ -318,17 +340,18 @@ GRAPHICS_ERROR_E Graphics_UnInit(GRAPHICS_S **obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *params)
+static enum graphics_error_e createDrawer_f(struct graphics_s *obj,
+                                            struct graphics_params_s *params)
 {
     assert(obj && obj->pData && params);
 
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -340,13 +363,7 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
         goto drawerInitExit;
     }
 
-    memcpy(&pData->params.screenParams, &params->screenParams, sizeof(GFX_SCREEN_S));
-    memcpy(&pData->params.colorOnFocus, &params->colorOnFocus, sizeof(GFX_COLOR_S));
-    memcpy(&pData->params.colorOnBlur,  &params->colorOnBlur, sizeof(GFX_COLOR_S));
-    memcpy(&pData->params.colorOnReset, &params->colorOnReset, sizeof(GFX_COLOR_S));
-    
-    pData->params.onGfxEventCb = params->onGfxEventCb;
-    pData->params.userData     = params->userData;
+    pData->params = *params;
     
     if (Drawer_Init(&pData->drawerObj) != DRAWER_ERROR_NONE) {
         Loge("Failed to init drawer");
@@ -354,13 +371,15 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
     }
 
     uint8_t opened = 0;
-    if (pData->fbDevObj->open(pData->fbDevObj, params->screenParams.fbDeviceName) == FBDEV_ERROR_NONE) {
+    if (pData->fbDevObj->open(pData->fbDevObj,
+                              params->screenParams.fbDeviceName) == FBDEV_ERROR_NONE) {
         opened = 1;
 
         (void)pData->fbDevObj->getInfos(pData->fbDevObj, &pData->fbInfos);
 
         Logd("\nFbDevice : \"%s\" / width = %u / height = %u / depth = %u\n",
-                params->screenParams.fbDeviceName, pData->fbInfos.width, pData->fbInfos.height, pData->fbInfos.depth);
+                params->screenParams.fbDeviceName, pData->fbInfos.width,
+                pData->fbInfos.height, pData->fbInfos.depth);
 
         if ((pData->fbInfos.width < params->screenParams.rect.w)
             || (pData->fbInfos.height < params->screenParams.rect.h)) {
@@ -370,11 +389,13 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
         }
 
         if (pData->fbInfos.depth != (uint32_t)params->screenParams.bitsPerPixel) {
-            (void)pData->fbDevObj->setDepth(pData->fbDevObj, (uint32_t)params->screenParams.bitsPerPixel);
+            (void)pData->fbDevObj->setDepth(pData->fbDevObj,
+                                            (uint32_t)params->screenParams.bitsPerPixel);
         }
     }
 
-    if (pData->drawerObj->initScreen(pData->drawerObj, &params->screenParams) != DRAWER_ERROR_NONE) {
+    if (pData->drawerObj->initScreen(pData->drawerObj,
+                                     &params->screenParams) != DRAWER_ERROR_NONE) {
         Loge("Failed to init screen");
         goto initScreenExit;
     }
@@ -384,7 +405,8 @@ static GRAPHICS_ERROR_E createDrawer_f(GRAPHICS_S *obj, GRAPHICS_PARAMS_S *param
     return GRAPHICS_ERROR_NONE;
 
 initScreenExit:
-    if (opened && (pData->fbInfos.depth != (uint32_t)params->screenParams.bitsPerPixel)) {
+    if (opened
+        && (pData->fbInfos.depth != (uint32_t)params->screenParams.bitsPerPixel)) {
         (void)pData->fbDevObj->restore(pData->fbDevObj);
     }
 
@@ -403,12 +425,12 @@ drawerInitExit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E destroyDrawer_f(GRAPHICS_S *obj)
+static enum graphics_error_e destroyDrawer_f(struct graphics_s *obj)
 {
     assert(obj && obj->pData);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -423,7 +445,7 @@ static GRAPHICS_ERROR_E destroyDrawer_f(GRAPHICS_S *obj)
     
     pData->params.userData = NULL;
     
-    (void)pData->drawerObj->unInitScreen(pData->drawerObj);
+    (void)pData->drawerObj->uninitScreen(pData->drawerObj);
 
     uint8_t opened = 0;
     (void)pData->fbDevObj->isOpened(pData->fbDevObj, &opened);
@@ -446,18 +468,19 @@ exit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E createElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S **newGfxElement)
+static enum graphics_error_e createElement_f(struct graphics_s *obj,
+                                             struct gfx_element_s **newGfxElement)
 {
     assert(obj && obj->pData && newGfxElement);
 
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
     
-    assert((*newGfxElement = calloc(1, sizeof(GFX_ELEMENT_S))));
+    assert((*newGfxElement = calloc(1, sizeof(struct gfx_element_s))));
 
     (void)pthread_mutex_unlock(&pData->gfxLock);
     
@@ -467,12 +490,13 @@ static GRAPHICS_ERROR_E createElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S **newGfxE
 /*!
  *
  */
-static GRAPHICS_ERROR_E pushElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement)
+static enum graphics_error_e pushElement_f(struct graphics_s *obj,
+                                           struct gfx_element_s *gfxElement)
 {
     assert(obj && obj->pData && gfxElement);
 
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -497,12 +521,12 @@ exit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E removeElement_f(GRAPHICS_S *obj, char *gfxElementName)
+static enum graphics_error_e removeElement_f(struct graphics_s *obj, char *gfxElementName)
 {
     assert(obj && obj->pData && gfxElementName);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -527,12 +551,12 @@ exit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E removeAll_f(GRAPHICS_S *obj)
+static enum graphics_error_e removeAll_f(struct graphics_s *obj)
 {
     assert(obj && obj->pData);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -557,12 +581,13 @@ exit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E setVisible_f(GRAPHICS_S *obj, char *gfxElementName, uint8_t isVisible)
+static enum graphics_error_e setVisible_f(struct graphics_s *obj, char *gfxElementName,
+                                                                  uint8_t isVisible)
 {
     assert(obj && obj->pData && gfxElementName);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -574,15 +599,18 @@ static GRAPHICS_ERROR_E setVisible_f(GRAPHICS_S *obj, char *gfxElementName, uint
         goto lockExit;
     }
     
-    GFX_ELEMENT_S *gfxElement = NULL;
+    struct gfx_element_s *gfxElement = NULL;
     
-    if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    if (pData->focusedElement
+        && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->focusedElement;
     }
-    else if (pData->videoElement && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    else if (pData->videoElement
+             && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->videoElement;
     }
-    else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    else if (pData->lastDrawnElement
+             && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
     }
     else if ((ret = getElement_f(obj, gfxElementName, &gfxElement)) != GRAPHICS_ERROR_NONE) {
@@ -603,7 +631,8 @@ static GRAPHICS_ERROR_E setVisible_f(GRAPHICS_S *obj, char *gfxElementName, uint
     }
 
     if (!gfxElement->isVisible && gfxElement->hasFocus) {
-        Logw("Invisible element \"%s\" still has focus - Please, call setFocus on a visible element", gfxElement->name);
+        Logw("Element \"%s\" is invisible - Please, call setFocus on a visible element",
+                gfxElement->name);
     }
 
 elementExit:    
@@ -618,12 +647,12 @@ lockExit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E setFocus_f(GRAPHICS_S *obj, char *gfxElementName)
+static enum graphics_error_e setFocus_f(struct graphics_s *obj, char *gfxElementName)
 {
     assert(obj && obj->pData && gfxElementName);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -635,16 +664,19 @@ static GRAPHICS_ERROR_E setFocus_f(GRAPHICS_S *obj, char *gfxElementName)
         goto lockExit;
     }
     
-    GFX_ELEMENT_S *gfxElement = NULL;
+    struct gfx_element_s *gfxElement = NULL;
     
-    if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    if (pData->focusedElement
+        && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
         Logd("\"%s\" already has focus", gfxElementName);
         goto elementExit;
     }
-    else if (pData->videoElement && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    else if (pData->videoElement
+             && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->videoElement;
     }
-    else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    else if (pData->lastDrawnElement
+             && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
     }
     else if ((ret = getElement_f(obj, gfxElementName, &gfxElement)) != GRAPHICS_ERROR_NONE) {
@@ -679,12 +711,13 @@ lockExit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E setClickable_f(GRAPHICS_S *obj, char *gfxElementName, uint8_t isClickable)
+static enum graphics_error_e setClickable_f(struct graphics_s *obj, char *gfxElementName,
+                                            uint8_t isClickable)
 {
     assert(obj && obj->pData && gfxElementName);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -696,15 +729,18 @@ static GRAPHICS_ERROR_E setClickable_f(GRAPHICS_S *obj, char *gfxElementName, ui
         goto lockExit;
     }
     
-    GFX_ELEMENT_S *gfxElement = NULL;
+    struct gfx_element_s *gfxElement = NULL;
     
-    if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    if (pData->focusedElement
+        && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->focusedElement;
     }
-    else if (pData->videoElement && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    else if (pData->videoElement
+             && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->videoElement;
     }
-    else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    else if (pData->lastDrawnElement
+             && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
     }
     else if ((ret = getElement_f(obj, gfxElementName, &gfxElement)) != GRAPHICS_ERROR_NONE) {
@@ -730,12 +766,13 @@ lockExit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E setNav_f(GRAPHICS_S *obj, char *gfxElementName, GFX_NAV_S *nav)
+static enum graphics_error_e setNav_f(struct graphics_s *obj, char *gfxElementName,
+                                      struct gfx_nav_s *nav)
 {
     assert(obj && obj->pData && gfxElementName && nav);
 
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -747,22 +784,25 @@ static GRAPHICS_ERROR_E setNav_f(GRAPHICS_S *obj, char *gfxElementName, GFX_NAV_
         goto lockExit;
     }
 
-    GFX_ELEMENT_S *gfxElement = NULL;
+    struct gfx_element_s *gfxElement = NULL;
 
-    if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    if (pData->focusedElement
+        && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->focusedElement;
     }
-    else if (pData->videoElement && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    else if (pData->videoElement
+             && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->videoElement;
     }
-    else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    else if (pData->lastDrawnElement
+             && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
     }
     else if ((ret = getElement_f(obj, gfxElementName, &gfxElement)) != GRAPHICS_ERROR_NONE) {
         goto elementExit;
     }
 
-    memcpy(&gfxElement->nav, nav, sizeof(GFX_NAV_S));
+    memcpy(&gfxElement->nav, nav, sizeof(struct gfx_nav_s));
 
 elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
@@ -776,12 +816,12 @@ lockExit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *data)
+static enum graphics_error_e setData_f(struct graphics_s *obj, char *gfxElementName, void *data)
 {
     assert(obj && obj->pData && gfxElementName && data);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -798,15 +838,18 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
         goto lockExit;
     }
 
-    GFX_ELEMENT_S *gfxElement = NULL;
+    struct gfx_element_s *gfxElement = NULL;
     
-    if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    if (pData->focusedElement
+        && !strncmp(pData->focusedElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->focusedElement;
     }
-    else if (pData->videoElement && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    else if (pData->videoElement
+             && !strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->videoElement;
     }
-    else if (pData->lastDrawnElement && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
+    else if (pData->lastDrawnElement
+             && !strncmp(pData->lastDrawnElement->name, gfxElementName, MAX_NAME_SIZE)) {
         gfxElement = pData->lastDrawnElement;
     }
     else if ((ret = getElement_f(obj, gfxElementName, &gfxElement)) != GRAPHICS_ERROR_NONE) {
@@ -815,14 +858,15 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
         
     switch (gfxElement->type) {
         case GFX_ELEMENT_TYPE_VIDEO:
-            gfxElement->data.buffer.data   = ((BUFFER_S*)data)->data;
-            gfxElement->data.buffer.length = ((BUFFER_S*)data)->length;
+            gfxElement->data.buffer.data   = ((struct buffer_s*)data)->data;
+            gfxElement->data.buffer.length = ((struct buffer_s*)data)->length;
             break;
                 
         case GFX_ELEMENT_TYPE_IMAGE:
-            strncpy(gfxElement->data.image.path, ((GFX_IMAGE_S*)data)->path, strlen(((GFX_IMAGE_S*)data)->path));
-            gfxElement->data.image.format      = ((GFX_IMAGE_S*)data)->format;
-            if (!((GFX_IMAGE_S*)data)->hiddenColor) {
+            strncpy(gfxElement->data.image.path, ((struct gfx_image_s*)data)->path,
+                                                 strlen(((struct gfx_image_s*)data)->path));
+            gfxElement->data.image.format = ((struct gfx_image_s*)data)->format;
+            if (!((struct gfx_image_s*)data)->hiddenColor) {
                 if (gfxElement->data.image.hiddenColor) {
                     free(gfxElement->data.image.hiddenColor);
                     gfxElement->data.image.hiddenColor = NULL;
@@ -830,19 +874,21 @@ static GRAPHICS_ERROR_E setData_f(GRAPHICS_S *obj, char *gfxElementName, void *d
             }
             else {
                 if (!gfxElement->data.image.hiddenColor) {
-                    assert((gfxElement->data.image.hiddenColor = calloc(1, sizeof(GFX_COLOR_S))));
+                    assert((gfxElement->data.image.hiddenColor = calloc(1, sizeof(struct gfx_color_s))));
                 }
-                memcpy(gfxElement->data.image.hiddenColor, ((GFX_IMAGE_S*)data)->hiddenColor, sizeof(GFX_COLOR_S));
+                memcpy(gfxElement->data.image.hiddenColor, ((struct gfx_image_s*)data)->hiddenColor,
+                                                           sizeof(struct gfx_color_s));
             }
             break;
                 
         case GFX_ELEMENT_TYPE_TEXT:
-            if (pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect, &pData->params.colorOnReset) != DRAWER_ERROR_NONE) {
+            if (pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect,
+                                             &pData->params.colorOnReset) != DRAWER_ERROR_NONE) {
                 Loge("Failed to set background color of element \"%s\"", gfxElement->name);
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto elementExit;
             }
-            memcpy(&gfxElement->data.text, (GFX_TEXT_S*)data, sizeof(GFX_TEXT_S));
+            memcpy(&gfxElement->data.text, (struct gfx_text_s*)data, sizeof(struct gfx_text_s));
             break;
                 
         default:
@@ -871,12 +917,13 @@ lockExit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_IMAGE_S *inOut)
+static enum graphics_error_e saveVideoFrame_f(struct graphics_s *obj, struct buffer_s *buffer,
+                                              struct gfx_image_s *inOut)
 {
     assert(obj && obj->pData && inOut);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_DRAWER;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_DRAWER;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -893,7 +940,7 @@ static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_
         goto lockExit;
     }
 
-    BUFFER_S videoBuffer = { 0 };
+    struct buffer_s videoBuffer = {0};
 
     if (!buffer) {
         if (!pData->videoElement) {
@@ -910,7 +957,8 @@ static GRAPHICS_ERROR_E saveVideoFrame_f(GRAPHICS_S *obj, BUFFER_S *buffer, GFX_
         videoBuffer.length = buffer->length;
     }
     
-    if (pData->drawerObj->saveBuffer(pData->drawerObj, &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
+    if (pData->drawerObj->saveBuffer(pData->drawerObj,
+                                     &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
         goto elementExit;
     }
 
@@ -928,12 +976,13 @@ lockExit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName, GFX_IMAGE_S *inOut)
+static enum graphics_error_e saveVideoElement_f(struct graphics_s *obj, char *gfxElementName,
+                                                struct gfx_image_s *inOut)
 {
     assert(obj && obj->pData && gfxElementName && inOut);
 
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_PARAMS;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_PARAMS;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -951,14 +1000,15 @@ static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName
         goto lockExit;
     }
 
-    BUFFER_S videoBuffer = { 0 };
+    struct buffer_s videoBuffer = {0};
 
-    if (!pData->videoElement && (strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE) == 0)) {
+    if (!pData->videoElement
+        && (strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE) == 0)) {
         videoBuffer.data   = pData->videoElement->data.buffer.data;
         videoBuffer.length = pData->videoElement->data.buffer.length;
     }
     else {
-        GFX_ELEMENT_S *gfxElement = NULL;
+        struct gfx_element_s *gfxElement = NULL;
 
         if (getElement_f(obj, gfxElementName, &gfxElement) != GRAPHICS_ERROR_NONE) {
             Loge("Element \"%s\" not found", gfxElementName);
@@ -979,7 +1029,8 @@ static GRAPHICS_ERROR_E saveVideoElement_f(GRAPHICS_S *obj, char *gfxElementName
         videoBuffer.length = gfxElement->data.buffer.length;
     }
 
-    if (pData->drawerObj->saveBuffer(pData->drawerObj, &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
+    if (pData->drawerObj->saveBuffer(pData->drawerObj,
+                                     &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
         ret = GRAPHICS_ERROR_DRAWER;
         goto elementExit;
     }
@@ -998,12 +1049,12 @@ lockExit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E takeScreenshot_f(GRAPHICS_S *obj, GFX_IMAGE_S *inOut)
+static enum graphics_error_e takeScreenshot_f(struct graphics_s *obj, struct gfx_image_s *inOut)
 {
     assert(obj && obj->pData && inOut);
 
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -1023,12 +1074,12 @@ static GRAPHICS_ERROR_E takeScreenshot_f(GRAPHICS_S *obj, GFX_IMAGE_S *inOut)
 /*!
  *
  */
-static GRAPHICS_ERROR_E drawAllElements_f(GRAPHICS_S *obj)
+static enum graphics_error_e drawAllElements_f(struct graphics_s *obj)
 {
     assert(obj && obj->pData);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -1056,14 +1107,15 @@ lockExit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E simulateGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
+static enum graphics_error_e simulateGfxEvent_f(struct graphics_s *obj,
+                                                struct gfx_event_s *gfxEvent)
 {
     assert(obj && obj->pData && gfxEvent);
 
-    GRAPHICS_PRIVATE_DATA_S *pData   = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_TASK_S *simulateEvtTask = &pData->simulateEvtTask;
-    LIST_S *evtsList                 = simulateEvtTask->list;
-    GRAPHICS_LIST_ELEMENT_S *element = NULL;
+    struct graphics_private_data_s *pData   = (struct graphics_private_data_s*)(obj->pData);
+    struct graphics_task_s *simulateEvtTask = &pData->simulateEvtTask;
+    struct list_s *evtsList                 = simulateEvtTask->list;
+    struct graphics_list_element_s *element = NULL;
 
     if (pData->quit) {
         Logw("Too late! Graphics module is stopped or being stopped");
@@ -1077,9 +1129,9 @@ static GRAPHICS_ERROR_E simulateGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEven
 
     Logd("Adding gfx event - type : \"%u\"", gfxEvent->type);
 
-    assert((element = calloc(1, sizeof(GRAPHICS_LIST_ELEMENT_S))));
+    assert((element = calloc(1, sizeof(struct graphics_list_element_s))));
     element->seconds = time(NULL);
-    memcpy(&element->event, gfxEvent, sizeof(GFX_EVENT_S));
+    memcpy(&element->event, gfxEvent, sizeof(struct gfx_event_s));
 
     (void)evtsList->add(evtsList, (void*)element);
 
@@ -1093,18 +1145,18 @@ static GRAPHICS_ERROR_E simulateGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEven
 /*!
  *
  */
-static GRAPHICS_ERROR_E handleGfxEvents_f(GRAPHICS_S *obj)
+static enum graphics_error_e handleGfxEvents_f(struct graphics_s *obj)
 {
     assert(obj && obj->pData);
 
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
 
     if (!pData->drawerObj) {
         Loge("Drawer not initialized yet");
         return GRAPHICS_ERROR_DRAWER;
     }
 
-    GFX_EVENT_S evt;
+    struct gfx_event_s evt;
 
     while (!pData->quit && pData->drawerObj) {
         if (pData->drawerObj->getEvent(pData->drawerObj, &evt) != DRAWER_ERROR_NONE) {
@@ -1123,11 +1175,11 @@ static GRAPHICS_ERROR_E handleGfxEvents_f(GRAPHICS_S *obj)
 /*!
  *
  */
-static GRAPHICS_ERROR_E quit_f(GRAPHICS_S *obj)
+static enum graphics_error_e quit_f(struct graphics_s *obj)
 {
     assert(obj && obj->pData);
 
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
 
     if (!pData->drawerObj) {
         Loge("Drawer not initialized yet");
@@ -1147,38 +1199,46 @@ static GRAPHICS_ERROR_E quit_f(GRAPHICS_S *obj)
     return GRAPHICS_ERROR_NONE;
 }
 
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////// PRIVATE FUNCTIONS IMPLEMENTATION ///////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
 /*!
  *
  */
-static GRAPHICS_ERROR_E updateGroup_f(GRAPHICS_S *obj, char *groupName, char *gfxElementToIgnore)
+static enum graphics_error_e updateGroup_f(struct graphics_s *obj, char *groupName,
+                                           char *gfxElementToIgnore)
 {
     assert(obj && obj->pData && groupName);
     
-    if (strlen(groupName) == 0) {
+    if (groupName[0] == '\0') {
         Loge("Invalid group name");
         return GRAPHICS_ERROR_DRAWER;
     }
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E ret           = GRAPHICS_ERROR_NONE;
-    GFX_ELEMENT_S *gfxElement      = NULL;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
+    struct gfx_element_s *gfxElement      = NULL;
     
     uint32_t nbElements;
-    if (pData->gfxElementsList->getNbElements(pData->gfxElementsList, &nbElements) != LIST_ERROR_NONE) {
+    if (pData->gfxElementsList->getNbElements(pData->gfxElementsList,
+                                              &nbElements) != LIST_ERROR_NONE) {
         Loge("Failed to get number of elements");
         ret = GRAPHICS_ERROR_LIST;
         goto exit;
     }
         
     while (nbElements > 0) {
-        if (pData->gfxElementsList->getElement(pData->gfxElementsList, (void*)&gfxElement) != LIST_ERROR_NONE) {
+        if (pData->gfxElementsList->getElement(pData->gfxElementsList,
+                                               (void*)&gfxElement) != LIST_ERROR_NONE) {
             Loge("Failed to retrieve element");
             ret = GRAPHICS_ERROR_LIST;
             goto exit;
         }
         
         if (!strncmp(gfxElement->groupName, groupName, MAX_NAME_SIZE)
-            && (!gfxElementToIgnore || strncmp(gfxElement->name, gfxElementToIgnore, MAX_NAME_SIZE))) {
+            && (!gfxElementToIgnore
+                || strncmp(gfxElement->name, gfxElementToIgnore, MAX_NAME_SIZE))) {
             if ((ret = updateElement_f(obj, gfxElement)) != GRAPHICS_ERROR_NONE) {
                 Loge("Failed to update element : \"%s\"", gfxElement->name);
                 goto exit;
@@ -1196,12 +1256,13 @@ exit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement)
+static enum graphics_error_e updateElement_f(struct graphics_s *obj,
+                                             struct gfx_element_s *gfxElement)
 {
     assert(obj && obj->pData && gfxElement);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E           ret = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (!pData->drawerObj) {
         Loge("Drawer not initialized yet");
@@ -1211,7 +1272,8 @@ static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxEleme
     if (!gfxElement->isVisible) {
         // Clear surface
         if (!gfxElement->surfaceUpdated
-            && pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect, &pData->params.colorOnReset) != DRAWER_ERROR_NONE) {
+            && pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect,
+                                            &pData->params.colorOnReset) != DRAWER_ERROR_NONE) {
             Loge("Failed to set background color of element \"%s\"", gfxElement->name);
             ret = GRAPHICS_ERROR_DRAWER;
             goto exit;
@@ -1220,7 +1282,8 @@ static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxEleme
         gfxElement->surfaceUpdated = 1;
 
         // Change focused element if required
-        if (pData->focusedElement && !strncmp(pData->focusedElement->name, gfxElement->name, MAX_NAME_SIZE)) {
+        if (pData->focusedElement
+            && !strncmp(pData->focusedElement->name, gfxElement->name, MAX_NAME_SIZE)) {
             Logw("Current focused element is not visible anymore => Please, set a new one");
             pData->focusedElement->hasFocus = 0;
             pData->focusedElement           = NULL;
@@ -1228,8 +1291,10 @@ static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxEleme
     }
     else {
         if (gfxElement->hasFocus) {
-            if (pData->focusedElement && strncmp(pData->focusedElement->name, gfxElement->name, MAX_NAME_SIZE)) {
-                Logd("\"%s\" was not the current focused element (Current : %s)", gfxElement->name, pData->focusedElement->name);
+            if (pData->focusedElement
+                && strncmp(pData->focusedElement->name, gfxElement->name, MAX_NAME_SIZE)) {
+                Logd("\"%s\" was not the current focused element (Current : %s)",
+                        gfxElement->name, pData->focusedElement->name);
                 pData->focusedElement->hasFocus = 0;
                 if (pData->drawerObj->setBgColor(pData->drawerObj,
                                                 &pData->focusedElement->rect,
@@ -1245,7 +1310,8 @@ static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxEleme
                 }
             }
             
-            if (pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect, &pData->params.colorOnFocus) != DRAWER_ERROR_NONE) {
+            if (pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect,
+                                             &pData->params.colorOnFocus) != DRAWER_ERROR_NONE) {
                 Loge("Failed to set colorOnFocus on \"%s\"", gfxElement->name);
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
@@ -1255,7 +1321,7 @@ static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxEleme
             Logd("Focus now given to : \"%s\"", pData->focusedElement->name);
             
             if (pData->params.onGfxEventCb) {
-                GFX_EVENT_S evt;
+                struct gfx_event_s evt;
                 evt.type            = GFX_EVENT_TYPE_FOCUS;
                 evt.gfxElementName  = strdup(pData->focusedElement->name);
                 evt.gfxElementPData = pData->focusedElement->pData;
@@ -1264,7 +1330,8 @@ static GRAPHICS_ERROR_E updateElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxEleme
             }
         }
         else if (gfxElement->isFocusable
-                    && pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect, &pData->params.colorOnBlur) != DRAWER_ERROR_NONE) {
+                 && pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect,
+                                                 &pData->params.colorOnBlur) != DRAWER_ERROR_NONE) {
             Loge("Failed to set colorOnBlur on \"%s\"", gfxElement->name);
             ret = GRAPHICS_ERROR_DRAWER;
             goto exit;
@@ -1281,12 +1348,13 @@ exit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E drawElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement)
+static enum graphics_error_e drawElement_f(struct graphics_s *obj,
+                                           struct gfx_element_s *gfxElement)
 {
     assert(obj && obj->pData && gfxElement);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E           ret = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (!pData->drawerObj) {
         Loge("Drawer not initialized yet");
@@ -1295,7 +1363,8 @@ static GRAPHICS_ERROR_E drawElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement
 
     switch (gfxElement->type) {
         case GFX_ELEMENT_TYPE_VIDEO:
-            if (pData->drawerObj->drawVideo(pData->drawerObj, &gfxElement->rect, &gfxElement->data.buffer) != DRAWER_ERROR_NONE) {
+            if (pData->drawerObj->drawVideo(pData->drawerObj, &gfxElement->rect,
+                                            &gfxElement->data.buffer) != DRAWER_ERROR_NONE) {
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
             }
@@ -1303,14 +1372,16 @@ static GRAPHICS_ERROR_E drawElement_f(GRAPHICS_S *obj, GFX_ELEMENT_S *gfxElement
             break;
                 
         case GFX_ELEMENT_TYPE_IMAGE:
-            if (pData->drawerObj->drawImage(pData->drawerObj, &gfxElement->rect, &gfxElement->data.image) != DRAWER_ERROR_NONE) {
+            if (pData->drawerObj->drawImage(pData->drawerObj, &gfxElement->rect,
+                                            &gfxElement->data.image) != DRAWER_ERROR_NONE) {
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
             }
             break;
                 
         case GFX_ELEMENT_TYPE_TEXT:
-            if (pData->drawerObj->drawText(pData->drawerObj, &gfxElement->rect, &gfxElement->data.text) != DRAWER_ERROR_NONE) {
+            if (pData->drawerObj->drawText(pData->drawerObj, &gfxElement->rect,
+                                           &gfxElement->data.text) != DRAWER_ERROR_NONE) {
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
             }
@@ -1331,22 +1402,25 @@ exit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E getElement_f(GRAPHICS_S *obj, char *gfxElementName, GFX_ELEMENT_S **gfxElement)
+static enum graphics_error_e getElement_f(struct graphics_s *obj, char *gfxElementName,
+                                          struct gfx_element_s **gfxElement)
 {
     assert(obj && obj->pData && gfxElementName);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_ERROR_E           ret = GRAPHICS_ERROR_NONE;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     uint32_t nbElements;
-    if (pData->gfxElementsList->getNbElements(pData->gfxElementsList, &nbElements) != LIST_ERROR_NONE) {
+    if (pData->gfxElementsList->getNbElements(pData->gfxElementsList,
+                                              &nbElements) != LIST_ERROR_NONE) {
         Loge("Failed to get number of elements");
         ret = GRAPHICS_ERROR_LIST;
         goto exit;
     }
     
     while (nbElements > 0) {
-        if (pData->gfxElementsList->getElement(pData->gfxElementsList, (void*)gfxElement) != LIST_ERROR_NONE) {
+        if (pData->gfxElementsList->getElement(pData->gfxElementsList,
+                                               (void*)gfxElement) != LIST_ERROR_NONE) {
             Loge("Failed to retrieve element");
             ret = GRAPHICS_ERROR_LIST;
             goto exit;
@@ -1372,28 +1446,31 @@ exit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E getClickedElement_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
+static enum graphics_error_e getClickedElement_f(struct graphics_s *obj,
+                                                 struct gfx_event_s *gfxEvent)
 {
     assert(obj && obj->pData && gfxEvent);
     
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     
     if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
         return GRAPHICS_ERROR_LOCK;
     }
     
-    GRAPHICS_ERROR_E ret      = GRAPHICS_ERROR_NONE;
-    GFX_ELEMENT_S *gfxElement = NULL;
+    enum graphics_error_e ret        = GRAPHICS_ERROR_NONE;
+    struct gfx_element_s *gfxElement = NULL;
     
     uint32_t nbElements;
-    if (pData->gfxElementsList->getNbElements(pData->gfxElementsList, &nbElements) != LIST_ERROR_NONE) {
+    if (pData->gfxElementsList->getNbElements(pData->gfxElementsList,
+                                              &nbElements) != LIST_ERROR_NONE) {
         Loge("Failed to get number of elements");
         ret = GRAPHICS_ERROR_LIST;
         goto exit;
     }
     
     while (nbElements > 0) {
-        if (pData->gfxElementsList->getElement(pData->gfxElementsList, (void*)&gfxElement) != LIST_ERROR_NONE) {
+        if (pData->gfxElementsList->getElement(pData->gfxElementsList,
+                                               (void*)&gfxElement) != LIST_ERROR_NONE) {
             Loge("Failed to retrieve element");
             continue;
         }
@@ -1403,8 +1480,10 @@ static GRAPHICS_ERROR_E getClickedElement_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEve
         }
         
         if (gfxElement->isClickable
-            && (gfxEvent->rect.x >= gfxElement->rect.x) && (gfxEvent->rect.x <= gfxElement->rect.x + gfxElement->rect.w)
-            && (gfxEvent->rect.y >= gfxElement->rect.y) && (gfxEvent->rect.y <= gfxElement->rect.y + gfxElement->rect.h)) {
+            && (gfxEvent->rect.x >= gfxElement->rect.x)
+            && (gfxEvent->rect.x <= gfxElement->rect.x + gfxElement->rect.w)
+            && (gfxEvent->rect.y >= gfxElement->rect.y)
+            && (gfxEvent->rect.y <= gfxElement->rect.y + gfxElement->rect.h)) {
             gfxEvent->gfxElementName  = strdup(gfxElement->name);
             gfxEvent->gfxElementPData = gfxElement->pData;
             break;
@@ -1426,7 +1505,8 @@ exit:
 /*!
  *
  */
-static GRAPHICS_ERROR_E handleGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
+static enum graphics_error_e handleGfxEvent_f(struct graphics_s *obj,
+                                              struct gfx_event_s *gfxEvent)
 {
     assert(obj && obj->pData && gfxEvent);
 
@@ -1435,7 +1515,7 @@ static GRAPHICS_ERROR_E handleGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
         return GRAPHICS_ERROR_PARAMS;
     }
 
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
 
     if (pthread_mutex_lock(&pData->evtLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -1468,7 +1548,8 @@ static GRAPHICS_ERROR_E handleGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
             break;
 
         case GFX_EVENT_TYPE_CLICK:
-            if (pData->params.onGfxEventCb && (getClickedElement_f(obj, gfxEvent) == GRAPHICS_ERROR_NONE)) {
+            if (pData->params.onGfxEventCb
+                && (getClickedElement_f(obj, gfxEvent) == GRAPHICS_ERROR_NONE)) {
                 setFocus_f(obj, gfxEvent->gfxElementName);
                 pData->params.onGfxEventCb(gfxEvent, pData->params.userData);
             }
@@ -1476,7 +1557,7 @@ static GRAPHICS_ERROR_E handleGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
 
         case GFX_EVENT_TYPE_MOVE_LEFT:
             if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                if (pData->focusedElement && (strlen(pData->focusedElement->nav.left) != 0)) {
+                if (pData->focusedElement && ((pData->focusedElement->nav.left)[0] != '\0')) {
                     gfxEvent->gfxElementName = strdup(pData->focusedElement->nav.left);
                 }
                 (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
@@ -1490,7 +1571,7 @@ static GRAPHICS_ERROR_E handleGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
 
         case GFX_EVENT_TYPE_MOVE_UP:
             if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                if (pData->focusedElement && (strlen(pData->focusedElement->nav.up) != 0)) {
+                if (pData->focusedElement && ((pData->focusedElement->nav.up)[0] != '\0')) {
                     gfxEvent->gfxElementName = strdup(pData->focusedElement->nav.up);
                 }
                 (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
@@ -1504,7 +1585,7 @@ static GRAPHICS_ERROR_E handleGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
 
         case GFX_EVENT_TYPE_MOVE_RIGHT:
             if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                if (pData->focusedElement && (strlen(pData->focusedElement->nav.right) != 0)) {
+                if (pData->focusedElement && ((pData->focusedElement->nav.right)[0] != '\0')) {
                     gfxEvent->gfxElementName = strdup(pData->focusedElement->nav.right);
                 }
                 (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
@@ -1518,7 +1599,7 @@ static GRAPHICS_ERROR_E handleGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
 
         case GFX_EVENT_TYPE_MOVE_DOWN:
             if (pData->gfxElementsList->lock(pData->gfxElementsList) == LIST_ERROR_NONE) {
-                if (pData->focusedElement && (strlen(pData->focusedElement->nav.down) != 0)) {
+                if (pData->focusedElement && ((pData->focusedElement->nav.down)[0] != '\0')) {
                     gfxEvent->gfxElementName = strdup(pData->focusedElement->nav.down);
                 }
                 (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
@@ -1545,59 +1626,15 @@ static GRAPHICS_ERROR_E handleGfxEvent_f(GRAPHICS_S *obj, GFX_EVENT_S *gfxEvent)
     return GRAPHICS_ERROR_NONE;
 }
 
-/*!
- *
- */
-static uint8_t compareElementsCb(LIST_S *obj, void *elementToCheck, void *userData)
-{
-    assert(obj && elementToCheck && userData);
-    
-    GFX_ELEMENT_S *gfxElement   = (GFX_ELEMENT_S*)elementToCheck;
-    char *nameOfElementToRemove = (char*)userData;
-    
-    return (strncmp(nameOfElementToRemove, gfxElement->name, MAX_NAME_SIZE) == 0);
-}
-
-/*!
- *
- */
-static void releaseElementCb(LIST_S *obj, void *element)
-{
-    assert(obj && element);
-    
-    GRAPHICS_PRIVATE_DATA_S *pData = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GFX_ELEMENT_S *gfxElement      = (GFX_ELEMENT_S*)element;
-    
-    gfxElement->pData = NULL;
-    
-    free(gfxElement);
-    gfxElement = NULL;
-}
-
-/*!
- *
- */
-static void browseElementsCb(LIST_S *obj, void *element, void *dataProvidedToBrowseFunction)
-{
-    assert(obj && element);
-    
-    GFX_ELEMENT_S *gfxElement = (GFX_ELEMENT_S*)element;
-    GRAPHICS_S    *gfxObj     = (GRAPHICS_S*)dataProvidedToBrowseFunction;
-    
-    if (updateElement_f(gfxObj, gfxElement) != GRAPHICS_ERROR_NONE) {
-        //Loge("Failed to update element : \"%s\"", gfxElement->name);
-    }
-}
-
-static void taskFct_f(TASK_PARAMS_S *params)
+static void taskFct_f(struct task_params_s *params)
 {
     assert(params && params->fctData);
 
-    GRAPHICS_S *obj                  = (GRAPHICS_S*)(params->fctData);
-    GRAPHICS_PRIVATE_DATA_S *pData   = (GRAPHICS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_TASK_S *simulateEvtTask = &pData->simulateEvtTask;
-    LIST_S *evtsList                 = simulateEvtTask->list;
-    GRAPHICS_LIST_ELEMENT_S *element = NULL;
+    struct graphics_s *obj                  = (struct graphics_s*)(params->fctData);
+    struct graphics_private_data_s *pData   = (struct graphics_private_data_s*)(obj->pData);
+    struct graphics_task_s *simulateEvtTask = &pData->simulateEvtTask;
+    struct list_s *evtsList                 = simulateEvtTask->list;
+    struct graphics_list_element_s *element = NULL;
 
     if (simulateEvtTask->quit) {
         return;
@@ -1636,21 +1673,69 @@ lockExit:
     sem_post(&simulateEvtTask->sem); // Force retry
 }
 
-static uint8_t compareEventsCb(LIST_S *obj, void *elementToCheck, void *userData)
+/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+/*!
+ *
+ */
+static uint8_t compareElementsCb(struct list_s *obj, void *elementToCheck, void *userData)
+{
+    assert(obj && elementToCheck && userData);
+    
+    struct gfx_element_s *gfxElement = (struct gfx_element_s*)elementToCheck;
+    char *nameOfElementToRemove      = (char*)userData;
+    
+    return (strncmp(nameOfElementToRemove, gfxElement->name, MAX_NAME_SIZE) == 0);
+}
+
+/*!
+ *
+ */
+static void releaseElementCb(struct list_s *obj, void *element)
+{
+    assert(obj && element);
+    
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
+    struct gfx_element_s *gfxElement      = (struct gfx_element_s*)element;
+    
+    gfxElement->pData = NULL;
+    
+    free(gfxElement);
+    gfxElement = NULL;
+}
+
+/*!
+ *
+ */
+static void browseElementsCb(struct list_s *obj, void *element, void *userData)
+{
+    assert(obj && element);
+    
+    struct gfx_element_s *gfxElement = (struct gfx_element_s*)element;
+    struct graphics_s *gfxObj        = (struct graphics_s*)userData;
+    
+    if (updateElement_f(gfxObj, gfxElement) != GRAPHICS_ERROR_NONE) {
+        //Loge("Failed to update element : \"%s\"", gfxElement->name);
+    }
+}
+
+static uint8_t compareEventsCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     assert(obj && elementToCheck && userData);
 
-    GRAPHICS_LIST_ELEMENT_S *element = (GRAPHICS_LIST_ELEMENT_S*)elementToCheck;
-    time_t secondsOfElementToRemove  = *((time_t*)userData);
+    struct graphics_list_element_s *element = (struct graphics_list_element_s*)elementToCheck;
+    time_t secondsOfElementToRemove         = *((time_t*)userData);
 
     return (element->seconds == secondsOfElementToRemove);
 }
 
-static void releaseEventCb(LIST_S *obj, void *element)
+static void releaseEventCb(struct list_s *obj, void *element)
 {
     assert(obj && element);
 
-    GRAPHICS_LIST_ELEMENT_S *elementToRemove = (GRAPHICS_LIST_ELEMENT_S*)element;
+    struct graphics_list_element_s *elementToRemove = (struct graphics_list_element_s*)element;
 
     free(elementToRemove);
     elementToRemove = NULL;

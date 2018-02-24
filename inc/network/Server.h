@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Server.h
+* \file Server.h
 * \author Boubacar DIENE
 */
 
@@ -32,46 +32,72 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "network/LinkHelper.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum server_accept_mode_e;
+enum server_error_e;
+
+struct server_params_s;
+struct server_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum SERVER_ACCEPT_MODE_E SERVER_ACCEPT_MODE_E;
-typedef enum SERVER_ERROR_E       SERVER_ERROR_E;
+typedef void (*server_on_client_state_changed_cb)(struct server_params_s *params,
+                                                  struct link_s *client,
+                                                  enum state_e state, void *userData);
 
-typedef struct SERVER_PARAMS_S    SERVER_PARAMS_S;
-typedef struct SERVER_S           SERVER_S;
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef void (*ON_CLIENT_STATE_CHANGED_CB)(SERVER_PARAMS_S *params, LINK_S *client, STATE_E state, void *userData);
+typedef enum server_error_e (*server_start_f)(struct server_s *obj,
+                                              struct server_params_s *params);
+typedef enum server_error_e (*server_stop_f)(struct server_s *obj,
+                                             struct server_params_s *params);
 
-typedef SERVER_ERROR_E (*SERVER_START_F)(SERVER_S *obj, SERVER_PARAMS_S *params);
-typedef SERVER_ERROR_E (*SERVER_STOP_F )(SERVER_S *obj, SERVER_PARAMS_S *params);
+/** addReceiver   : Client added to receivers' list => it starts receiving data from server
+ * removeReceiver: Remove client from receivers' list but still connected */
+typedef enum server_error_e (*server_add_receiver_f)(struct server_s *obj,
+                                                     struct server_params_s *params,
+                                                     struct link_s *client);
+typedef enum server_error_e (*server_remove_receiver_f)(struct server_s *obj,
+                                                        struct server_params_s *params,
+                                                        struct link_s *client);
 
-typedef SERVER_ERROR_E (*SERVER_ADD_RECEIVER_F)(SERVER_S *obj, SERVER_PARAMS_S *params, LINK_S *client);
-typedef SERVER_ERROR_E (*SERVER_REMOVE_RECEIVER_F)(SERVER_S *obj, SERVER_PARAMS_S *params, LINK_S *client);
+typedef enum server_error_e (*server_suspend_sender_f)(struct server_s *obj,
+                                                       struct server_params_s *params);
+typedef enum server_error_e (*server_resume_sender_f)(struct server_s *obj,
+                                                      struct server_params_s *params);
 
-typedef SERVER_ERROR_E (*SERVER_SUSPEND_SENDER_F)(SERVER_S *obj, SERVER_PARAMS_S *params);
-typedef SERVER_ERROR_E (*SERVER_RESUME_SSENDER_F)(SERVER_S *obj, SERVER_PARAMS_S *params);
+/* Close link with client and release its resources */
+typedef enum server_error_e (*server_disconnect_client_f)(struct server_s *obj,
+                                                          struct server_params_s *params,
+                                                          struct link_s *client);
 
-typedef SERVER_ERROR_E (*SERVER_DISCONNECT_CLIENT_F)(SERVER_S *obj, SERVER_PARAMS_S *params, LINK_S *client);
+typedef enum server_error_e (*server_send_data_f)(struct server_s *obj,
+                                                  struct server_params_s *params,
+                                                  struct buffer_s *buffer);
 
-typedef SERVER_ERROR_E (*SERVER_SEND_DATA_F)(SERVER_S *obj, SERVER_PARAMS_S *params, BUFFER_S *buffer);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-enum SERVER_ACCEPT_MODE_E {
-    SERVER_ACCEPT_MODE_AUTOMATIC, /* Dispatch data to all connected clients i.e no need to call addReceiver() */
+enum server_accept_mode_e {
+    SERVER_ACCEPT_MODE_AUTOMATIC, /** Dispatch data to all connected clients i.e no need to call
+                                      addReceiver() */
     SERVER_ACCEPT_MODE_MANUAL,    /* Wait until client is added to receivers' list */
 };
 
-enum SERVER_ERROR_E {
+enum server_error_e {
     SERVER_ERROR_NONE,
     SERVER_ERROR_INIT,
     SERVER_ERROR_UNINIT,
@@ -82,53 +108,57 @@ enum SERVER_ERROR_E {
     SERVER_ERROR_PARAMS
 };
 
-struct SERVER_PARAMS_S {
-    char                       name[MAX_NAME_SIZE];
+struct server_params_s {
+    char                              name[MAX_NAME_SIZE];
     
-    STREAM_TYPE_E              type;
-    LINK_TYPE_E                link;
-    LINK_MODE_E                mode;
-    SERVER_ACCEPT_MODE_E       acceptMode;
+    enum stream_type_e                type;
+    enum link_type_e                  link;
+    enum link_mode_e                  mode;
+    enum server_accept_mode_e         acceptMode;
     
-    char                       mime[MAX_MIME_SIZE];
+    char                              mime[MAX_MIME_SIZE];
     
     union {
-        RECIPIENT_S            server;                          /* Used in connection-oriented mode */
-        char                   serverSocketName[MAX_NAME_SIZE]; /* Used in connectionless mode */
+        struct recipient_s            server;                          /* Connection-oriented */
+        char                          serverSocketName[MAX_NAME_SIZE]; /* Connectionless */
     } recipient;
     
-    PRIORITY_E                 priority;
-    uint32_t                   maxClients;
-    size_t                     maxBufferSize;
+    enum priority_e                   priority;
+    uint32_t                          maxClients;
+    size_t                            maxBufferSize;
     
-    ON_CLIENT_STATE_CHANGED_CB onClientStateChangedCb;
+    server_on_client_state_changed_cb onClientStateChangedCb;
     
-    void                       *userData;
-};
-
-struct SERVER_S {
-    SERVER_START_F             start;
-    SERVER_STOP_F              stop;
-    
-    SERVER_ADD_RECEIVER_F      addReceiver;    /* Client added to receivers' list => it starts receiving data from server */
-    SERVER_REMOVE_RECEIVER_F   removeReceiver; // Remove client from receivers' list but still connected
-    
-    SERVER_SUSPEND_SENDER_F    suspendSender;
-    SERVER_SUSPEND_SENDER_F    resumeSender;
-
-    SERVER_DISCONNECT_CLIENT_F disconnectClient; // Close link with client and release its resources
-    
-    SERVER_SEND_DATA_F         sendData;
-    
-    void                       *pData;
+    void                              *userData;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-SERVER_ERROR_E Server_Init  (SERVER_S **obj);
-SERVER_ERROR_E Server_UnInit(SERVER_S **obj);
+struct server_s {
+    server_start_f             start;
+    server_stop_f              stop;
+
+    server_add_receiver_f      addReceiver;
+    server_remove_receiver_f   removeReceiver;
+
+    server_suspend_sender_f    suspendSender;
+    server_resume_sender_f     resumeSender;
+
+    server_disconnect_client_f disconnectClient;
+
+    server_send_data_f         sendData;
+
+    void *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum server_error_e Server_Init(struct server_s **obj);
+enum server_error_e Server_UnInit(struct server_s **obj);
 
 #ifdef __cplusplus
 }

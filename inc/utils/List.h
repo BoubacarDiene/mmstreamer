@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   List.h
+* \file List.h
 * \author Boubacar DIENE
 */
 
@@ -32,40 +32,48 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "utils/Common.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum list_error_e;
+
+struct list_params_s;
+struct list_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   LIST_ERROR_E  LIST_ERROR_E;
+typedef uint8_t (*list_compare_cb)(struct list_s *obj, void *elementToCheck, void *userData);
+typedef void (*list_release_cb)(struct list_s *obj, void *element);
+typedef void (*list_browse_cb)(struct list_s *obj, void *element, void *userData);
 
-typedef struct LIST_PARAMS_S LIST_PARAMS_S;
-typedef struct LIST_S        LIST_S;
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef uint8_t (*LIST_COMPARE_CB)(LIST_S *obj, void *elementToCheck, void *userData);
-typedef void    (*LIST_RELEASE_CB)(LIST_S *obj, void *element);
-typedef void    (*LIST_BROWSE_CB )(LIST_S *obj, void *element, void *dataProvidedToBrowseFunction);
+typedef enum list_error_e (*list_add_f)(struct list_s *obj, void *element);
+typedef enum list_error_e (*list_remove_f)(struct list_s *obj, void *userData);
+typedef enum list_error_e (*list_remove_all_f)(struct list_s *obj);
 
-typedef LIST_ERROR_E (*LIST_ADD_F       )(LIST_S *obj, void *element);
-typedef LIST_ERROR_E (*LIST_REMOVE_F    )(LIST_S *obj, void *userData);
-typedef LIST_ERROR_E (*LIST_REMOVE_ALL_F)(LIST_S *obj);
+typedef enum list_error_e (*list_get_nb_elements_f)(struct list_s *obj, uint32_t *nbElements);
+typedef enum list_error_e (*list_get_element_f)(struct list_s *obj, void **element);
+typedef enum list_error_e (*list_browse_elements_f)(struct list_s *obj, void *userData);
 
-typedef LIST_ERROR_E (*LIST_GET_NB_ELEMENTS_F)(LIST_S *obj, uint32_t *nbElements);
-typedef LIST_ERROR_E (*LIST_GET_ELEMENT_F    )(LIST_S *obj, void **element);
-typedef LIST_ERROR_E (*LIST_BROWSE_ELEMENTS_F)(LIST_S *obj, void *userData);
+typedef enum list_error_e (*list_lock_f)(struct list_s *obj);
+typedef enum list_error_e (*list_unlock_f)(struct list_s *obj);
 
-typedef LIST_ERROR_E (*LIST_LOCK_F  )(LIST_S *obj);
-typedef LIST_ERROR_E (*LIST_UNLOCK_F)(LIST_S *obj);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-enum LIST_ERROR_E {
+enum list_error_e {
     LIST_ERROR_NONE,
     LIST_ERROR_INIT,
     LIST_ERROR_UNINIT,
@@ -73,35 +81,38 @@ enum LIST_ERROR_E {
     LIST_ERROR_PARAMS
 };
 
-struct LIST_PARAMS_S {
-    LIST_COMPARE_CB compareCb;
-    LIST_RELEASE_CB releaseCb;
-    LIST_BROWSE_CB  browseCb;
-};
-
-struct LIST_S {
-    LIST_PARAMS_S          params;
-    
-    LIST_ADD_F             add;
-    LIST_REMOVE_F          remove;
-    LIST_REMOVE_ALL_F      removeAll;
-    
-    LIST_GET_NB_ELEMENTS_F getNbElements;
-    LIST_GET_ELEMENT_F     getElement;
-    LIST_BROWSE_ELEMENTS_F browseElements;
-    
-    LIST_LOCK_F            lock;
-    LIST_UNLOCK_F          unlock;
-    
-    void                   *pData;
+struct list_params_s {
+    list_compare_cb compareCb;
+    list_release_cb releaseCb;
+    list_browse_cb  browseCb;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-LIST_ERROR_E List_Init  (LIST_S **obj, LIST_PARAMS_S *params);
-LIST_ERROR_E List_UnInit(LIST_S **obj);
+struct list_s {
+    list_add_f             add;
+    list_remove_f          remove;
+    list_remove_all_f      removeAll;
+
+    list_get_nb_elements_f getNbElements;
+    list_get_element_f     getElement;
+    list_browse_elements_f browseElements;
+
+    list_lock_f            lock;
+    list_unlock_f          unlock;
+    
+    struct list_params_s params;
+    void                 *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum list_error_e List_Init(struct list_s **obj, struct list_params_s *params);
+enum list_error_e List_UnInit(struct list_s **obj);
 
 #ifdef __cplusplus
 }

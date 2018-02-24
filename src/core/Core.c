@@ -20,13 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Core.c
-* \brief  TODO
+* \file Core.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Configs.h"
@@ -35,70 +35,71 @@
 #include "core/Core.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "Core"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct CORE_PRIVATE_DATA_S {
-    CONTEXT_S   *ctx;
-    XML_S       xml;
+struct core_private_data_s {
+    struct context_s   *ctx;
+    struct xml_s       xml;
 
-    CONFIGS_S   *configsObj;
-    CONTROL_S   *controlObj;
-    LOADERS_S   *loadersObj;
-    LISTENERS_S *listenersObj;
-} CORE_PRIVATE_DATA_S;
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
+    struct configs_s   *configsObj;
+    struct control_s   *controlObj;
+    struct loaders_s   *loadersObj;
+    struct listeners_s *listenersObj;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static CORE_ERROR_E loadAllParams_f  (CORE_S *obj);
-static CORE_ERROR_E unloadAllParams_f(CORE_S *obj);
+static enum core_error_e loadAllParams_f(struct core_s *obj);
+static enum core_error_e unloadAllParams_f(struct core_s *obj);
 
-static CORE_ERROR_E loadGraphicsParams_f  (CORE_S *obj);
-static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj);
+static enum core_error_e loadGraphicsParams_f(struct core_s *obj);
+static enum core_error_e unloadGraphicsParams_f(struct core_s *obj);
 
-static CORE_ERROR_E loadVideosParams_f  (CORE_S *obj);
-static CORE_ERROR_E unloadVideosParams_f(CORE_S *obj);
+static enum core_error_e loadVideosParams_f(struct core_s *obj);
+static enum core_error_e unloadVideosParams_f(struct core_s *obj);
 
-static CORE_ERROR_E loadServersParams_f  (CORE_S *obj);
-static CORE_ERROR_E unloadServersParams_f(CORE_S *obj);
+static enum core_error_e loadServersParams_f(struct core_s *obj);
+static enum core_error_e unloadServersParams_f(struct core_s *obj);
 
-static CORE_ERROR_E loadClientsParams_f  (CORE_S *obj);
-static CORE_ERROR_E unloadClientsParams_f(CORE_S *obj);
+static enum core_error_e loadClientsParams_f(struct core_s *obj);
+static enum core_error_e unloadClientsParams_f(struct core_s *obj);
 
-static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, KEEP_ALIVE_METHOD_E method, uint32_t timeout_s);
+static enum core_error_e keepAppRunning_f(struct core_s *obj, enum keep_alive_method_e method,
+                                          uint32_t timeout_s);
 
-static void getString_f  (void *userData, uint32_t stringId, char *language, char *strOut);
-static void getColor_f   (void *userData, int32_t colorId, GFX_COLOR_S *colorOut);
-static void getFont_f    (void *userData, uint32_t fontId, char *ttfFontOut);
-static void getImage_f   (void *userData, uint32_t imageId, GFX_IMAGE_S *imageOut);
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static void getString_f(void *userData, uint32_t stringId, char *language, char *strOut);
+static void getColor_f(void *userData, int32_t colorId, struct gfx_color_s *colorOut);
+static void getFont_f(void *userData, uint32_t fontId, char *ttfFontOut);
+static void getImage_f(void *userData, uint32_t imageId, struct gfx_image_s *imageOut);
 static void getLanguage_f(void *userData, char *currentIn, char *nextOut);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-CORE_ERROR_E Core_Init(CORE_S **obj, CONTEXT_S *ctx)
+enum core_error_e Core_Init(struct core_s **obj, struct context_s *ctx)
 {
-    assert(obj && ctx && (*obj = calloc(1, sizeof(CORE_S))));
+    assert(obj && ctx && (*obj = calloc(1, sizeof(struct core_s))));
     
-    CORE_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(CORE_PRIVATE_DATA_S))));
+    struct core_private_data_s *pData;
+    assert((pData = calloc(1, sizeof(struct core_private_data_s))));
     
     if (Configs_Init(&pData->configsObj) != CONFIGS_ERROR_NONE) {
         Loge("Configs_Init() failed");
@@ -115,7 +116,12 @@ CORE_ERROR_E Core_Init(CORE_S **obj, CONTEXT_S *ctx)
         goto loader_exit;
     }
     
-    if (Listeners_Init(&pData->listenersObj, ctx, pData->controlObj) != LISTENERS_ERROR_NONE) {
+    struct listeners_params_s listenersParams = {
+        .ctx        = ctx,
+        .controlObj = pData->controlObj
+    };
+
+    if (Listeners_Init(&pData->listenersObj, &listenersParams) != LISTENERS_ERROR_NONE) {
         Loge("Listeners_Init() failed");
         goto listeners_exit;
     }
@@ -165,11 +171,11 @@ configs_exit:
 /*!
  *
  */
-CORE_ERROR_E Core_UnInit(CORE_S **obj)
+enum core_error_e Core_UnInit(struct core_s **obj)
 {
     assert(obj && *obj && (*obj)->pData);
     
-    CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)((*obj)->pData);
+    struct core_private_data_s *pData = (struct core_private_data_s*)((*obj)->pData);
     
     (void)Listeners_UnInit(&pData->listenersObj);
     (void)Loaders_UnInit(&pData->loadersObj);
@@ -188,15 +194,15 @@ CORE_ERROR_E Core_UnInit(CORE_S **obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static CORE_ERROR_E loadAllParams_f(CORE_S *obj)
+static enum core_error_e loadAllParams_f(struct core_s *obj)
 {
-    CORE_ERROR_E ret = CORE_ERROR_NONE;
+    enum core_error_e ret = CORE_ERROR_NONE;
     
     if ((ret = loadGraphicsParams_f(obj)) != CORE_ERROR_NONE) {
         Loge("Failed to load graphics params");
@@ -236,7 +242,7 @@ graphics_exit:
 /*!
  *
  */
-static CORE_ERROR_E unloadAllParams_f(CORE_S *obj)
+static enum core_error_e unloadAllParams_f(struct core_s *obj)
 {
     (void)unloadClientsParams_f(obj);
     (void)unloadServersParams_f(obj);
@@ -249,22 +255,25 @@ static CORE_ERROR_E unloadAllParams_f(CORE_S *obj)
 /*!
  *
  */
-static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
+static enum core_error_e loadGraphicsParams_f(struct core_s *obj)
 {
     assert(obj && obj->pData);
     
-    CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
-    CORE_ERROR_E ret           = CORE_ERROR_PARAMS;
+    struct core_private_data_s *pData = (struct core_private_data_s*)(obj->pData);
+    enum core_error_e ret             = CORE_ERROR_PARAMS;
 
-    if (pData->loadersObj->loadGraphicsXml(pData->loadersObj, pData->ctx, &pData->xml.xmlGraphics) != LOADERS_ERROR_NONE) {
+    if (pData->loadersObj->loadGraphicsXml(pData->loadersObj,
+                                           pData->ctx,
+                                           &pData->xml.xmlGraphics) != LOADERS_ERROR_NONE) {
         Loge("Failed to load graphics xml");
         return CORE_ERROR_XML;
     }
     
-    XML_COMMON_S *xmlCommon     = &pData->xml.xmlCommon;
-    XML_GRAPHICS_S *xmlGraphics = &pData->xml.xmlGraphics;
+    struct xml_common_s *xmlCommon     = &pData->xml.xmlCommon;
+    struct xml_graphics_s *xmlGraphics = &pData->xml.xmlGraphics;
 
-    snprintf(xmlCommon->defaultLanguage, sizeof(xmlCommon->defaultLanguage), "%s", xmlGraphics->defaultLanguage);
+    snprintf(xmlCommon->defaultLanguage,
+             sizeof(xmlCommon->defaultLanguage), "%s", xmlGraphics->defaultLanguage);
 
     const char *colorsXmlFile = (xmlGraphics->colorsXmlFile ? xmlGraphics->colorsXmlFile : "");
     snprintf(xmlCommon->files.colors, sizeof(xmlCommon->files.colors), "%s", colorsXmlFile);
@@ -278,27 +287,31 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
     const char *stringsXmlFile = (xmlGraphics->stringsXmlFile ? xmlGraphics->stringsXmlFile : "");
     snprintf(xmlCommon->files.strings, sizeof(xmlCommon->files.strings), "%s", stringsXmlFile);
 
-    if (pData->loadersObj->loadCommonXml(pData->loadersObj, pData->ctx, xmlCommon) != LOADERS_ERROR_NONE) {
+    if (pData->loadersObj->loadCommonXml(pData->loadersObj,
+                                         pData->ctx, xmlCommon) != LOADERS_ERROR_NONE) {
         Loge("Failed to load common xml");
         ret = CORE_ERROR_XML;
         goto unloadXml_exit;
     }
 
-    GRAPHICS_INFOS_S *graphicsInfos   = &pData->ctx->params.graphicsInfos;
-    GRAPHICS_PARAMS_S *graphicsParams = &graphicsInfos->graphicsParams;
+    struct graphics_infos_s *graphicsInfos   = &pData->ctx->params.graphicsInfos;
+    struct graphics_params_s *graphicsParams = &graphicsInfos->graphicsParams;
     
     assert((graphicsInfos->currentLanguage = calloc(1, MIN_STR_SIZE)));
     strncpy(graphicsInfos->currentLanguage, xmlCommon->defaultLanguage, MIN_STR_SIZE);
     
     Logd("Setting main colors");
 
-    getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->onFocusColorId, &graphicsParams->colorOnFocus);
-    getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->onBlurColorId, &graphicsParams->colorOnBlur);
-    getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->onResetColorId, &graphicsParams->colorOnReset);
+    getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->onFocusColorId,
+                                 &graphicsParams->colorOnFocus);
+    getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->onBlurColorId,
+                                 &graphicsParams->colorOnBlur);
+    getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->onResetColorId,
+                                 &graphicsParams->colorOnReset);
 
     Logd("Setting screen params");
     
-    GFX_SCREEN_S *screenParams = &graphicsParams->screenParams;
+    struct gfx_screen_s *screenParams = &graphicsParams->screenParams;
 
     if (xmlGraphics->screen.name) {
         strncpy(screenParams->name, xmlGraphics->screen.name, sizeof(screenParams->name));
@@ -309,15 +322,16 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
     screenParams->rect.w = xmlGraphics->screen.width;
     screenParams->rect.h = xmlGraphics->screen.height;
 
-    if (xmlGraphics->screen.fbDeviceName && (strlen(xmlGraphics->screen.fbDeviceName) > 0)) {
-        strncpy(screenParams->fbDeviceName, xmlGraphics->screen.fbDeviceName, sizeof(screenParams->fbDeviceName));
+    if (xmlGraphics->screen.fbDeviceName && ((xmlGraphics->screen.fbDeviceName)[0] != '\0')) {
+        strncpy(screenParams->fbDeviceName,
+                xmlGraphics->screen.fbDeviceName, sizeof(screenParams->fbDeviceName));
     }
 
     screenParams->bitsPerPixel = xmlGraphics->screen.bitsPerPixel;
     screenParams->isFullScreen = xmlGraphics->screen.fullscreen;
     screenParams->showCursor   = xmlGraphics->screen.showCursor;
     
-    if (xmlGraphics->screen.caption && (strlen(xmlGraphics->screen.caption) > 0)) {
+    if (xmlGraphics->screen.caption && ((xmlGraphics->screen.caption)[0] != '\0')) {
         screenParams->isTitleBarUsed = 1;
         strncpy(screenParams->caption, xmlGraphics->screen.caption, sizeof(screenParams->caption));
     }
@@ -328,20 +342,25 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
     getImage_f((void*)xmlCommon, xmlGraphics->screen.iconImageId, &screenParams->icon);
     
     if (xmlGraphics->screen.iconHiddenColorId >= 0) {
-        assert((screenParams->icon.hiddenColor = calloc(1, sizeof(GFX_COLOR_S))));
-        getColor_f((void*)xmlCommon, xmlGraphics->screen.iconHiddenColorId, screenParams->icon.hiddenColor);
+        assert((screenParams->icon.hiddenColor = calloc(1, sizeof(struct gfx_color_s))));
+        getColor_f((void*)xmlCommon, xmlGraphics->screen.iconHiddenColorId,
+                                     screenParams->icon.hiddenColor);
     }
 
     if (!(screenParams->isBgImageUsed = !xmlGraphics->screen.useColor)) {
-        getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->screen.BgColorId, &screenParams->background.color);
+        getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->screen.BgColorId,
+                                     &screenParams->background.color);
     }
     else {
-        getImage_f((void*)xmlCommon, xmlGraphics->screen.BgImageId, &screenParams->background.image);
+        getImage_f((void*)xmlCommon, xmlGraphics->screen.BgImageId,
+                                     &screenParams->background.image);
         
         int32_t BgHiddenColorId = xmlGraphics->screen.BgHiddenColorId;
         if (BgHiddenColorId >= 0) {
-            assert((screenParams->background.image.hiddenColor = calloc(1, sizeof(GFX_COLOR_S))));
-            getColor_f((void*)xmlCommon, BgHiddenColorId, screenParams->background.image.hiddenColor);
+            screenParams->background.image.hiddenColor = calloc(1, sizeof(struct gfx_color_s));
+            assert(screenParams->background.image.hiddenColor);
+            getColor_f((void*)xmlCommon,
+                       BgHiddenColorId, screenParams->background.image.hiddenColor);
         }
     }
 
@@ -351,9 +370,9 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
     
     uint32_t index;
     
-    GRAPHICS_S *graphicsObj      = pData->ctx->modules.graphicsObj;
-    uint32_t *nbGfxElements      = &graphicsInfos->nbGfxElements;
-    GFX_ELEMENT_S ***gfxElements = &graphicsInfos->gfxElements;
+    struct graphics_s *graphicsObj      = pData->ctx->modules.graphicsObj;
+    uint32_t *nbGfxElements             = &graphicsInfos->nbGfxElements;
+    struct gfx_element_s ***gfxElements = &graphicsInfos->gfxElements;
     
     *nbGfxElements = xmlGraphics->nbElements;
     
@@ -361,44 +380,49 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
         Logw("No graphics element defined");
     }
     else {
-        assert((*gfxElements = (GFX_ELEMENT_S**)calloc(*nbGfxElements, sizeof(GFX_ELEMENT_S*))));
+        assert((*gfxElements = calloc(*nbGfxElements, sizeof(struct gfx_element_s*))));
         
         for (index = 0; index < *nbGfxElements; index++) {
-            if (graphicsObj->createElement(graphicsObj, &(*gfxElements)[index]) != GRAPHICS_ERROR_NONE) {
+            if (graphicsObj->createElement(graphicsObj,
+                                           &(*gfxElements)[index]) != GRAPHICS_ERROR_NONE) {
                 Loge("Failed to create graphics element");
                 goto badConfig_exit;
             }
             
-            (void)pData->controlObj->initElementData(pData->controlObj, &(*gfxElements)[index]->pData);
+            (void)pData->controlObj->initElementData(pData->controlObj,
+                                                     &(*gfxElements)[index]->pData);
             
-            strncpy((*gfxElements)[index]->name, xmlGraphics->elements[index].name, sizeof((*gfxElements)[index]->name));
-            strncpy((*gfxElements)[index]->groupName, xmlGraphics->elements[index].groupName, sizeof((*gfxElements)[index]->groupName));
+            strncpy((*gfxElements)[index]->name, xmlGraphics->elements[index].name,
+                                                 sizeof((*gfxElements)[index]->name));
+            strncpy((*gfxElements)[index]->groupName, xmlGraphics->elements[index].groupName,
+                                                      sizeof((*gfxElements)[index]->groupName));
 
             (*gfxElements)[index]->redrawGroup = xmlGraphics->elements[index].redrawGroup;
             (*gfxElements)[index]->type        = xmlGraphics->elements[index].type;
 	        
             switch ((*gfxElements)[index]->type) {
-                case GFX_ELEMENT_TYPE_VIDEO:
-                    memset(&(*gfxElements)[index]->data.buffer, '\0', sizeof(BUFFER_S));
-                    break;
-	                
                 case GFX_ELEMENT_TYPE_IMAGE:
                     if (!xmlGraphics->elements[index].image) {
                         Loge("Bad config - image is expected");
                         goto badConfig_exit;
                     }
 
-                    CONTROL_IMAGE_IDS_S imageIds;
+                    struct control_image_ids_s imageIds;
                     imageIds.imageId       = xmlGraphics->elements[index].image->imageId;
                     imageIds.hiddenColorId = xmlGraphics->elements[index].image->hiddenColorId;
 	                
-                    (void)pData->controlObj->setElementImageIds(pData->controlObj, (*gfxElements)[index]->pData, &imageIds);
+                    (void)pData->controlObj->setElementImageIds(pData->controlObj,
+                                                                (*gfxElements)[index]->pData,
+                                                                &imageIds);
 	                
-                    getImage_f((void*)xmlCommon, imageIds.imageId, &(*gfxElements)[index]->data.image);
+                    getImage_f((void*)xmlCommon, imageIds.imageId,
+                                                 &(*gfxElements)[index]->data.image);
 	                
                     if (imageIds.hiddenColorId >= 0) {
-                        assert(((*gfxElements)[index]->data.image.hiddenColor = calloc(1, sizeof(GFX_COLOR_S))));
-                        getColor_f((void*)xmlCommon, imageIds.hiddenColorId, (*gfxElements)[index]->data.image.hiddenColor);
+                        (*gfxElements)[index]->data.image.hiddenColor = calloc(1, sizeof(struct gfx_color_s));
+                        assert((*gfxElements)[index]->data.image.hiddenColor);
+                        getColor_f((void*)xmlCommon, imageIds.hiddenColorId,
+                                                     (*gfxElements)[index]->data.image.hiddenColor);
                     }
                     break;
 	                
@@ -408,20 +432,27 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
                         goto badConfig_exit;
                     }
                     
-                    CONTROL_TEXT_IDS_S textIds;
+                    struct control_text_ids_s textIds;
                     textIds.stringId = xmlGraphics->elements[index].text->stringId;
                     textIds.fontId   = xmlGraphics->elements[index].text->fontId;
                     textIds.colorId  = xmlGraphics->elements[index].text->colorId;
 	                
-                    (void)pData->controlObj->setElementTextIds(pData->controlObj, (*gfxElements)[index]->pData, &textIds);
+                    (void)pData->controlObj->setElementTextIds(pData->controlObj,
+                                                               (*gfxElements)[index]->pData,
+                                                               &textIds);
                     
-                    getString_f((void*)xmlCommon, textIds.stringId, graphicsInfos->currentLanguage, (*gfxElements)[index]->data.text.str);
-                    getFont_f((void*)xmlCommon, textIds.fontId, (*gfxElements)[index]->data.text.ttfFont);
+                    getString_f((void*)xmlCommon, textIds.stringId,
+                                                  graphicsInfos->currentLanguage,
+                                                  (*gfxElements)[index]->data.text.str);
+                    getFont_f((void*)xmlCommon, textIds.fontId,
+                                                (*gfxElements)[index]->data.text.ttfFont);
 	                
                     (*gfxElements)[index]->data.text.ttfFontSize = xmlGraphics->elements[index].text->size;
-                    getColor_f((void*)xmlCommon, (int32_t)textIds.colorId, &(*gfxElements)[index]->data.text.color);
+                    getColor_f((void*)xmlCommon, (int32_t)textIds.colorId,
+                                                 &(*gfxElements)[index]->data.text.color);
                     break;
-	                
+
+                case GFX_ELEMENT_TYPE_VIDEO:
                 default:
                     ;
             }
@@ -437,21 +468,17 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
             (*gfxElements)[index]->hasFocus    = xmlGraphics->elements[index].hasFocus;
             
             if (xmlGraphics->elements[index].nav) {
-                strncpy((*gfxElements)[index]->nav.left,
-                            xmlGraphics->elements[index].nav->left,
-                            sizeof((*gfxElements)[index]->nav.left));
-                strncpy((*gfxElements)[index]->nav.up,
-                            xmlGraphics->elements[index].nav->up,
-                            sizeof((*gfxElements)[index]->nav.up));
-                strncpy((*gfxElements)[index]->nav.right,
-                            xmlGraphics->elements[index].nav->right,
-                            sizeof((*gfxElements)[index]->nav.right));
-                strncpy((*gfxElements)[index]->nav.down,
-                            xmlGraphics->elements[index].nav->down,
-                            sizeof((*gfxElements)[index]->nav.down));
+                strncpy((*gfxElements)[index]->nav.left, xmlGraphics->elements[index].nav->left,
+                                                         sizeof((*gfxElements)[index]->nav.left));
+                strncpy((*gfxElements)[index]->nav.up, xmlGraphics->elements[index].nav->up,
+                                                       sizeof((*gfxElements)[index]->nav.up));
+                strncpy((*gfxElements)[index]->nav.right, xmlGraphics->elements[index].nav->right,
+                                                          sizeof((*gfxElements)[index]->nav.right));
+                strncpy((*gfxElements)[index]->nav.down, xmlGraphics->elements[index].nav->down,
+                                                         sizeof((*gfxElements)[index]->nav.down));
             }
 
-            CONTROL_GETTERS_S getters;
+            struct control_getters_s getters;
             getters.getString   = getString_f;
             getters.getColor    = getColor_f;
             getters.getFont     = getFont_f;
@@ -459,12 +486,15 @@ static CORE_ERROR_E loadGraphicsParams_f(CORE_S *obj)
             getters.getLanguage = getLanguage_f;
             getters.userData    = (void*)xmlCommon;
 	                
-            (void)pData->controlObj->setElementGetters(pData->controlObj, (*gfxElements)[index]->pData, &getters);
-            (void)pData->controlObj->setCommandHandlers(pData->controlObj, (*gfxElements)[index]->pData,
-	                                            (HANDLERS_ID_S*)xmlGraphics->elements[index].clickHandlers,
-	                                            xmlGraphics->elements[index].nbClickHandlers, index);
+            (void)pData->controlObj->setElementGetters(pData->controlObj,
+                                                       (*gfxElements)[index]->pData, &getters);
+            (void)pData->controlObj->setCommandHandlers(pData->controlObj,
+                                (*gfxElements)[index]->pData,
+                                (struct handlers_id_s*)xmlGraphics->elements[index].clickHandlers,
+	                            xmlGraphics->elements[index].nbClickHandlers, index);
             
-            if (graphicsObj->pushElement(graphicsObj, (*gfxElements)[index]) != GRAPHICS_ERROR_NONE) {
+            if (graphicsObj->pushElement(graphicsObj,
+                                         (*gfxElements)[index]) != GRAPHICS_ERROR_NONE) {
                 Loge("Failed to push element \"%s\"", (*gfxElements)[index]->name);
                 goto badConfig_exit;
             }
@@ -486,13 +516,19 @@ badConfig_exit:
         for (index = 0; index < *nbGfxElements; index++) {
             if ((*gfxElements)[index]) {
                 if ((*gfxElements)[index]->pData) {
-                    (void)pData->controlObj->unsetCommandHandlers(pData->controlObj, (*gfxElements)[index]->pData);
-                    (void)pData->controlObj->unsetElementGetters(pData->controlObj, (*gfxElements)[index]->pData);
-                    (void)pData->controlObj->unsetElementTextIds(pData->controlObj, (*gfxElements)[index]->pData);
-                    (void)pData->controlObj->unsetElementImageIds(pData->controlObj, (*gfxElements)[index]->pData);
-                    (void)pData->controlObj->uninitElementData(pData->controlObj, &(*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetCommandHandlers(pData->controlObj,
+                                                                  (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetElementGetters(pData->controlObj,
+                                                                 (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetElementTextIds(pData->controlObj,
+                                                                 (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetElementImageIds(pData->controlObj,
+                                                                  (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->uninitElementData(pData->controlObj,
+                                                               &(*gfxElements)[index]->pData);
                 }
-                if (((*gfxElements)[index]->type == GFX_ELEMENT_TYPE_IMAGE) && (*gfxElements)[index]->data.image.hiddenColor) {
+                if (((*gfxElements)[index]->type == GFX_ELEMENT_TYPE_IMAGE)
+                    && (*gfxElements)[index]->data.image.hiddenColor) {
                     free((*gfxElements)[index]->data.image.hiddenColor);
                     (*gfxElements)[index]->data.image.hiddenColor = NULL;
                 }
@@ -522,18 +558,18 @@ unloadXml_exit:
 /*!
  *
  */
-static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj)
+static enum core_error_e unloadGraphicsParams_f(struct core_s *obj)
 {
     assert(obj && obj->pData);
     
-    CORE_PRIVATE_DATA_S *pData      = (CORE_PRIVATE_DATA_S*)(obj->pData);
-    XML_COMMON_S *xmlCommon         = &pData->xml.xmlCommon;
-    XML_GRAPHICS_S *xmlGraphics     = &pData->xml.xmlGraphics;
-    GRAPHICS_S *graphicsObj         = pData->ctx->modules.graphicsObj;
-    GRAPHICS_INFOS_S *graphicsInfos = &pData->ctx->params.graphicsInfos;
-    GFX_SCREEN_S *screenParams      = &graphicsInfos->graphicsParams.screenParams;
-    GFX_ELEMENT_S ***gfxElements    = &graphicsInfos->gfxElements;
-    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
+    struct core_private_data_s *pData      = (struct core_private_data_s*)(obj->pData);
+    struct xml_common_s *xmlCommon         = &pData->xml.xmlCommon;
+    struct xml_graphics_s *xmlGraphics     = &pData->xml.xmlGraphics;
+    struct graphics_s *graphicsObj         = pData->ctx->modules.graphicsObj;
+    struct graphics_infos_s *graphicsInfos = &pData->ctx->params.graphicsInfos;
+    struct gfx_screen_s *screenParams      = &graphicsInfos->graphicsParams.screenParams;
+    struct gfx_element_s ***gfxElements    = &graphicsInfos->gfxElements;
+    uint32_t nbGfxElements                 = graphicsInfos->nbGfxElements;
     
     (void)pData->listenersObj->unsetGraphicsListeners(pData->listenersObj);
 
@@ -542,13 +578,19 @@ static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj)
         for (index = 0; index < nbGfxElements; index++) {
             if ((*gfxElements)[index]) {
                 if ((*gfxElements)[index]->pData) {
-                    (void)pData->controlObj->unsetCommandHandlers(pData->controlObj, (*gfxElements)[index]->pData);
-                    (void)pData->controlObj->unsetElementGetters(pData->controlObj, (*gfxElements)[index]->pData);
-                    (void)pData->controlObj->unsetElementTextIds(pData->controlObj, (*gfxElements)[index]->pData);
-                    (void)pData->controlObj->unsetElementImageIds(pData->controlObj, (*gfxElements)[index]->pData);
-                    (void)pData->controlObj->uninitElementData(pData->controlObj, &(*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetCommandHandlers(pData->controlObj,
+                                                                  (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetElementGetters(pData->controlObj,
+                                                                 (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetElementTextIds(pData->controlObj,
+                                                                 (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->unsetElementImageIds(pData->controlObj,
+                                                                  (*gfxElements)[index]->pData);
+                    (void)pData->controlObj->uninitElementData(pData->controlObj,
+                                                               &(*gfxElements)[index]->pData);
                 }
-                if (((*gfxElements)[index]->type == GFX_ELEMENT_TYPE_IMAGE) && (*gfxElements)[index]->data.image.hiddenColor) {
+                if (((*gfxElements)[index]->type == GFX_ELEMENT_TYPE_IMAGE)
+                    && (*gfxElements)[index]->data.image.hiddenColor) {
                     free((*gfxElements)[index]->data.image.hiddenColor);
                     (*gfxElements)[index]->data.image.hiddenColor = NULL;
                 }
@@ -581,53 +623,58 @@ static CORE_ERROR_E unloadGraphicsParams_f(CORE_S *obj)
 /*!
  *
  */
-static CORE_ERROR_E loadVideosParams_f(CORE_S *obj)
+static enum core_error_e loadVideosParams_f(struct core_s *obj)
 {
     assert(obj && obj->pData);
     
-    CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
-    CORE_ERROR_E ret           = CORE_ERROR_NONE;
+    struct core_private_data_s *pData = (struct core_private_data_s*)(obj->pData);
+    enum core_error_e ret             = CORE_ERROR_NONE;
 
-    if (pData->loadersObj->loadVideosXml(pData->loadersObj, pData->ctx, &pData->xml.xmlVideos) != LOADERS_ERROR_NONE) {
+    if (pData->loadersObj->loadVideosXml(pData->loadersObj, pData->ctx,
+                                         &pData->xml.xmlVideos) != LOADERS_ERROR_NONE) {
         Loge("Failed to load videos xml");
         return CORE_ERROR_XML;
     }
     
-    XML_VIDEOS_S *xmlVideos        = &pData->xml.xmlVideos;
-    VIDEOS_INFOS_S *videosInfos    = &pData->ctx->params.videosInfos;
-    VIDEO_DEVICE_S ***videoDevices = &videosInfos->devices;
-    VIDEO_DEVICE_S *videoDevice    = NULL;
-    uint8_t *nbDevices             = &videosInfos->nbDevices;
-    VIDEO_CONFIG_S videoConfig     = { 0 };
+    struct xml_videos_s *xmlVideos        = &pData->xml.xmlVideos;
+    struct videos_infos_s *videosInfos    = &pData->ctx->params.videosInfos;
+    struct video_device_s ***videoDevices = &videosInfos->devices;
+    struct video_device_s *videoDevice    = NULL;
+    uint8_t *nbDevices                    = &videosInfos->nbDevices;
+    struct video_config_s videoConfig     = {0};
 
     *nbDevices = xmlVideos->nbVideos;
     
     Logd("Setting videos params");
 
-    assert((*videoDevices = (VIDEO_DEVICE_S**)calloc(*nbDevices, sizeof(VIDEO_DEVICE_S*))));
+    assert((*videoDevices = calloc(*nbDevices, sizeof(struct video_device_s*))));
 
-    uint8_t index;
+    uint8_t index, configId;
+    struct video_config_choice_s *configChoice;
     for (index = 0; index < *nbDevices; index++) {
-        assert(((*videoDevices)[index] = calloc(1, sizeof(VIDEO_DEVICE_S))));
+        assert(((*videoDevices)[index] = calloc(1, sizeof(struct video_device_s))));
 
         if (xmlVideos->videos[index].configChoice >= xmlVideos->nbConfigs) {
-            Loge("Bad video config choice - Choice : %u / Max : %u", xmlVideos->videos[index].configChoice, xmlVideos->nbConfigs - 1);
+            Loge("Bad video config choice - Choice : %u / Max : %u",
+                    xmlVideos->videos[index].configChoice, xmlVideos->nbConfigs - 1);
             goto badConfig_exit;
         }
 
-        VIDEO_CONFIG_CHOICE_S *configChoice = (VIDEO_CONFIG_CHOICE_S*)&xmlVideos->configs[xmlVideos->videos[index].configChoice];
+        configId     = xmlVideos->videos[index].configChoice;
+        configChoice = (struct video_config_choice_s*)&xmlVideos->configs[configId];
 
-        if (pData->configsObj->getVideoConfig(pData->configsObj,
-                                                &videoConfig,
-                                                configChoice) != CONFIGS_ERROR_NONE) {
+        if (pData->configsObj->getVideoConfig(pData->configsObj, &videoConfig,
+                                              configChoice) != CONFIGS_ERROR_NONE) {
             Loge("getVideoConfig() failed");
             goto badConfig_exit;
         }
 
         videoDevice = (*videoDevices)[index];
 
-        strncpy(videoDevice->videoParams.name, xmlVideos->videos[index].deviceName, sizeof(videoDevice->videoParams.name));
-        strncpy(videoDevice->videoParams.path, xmlVideos->videos[index].deviceSrc, sizeof(videoDevice->videoParams.path));
+        strncpy(videoDevice->videoParams.name, xmlVideos->videos[index].deviceName,
+                                               sizeof(videoDevice->videoParams.name));
+        strncpy(videoDevice->videoParams.path, xmlVideos->videos[index].deviceSrc,
+                                               sizeof(videoDevice->videoParams.path));
 
         videoDevice->videoParams.caps        = videoConfig.caps;
         videoDevice->videoParams.type        = videoConfig.type;
@@ -652,10 +699,17 @@ static CORE_ERROR_E loadVideosParams_f(CORE_S *obj)
                     &xmlVideos->videos[index].composingArea,
                     sizeof(videoDevice->videoParams.composingArea));
 
-        videoDevice->graphicsDest  = xmlVideos->videos[index].graphicsDest ? strdup(xmlVideos->videos[index].graphicsDest) : NULL;
+        videoDevice->graphicsDest  = NULL;
         videoDevice->graphicsIndex = -1;
-        videoDevice->serverDest    = xmlVideos->videos[index].serverDest ? strdup(xmlVideos->videos[index].serverDest) : NULL;
-        videoDevice->serverIndex   = -1;
+        if (xmlVideos->videos[index].graphicsDest) {
+            videoDevice->graphicsDest = strdup(xmlVideos->videos[index].graphicsDest);
+        }
+        
+        videoDevice->serverDest  = NULL;
+        videoDevice->serverIndex = -1;
+        if (xmlVideos->videos[index].serverDest) {
+            videoDevice->serverDest = strdup(xmlVideos->videos[index].serverDest);
+        }
     }
 
     Logd("Setting video listeners");
@@ -698,15 +752,15 @@ unloadXml_exit:
 /*!
  *
  */
-static CORE_ERROR_E unloadVideosParams_f(CORE_S *obj)
+static enum core_error_e unloadVideosParams_f(struct core_s *obj)
 {
     assert(obj && obj->pData);
     
-    CORE_PRIVATE_DATA_S *pData     = (CORE_PRIVATE_DATA_S*)(obj->pData);
-    VIDEOS_INFOS_S *videosInfos    = &pData->ctx->params.videosInfos;
-    VIDEO_DEVICE_S ***videoDevices = &videosInfos->devices;
-    VIDEO_DEVICE_S *videoDevice    = NULL;
-    uint8_t nbDevices              = videosInfos->nbDevices;
+    struct core_private_data_s *pData     = (struct core_private_data_s*)(obj->pData);
+    struct videos_infos_s *videosInfos    = &pData->ctx->params.videosInfos;
+    struct video_device_s ***videoDevices = &videosInfos->devices;
+    struct video_device_s *videoDevice    = NULL;
+    uint8_t nbDevices                     = videosInfos->nbDevices;
     
     (void)pData->listenersObj->unsetVideosListeners(pData->listenersObj);
     
@@ -737,33 +791,35 @@ static CORE_ERROR_E unloadVideosParams_f(CORE_S *obj)
 /*!
  *
  */
-static CORE_ERROR_E loadServersParams_f(CORE_S *obj)
+static enum core_error_e loadServersParams_f(struct core_s *obj)
 {
     assert(obj && obj->pData);
     
-    CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
-    CORE_ERROR_E ret           = CORE_ERROR_NONE;
+    struct core_private_data_s *pData = (struct core_private_data_s*)(obj->pData);
+    enum core_error_e ret             = CORE_ERROR_NONE;
 
-    if (pData->loadersObj->loadServersXml(pData->loadersObj, pData->ctx, &pData->xml.xmlServers) != LOADERS_ERROR_NONE) {
+    if (pData->loadersObj->loadServersXml(pData->loadersObj,
+                                          pData->ctx,
+                                          &pData->xml.xmlServers) != LOADERS_ERROR_NONE) {
         Loge("Failed to load servers xml");
         return CORE_ERROR_XML;
     }
     
-    XML_SERVERS_S *xmlServers     = &pData->xml.xmlServers;
-    SERVERS_INFOS_S *serversInfos = &pData->ctx->params.serversInfos;
-    SERVER_INFOS_S ***serverInfos = &serversInfos->serverInfos;
-    SERVER_PARAMS_S *serverParams = NULL;
-    uint8_t *nbServers            = &serversInfos->nbServers;
+    struct xml_servers_s *xmlServers     = &pData->xml.xmlServers;
+    struct servers_infos_s *serversInfos = &pData->ctx->params.serversInfos;
+    struct server_infos_s ***serverInfos = &serversInfos->serverInfos;
+    struct server_params_s *serverParams = NULL;
+    uint8_t *nbServers                   = &serversInfos->nbServers;
     
     *nbServers = xmlServers->nbServers;
     
     Logd("Setting servers params");
     
-    assert((*serverInfos = (SERVER_INFOS_S**)calloc(*nbServers, sizeof(SERVER_INFOS_S*))));
+    assert((*serverInfos = calloc(*nbServers, sizeof(struct server_infos_s*))));
     
     uint8_t index;
     for (index = 0; index < *nbServers; index++) {
-        assert(((*serverInfos)[index] = calloc(1, sizeof(SERVER_INFOS_S))));
+        assert(((*serverInfos)[index] = calloc(1, sizeof(struct server_infos_s))));
 
         serverParams = &((*serverInfos)[index])->serverParams;
 
@@ -834,15 +890,14 @@ unloadXml_exit:
 /*!
  *
  */
-static CORE_ERROR_E unloadServersParams_f(CORE_S *obj)
+static enum core_error_e unloadServersParams_f(struct core_s *obj)
 {
     assert(obj && obj->pData);
     
-    CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
-    
-    SERVERS_INFOS_S *serversInfos = &pData->ctx->params.serversInfos;
-    SERVER_INFOS_S ***serverInfos = &serversInfos->serverInfos;
-    uint8_t nbServers             = serversInfos->nbServers;
+    struct core_private_data_s *pData    = (struct core_private_data_s*)(obj->pData);
+    struct servers_infos_s *serversInfos = &pData->ctx->params.serversInfos;
+    struct server_infos_s ***serverInfos = &serversInfos->serverInfos;
+    uint8_t nbServers                    = serversInfos->nbServers;
     
     (void)pData->listenersObj->unsetServersListeners(pData->listenersObj);
     
@@ -863,33 +918,35 @@ static CORE_ERROR_E unloadServersParams_f(CORE_S *obj)
 /*!
  *
  */
-static CORE_ERROR_E loadClientsParams_f(CORE_S *obj)
+static enum core_error_e loadClientsParams_f(struct core_s *obj)
 {
     assert(obj && obj->pData);
     
-    CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
-    CORE_ERROR_E ret           = CORE_ERROR_NONE;
+    struct core_private_data_s *pData = (struct core_private_data_s*)(obj->pData);
+    enum core_error_e ret             = CORE_ERROR_NONE;
 
-    if (pData->loadersObj->loadClientsXml(pData->loadersObj, pData->ctx, &pData->xml.xmlClients) != LOADERS_ERROR_NONE) {
+    if (pData->loadersObj->loadClientsXml(pData->loadersObj,
+                                          pData->ctx,
+                                          &pData->xml.xmlClients) != LOADERS_ERROR_NONE) {
         Loge("Failed to load clients xml");
         return CORE_ERROR_XML;
     }
     
-    XML_CLIENTS_S *xmlClients     = &pData->xml.xmlClients;
-    CLIENTS_INFOS_S *clientsInfos = &pData->ctx->params.clientsInfos;
-    CLIENT_INFOS_S ***clientInfos = &clientsInfos->clientInfos;
-    CLIENT_PARAMS_S *clientParams = NULL;
-    uint8_t *nbClients            = &clientsInfos->nbClients;
+    struct xml_clients_s *xmlClients     = &pData->xml.xmlClients;
+    struct clients_infos_s *clientsInfos = &pData->ctx->params.clientsInfos;
+    struct client_infos_s ***clientInfos = &clientsInfos->clientInfos;
+    struct client_params_s *clientParams = NULL;
+    uint8_t *nbClients                   = &clientsInfos->nbClients;
     
     *nbClients = xmlClients->nbClients;
     
     Logd("Setting clients params");
     
-    assert((*clientInfos = (CLIENT_INFOS_S**)calloc(*nbClients, sizeof(CLIENT_INFOS_S*))));
+    assert((*clientInfos = calloc(*nbClients, sizeof(struct client_infos_s*))));
     
     uint8_t index;
     for (index = 0; index < *nbClients; index++) {
-        assert(((*clientInfos)[index] = calloc(1, sizeof(CLIENT_INFOS_S))));
+        assert(((*clientInfos)[index] = calloc(1, sizeof(struct client_infos_s))));
 
         clientParams = &((*clientInfos)[index])->clientParams;
 
@@ -976,15 +1033,14 @@ unloadXml_exit:
 /*!
  *
  */
-static CORE_ERROR_E unloadClientsParams_f(CORE_S *obj)
+static enum core_error_e unloadClientsParams_f(struct core_s *obj)
 {
     assert(obj && obj->pData);
     
-    CORE_PRIVATE_DATA_S *pData  = (CORE_PRIVATE_DATA_S*)(obj->pData);
-    
-    CLIENTS_INFOS_S *clientsInfos = &pData->ctx->params.clientsInfos;
-    CLIENT_INFOS_S ***clientInfos = &clientsInfos->clientInfos;
-    uint8_t nbClients             = clientsInfos->nbClients;
+    struct core_private_data_s *pData    = (struct core_private_data_s*)(obj->pData);
+    struct clients_infos_s *clientsInfos = &pData->ctx->params.clientsInfos;
+    struct client_infos_s ***clientInfos = &clientsInfos->clientInfos;
+    uint8_t nbClients                    = clientsInfos->nbClients;
     
     (void)pData->listenersObj->unsetClientsListeners(pData->listenersObj);
     
@@ -1015,15 +1071,16 @@ static CORE_ERROR_E unloadClientsParams_f(CORE_S *obj)
 /*!
  *
  */
-static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, KEEP_ALIVE_METHOD_E method, uint32_t timeout_s)
+static enum core_error_e keepAppRunning_f(struct core_s *obj, enum keep_alive_method_e method,
+                                          uint32_t timeout_s)
 {
     assert(obj && obj->pData);
     
-    CORE_ERROR_E ret           = CORE_ERROR_NONE;
-    CORE_PRIVATE_DATA_S *pData = (CORE_PRIVATE_DATA_S*)(obj->pData);
-    CONTEXT_S *ctx             = pData->ctx;
-    GRAPHICS_S *graphicsObj    = ctx->modules.graphicsObj;
-    CONTROL_S *controlObj      = pData->controlObj;
+    struct core_private_data_s *pData = (struct core_private_data_s*)(obj->pData);
+    struct context_s *ctx             = pData->ctx;
+    struct graphics_s *graphicsObj    = ctx->modules.graphicsObj;
+    struct control_s *controlObj      = pData->controlObj;
+    enum core_error_e ret             = CORE_ERROR_NONE;
 
     if (method == KEEP_ALIVE_SEMAPHORE_BASED) {
         if (sem_init(&ctx->keepAliveSem, 0, 0) != 0) {
@@ -1039,7 +1096,8 @@ static CORE_ERROR_E keepAppRunning_f(CORE_S *obj, KEEP_ALIVE_METHOD_E method, ui
 
     switch (method) {
         case KEEP_ALIVE_EVENTS_BASED:
-            if (graphicsObj && graphicsObj->handleGfxEvents(graphicsObj) != GRAPHICS_ERROR_NONE) {
+            if (graphicsObj
+                && graphicsObj->handleGfxEvents(graphicsObj) != GRAPHICS_ERROR_NONE) {
                 Loge("Error occurred while handling events");
                 ret = CORE_ERROR_KEEP_ALIVE;
             }
@@ -1070,6 +1128,10 @@ exit:
     return ret;
 }
 
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////// PRIVATE FUNCTIONS IMPLEMENTATION ///////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
 /*!
  *
  */
@@ -1077,7 +1139,7 @@ static void getString_f(void *userData, uint32_t stringId, char *language, char 
 {
     assert(userData && language && strOut);
     
-    XML_COMMON_S *common = (XML_COMMON_S*)userData;
+    struct xml_common_s *common   = (struct xml_common_s*)userData;
     uint32_t defaultLanguageIndex = 0;
     
     uint32_t index;
@@ -1092,7 +1154,8 @@ static void getString_f(void *userData, uint32_t stringId, char *language, char 
     }
     
     if (index == common->nbLanguages) {
-        Loge("Language \"%s\" not found - Using default language ( \"%s\" )", language, common->defaultLanguage);
+        Loge("Language \"%s\" not found - Using default language ( \"%s\" )",
+                language, common->defaultLanguage);
         strcpy(strOut, common->xmlStrings[defaultLanguageIndex].strings[stringId].str);
     }
 }
@@ -1100,11 +1163,11 @@ static void getString_f(void *userData, uint32_t stringId, char *language, char 
 /*!
  *
  */
-static void getColor_f(void *userData, int32_t colorId, GFX_COLOR_S *colorOut)
+static void getColor_f(void *userData, int32_t colorId, struct gfx_color_s *colorOut)
 {
     assert(userData && colorOut);
     
-    XML_COMMON_S *common = (XML_COMMON_S*)userData;
+    struct xml_common_s *common = (struct xml_common_s*)userData;
     
     colorOut->red   = common->xmlColors.colors[colorId].red;
     colorOut->green = common->xmlColors.colors[colorId].green;
@@ -1119,7 +1182,7 @@ static void getFont_f(void *userData, uint32_t fontId, char *ttfFontOut)
 {
     assert(userData && ttfFontOut);
     
-    XML_COMMON_S *common = (XML_COMMON_S*)userData;
+    struct xml_common_s *common = (struct xml_common_s*)userData;
     
     strcpy(ttfFontOut, common->xmlFonts.fonts[fontId].file);
 }
@@ -1127,11 +1190,11 @@ static void getFont_f(void *userData, uint32_t fontId, char *ttfFontOut)
 /*!
  *
  */
-static void getImage_f(void *userData, uint32_t imageId, GFX_IMAGE_S *imageOut)
+static void getImage_f(void *userData, uint32_t imageId, struct gfx_image_s *imageOut)
 {
     assert(userData && imageOut);
     
-    XML_COMMON_S *common = (XML_COMMON_S*)userData;
+    struct xml_common_s *common = (struct xml_common_s*)userData;
     
     strncpy(imageOut->path, common->xmlImages.images[imageId].file, sizeof(imageOut->path));
 	imageOut->format = common->xmlImages.images[imageId].format;
@@ -1144,7 +1207,7 @@ static void getLanguage_f(void *userData, char *currentIn, char *nextOut)
 {
     assert(userData && currentIn && nextOut);
     
-    XML_COMMON_S *common = (XML_COMMON_S*)userData;
+    struct xml_common_s *common = (struct xml_common_s*)userData;
     
     uint32_t index;
     for (index = 0; index < common->nbLanguages; index++) {

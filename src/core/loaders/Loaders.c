@@ -20,61 +20,63 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Loaders.c
-* \brief  TODO
+* \file Loaders.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Loaders.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "Loaders"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
+extern enum loaders_error_e loadGraphicsXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                              struct xml_graphics_s *xmlGraphics);
+extern enum loaders_error_e unloadGraphicsXml_f(struct loaders_s *obj,
+                                                struct xml_graphics_s *xmlGraphics);
+
+extern enum loaders_error_e loadCommonXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                            struct xml_common_s *xmlCommon);
+extern enum loaders_error_e unloadCommonXml_f(struct loaders_s *obj,
+                                              struct xml_common_s *xmlCommon);
+
+extern enum loaders_error_e loadVideosXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                            struct xml_videos_s *xmlVideos);
+extern enum loaders_error_e unloadVideosXml_f(struct loaders_s *obj,
+                                              struct xml_videos_s *xmlVideos);
+
+extern enum loaders_error_e loadServersXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                             struct xml_servers_s *xmlServers);
+extern enum loaders_error_e unloadServersXml_f(struct loaders_s *obj,
+                                               struct xml_servers_s *xmlServers);
+
+extern enum loaders_error_e loadClientsXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                             struct xml_clients_s *xmlClients);
+extern enum loaders_error_e unloadClientsXml_f(struct loaders_s *obj,
+                                               struct xml_clients_s *xmlClients);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-extern LOADERS_ERROR_E loadGraphicsXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S *xmlGraphics);
-extern LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics);
-
-extern LOADERS_ERROR_E loadCommonXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_COMMON_S *xmlCommon);
-extern LOADERS_ERROR_E unloadCommonXml_f(LOADERS_S *obj, XML_COMMON_S *xmlCommon);
-
-extern LOADERS_ERROR_E loadVideosXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xmlVideos);
-extern LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos);
-
-extern LOADERS_ERROR_E loadServersXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *xmlServers);
-extern LOADERS_ERROR_E unloadServersXml_f(LOADERS_S *obj, XML_SERVERS_S *xmlServers);
-
-extern LOADERS_ERROR_E loadClientsXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_CLIENTS_S *xmlClients);
-extern LOADERS_ERROR_E unloadClientsXml_f(LOADERS_S *obj, XML_CLIENTS_S *xmlClients);
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-LOADERS_ERROR_E Loaders_Init(LOADERS_S **obj)
+enum loaders_error_e Loaders_Init(struct loaders_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(LOADERS_S))));
+    assert(obj && (*obj = calloc(1, sizeof(struct loaders_s))));
     
     (*obj)->loadGraphicsXml   = loadGraphicsXml_f;
     (*obj)->unloadGraphicsXml = unloadGraphicsXml_f;
@@ -97,7 +99,7 @@ LOADERS_ERROR_E Loaders_Init(LOADERS_S **obj)
 /*!
  *
  */
-LOADERS_ERROR_E Loaders_UnInit(LOADERS_S **obj)
+enum loaders_error_e Loaders_UnInit(struct loaders_s **obj)
 {
     assert(obj && *obj);
     

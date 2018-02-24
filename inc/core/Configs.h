@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Configs.h
+* \file Configs.h
 * \author Boubacar DIENE
 */
 
@@ -32,71 +32,81 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "video/Video.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                             */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum configs_error_e;
+
+struct video_capability_s;
+struct video_config_choice_s;
+struct video_config_s;
+struct configs_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEFS                                           */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum CONFIGS_ERROR_E         CONFIGS_ERROR_E;
+typedef enum configs_error_e (*configs_get_video_config_f)(struct configs_s *obj,
+                                                      struct video_config_s *config,
+                                                      struct video_config_choice_s *configChoice);
 
-typedef struct VIDEO_CAPABILITY_S    VIDEO_CAPABILITY_S;
-typedef struct VIDEO_CONFIG_CHOICE_S VIDEO_CONFIG_CHOICE_S;
-typedef struct VIDEO_CONFIG_S        VIDEO_CONFIG_S;
-typedef struct CONFIGS_S             CONFIGS_S;
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef CONFIGS_ERROR_E (*CONFIGS_GET_VIDEO_CONFIG_F)(CONFIGS_S *obj, VIDEO_CONFIG_S *config, VIDEO_CONFIG_CHOICE_S *configChoice);
-
-enum CONFIGS_ERROR_E {
+enum configs_error_e {
     CONFIGS_ERROR_NONE,
     CONFIGS_ERROR_INIT,
     CONFIGS_ERROR_UNINIT,
     CONFIGS_ERROR_PARAMS
 };
 
-struct VIDEO_CAPABILITY_S {
+struct video_capability_s {
     char *item;
 };
 
-struct VIDEO_CONFIG_CHOICE_S {
-    uint8_t            nbItems;
-    VIDEO_CAPABILITY_S *capabilities;
+struct video_config_choice_s {
+    uint8_t                   nbItems;
+    struct video_capability_s *capabilities;
 
-    char               *bufferType;
-    char               *pixelFormat;
-    char               *colorspace;
-    char               *memory;
-    char               *awaitMode;
+    char                      *bufferType;
+    char                      *pixelFormat;
+    char                      *colorspace;
+    char                      *memory;
+    char                      *awaitMode;
 };
 
-struct VIDEO_CONFIG_S {
-    uint32_t             caps;
-    enum v4l2_buf_type   type;
-    uint32_t             pixelformat;
-    enum v4l2_colorspace colorspace;
-    enum v4l2_memory     memory;
-    VIDEO_AWAIT_MODE_E   awaitMode;
-};
-
-struct CONFIGS_S {
-    CONFIGS_GET_VIDEO_CONFIG_F getVideoConfig;
-
-    void                       *pData;
+struct video_config_s {
+    uint32_t                caps;
+    enum v4l2_buf_type      type;
+    uint32_t                pixelformat;
+    enum v4l2_colorspace    colorspace;
+    enum v4l2_memory        memory;
+    enum video_await_mode_e awaitMode;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-CONFIGS_ERROR_E Configs_Init  (CONFIGS_S **obj);
-CONFIGS_ERROR_E Configs_UnInit(CONFIGS_S **obj);
+struct configs_s {
+    configs_get_video_config_f getVideoConfig;
+
+    void *pData;
+};
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+enum configs_error_e Configs_Init(struct configs_s **obj);
+enum configs_error_e Configs_UnInit(struct configs_s **obj);
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   V4l2.h
+* \file V4l2.h
 * \author Boubacar DIENE
 */
 
@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include <linux/videodev2.h>
@@ -40,43 +40,51 @@ extern "C" {
 #include "utils/Common.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum v4l2_error_e;
+
+struct v4l2_open_device_params_s;
+struct v4l2_configure_device_params_s;
+struct v4l2_selection_params_s;
+struct v4l2_request_buffers_params_s;
+struct v4l2_mapping_buffer_s;
+struct v4l2_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   V4L2_ERROR_E                   V4L2_ERROR_E;
+typedef enum v4l2_error_e (*v4l2_open_device_f)(struct v4l2_s *obj,
+                                                struct v4l2_open_device_params_s *params);
+typedef enum v4l2_error_e (*v4l2_close_device_f)(struct v4l2_s *obj);
 
-typedef struct V4L2_OPEN_DEVICE_PARAMS_S      V4L2_OPEN_DEVICE_PARAMS_S;
-typedef struct V4L2_CONFIGURE_DEVICE_PARAMS_S V4L2_CONFIGURE_DEVICE_PARAMS_S;
-typedef struct V4L2_SELECTION_PARAMS_S        V4L2_SELECTION_PARAMS_S;
-typedef struct V4L2_REQUEST_BUFFERS_PARAMS_S  V4L2_REQUEST_BUFFERS_PARAMS_S;
+typedef enum v4l2_error_e (*v4l2_configure_device_f)(struct v4l2_s *obj,
+                                                     struct v4l2_configure_device_params_s *params);
+typedef enum v4l2_error_e (*v4l2_set_cropping_area_f)(struct v4l2_s *obj,
+                                                      struct v4l2_selection_params_s *cropRectInOut);
+typedef enum v4l2_error_e (*v4l2_set_composing_area_f)(struct v4l2_s *obj,
+                                                       struct v4l2_selection_params_s *composeRectInOut);
 
-typedef struct V4L2_MAPPING_BUFFER_S          V4L2_MAPPING_BUFFER_S;
-typedef struct V4L2_S                         V4L2_S;
+typedef enum v4l2_error_e (*v4l2_request_buffers_f)(struct v4l2_s *obj,
+                                                    struct v4l2_request_buffers_params_s *params);
+typedef enum v4l2_error_e (*v4l2_release_buffers_f)(struct v4l2_s *obj);
 
-typedef V4L2_ERROR_E (*V4L2_OPEN_DEVICE_F )(V4L2_S *obj, V4L2_OPEN_DEVICE_PARAMS_S *params);
-typedef V4L2_ERROR_E (*V4L2_CLOSE_DEVICE_F)(V4L2_S *obj);
+typedef enum v4l2_error_e (*v4l2_start_capture_f)(struct v4l2_s *obj);
+typedef enum v4l2_error_e (*v4l2_stop_capture_f)(struct v4l2_s *obj);
 
-typedef V4L2_ERROR_E (*V4L2_CONFIGURE_DEVICE_F  )(V4L2_S *obj, V4L2_CONFIGURE_DEVICE_PARAMS_S *params);
-typedef V4L2_ERROR_E (*V4L2_SET_CROPPING_AREA_F )(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *cropRectInOut);
-typedef V4L2_ERROR_E (*V4L2_SET_COMPOSING_AREA_F)(V4L2_S *obj, V4L2_SELECTION_PARAMS_S *composeRectInOut);
+typedef enum v4l2_error_e (*v4l2_await_data_f)(struct v4l2_s *obj, int32_t timeout_ms);
+typedef enum v4l2_error_e (*v4l2_stop_awaiting_data_f)(struct v4l2_s *obj);
 
-typedef V4L2_ERROR_E (*V4L2_REQUEST_BUFFERS_F)(V4L2_S *obj, V4L2_REQUEST_BUFFERS_PARAMS_S *params);
-typedef V4L2_ERROR_E (*V4L2_RELEASE_BUFFERS_F)(V4L2_S *obj);
+typedef enum v4l2_error_e (*v4l2_queue_buffer_f)(struct v4l2_s *obj, uint32_t index);
+typedef enum v4l2_error_e (*v4l2_dequeue_buffer_f)(struct v4l2_s *obj);
 
-typedef V4L2_ERROR_E (*V4L2_START_CAPTURE_F)(V4L2_S *obj);
-typedef V4L2_ERROR_E (*V4L2_STOP_CAPTURE_F )(V4L2_S *obj);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef V4L2_ERROR_E (*V4L2_AWAIT_DATA_F        )(V4L2_S *obj, int32_t timeout_ms);
-typedef V4L2_ERROR_E (*V4L2_STOP_AWAITING_DATA_F)(V4L2_S *obj);
-
-typedef V4L2_ERROR_E (*V4L2_QUEUE_BUFFER_F  )(V4L2_S *obj, uint32_t index);
-typedef V4L2_ERROR_E (*V4L2_DEQUEUE_BUFFER_F)(V4L2_S *obj);
-
-enum V4L2_ERROR_E {
+enum v4l2_error_e {
     V4L2_ERROR_NONE,
     V4L2_ERROR_IO,
     V4L2_ERROR_MEMORY,
@@ -86,12 +94,12 @@ enum V4L2_ERROR_E {
     V4L2_ERROR_BAD_CAPS
 };
 
-struct V4L2_OPEN_DEVICE_PARAMS_S {
+struct v4l2_open_device_params_s {
     char     path[MAX_PATH_SIZE];
     uint32_t caps;
 };
 
-struct V4L2_CONFIGURE_DEVICE_PARAMS_S {
+struct v4l2_configure_device_params_s {
     enum v4l2_buf_type   type;
     uint32_t             pixelformat;
     enum v4l2_colorspace colorspace;
@@ -100,65 +108,69 @@ struct V4L2_CONFIGURE_DEVICE_PARAMS_S {
     uint32_t             desiredFps;
 };
 
-struct V4L2_SELECTION_PARAMS_S {
+struct v4l2_selection_params_s {
     int32_t  left;
     int32_t  top;
     uint32_t width;
     uint32_t height;
 };
 
-struct V4L2_REQUEST_BUFFERS_PARAMS_S {
+struct v4l2_request_buffers_params_s {
     uint32_t         count;
     enum v4l2_memory memory;
 };
 
-struct V4L2_MAPPING_BUFFER_S {
+struct v4l2_mapping_buffer_s {
     uint32_t index;
     size_t   length;
     uint32_t offset;
     void     *start;
 };
 
-struct V4L2_S {
-    char                      path[MAX_PATH_SIZE];
-    int32_t                   deviceFd;
-    int32_t                   quitFd[PIPE_COUNT];
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-    struct v4l2_capability    caps;
-    struct v4l2_format        format;
-    enum   v4l2_memory        memory;
-    
-    uint32_t                  nbBuffers;
-    size_t                    maxBufferSize;
-    
-    V4L2_MAPPING_BUFFER_S     *map;
+struct v4l2_s {
+    v4l2_open_device_f        openDevice;
+    v4l2_close_device_f       closeDevice;
 
-    V4L2_OPEN_DEVICE_F        openDevice;
-    V4L2_CLOSE_DEVICE_F       closeDevice;
+    v4l2_configure_device_f   configureDevice;
+    v4l2_set_cropping_area_f  setCroppingArea;
+    v4l2_set_composing_area_f setComposingArea;
+
+    v4l2_request_buffers_f    requestBuffers;
+    v4l2_release_buffers_f    releaseBuffers;
+
+    v4l2_start_capture_f      startCapture;
+    v4l2_stop_capture_f       stopCapture;
+
+    v4l2_await_data_f         awaitData;
+    v4l2_stop_awaiting_data_f stopAwaitingData;
+
+    v4l2_queue_buffer_f       queueBuffer;
+    v4l2_dequeue_buffer_f     dequeueBuffer;
+
+    char                         path[MAX_PATH_SIZE];
+    int32_t                      deviceFd;
+    int32_t                      quitFd[PIPE_COUNT];
+
+    struct v4l2_capability       caps;
+    struct v4l2_format           format;
+    enum   v4l2_memory           memory;
     
-    V4L2_CONFIGURE_DEVICE_F   configureDevice;
-    V4L2_SET_CROPPING_AREA_F  setCroppingArea;
-    V4L2_SET_COMPOSING_AREA_F setComposingArea;
+    uint32_t                     nbBuffers;
+    size_t                       maxBufferSize;
     
-    V4L2_REQUEST_BUFFERS_F    requestBuffers;
-    V4L2_RELEASE_BUFFERS_F    releaseBuffers;
-    
-    V4L2_START_CAPTURE_F      startCapture;
-    V4L2_STOP_CAPTURE_F       stopCapture;
-    
-    V4L2_AWAIT_DATA_F         awaitData;
-    V4L2_STOP_AWAITING_DATA_F stopAwaitingData;
-    
-    V4L2_QUEUE_BUFFER_F       queueBuffer;
-    V4L2_DEQUEUE_BUFFER_F     dequeueBuffer;
+    struct v4l2_mapping_buffer_s *map;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-V4L2_ERROR_E V4l2_Init  (V4L2_S **obj);
-V4L2_ERROR_E V4l2_UnInit(V4L2_S **obj);
+enum v4l2_error_e V4l2_Init(struct v4l2_s **obj);
+enum v4l2_error_e V4l2_UnInit(struct v4l2_s **obj);
 
 #ifdef __cplusplus
 }

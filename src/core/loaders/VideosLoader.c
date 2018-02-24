@@ -20,102 +20,101 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   VideoLoader.c
-* \brief  TODO
+* \file VideoLoader.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Loaders.h"
 #include "core/XmlDefines.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "VideosLoader"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
+enum loaders_error_e loadVideosXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                     struct xml_videos_s *xmlVideos);
+enum loaders_error_e unloadVideosXml_f(struct loaders_s *obj, struct xml_videos_s *xmlVideos);
 
-LOADERS_ERROR_E loadVideosXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xmlVideos);
-LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos);
+/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
 static void onVideoStartCb(void *userData, const char **attrs);
-static void onVideoEndCb  (void *userData);
+static void onVideoEndCb(void *userData);
 
-static void onGeneralCb      (void *userData, const char **attrs);
-static void onDeviceCb       (void *userData, const char **attrs);
-static void onCroppingAreaCb (void *userData, const char **attrs);
+static void onGeneralCb(void *userData, const char **attrs);
+static void onDeviceCb(void *userData, const char **attrs);
+static void onCroppingAreaCb(void *userData, const char **attrs);
 static void onComposingAreaCb(void *userData, const char **attrs);
-static void onBufferCb       (void *userData, const char **attrs);
+static void onBufferCb(void *userData, const char **attrs);
 
 static void onConfigStartCb(void *userData, const char **attrs);
-static void onConfigEndCb  (void *userData);
+static void onConfigEndCb(void *userData);
 
 static void onCapabilitiesStartCb(void *userData, const char **attrs);
-static void onCapabilitiesEndCb  (void *userData);
+static void onCapabilitiesEndCb(void *userData);
 
-static void onItemCb       (void *userData, const char **attrs);
-static void onBufferTypeCb (void *userData, const char **attrs);
+static void onItemCb(void *userData, const char **attrs);
+static void onBufferTypeCb(void *userData, const char **attrs);
 static void onPixelFormatCb(void *userData, const char **attrs);
-static void onColorspaceCb (void *userData, const char **attrs);
-static void onMemoryCb     (void *userData, const char **attrs);
-static void onAwaitModeCb  (void *userData, const char **attrs);
+static void onColorspaceCb(void *userData, const char **attrs);
+static void onMemoryCb(void *userData, const char **attrs);
+static void onAwaitModeCb(void *userData, const char **attrs);
 
 static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          FUNCTIONS                                           */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-LOADERS_ERROR_E loadVideosXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xmlVideos)
+enum loaders_error_e loadVideosXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                     struct xml_videos_s *xmlVideos)
 {
     assert(obj && ctx && xmlVideos);
     
-    PARSER_S *parserObj = ctx->parserObj;
-    INPUT_S *input      = &ctx->input;
+    struct parser_s *parserObj = ctx->parserObj;
+    struct input_s *input      = &ctx->input;
     
     xmlVideos->reserved = ctx;
     
     Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->videosConfig.xml);
     
-    PARSER_TAGS_HANDLER_S tagsHandlers[] = {
-    	{ XML_TAG_VIDEO,            onVideoStartCb,          onVideoEndCb,         NULL },
-    	{ XML_TAG_GENERAL,          onGeneralCb,             NULL,                 NULL },
-    	{ XML_TAG_DEVICE,           onDeviceCb,              NULL,                 NULL },
-    	{ XML_TAG_CROPPING_AREA,    onCroppingAreaCb,        NULL,                 NULL },
-    	{ XML_TAG_COMPOSING_AREA,   onComposingAreaCb,       NULL,                 NULL },
-    	{ XML_TAG_BUFFER,           onBufferCb,              NULL,                 NULL },
-    	{ XML_TAG_CONFIG,           onConfigStartCb,         onConfigEndCb,        NULL },
-    	{ XML_TAG_CAPABILITIES,     onCapabilitiesStartCb,   onCapabilitiesEndCb,  NULL },
-    	{ XML_TAG_ITEM,             onItemCb,                NULL,                 NULL },
-    	{ XML_TAG_BUFFER_TYPE,      onBufferTypeCb,          NULL,                 NULL },
-    	{ XML_TAG_PIXEL_FORMAT,     onPixelFormatCb,         NULL,                 NULL },
-    	{ XML_TAG_COLORSPACE,       onColorspaceCb,          NULL,                 NULL },
-    	{ XML_TAG_MEMORY,           onMemoryCb,              NULL,                 NULL },
-    	{ XML_TAG_AWAIT_MODE,       onAwaitModeCb,           NULL,                 NULL },
-    	{ NULL,                     NULL,                    NULL,                 NULL }
+    struct parser_tags_handler_s tagsHandlers[] = {
+    	{ XML_TAG_VIDEO,           onVideoStartCb,         onVideoEndCb,         NULL },
+    	{ XML_TAG_GENERAL,         onGeneralCb,            NULL,                 NULL },
+    	{ XML_TAG_DEVICE,          onDeviceCb,             NULL,                 NULL },
+    	{ XML_TAG_CROPPING_AREA,   onCroppingAreaCb,       NULL,                 NULL },
+    	{ XML_TAG_COMPOSING_AREA,  onComposingAreaCb,      NULL,                 NULL },
+    	{ XML_TAG_BUFFER,          onBufferCb,             NULL,                 NULL },
+    	{ XML_TAG_CONFIG,          onConfigStartCb,        onConfigEndCb,        NULL },
+    	{ XML_TAG_CAPABILITIES,    onCapabilitiesStartCb,  onCapabilitiesEndCb,  NULL },
+    	{ XML_TAG_ITEM,            onItemCb,               NULL,                 NULL },
+    	{ XML_TAG_BUFFER_TYPE,     onBufferTypeCb,         NULL,                 NULL },
+    	{ XML_TAG_PIXEL_FORMAT,    onPixelFormatCb,        NULL,                 NULL },
+    	{ XML_TAG_COLORSPACE,      onColorspaceCb,         NULL,                 NULL },
+    	{ XML_TAG_MEMORY,          onMemoryCb,             NULL,                 NULL },
+    	{ XML_TAG_AWAIT_MODE,      onAwaitModeCb,          NULL,                 NULL },
+    	{ NULL,                    NULL,                   NULL,                 NULL }
     };
     
-    PARSER_PARAMS_S parserParams;
-    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->resRootDir, input->videosConfig.xml);
+    struct parser_params_s parserParams;
+    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s",
+                                input->resRootDir, input->videosConfig.xml);
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
     parserParams.onErrorCb    = onErrorCb;
@@ -133,13 +132,13 @@ LOADERS_ERROR_E loadVideosXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_VIDEOS_S *xm
 /*!
  *
  */
-LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos)
+enum loaders_error_e unloadVideosXml_f(struct loaders_s *obj, struct xml_videos_s *xmlVideos)
 {
     assert(obj && xmlVideos);
     
     uint8_t i, j;
-    XML_VIDEO_S *video;
-    XML_CONFIG_S *config;
+    struct xml_video_s *video;
+    struct xml_config_s *config;
     
     for (i = 0; i < xmlVideos->nbVideos; i++) {
         video = &xmlVideos->videos[i];
@@ -214,7 +213,7 @@ LOADERS_ERROR_E unloadVideosXml_f(LOADERS_S *obj, XML_VIDEOS_S *xmlVideos)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           CALLBACKS                                          */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
@@ -226,14 +225,15 @@ static void onVideoStartCb(void *userData, const char **attrs)
     
     (void)attrs;
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     
     Logd("Adding video %u", (xmlVideos->nbVideos + 1));
     
-    xmlVideos->videos = realloc(xmlVideos->videos, (xmlVideos->nbVideos + 1) * sizeof(XML_VIDEO_S));
+    xmlVideos->videos = realloc(xmlVideos->videos,
+                                (xmlVideos->nbVideos + 1) * sizeof(struct xml_video_s));
     assert(xmlVideos->videos);
     
-    memset(&xmlVideos->videos[xmlVideos->nbVideos], '\0', sizeof(XML_VIDEO_S));
+    memset(&xmlVideos->videos[xmlVideos->nbVideos], 0, sizeof(struct xml_video_s));
 }
 
 /*!
@@ -243,7 +243,7 @@ static void onVideoEndCb(void *userData)
 {
     assert(userData);
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
 
     xmlVideos->nbVideos++;
     
@@ -257,12 +257,12 @@ static void onGeneralCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
-    XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->parserObj;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
+    struct xml_video_s *video      = &xmlVideos->videos[xmlVideos->nbVideos];
+    struct context_s *ctx          = (struct context_s*)xmlVideos->reserved;
+    struct parser_s *parserObj     = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_PRIORITY,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -299,12 +299,12 @@ static void onGeneralCb(void *userData, const char **attrs)
     	Loge("Failed to retrieve attributes in \"General\" tag");
     }
     
-    if (video->graphicsDest && (strlen(video->graphicsDest) == 0)) {
+    if (video->graphicsDest && ((video->graphicsDest)[0] == '\0')) {
         free(video->graphicsDest);
         video->graphicsDest = NULL;
     }
     
-    if (video->serverDest && (strlen(video->serverDest) == 0)) {
+    if (video->serverDest && ((video->serverDest)[0] == '\0')) {
         free(video->serverDest);
         video->serverDest = NULL;
     }
@@ -317,12 +317,12 @@ static void onDeviceCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
-    XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->parserObj;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
+    struct xml_video_s *video      = &xmlVideos->videos[xmlVideos->nbVideos];
+    struct context_s *ctx          = (struct context_s*)xmlVideos->reserved;
+    struct parser_s *parserObj     = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_NAME,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -367,12 +367,12 @@ static void onCroppingAreaCb(void *userData, const char **attrs)
 {
     assert(userData);
 
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
-    XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->parserObj;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
+    struct xml_video_s *video      = &xmlVideos->videos[xmlVideos->nbVideos];
+    struct context_s *ctx          = (struct context_s*)xmlVideos->reserved;
+    struct parser_s *parserObj     = ctx->parserObj;
 
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_LEFT,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -417,12 +417,12 @@ static void onComposingAreaCb(void *userData, const char **attrs)
 {
     assert(userData);
 
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
-    XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->parserObj;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
+    struct xml_video_s *video      = &xmlVideos->videos[xmlVideos->nbVideos];
+    struct context_s *ctx          = (struct context_s*)xmlVideos->reserved;
+    struct parser_s *parserObj     = ctx->parserObj;
 
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_LEFT,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -467,12 +467,12 @@ static void onBufferCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
-    XML_VIDEO_S *video      = &xmlVideos->videos[xmlVideos->nbVideos];
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->parserObj;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
+    struct xml_video_s *video      = &xmlVideos->videos[xmlVideos->nbVideos];
+    struct context_s *ctx          = (struct context_s*)xmlVideos->reserved;
+    struct parser_s *parserObj     = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_NB_BUFFERS,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -507,14 +507,15 @@ static void onConfigStartCb(void *userData, const char **attrs)
     
     (void)attrs;
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     
     Logd("Adding config %u", (xmlVideos->nbConfigs + 1));
     
-    xmlVideos->configs = realloc(xmlVideos->configs, (xmlVideos->nbConfigs + 1) * sizeof(XML_CONFIG_S));
+    xmlVideos->configs = realloc(xmlVideos->configs,
+                                 (xmlVideos->nbConfigs + 1) * sizeof(struct xml_config_s));
     assert(xmlVideos->configs);
     
-    memset(&xmlVideos->configs[xmlVideos->nbConfigs], '\0', sizeof(XML_CONFIG_S));
+    memset(&xmlVideos->configs[xmlVideos->nbConfigs], 0, sizeof(struct xml_config_s));
 }
 
 /*!
@@ -524,7 +525,7 @@ static void onConfigEndCb(void *userData)
 {
     assert(userData);
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
 
     xmlVideos->nbConfigs++;
     
@@ -560,21 +561,22 @@ static void onItemCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
-    XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->parserObj;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
+    struct xml_config_s *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
+    struct context_s *ctx          = (struct context_s*)xmlVideos->reserved;
+    struct parser_s *parserObj     = ctx->parserObj;
 
     Logd("Adding item %u", (config->nbItems + 1));
     
-    config->capabilities = realloc(config->capabilities, (config->nbItems + 1) * sizeof(XML_CAPABILITY_S));
+    config->capabilities = realloc(config->capabilities,
+                                   (config->nbItems + 1) * sizeof(struct xml_capability_s));
     assert(config->capabilities);
     
-    memset(&config->capabilities[config->nbItems], '\0', sizeof(XML_CAPABILITY_S));
+    memset(&config->capabilities[config->nbItems], 0, sizeof(struct xml_capability_s));
 
-    XML_CAPABILITY_S *capability = &config->capabilities[config->nbItems];
+    struct xml_capability_s *capability = &config->capabilities[config->nbItems];
 
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_VALUE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -606,12 +608,12 @@ static void onBufferTypeCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
-    XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->parserObj;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
+    struct xml_config_s *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
+    struct context_s *ctx          = (struct context_s*)xmlVideos->reserved;
+    struct parser_s *parserObj     = ctx->parserObj;
 
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_VALUE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -641,12 +643,12 @@ static void onPixelFormatCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
-    XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->parserObj;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
+    struct xml_config_s *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
+    struct context_s *ctx          = (struct context_s*)xmlVideos->reserved;
+    struct parser_s *parserObj     = ctx->parserObj;
 
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_VALUE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -676,12 +678,12 @@ static void onColorspaceCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
-    XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->parserObj;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
+    struct xml_config_s *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
+    struct context_s *ctx          = (struct context_s*)xmlVideos->reserved;
+    struct parser_s *parserObj     = ctx->parserObj;
 
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_VALUE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -711,12 +713,12 @@ static void onMemoryCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
-    XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->parserObj;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
+    struct xml_config_s *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
+    struct context_s *ctx          = (struct context_s*)xmlVideos->reserved;
+    struct parser_s *parserObj     = ctx->parserObj;
 
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_VALUE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -746,12 +748,12 @@ static void onAwaitModeCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_VIDEOS_S *xmlVideos = (XML_VIDEOS_S*)userData;
-    XML_CONFIG_S *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlVideos->reserved;
-    PARSER_S *parserObj     = ctx->parserObj;
+    struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
+    struct xml_config_s *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
+    struct context_s *ctx          = (struct context_s*)xmlVideos->reserved;
+    struct parser_s *parserObj     = ctx->parserObj;
 
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_VALUE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,

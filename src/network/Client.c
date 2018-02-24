@@ -20,19 +20,19 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Client.c
-* \brief  Clients management
+* \file Client.c
+* \brief Clients management
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "network/Client.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
@@ -42,99 +42,105 @@
 #define RECEIVER_TASK_NAME "ReceiverTask"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef struct CLIENT_CONTEXT_S {
-    volatile uint8_t quit;
+struct client_context_s {
+    volatile uint8_t        quit;
     
-    CLIENT_PARAMS_S  params;
+    struct client_params_s  params;
     
-    LINK_S           *client;
-    LINK_S           *server;
+    struct link_s           *client;
+    struct link_s           *server;
     
-    CUSTOM_HEADER_S  customHeader;
-    CUSTOM_CONTENT_S customContent;
+    struct custom_header_s  customHeader;
+    struct custom_content_s customContent;
 
-    HTTP_GET_S       httpGet;
-    HTTP_200_OK_S    http200Ok;
-    HTTP_CONTENT_S   httpContent;
-    BUFFER_S         httpBuffer;
-    size_t           nbBodyRead;
+    struct http_get_s       httpGet;
+    struct http_200_ok_s    http200Ok;
+    struct http_content_s   httpContent;
+    struct buffer_s         httpBuffer;
+    size_t                  nbBodyRead;
     
-    BUFFER_S         bufferIn;
-    BUFFER_S         bufferOut;
-    ssize_t          nbRead;
+    struct buffer_s         bufferIn;
+    struct buffer_s         bufferOut;
+    ssize_t                 nbRead;
     
-    sem_t            sem;
-    pthread_mutex_t  lock;
+    sem_t                   sem;
+    pthread_mutex_t         lock;
     
-    TASK_S           *clientTask;
-    TASK_PARAMS_S    watcherTaskParams;
-    TASK_PARAMS_S    receiverTaskParams;
+    struct task_s           *clientTask;
+    struct task_params_s    watcherTaskParams;
+    struct task_params_s    receiverTaskParams;
     
-    ADDRINFO         hints;
-    ADDRINFO         *result;
-    ADDRINFO         *rp;
-    void             *addr;
-    char             *ipver;
-    char             ipstr[MAX_ADDRESS_SIZE];
-    uint16_t         port;
+    struct addrinfo         hints;
+    struct addrinfo         *result;
+    struct addrinfo         *rp;
+    void                    *addr;
+    char                    *ipver;
+    char                    ipstr[MAX_ADDRESS_SIZE];
+    uint16_t                port;
     union {
-        SOCKADDR_IN  *v4;
-        SOCKADDR_IN6 *v6;
+        struct sockaddr_in  *v4;
+        struct sockaddr_in6 *v6;
     } ip;
     
-    uint8_t          ackReceived;
-} CLIENT_CONTEXT_S;
+    uint8_t                 ackReceived;
+};
 
-typedef struct CLIENT_PRIVATE_DATA_S {
-    LINK_HELPER_S *linkHelper;
-    LIST_S        *clientsList;
-} CLIENT_PRIVATE_DATA_S;
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
+struct client_private_data_s {
+    struct link_helper_s *linkHelper;
+    struct list_s        *clientsList;
+};
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static CLIENT_ERROR_E start_f(CLIENT_S *obj, CLIENT_PARAMS_S *params);
-static CLIENT_ERROR_E stop_f (CLIENT_S *obj, CLIENT_PARAMS_S *params);
+static enum client_error_e start_f(struct client_s *obj, struct client_params_s *params);
+static enum client_error_e stop_f(struct client_s *obj, struct client_params_s *params);
 
-static CLIENT_ERROR_E sendData_f(CLIENT_S *obj, CLIENT_PARAMS_S *params, BUFFER_S *buffer);
-
-static CLIENT_ERROR_E openClientSocket_f(CLIENT_CONTEXT_S *ctx, LINK_HELPER_S *linkHelper);
-static CLIENT_ERROR_E closeClientSocket_f(CLIENT_CONTEXT_S *ctx);
-static CLIENT_ERROR_E getClientContext_f(CLIENT_S *obj, char *clientName, CLIENT_CONTEXT_S **ctxOut, uint8_t lock);
-
-static void watcherTaskFct_f (TASK_PARAMS_S *params);
-static void receiverTaskFct_f(TASK_PARAMS_S *params);
-
-static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData);
-static void    releaseCb(LIST_S *obj, void *element);
+static enum client_error_e sendData_f(struct client_s *obj, struct client_params_s *params,
+                                      struct buffer_s *buffer);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static enum client_error_e openClientSocket_f(struct client_context_s *ctx,
+                                              struct link_helper_s *linkHelper);
+static enum client_error_e closeClientSocket_f(struct client_context_s *ctx);
+static enum client_error_e getClientContext_f(struct client_s *obj, char *clientName,
+                                              struct client_context_s **ctxOut, uint8_t lock);
+
+static void watcherTaskFct_f(struct task_params_s *params);
+static void receiverTaskFct_f(struct task_params_s *params);
+
+/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData);
+static void releaseCb(struct list_s *obj, void *element);
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-CLIENT_ERROR_E Client_Init(CLIENT_S **obj)
+enum client_error_e Client_Init(struct client_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(CLIENT_S))));
+    assert(obj && (*obj = calloc(1, sizeof(struct client_s))));
 
-    CLIENT_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(CLIENT_PRIVATE_DATA_S))));
+    struct client_private_data_s *pData;
+    assert((pData = calloc(1, sizeof(struct client_private_data_s))));
     
     LinkHelper_Init(&pData->linkHelper);
     assert(pData->linkHelper);
     
-    LIST_PARAMS_S listParams;
-    memset(&listParams, '\0', sizeof(LIST_PARAMS_S));
+    struct list_params_s listParams = {0};
     listParams.compareCb = compareCb;
     listParams.releaseCb = releaseCb;
     listParams.browseCb  = NULL;
@@ -170,11 +176,11 @@ exit:
 /*!
  *
  */
-CLIENT_ERROR_E Client_UnInit(CLIENT_S **obj)
+enum client_error_e Client_UnInit(struct client_s **obj)
 {
     assert(obj && *obj && (*obj)->pData);
     
-    CLIENT_PRIVATE_DATA_S *pData = (CLIENT_PRIVATE_DATA_S*)((*obj)->pData);
+    struct client_private_data_s *pData = (struct client_private_data_s*)((*obj)->pData);
     
     LinkHelper_UnInit(&pData->linkHelper);
     
@@ -190,17 +196,17 @@ CLIENT_ERROR_E Client_UnInit(CLIENT_S **obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-static CLIENT_ERROR_E start_f(CLIENT_S *obj, CLIENT_PARAMS_S *params)
+static enum client_error_e start_f(struct client_s *obj, struct client_params_s *params)
 {
     assert(obj && obj->pData && params);
 
-    CLIENT_CONTEXT_S *ctx = NULL;
+    struct client_context_s *ctx = NULL;
 
     /* Check if client is already started or not */
     if (getClientContext_f(obj, params->name, &ctx, 1) == CLIENT_ERROR_NONE) {
@@ -209,21 +215,11 @@ static CLIENT_ERROR_E start_f(CLIENT_S *obj, CLIENT_PARAMS_S *params)
     }
 
     /* Init context */
-    assert((ctx = calloc(1, sizeof(CLIENT_CONTEXT_S))));
-    
-    strncpy(ctx->params.name, params->name, sizeof(ctx->params.name));
-    ctx->params.type             = params->type;
-    ctx->params.link             = params->link;
-    ctx->params.mode             = params->mode;
-    memcpy(&ctx->params.recipient, &params->recipient, sizeof(params->recipient));
-    ctx->params.priority         = params->priority;
-    ctx->params.maxBufferSize    = params->maxBufferSize;
-    ctx->params.onDataReceivedCb = params->onDataReceivedCb;
-    ctx->params.onLinkBrokenCb   = params->onLinkBrokenCb;
-    ctx->params.userData         = params->userData;
+    assert((ctx = calloc(1, sizeof(struct client_context_s))));
+    ctx->params = *params;
     
     /* Init socket */
-    CLIENT_PRIVATE_DATA_S *pData = (CLIENT_PRIVATE_DATA_S*)(obj->pData);
+    struct client_private_data_s *pData = (struct client_private_data_s*)(obj->pData);
 
     if (openClientSocket_f(ctx, pData->linkHelper) != CLIENT_ERROR_NONE) {
         Loge("openClientSocket_f() failed");
@@ -276,7 +272,8 @@ static CLIENT_ERROR_E start_f(CLIENT_S *obj, CLIENT_PARAMS_S *params)
     }
     
     /* Add client's ctx to list */
-    if (!pData->clientsList || (pData->clientsList->lock(pData->clientsList) != LIST_ERROR_NONE)) {
+    if (!pData->clientsList
+        || (pData->clientsList->lock(pData->clientsList) != LIST_ERROR_NONE)) {
         Loge("Failed to lock clientsList");
         goto list_exit;
     }
@@ -317,12 +314,12 @@ exit:
 /*!
  *
  */
-static CLIENT_ERROR_E stop_f(CLIENT_S *obj, CLIENT_PARAMS_S *params)
+static enum client_error_e stop_f(struct client_s *obj, struct client_params_s *params)
 {
     assert(obj && obj->pData && params);
 
-    CLIENT_CONTEXT_S *ctx = NULL;
-    CLIENT_ERROR_E ret    = CLIENT_ERROR_NONE;
+    struct client_context_s *ctx = NULL;
+    enum client_error_e ret      = CLIENT_ERROR_NONE;
 
     /* Ensure that the client is started */
     if ((ret = getClientContext_f(obj, params->name, &ctx, 1)) != CLIENT_ERROR_NONE) {
@@ -330,9 +327,10 @@ static CLIENT_ERROR_E stop_f(CLIENT_S *obj, CLIENT_PARAMS_S *params)
         goto exit;
     }
 
-    CLIENT_PRIVATE_DATA_S *pData = (CLIENT_PRIVATE_DATA_S*)(obj->pData);
+    struct client_private_data_s *pData = (struct client_private_data_s*)(obj->pData);
 
-    if (!pData->clientsList || pData->clientsList->lock(pData->clientsList) != LIST_ERROR_NONE) {
+    if (!pData->clientsList
+        || pData->clientsList->lock(pData->clientsList) != LIST_ERROR_NONE) {
         Loge("Failed to lock clientsList");
         ret = CLIENT_ERROR_LOCK;
         goto exit;
@@ -348,11 +346,12 @@ exit:
 /*!
  *
  */
-static CLIENT_ERROR_E sendData_f(CLIENT_S *obj, CLIENT_PARAMS_S *params, BUFFER_S *buffer)
+static enum client_error_e sendData_f(struct client_s *obj, struct client_params_s *params,
+                                      struct buffer_s *buffer)
 {
     assert(obj && obj->pData && params && buffer);
 
-    CLIENT_PRIVATE_DATA_S *pData = (CLIENT_PRIVATE_DATA_S*)(obj->pData);
+    struct client_private_data_s *pData = (struct client_private_data_s*)(obj->pData);
     
     if (!pData->clientsList) {
         Loge("No element in list");
@@ -365,8 +364,8 @@ static CLIENT_ERROR_E sendData_f(CLIENT_S *obj, CLIENT_PARAMS_S *params, BUFFER_
     }
     
     // Retrieve client context
-    CLIENT_CONTEXT_S *ctx = NULL;
-    CLIENT_ERROR_E ret    = CLIENT_ERROR_NONE;
+    struct client_context_s *ctx = NULL;
+    enum client_error_e ret      = CLIENT_ERROR_NONE;
 
     if ((ret = getClientContext_f(obj, params->name, &ctx, 0)) != CLIENT_ERROR_NONE) {
         Loge("%s's context exists", params->name);
@@ -374,7 +373,8 @@ static CLIENT_ERROR_E sendData_f(CLIENT_S *obj, CLIENT_PARAMS_S *params, BUFFER_
     }
     
     // Send data to server
-    if (pData->linkHelper->writeData(pData->linkHelper, ctx->client, ctx->server, buffer, NULL) == ERROR) {
+    if (pData->linkHelper->writeData(pData->linkHelper,
+                                     ctx->client, ctx->server, buffer, NULL) == ERROR) {
         Loge("Failed to send data to server");
     }
 
@@ -384,10 +384,15 @@ exit:
     return ret;
 }
 
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////// PRIVATE FUNCTIONS IMPLEMENTATION ///////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
 /*!
  *
  */
-static CLIENT_ERROR_E openClientSocket_f(CLIENT_CONTEXT_S *ctx, LINK_HELPER_S *linkHelper)
+static enum client_error_e openClientSocket_f(struct client_context_s *ctx,
+                                              struct link_helper_s *linkHelper)
 {
     assert(ctx && linkHelper);
     
@@ -396,21 +401,20 @@ static CLIENT_ERROR_E openClientSocket_f(CLIENT_CONTEXT_S *ctx, LINK_HELPER_S *l
         return CLIENT_ERROR_PARAMS;
     }
     
-    assert((ctx->client = calloc(1, sizeof(LINK_S)))
-            && (ctx->server = calloc(1, sizeof(LINK_S))));
+    assert((ctx->client = calloc(1, sizeof(struct link_s)))
+            && (ctx->server = calloc(1, sizeof(struct link_s))));
     
     ctx->client->domain = ((ctx->params.link == LINK_TYPE_INET_STREAM)
-                            || (ctx->params.link == LINK_TYPE_INET_DGRAM))  ? AF_UNSPEC   : AF_UNIX;
-    ctx->client->type   = ((ctx->params.link == LINK_TYPE_INET_STREAM)
-                            || (ctx->params.link == LINK_TYPE_UNIX_STREAM)) ? SOCK_STREAM : SOCK_DGRAM;
+                          || (ctx->params.link == LINK_TYPE_INET_DGRAM)) ? AF_UNSPEC : AF_UNIX;
+    ctx->client->type = ((ctx->params.link == LINK_TYPE_INET_STREAM)
+                        || (ctx->params.link == LINK_TYPE_UNIX_STREAM)) ? SOCK_STREAM : SOCK_DGRAM;
     
     if (ctx->client->domain != AF_UNIX) {
-        memset(&ctx->hints, '\0', sizeof(ADDRINFO));
         ctx->hints.ai_family   = ctx->client->domain;
         ctx->hints.ai_socktype = ctx->server->type;
 
         int status = getaddrinfo(ctx->params.recipient.server.host,
-                                    ctx->params.recipient.server.service, &ctx->hints, &ctx->result);
+                                 ctx->params.recipient.server.service, &ctx->hints, &ctx->result);
         if (status != 0) {
             Loge("getaddrinfo() failed - %s", gai_strerror(status));
             goto getaddrinfo_exit;
@@ -430,13 +434,13 @@ next_addr:
         ctx->client->type   = ctx->rp->ai_socktype;
         
         if (ctx->client->domain != AF_UNIX) {
-            ctx->ip.v4  = (SOCKADDR_IN*)ctx->rp->ai_addr;
+            ctx->ip.v4  = (struct sockaddr_in*)ctx->rp->ai_addr;
             ctx->addr   = &(ctx->ip.v4->sin_addr);
             ctx->port   = (uint16_t)ntohs(ctx->ip.v4->sin_port);
             ctx->ipver  = IPV4;
         }
         else {
-            ctx->ip.v6  = (SOCKADDR_IN6*)ctx->rp->ai_addr;
+            ctx->ip.v6  = (struct sockaddr_in6*)ctx->rp->ai_addr;
             ctx->addr   = &(ctx->ip.v6->sin6_addr);
             ctx->port   = (uint16_t)ntohs(ctx->ip.v6->sin6_port);
             ctx->ipver  = IPV6;
@@ -446,7 +450,8 @@ next_addr:
         Logd("Testing : %s - address : %s / port : %d", ctx->ipver, ctx->ipstr, ctx->port);
     }
     
-    if ((ctx->client->sock = socket(ctx->client->domain, ctx->client->type, 0)) == INVALID_SOCKET) {
+    if ((ctx->client->sock = socket(ctx->client->domain,
+                                    ctx->client->type, 0)) == INVALID_SOCKET) {
         if (ctx->client->domain != AF_UNIX) {
             goto next_addr;
         }
@@ -457,11 +462,11 @@ next_addr:
     /* Init server's data */
     if (ctx->client->domain != AF_UNIX) {
         if (!strcmp(ctx->ipver, IPV4)) {
-            ctx->server->destAddress       = (SOCKADDR*)(ctx->ip.v4);
+            ctx->server->destAddress       = (struct sockaddr*)(ctx->ip.v4);
             ctx->server->destAddressLength = sizeof(*(ctx->ip.v4));
         }
         else {
-            ctx->server->destAddress       = (SOCKADDR*)(ctx->ip.v6);
+            ctx->server->destAddress       = (struct sockaddr*)(ctx->ip.v6);
             ctx->server->destAddressLength = sizeof(*(ctx->ip.v6));
         }
     }
@@ -476,13 +481,14 @@ next_addr:
                     ctx->params.recipient.serverSocketName);
                     
         ctx->server->destAddressLength = sizeof(ctx->server->addr.sun);
-        ctx->server->destAddress       = (SOCKADDR*)&ctx->server->addr.sun;
+        ctx->server->destAddress       = (struct sockaddr*)&ctx->server->addr.sun;
     }
     
     /* Connect to server if required */
     if (ctx->client->type == SOCK_STREAM) { // Connection oriented
-        if ((connect(ctx->client->sock, ctx->server->destAddress, ctx->server->destAddressLength) == SOCKET_ERROR)
-            && (errno != EINPROGRESS)) {
+        if ((connect(ctx->client->sock, ctx->server->destAddress,
+                                        ctx->server->destAddressLength) == SOCKET_ERROR)
+                                        && (errno != EINPROGRESS)) {
             if (ctx->client->domain != AF_UNIX) {
                 close(ctx->client->sock);
                 goto next_addr;
@@ -512,7 +518,8 @@ next_addr:
                     ctx->params.recipient.serverSocketName);
                     
             unlink(ctx->client->addr.sun.sun_path);
-            if (bind(ctx->client->sock, (SOCKADDR*)&(ctx->client->addr.sun), sizeof(ctx->client->addr.sun)) == SOCKET_ERROR) {
+            if (bind(ctx->client->sock, (struct sockaddr*)&(ctx->client->addr.sun),
+                                        sizeof(ctx->client->addr.sun)) == SOCKET_ERROR) {
                 Loge("Failed to bind to client socket");
                 goto freeaddrinfo_exit;
             }
@@ -520,7 +527,7 @@ next_addr:
     }
     
     /* Exchange first data with server to finalize initialization */
-    BUFFER_S buffer;
+    struct buffer_s buffer;
     if (ctx->params.mode == LINK_MODE_HTTP) {
         strcpy(ctx->httpGet.path, ctx->params.recipient.server.path);
         strcpy(ctx->httpGet.host, ctx->ipstr);
@@ -593,7 +600,7 @@ getaddrinfo_exit:
 /*!
  *
  */
-static CLIENT_ERROR_E closeClientSocket_f(CLIENT_CONTEXT_S *ctx)
+static enum client_error_e closeClientSocket_f(struct client_context_s *ctx)
 {
     assert(ctx);
     
@@ -621,18 +628,19 @@ static CLIENT_ERROR_E closeClientSocket_f(CLIENT_CONTEXT_S *ctx)
 /*!
  *
  */
-static CLIENT_ERROR_E getClientContext_f(CLIENT_S *obj, char *clientName, CLIENT_CONTEXT_S **ctxOut, uint8_t lock)
+static enum client_error_e getClientContext_f(struct client_s *obj, char *clientName,
+                                              struct client_context_s **ctxOut, uint8_t lock)
 {
     assert(obj && obj->pData && clientName && ctxOut);
 
-    CLIENT_PRIVATE_DATA_S *pData = (CLIENT_PRIVATE_DATA_S*)(obj->pData);
+    struct client_private_data_s *pData = (struct client_private_data_s*)(obj->pData);
 
     if (!pData->clientsList) {
         Loge("There is currently no element in list");
         return CLIENT_ERROR_LIST;
     }
 
-    CLIENT_ERROR_E ret = CLIENT_ERROR_NONE;
+    enum client_error_e ret = CLIENT_ERROR_NONE;
 
     if (lock && (pData->clientsList->lock(pData->clientsList) != LIST_ERROR_NONE)) {
         Loge("Failed to lock clientsList");
@@ -647,7 +655,8 @@ static CLIENT_ERROR_E getClientContext_f(CLIENT_S *obj, char *clientName, CLIENT
     }
 
     while (nbElements > 0) {
-        if (pData->clientsList->getElement(pData->clientsList, (void**)ctxOut) != LIST_ERROR_NONE) {
+        if (pData->clientsList->getElement(pData->clientsList,
+                                           (void**)ctxOut) != LIST_ERROR_NONE) {
             Loge("Failed to retrieve element");
             ret = CLIENT_ERROR_LIST;
             goto exit;
@@ -677,12 +686,12 @@ exit:
 /*!
  *
  */
-static void watcherTaskFct_f(TASK_PARAMS_S *params)
+static void watcherTaskFct_f(struct task_params_s *params)
 {
     assert(params && params->fctData && params->userData);
     
-    CLIENT_CONTEXT_S      *ctx   = (CLIENT_CONTEXT_S*)params->fctData;
-    CLIENT_PRIVATE_DATA_S *pData = (CLIENT_PRIVATE_DATA_S*)params->userData;
+    struct client_context_s *ctx        = (struct client_context_s*)params->fctData;
+    struct client_private_data_s *pData = (struct client_private_data_s*)params->userData;
 
     if (pData->linkHelper->isReadyForReading(pData->linkHelper, ctx->client, WAIT_TIME_2S) == NO) {
         return;
@@ -699,7 +708,9 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
             ctx->bufferIn.data   = (void*)ctx->http200Ok.str;
             ctx->bufferIn.length = sizeof(ctx->http200Ok.str);
 
-            if ((pData->linkHelper->readData(pData->linkHelper, ctx->client, NULL, &ctx->bufferIn, &ctx->nbRead) == ERROR)
+            if ((pData->linkHelper->readData(pData->linkHelper,
+                                             ctx->client, NULL,
+                                             &ctx->bufferIn, &ctx->nbRead) == ERROR)
                 || (ctx->nbRead == 0)) {
                 Loge("No ack received from server yet");
                 ctx->bufferIn.data = NULL;
@@ -720,7 +731,9 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
             ctx->bufferIn.data   = (void*)ctx->customContent.str;
             ctx->bufferIn.length = sizeof(ctx->customContent.str);
                     
-            if ((pData->linkHelper->readData(pData->linkHelper, ctx->client, ctx->server, &ctx->bufferIn, &ctx->nbRead) == ERROR)
+            if ((pData->linkHelper->readData(pData->linkHelper,
+                                             ctx->client, ctx->server,
+                                             &ctx->bufferIn, &ctx->nbRead) == ERROR)
                 || (ctx->nbRead == 0)) {
                 Loge("No ack received from server yet");
                 ctx->bufferIn.data = NULL;
@@ -756,21 +769,25 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
         ctx->bufferIn.length = ctx->params.maxBufferSize;
         
         ctx->ackReceived = 1;
-        Logd("ackReceived = %d / maxBufferSize = %lu", ctx->ackReceived, ctx->params.maxBufferSize);
+        Logd("ackReceived = %d / maxBufferSize = %lu",
+                ctx->ackReceived, ctx->params.maxBufferSize);
     }
     else {
         if (ctx->params.mode == LINK_MODE_HTTP) {
             ctx->httpBuffer.data   = (void*)ctx->httpContent.str;
             ctx->httpBuffer.length = sizeof(ctx->httpContent.str);
             
-            if ((pData->linkHelper->readData(pData->linkHelper, ctx->client, NULL, &ctx->httpBuffer, &ctx->nbRead) == ERROR)
+            if ((pData->linkHelper->readData(pData->linkHelper,
+                                             ctx->client, NULL,
+                                             &ctx->httpBuffer, &ctx->nbRead) == ERROR)
                 || (ctx->nbRead == 0)) {
                 Loge("Failed to receive http content's header");
                 goto exitNoFree;
             }
             
             pData->linkHelper->parseHttpContent(pData->linkHelper, &ctx->httpContent);
-            Logd("Http Content : %s / read = %ld / bodyStart = %d", ctx->httpContent.str, ctx->nbRead, ctx->httpContent.bodyStart);
+            Logd("Http Content : %s / read = %ld / bodyStart = %d",
+                    ctx->httpContent.str, ctx->nbRead, ctx->httpContent.bodyStart);
             
             if (ctx->httpContent.length == 0) {
                 Logw("Bad HTTP response");
@@ -781,14 +798,17 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
             ctx->httpBuffer.length = ctx->httpContent.length - ctx->nbBodyRead;
             
             assert((ctx->httpBuffer.data = calloc(1, ctx->httpBuffer.length)));
-            if (pData->linkHelper->readData(pData->linkHelper, ctx->client, NULL, &ctx->httpBuffer, &ctx->nbRead) == ERROR) {
+            if (pData->linkHelper->readData(pData->linkHelper,
+                                            ctx->client, NULL,
+                                            &ctx->httpBuffer, &ctx->nbRead) == ERROR) {
                 Loge("Failed to read from server");
                 goto exit;
             }
             
             // Adjust buffer size if necessary
             if (ctx->httpContent.length > ctx->params.maxBufferSize) {
-                Logw("Ajusting maxBufferSize from %lu bytes to %lu bytes", ctx->params.maxBufferSize, ctx->httpContent.length);
+                Logw("Ajusting maxBufferSize from %lu bytes to %lu bytes",
+                        ctx->params.maxBufferSize, ctx->httpContent.length);
                 free(ctx->bufferIn.data);
 
                 ctx->bufferIn.length       = ctx->httpContent.length;
@@ -797,12 +817,17 @@ static void watcherTaskFct_f(TASK_PARAMS_S *params)
             }
 
             // Copy received data
-            memcpy(ctx->bufferIn.data, ctx->httpContent.str + ctx->httpContent.bodyStart, ctx->nbBodyRead);
+            memcpy(ctx->bufferIn.data,
+                   ctx->httpContent.str + ctx->httpContent.bodyStart,
+                   ctx->nbBodyRead);
             memcpy(ctx->bufferIn.data + ctx->nbBodyRead, ctx->httpBuffer.data, ctx->nbRead);
             ctx->bufferIn.length = ctx->nbBodyRead + ctx->nbRead;
-            Logd("Http body length : read = %ld / expected : %ld", ctx->bufferIn.length, ctx->httpBuffer.length);
+            Logd("Http body length : read = %ld / expected : %ld",
+                    ctx->bufferIn.length, ctx->httpBuffer.length);
         }
-        else if (pData->linkHelper->readData(pData->linkHelper, ctx->client, ctx->server, &ctx->bufferIn, &ctx->nbRead) == ERROR) {
+        else if (pData->linkHelper->readData(pData->linkHelper,
+                                             ctx->client, ctx->server,
+                                             &ctx->bufferIn, &ctx->nbRead) == ERROR) {
             Loge("Failed to read from server");
             goto exit;
         }
@@ -828,11 +853,11 @@ exitNoFree:
 /*!
  *
  */
-static void receiverTaskFct_f(TASK_PARAMS_S *params)
+static void receiverTaskFct_f(struct task_params_s *params)
 {
     assert(params && params->fctData && params->userData);
     
-    CLIENT_CONTEXT_S *ctx = (CLIENT_CONTEXT_S*)params->fctData;
+    struct client_context_s *ctx = (struct client_context_s*)params->fctData;
     
     if (ctx->quit) {
         return;
@@ -861,15 +886,19 @@ static void receiverTaskFct_f(TASK_PARAMS_S *params)
     (void)pthread_mutex_unlock(&ctx->lock);
 }
 
+/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
 /*!
  *
  */
-static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData)
+static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     assert(obj && elementToCheck && userData);
     
-    CLIENT_CONTEXT_S *ctx  = (CLIENT_CONTEXT_S*)elementToCheck;
-    char *nameOfElementToRemove = (char*)userData;
+    struct client_context_s *ctx = (struct client_context_s*)elementToCheck;
+    char *nameOfElementToRemove  = (char*)userData;
     
     return (strncmp(nameOfElementToRemove, ctx->params.name, strlen(ctx->params.name)) == 0);
 }
@@ -877,11 +906,11 @@ static uint8_t compareCb(LIST_S *obj, void *elementToCheck, void *userData)
 /*!
  *
  */
-static void releaseCb(LIST_S *obj, void *element)
+static void releaseCb(struct list_s *obj, void *element)
 {
     assert(obj && element);
     
-    CLIENT_CONTEXT_S *ctx = (CLIENT_CONTEXT_S*)element;
+    struct client_context_s *ctx = (struct client_context_s*)element;
        
     /* Stop tasks */
     ctx->quit = 1;

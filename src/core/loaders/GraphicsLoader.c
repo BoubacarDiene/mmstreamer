@@ -20,120 +20,121 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   GraphicsLoader.c
-* \brief  TODO
+* \file GraphicsLoader.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Loaders.h"
 #include "core/XmlDefines.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "GraphicsLoader"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum loaders_error_e loadGraphicsXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                       struct xml_graphics_s *xmlGraphics);
+enum loaders_error_e unloadGraphicsXml_f(struct loaders_s *obj,
+                                         struct xml_graphics_s *xmlGraphics);
+
+enum loaders_error_e loadCommonXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                     struct xml_common_s *xmlCommon);
+enum loaders_error_e unloadCommonXml_f(struct loaders_s *obj, struct xml_common_s *xmlCommon);
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-LOADERS_ERROR_E loadGraphicsXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S *xmlGraphics);
-LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics);
-
-LOADERS_ERROR_E loadCommonXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_COMMON_S *xmlCommon);
-LOADERS_ERROR_E unloadCommonXml_f(LOADERS_S *obj, XML_COMMON_S *xmlCommon);
-
-static void onCommonCb (void *userData, const char **attrs);
-static void onColorsCb (void *userData, const char **attrs);
-static void onImagesCb (void *userData, const char **attrs);
-static void onFontsCb  (void *userData, const char **attrs);
+static void onCommonCb(void *userData, const char **attrs);
+static void onColorsCb(void *userData, const char **attrs);
+static void onImagesCb(void *userData, const char **attrs);
+static void onFontsCb(void *userData, const char **attrs);
 static void onStringsCb(void *userData, const char **attrs);
 
-static void onScreenCb    (void *userData, const char **attrs);
+static void onScreenCb(void *userData, const char **attrs);
 static void onBackgroundCb(void *userData, const char **attrs);
-static void onIconCb      (void *userData, const char **attrs);
+static void onIconCb(void *userData, const char **attrs);
 
-static void onElementStartCb (void *userData, const char **attrs);
-static void onElementEndCb   (void *userData);
+static void onElementStartCb(void *userData, const char **attrs);
+static void onElementEndCb(void *userData);
 static void onElementConfigCb(void *userData, const char **attrs);
-static void onElementTextCb  (void *userData, const char **attrs);
-static void onElementNavCb   (void *userData, const char **attrs);
-static void onElementImageCb (void *userData, const char **attrs);
+static void onElementTextCb(void *userData, const char **attrs);
+static void onElementNavCb(void *userData, const char **attrs);
+static void onElementImageCb(void *userData, const char **attrs);
 
 static void onElementClickStartCb(void *userData, const char **attrs);
-static void onElementClickEndCb  (void *userData);
-static void onElementHandlerCb   (void *userData, const char **attrs);
+static void onElementClickEndCb(void *userData);
+static void onElementHandlerCb(void *userData, const char **attrs);
 
 static void onFocusCb(void *userData, const char **attrs);
-static void onBlurCb (void *userData, const char **attrs);
+static void onBlurCb(void *userData, const char **attrs);
 static void onResetCb(void *userData, const char **attrs);
 
 static void onColorCb(void *userData, const char **attrs);
 static void onImageCb(void *userData, const char **attrs);
-static void onFontCb (void *userData, const char **attrs);
+static void onFontCb(void *userData, const char **attrs);
 
 static void onStrGroupStartCb(void *userData, const char **attrs);
-static void onStringCb       (void *userData, const char **attrs);
-static void onStrGroupEndCb  (void *userData);
+static void onStringCb(void *userData, const char **attrs);
+static void onStrGroupEndCb(void *userData);
 
 static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          FUNCTIONS                                           */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S *xmlGraphics)
+enum loaders_error_e loadGraphicsXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                       struct xml_graphics_s *xmlGraphics)
 {
     assert(obj && ctx && xmlGraphics);
     
-    PARSER_S *parserObj = ctx->parserObj;
-    INPUT_S *input      = &ctx->input;
+    struct parser_s *parserObj = ctx->parserObj;
+    struct input_s *input      = &ctx->input;
     
     xmlGraphics->reserved = ctx;
     
     Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->graphicsConfig.xml);
     
-    PARSER_TAGS_HANDLER_S gfxTagsHandlers[] = {
-        { XML_TAG_COMMON,      onCommonCb,             NULL,                NULL },
-        { XML_TAG_COLORS,      onColorsCb,             NULL,                NULL },
-        { XML_TAG_IMAGES,      onImagesCb,             NULL,                NULL },
-        { XML_TAG_FONTS,       onFontsCb,              NULL,                NULL },
-        { XML_TAG_STRINGS,     onStringsCb,            NULL,                NULL },
-        { XML_TAG_SCREEN,      onScreenCb,             NULL,                NULL },
-        { XML_TAG_BACKGROUND,  onBackgroundCb,         NULL,                NULL },
-        { XML_TAG_ICON,        onIconCb,               NULL,                NULL },
-        { XML_TAG_ELEMENT,     onElementStartCb,       onElementEndCb,      NULL },
-        { XML_TAG_CONFIG,      onElementConfigCb,      NULL,                NULL },
-        { XML_TAG_TEXT,        onElementTextCb,        NULL,                NULL },
-        { XML_TAG_NAV,         onElementNavCb,         NULL,                NULL },
-        { XML_TAG_IMAGE,       onElementImageCb,       NULL,                NULL },
-        { XML_TAG_ON_CLICK,    onElementClickStartCb,  onElementClickEndCb, NULL },
-        { XML_TAG_HANDLER,     onElementHandlerCb,     NULL,                NULL },
-        { XML_TAG_FOCUS,       onFocusCb,              NULL,                NULL },
-        { XML_TAG_BLUR,        onBlurCb,               NULL,                NULL },
-        { XML_TAG_RESET,       onResetCb,              NULL,                NULL },
-        { NULL,                NULL,                   NULL,                NULL }
+    struct parser_tags_handler_s gfxTagsHandlers[] = {
+        { XML_TAG_COMMON,      onCommonCb,             NULL,                 NULL },
+        { XML_TAG_COLORS,      onColorsCb,             NULL,                 NULL },
+        { XML_TAG_IMAGES,      onImagesCb,             NULL,                 NULL },
+        { XML_TAG_FONTS,       onFontsCb,              NULL,                 NULL },
+        { XML_TAG_STRINGS,     onStringsCb,            NULL,                 NULL },
+        { XML_TAG_SCREEN,      onScreenCb,             NULL,                 NULL },
+        { XML_TAG_BACKGROUND,  onBackgroundCb,         NULL,                 NULL },
+        { XML_TAG_ICON,        onIconCb,               NULL,                 NULL },
+        { XML_TAG_ELEMENT,     onElementStartCb,       onElementEndCb,       NULL },
+        { XML_TAG_CONFIG,      onElementConfigCb,      NULL,                 NULL },
+        { XML_TAG_TEXT,        onElementTextCb,        NULL,                 NULL },
+        { XML_TAG_NAV,         onElementNavCb,         NULL,                 NULL },
+        { XML_TAG_IMAGE,       onElementImageCb,       NULL,                 NULL },
+        { XML_TAG_ON_CLICK,    onElementClickStartCb,  onElementClickEndCb,  NULL },
+        { XML_TAG_HANDLER,     onElementHandlerCb,     NULL,                 NULL },
+        { XML_TAG_FOCUS,       onFocusCb,              NULL,                 NULL },
+        { XML_TAG_BLUR,        onBlurCb,               NULL,                 NULL },
+        { XML_TAG_RESET,       onResetCb,              NULL,                 NULL },
+        { NULL,                NULL,                   NULL,                 NULL }
     };
     
-    PARSER_PARAMS_S gfxParserParams;
-    snprintf(gfxParserParams.path, sizeof(gfxParserParams.path), "%s/%s", input->resRootDir, input->graphicsConfig.xml);
+    struct parser_params_s gfxParserParams;
+    snprintf(gfxParserParams.path, sizeof(gfxParserParams.path), "%s/%s",
+                                   input->resRootDir, input->graphicsConfig.xml);
     gfxParserParams.encoding     = PARSER_ENCODING_UTF_8;
     gfxParserParams.tagsHandlers = gfxTagsHandlers;
     gfxParserParams.onErrorCb    = onErrorCb;
@@ -151,7 +152,7 @@ LOADERS_ERROR_E loadGraphicsXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_GRAPHICS_S
 /*!
  *
  */
-LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
+enum loaders_error_e unloadGraphicsXml_f(struct loaders_s *obj, struct xml_graphics_s *xmlGraphics)
 {
     assert(obj && xmlGraphics);
     
@@ -197,7 +198,7 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
     
     uint32_t index, handlerIndex;
     
-    XML_ELEMENT_S *element;
+    struct xml_element_s *element;
     for (index = 0; index < xmlGraphics->nbElements; index++) {
         element = &xmlGraphics->elements[index];
         if (element->name) {
@@ -237,7 +238,7 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
             element->image = NULL;
         }
         if (element->clickHandlers) {
-            XML_ELEMENT_CLICK_S *handler;
+            struct xml_element_click_s *handler;
             for (handlerIndex = 0; handlerIndex < element->nbClickHandlers; handlerIndex++) {
                 handler = &element->clickHandlers[handlerIndex];
                 if (handler->name) {
@@ -265,25 +266,27 @@ LOADERS_ERROR_E unloadGraphicsXml_f(LOADERS_S *obj, XML_GRAPHICS_S *xmlGraphics)
 /*!
  *
  */
-LOADERS_ERROR_E loadCommonXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_COMMON_S *xmlCommon)
+enum loaders_error_e loadCommonXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                     struct xml_common_s *xmlCommon)
 {
     assert(obj && ctx && xmlCommon);
     
-    PARSER_S *parserObj = ctx->parserObj;
-    INPUT_S *input      = &ctx->input;
+    struct parser_s *parserObj = ctx->parserObj;
+    struct input_s *input      = &ctx->input;
     
     xmlCommon->reserved = ctx;
     
     if (xmlCommon->files.colors[0] != '\0') {
         Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlCommon->files.colors);
         
-        PARSER_TAGS_HANDLER_S colorsTagsHandlers[] = {
+        struct parser_tags_handler_s colorsTagsHandlers[] = {
         	{ XML_TAG_COLOR,  onColorCb,  NULL,  NULL },
         	{ NULL,           NULL,       NULL,  NULL }
         };
         
-        PARSER_PARAMS_S colorsParserParams;
-        snprintf(colorsParserParams.path, sizeof(colorsParserParams.path), "%s/%s", input->resRootDir, xmlCommon->files.colors);
+        struct parser_params_s colorsParserParams;
+        snprintf(colorsParserParams.path, sizeof(colorsParserParams.path), "%s/%s",
+                                          input->resRootDir, xmlCommon->files.colors);
         colorsParserParams.encoding     = PARSER_ENCODING_UTF_8;
         colorsParserParams.tagsHandlers = colorsTagsHandlers;
         colorsParserParams.onErrorCb    = onErrorCb;
@@ -299,13 +302,14 @@ LOADERS_ERROR_E loadCommonXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_COMMON_S *xm
     if (xmlCommon->files.images[0] != '\0') {
         Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlCommon->files.images);
         
-        PARSER_TAGS_HANDLER_S imagesTagsHandlers[] = {
+        struct parser_tags_handler_s imagesTagsHandlers[] = {
         	{ XML_TAG_IMAGE,  onImageCb,  NULL,  NULL },
         	{ NULL,           NULL,       NULL,  NULL }
         };
         
-        PARSER_PARAMS_S imagesParserParams;
-        snprintf(imagesParserParams.path, sizeof(imagesParserParams.path), "%s/%s", input->resRootDir, xmlCommon->files.images);
+        struct parser_params_s imagesParserParams;
+        snprintf(imagesParserParams.path, sizeof(imagesParserParams.path), "%s/%s",
+                                          input->resRootDir, xmlCommon->files.images);
         imagesParserParams.encoding     = PARSER_ENCODING_UTF_8;
         imagesParserParams.tagsHandlers = imagesTagsHandlers;
         imagesParserParams.onErrorCb    = onErrorCb;
@@ -321,13 +325,14 @@ LOADERS_ERROR_E loadCommonXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_COMMON_S *xm
     if (xmlCommon->files.fonts[0] != '\0') {
         Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlCommon->files.fonts);
         
-        PARSER_TAGS_HANDLER_S fontsTagsHandlers[] = {
+        struct parser_tags_handler_s fontsTagsHandlers[] = {
         	{ XML_TAG_FONT,  onFontCb,  NULL,  NULL },
         	{ NULL,          NULL,      NULL,  NULL }
         };
         
-        PARSER_PARAMS_S fontsParserParams;
-        snprintf(fontsParserParams.path, sizeof(fontsParserParams.path), "%s/%s", input->resRootDir, xmlCommon->files.fonts);
+        struct parser_params_s fontsParserParams;
+        snprintf(fontsParserParams.path, sizeof(fontsParserParams.path), "%s/%s",
+                                         input->resRootDir, xmlCommon->files.fonts);
         fontsParserParams.encoding     = PARSER_ENCODING_UTF_8;
         fontsParserParams.tagsHandlers = fontsTagsHandlers;
         fontsParserParams.onErrorCb    = onErrorCb;
@@ -343,14 +348,15 @@ LOADERS_ERROR_E loadCommonXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_COMMON_S *xm
     if (xmlCommon->files.strings[0] != '\0') {
         Logd("Parsing file : \"%s/%s\"", input->resRootDir, xmlCommon->files.strings);
         
-        PARSER_TAGS_HANDLER_S stringsTagsHandlers[] = {
+        struct parser_tags_handler_s stringsTagsHandlers[] = {
         	{ XML_TAG_STR_GROUP,  onStrGroupStartCb,  onStrGroupEndCb,  NULL },
         	{ XML_TAG_STRING,     onStringCb,         NULL,             NULL },
         	{ NULL,               NULL,               NULL,             NULL }
         };
         
-        PARSER_PARAMS_S stringsParserParams;
-        snprintf(stringsParserParams.path, sizeof(stringsParserParams.path), "%s/%s", input->resRootDir, xmlCommon->files.strings);
+        struct parser_params_s stringsParserParams;
+        snprintf(stringsParserParams.path, sizeof(stringsParserParams.path), "%s/%s",
+                                           input->resRootDir, xmlCommon->files.strings);
         stringsParserParams.encoding     = PARSER_ENCODING_UTF_8;
         stringsParserParams.tagsHandlers = stringsTagsHandlers;
         stringsParserParams.onErrorCb    = onErrorCb;
@@ -369,21 +375,21 @@ LOADERS_ERROR_E loadCommonXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_COMMON_S *xm
 /*!
  *
  */
-LOADERS_ERROR_E unloadCommonXml_f(LOADERS_S *obj, XML_COMMON_S *xmlCommon)
+enum loaders_error_e unloadCommonXml_f(struct loaders_s *obj, struct xml_common_s *xmlCommon)
 {
     assert(obj && xmlCommon);
 
     uint32_t index;
 
-    XML_COLORS_S *xmlColors = &xmlCommon->xmlColors;
+    struct xml_colors_s *xmlColors = &xmlCommon->xmlColors;
     if (xmlColors->colors) {
         free(xmlColors->colors);
         xmlColors->colors = NULL;
     }
     
-    XML_IMAGES_S *xmlImages = &xmlCommon->xmlImages;
+    struct xml_images_s *xmlImages = &xmlCommon->xmlImages;
     if (xmlImages->images) {
-        XML_IMAGE_S *image;
+        struct xml_image_s *image;
         for (index = 0; index < xmlImages->nbImages; index++) {
             image = &xmlImages->images[index];
             if (image->file) {
@@ -395,9 +401,9 @@ LOADERS_ERROR_E unloadCommonXml_f(LOADERS_S *obj, XML_COMMON_S *xmlCommon)
         xmlImages->images = NULL;
     }
     
-    XML_FONTS_S *xmlFonts = &xmlCommon->xmlFonts;
+    struct xml_fonts_s *xmlFonts = &xmlCommon->xmlFonts;
     if (xmlFonts->fonts) {
-        XML_FONT_S *font;
+        struct xml_font_s *font;
         for (index = 0; index < xmlFonts->nbFonts; index++) {
             font = &xmlFonts->fonts[index];
             if (font->file) {
@@ -409,8 +415,8 @@ LOADERS_ERROR_E unloadCommonXml_f(LOADERS_S *obj, XML_COMMON_S *xmlCommon)
         xmlFonts->fonts = NULL;
     }
     
-    XML_STRINGS_S *xmlStrings = xmlCommon->xmlStrings;
-    uint32_t nbXmlStrings     = xmlCommon->nbLanguages;
+    struct xml_strings_s *xmlStrings = xmlCommon->xmlStrings;
+    uint32_t nbXmlStrings            = xmlCommon->nbLanguages;
     uint32_t nbStrings, strCount;
     
     if (xmlStrings) {
@@ -441,7 +447,7 @@ LOADERS_ERROR_E unloadCommonXml_f(LOADERS_S *obj, XML_COMMON_S *xmlCommon)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           CALLBACKS                                          */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
@@ -451,11 +457,11 @@ static void onCommonCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_DEFAULT_LANGUAGE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -482,11 +488,11 @@ static void onColorsCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_XML_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -513,11 +519,11 @@ static void onImagesCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_XML_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -544,11 +550,11 @@ static void onFontsCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_XML_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -575,11 +581,11 @@ static void onStringsCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_XML_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -606,12 +612,12 @@ static void onScreenCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    XML_SCREEN_S *screen        = &xmlGraphics->screen;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct xml_screen_s *screen        = &xmlGraphics->screen;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_NAME,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -686,12 +692,12 @@ static void onBackgroundCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    XML_SCREEN_S *screen        = &xmlGraphics->screen;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct xml_screen_s *screen        = &xmlGraphics->screen;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_USE_COLOR,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -736,12 +742,12 @@ static void onIconCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    XML_SCREEN_S *screen        = &xmlGraphics->screen;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct xml_screen_s *screen        = &xmlGraphics->screen;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_IMAGE_ID,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -774,20 +780,21 @@ static void onElementStartCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
     
     Logd("Adding element %u", (xmlGraphics->nbElements + 1));
     
-    xmlGraphics->elements = realloc(xmlGraphics->elements, (xmlGraphics->nbElements + 1) * sizeof(XML_ELEMENT_S));
+    xmlGraphics->elements = realloc(xmlGraphics->elements,
+                                    (xmlGraphics->nbElements + 1) * sizeof(struct xml_element_s));
     assert(xmlGraphics->elements);
     
-    memset(&xmlGraphics->elements[xmlGraphics->nbElements], '\0', sizeof(XML_ELEMENT_S));
+    memset(&xmlGraphics->elements[xmlGraphics->nbElements], 0, sizeof(struct xml_element_s));
     
-    XML_ELEMENT_S *element = &xmlGraphics->elements[xmlGraphics->nbElements];
+    struct xml_element_s *element = &xmlGraphics->elements[xmlGraphics->nbElements];
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_NAME,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -856,7 +863,7 @@ static void onElementEndCb(void *userData)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
 
     xmlGraphics->nbElements++;
     
@@ -870,12 +877,12 @@ static void onElementConfigCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
-    XML_ELEMENT_S *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
+    struct xml_element_s *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_VISIBLE,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -920,14 +927,14 @@ static void onElementTextCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
-    XML_ELEMENT_S *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
+    struct xml_element_s *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
     
-    assert((element->text = calloc(1, sizeof(XML_ELEMENT_TEXT_S))));
+    assert((element->text = calloc(1, sizeof(struct xml_element_text_s))));
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_STRING_ID,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -972,14 +979,14 @@ static void onElementNavCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
-    XML_ELEMENT_S *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
+    struct xml_element_s *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
     
-    assert((element->nav = calloc(1, sizeof(XML_ELEMENT_NAV_S))));
+    assert((element->nav = calloc(1, sizeof(struct xml_element_nav_s))));
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_LEFT,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -1024,14 +1031,14 @@ static void onElementImageCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
-    XML_ELEMENT_S *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
+    struct xml_element_s *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
     
-    assert((element->image = calloc(1, sizeof(XML_ELEMENT_IMAGE_S))));
+    assert((element->image = calloc(1, sizeof(struct xml_element_image_s))));
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_IMAGE_ID,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -1074,8 +1081,8 @@ static void onElementClickEndCb(void *userData)
 {
     assert(userData);
 
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    XML_ELEMENT_S *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct xml_element_s *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
 
     Logd("%u click handlers added", element->nbClickHandlers);
 }
@@ -1087,19 +1094,22 @@ static void onElementHandlerCb(void *userData, const char **attrs)
 {
     assert(userData);
 
-    XML_GRAPHICS_S *xmlGraphics  = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx               = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj          = ctx->parserObj;
-    XML_ELEMENT_S *element       = &xmlGraphics->elements[xmlGraphics->nbElements];
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
+    struct xml_element_s *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
 
-    element->clickHandlers = realloc(element->clickHandlers, (element->nbClickHandlers + 1) * sizeof(XML_ELEMENT_CLICK_S));
+    element->clickHandlers = realloc(element->clickHandlers,
+                                     (element->nbClickHandlers + 1)
+                                     * sizeof(struct xml_element_click_s));
     assert(element->clickHandlers);
 
-    memset(&element->clickHandlers[element->nbClickHandlers], '\0', sizeof(XML_ELEMENT_CLICK_S));
+    memset(&element->clickHandlers[element->nbClickHandlers],
+                       0, sizeof(struct xml_element_click_s));
 
-    XML_ELEMENT_CLICK_S *handler = &element->clickHandlers[element->nbClickHandlers];
+    struct xml_element_click_s *handler = &element->clickHandlers[element->nbClickHandlers];
 
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
         {
             .attrName          = XML_ATTR_NAME,
             .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -1134,11 +1144,11 @@ static void onFocusCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_COLOR_ID,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -1165,11 +1175,11 @@ static void onBlurCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_COLOR_ID,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -1196,11 +1206,11 @@ static void onResetCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_GRAPHICS_S *xmlGraphics = (XML_GRAPHICS_S*)userData;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlGraphics->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_COLOR_ID,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -1227,20 +1237,21 @@ static void onColorCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_COMMON_S *xmlCommon = (XML_COMMON_S*)userData;
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlCommon->reserved;
-    PARSER_S *parserObj     = ctx->parserObj;
-    XML_COLORS_S *xmlColors = &xmlCommon->xmlColors;
+    struct xml_common_s *xmlCommon = (struct xml_common_s*)userData;
+    struct context_s *ctx          = (struct context_s*)xmlCommon->reserved;
+    struct parser_s *parserObj     = ctx->parserObj;
+    struct xml_colors_s *xmlColors = &xmlCommon->xmlColors;
     
     Logd("Adding color %u", (xmlColors->nbColors + 1));
     
-    xmlColors->colors = realloc(xmlColors->colors, (xmlColors->nbColors + 1) * sizeof(XML_COLOR_S));
+    xmlColors->colors = realloc(xmlColors->colors,
+                                (xmlColors->nbColors + 1) * sizeof(struct xml_color_s));
     assert(xmlColors->colors);
     
-    XML_COLOR_S *color = &xmlColors->colors[xmlColors->nbColors];
-    memset(color, '\0', sizeof(XML_COLOR_S));
+    struct xml_color_s *color = &xmlColors->colors[xmlColors->nbColors];
+    memset(color, 0, sizeof(struct xml_color_s));
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_RED,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
@@ -1287,21 +1298,22 @@ static void onImageCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_COMMON_S *xmlCommon = (XML_COMMON_S*)userData;
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlCommon->reserved;
-    INPUT_S *input          = &ctx->input;
-    PARSER_S *parserObj     = ctx->parserObj;
-    XML_IMAGES_S *xmlImages = &xmlCommon->xmlImages;
+    struct xml_common_s *xmlCommon = (struct xml_common_s*)userData;
+    struct context_s *ctx          = (struct context_s*)xmlCommon->reserved;
+    struct input_s *input          = &ctx->input;
+    struct parser_s *parserObj     = ctx->parserObj;
+    struct xml_images_s *xmlImages = &xmlCommon->xmlImages;
     
     Logd("Adding image %u", (xmlImages->nbImages + 1));
     
-    xmlImages->images = realloc(xmlImages->images, (xmlImages->nbImages + 1) * sizeof(XML_IMAGE_S));
+    xmlImages->images = realloc(xmlImages->images,
+                                (xmlImages->nbImages + 1) * sizeof(struct xml_image_s));
     assert(xmlImages->images);
     
-    XML_IMAGE_S *image = &xmlImages->images[xmlImages->nbImages];
-    memset(image, '\0', sizeof(XML_IMAGE_S));
+    struct xml_image_s *image = &xmlImages->images[xmlImages->nbImages];
+    memset(image, 0, sizeof(struct xml_image_s));
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -1349,21 +1361,22 @@ static void onFontCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_COMMON_S *xmlCommon = (XML_COMMON_S*)userData;
-    CONTEXT_S *ctx          = (CONTEXT_S*)xmlCommon->reserved;
-    INPUT_S *input          = &ctx->input;
-    PARSER_S *parserObj     = ctx->parserObj;
-    XML_FONTS_S *xmlFonts   = &xmlCommon->xmlFonts;
+    struct xml_common_s *xmlCommon = (struct xml_common_s*)userData;
+    struct context_s *ctx          = (struct context_s*)xmlCommon->reserved;
+    struct input_s *input          = &ctx->input;
+    struct parser_s *parserObj     = ctx->parserObj;
+    struct xml_fonts_s *xmlFonts   = &xmlCommon->xmlFonts;
     
     Logd("Adding font %u", (xmlFonts->nbFonts + 1));
     
-    xmlFonts->fonts = realloc(xmlFonts->fonts, (xmlFonts->nbFonts + 1) * sizeof(XML_FONT_S));
+    xmlFonts->fonts = realloc(xmlFonts->fonts,
+                              (xmlFonts->nbFonts + 1) * sizeof(struct xml_font_s));
     assert(xmlFonts->fonts);
     
-    XML_FONT_S *font = &xmlFonts->fonts[xmlFonts->nbFonts];
-    memset(font, '\0', sizeof(XML_FONT_S));
+    struct xml_font_s *font = &xmlFonts->fonts[xmlFonts->nbFonts];
+    memset(font, 0, sizeof(struct xml_font_s));
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_FILE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -1405,20 +1418,20 @@ static void onStrGroupStartCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_COMMON_S *xmlCommon     = (XML_COMMON_S*)userData;
-    XML_STRINGS_S **xmlStrings  = (XML_STRINGS_S**)&xmlCommon->xmlStrings;
-    uint32_t nbXmlStrings       = xmlCommon->nbLanguages;
-    CONTEXT_S *ctx              = (CONTEXT_S*)xmlCommon->reserved;
-    PARSER_S *parserObj         = ctx->parserObj;
+    struct xml_common_s *xmlCommon    = (struct xml_common_s*)userData;
+    struct xml_strings_s **xmlStrings = (struct xml_strings_s**)&xmlCommon->xmlStrings;
+    uint32_t nbXmlStrings             = xmlCommon->nbLanguages;
+    struct context_s *ctx             = (struct context_s*)xmlCommon->reserved;
+    struct parser_s *parserObj        = ctx->parserObj;
     
     Logd("Adding strGroup %u", (nbXmlStrings + 1));
     
-    *xmlStrings = realloc(*xmlStrings, (nbXmlStrings + 1) * sizeof(XML_STRINGS_S));
+    *xmlStrings = realloc(*xmlStrings, (nbXmlStrings + 1) * sizeof(struct xml_strings_s));
     assert(*xmlStrings);
     
-    memset(&(*xmlStrings)[nbXmlStrings], '\0', sizeof(XML_STRINGS_S));
+    memset(&(*xmlStrings)[nbXmlStrings], 0, sizeof(struct xml_strings_s));
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_LANGUAGE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -1445,23 +1458,23 @@ static void onStringCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_COMMON_S *xmlCommon   = (XML_COMMON_S*)userData;
-    CONTEXT_S *ctx            = (CONTEXT_S*)xmlCommon->reserved;
-    PARSER_S *parserObj       = ctx->parserObj;
-    uint32_t nbXmlStrings     = xmlCommon->nbLanguages;
-    XML_STRINGS_S *xmlStrings = xmlCommon->xmlStrings;
+    struct xml_common_s *xmlCommon   = (struct xml_common_s*)userData;
+    struct context_s *ctx            = (struct context_s*)xmlCommon->reserved;
+    struct parser_s *parserObj       = ctx->parserObj;
+    uint32_t nbXmlStrings            = xmlCommon->nbLanguages;
+    struct xml_strings_s *xmlStrings = xmlCommon->xmlStrings;
     
-    uint32_t *nbStrings       = &xmlStrings[nbXmlStrings].nbStrings;
-    XML_STRING_S **strings    = &xmlStrings[nbXmlStrings].strings;
+    uint32_t *nbStrings           = &xmlStrings[nbXmlStrings].nbStrings;
+    struct xml_string_s **strings = &xmlStrings[nbXmlStrings].strings;
     
     Logd("Adding string %u", (*nbStrings + 1));
     
-    *strings = realloc(*strings, (*nbStrings + 1) * sizeof(XML_STRING_S));
+    *strings = realloc(*strings, (*nbStrings + 1) * sizeof(struct xml_string_s));
     assert(*strings);
     
-    memset(&(*strings)[*nbStrings], '\0', sizeof(XML_STRING_S));
+    memset(&(*strings)[*nbStrings], 0, sizeof(struct xml_string_s));
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_STR,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -1490,7 +1503,7 @@ static void onStrGroupEndCb(void *userData)
 {
     assert(userData);
     
-    XML_COMMON_S *xmlCommon = (XML_COMMON_S*)userData;
+    struct xml_common_s *xmlCommon = (struct xml_common_s*)userData;
     
     (xmlCommon->nbLanguages)++;
     

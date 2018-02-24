@@ -20,68 +20,66 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   ServersLoader.c
-* \brief  TODO
+* \file ServersLoader.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "core/Loaders.h"
 #include "core/XmlDefines.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "ServersLoader"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
-/* -------------------------------------------------------------------------------------------- */
+enum loaders_error_e loadServersXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                      struct xml_servers_s *xmlServers);
+enum loaders_error_e unloadServersXml_f(struct loaders_s *obj, struct xml_servers_s *xmlServers);
 
-LOADERS_ERROR_E loadServersXml_f  (LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *xmlServers);
-LOADERS_ERROR_E unloadServersXml_f(LOADERS_S *obj, XML_SERVERS_S *xmlServers);
+/* -------------------------------------------------------------------------------------------- */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
 static void onServerStartCb(void *userData, const char **attrs);
-static void onServerEndCb  (void *userData);
+static void onServerEndCb(void *userData);
 
-static void onGeneralCb    (void *userData, const char **attrs);
-static void onInetCb       (void *userData, const char **attrs);
-static void onUnixCb       (void *userData, const char **attrs);
+static void onGeneralCb(void *userData, const char **attrs);
+static void onInetCb(void *userData, const char **attrs);
+static void onUnixCb(void *userData, const char **attrs);
 
 static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          FUNCTIONS                                           */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-LOADERS_ERROR_E loadServersXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *xmlServers)
+enum loaders_error_e loadServersXml_f(struct loaders_s *obj, struct context_s *ctx,
+                                      struct xml_servers_s *xmlServers)
 {
     assert(obj && ctx && xmlServers);
     
-    PARSER_S *parserObj  = ctx->parserObj;
-    INPUT_S *input       = &ctx->input;
+    struct parser_s *parserObj = ctx->parserObj;
+    struct input_s *input      = &ctx->input;
     
     xmlServers->reserved = ctx;
     
     Logd("Parsing file : \"%s/%s\"", input->resRootDir, input->serversConfig.xml);
     
-    PARSER_TAGS_HANDLER_S tagsHandlers[] = {
+    struct parser_tags_handler_s tagsHandlers[] = {
     	{ XML_TAG_SERVER,   onServerStartCb,  onServerEndCb,  NULL },
     	{ XML_TAG_GENERAL,  onGeneralCb,      NULL,           NULL },
     	{ XML_TAG_INET,     onInetCb,         NULL,           NULL },
@@ -89,8 +87,9 @@ LOADERS_ERROR_E loadServersXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *
     	{ NULL,             NULL,             NULL,           NULL }
     };
     
-    PARSER_PARAMS_S parserParams;
-    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s", input->resRootDir, input->serversConfig.xml);
+    struct parser_params_s parserParams;
+    snprintf(parserParams.path, sizeof(parserParams.path), "%s/%s",
+                                input->resRootDir, input->serversConfig.xml);
     parserParams.encoding     = PARSER_ENCODING_UTF_8;
     parserParams.tagsHandlers = tagsHandlers;
     parserParams.onErrorCb    = onErrorCb;
@@ -108,12 +107,12 @@ LOADERS_ERROR_E loadServersXml_f(LOADERS_S *obj, CONTEXT_S *ctx, XML_SERVERS_S *
 /*!
  *
  */
-LOADERS_ERROR_E unloadServersXml_f(LOADERS_S *obj, XML_SERVERS_S *xmlServers)
+enum loaders_error_e unloadServersXml_f(struct loaders_s *obj, struct xml_servers_s *xmlServers)
 {
     assert(obj && xmlServers);
     
     uint8_t index;
-    XML_SERVER_S *server;
+    struct xml_server_s *server;
     
     for (index = 0; index < xmlServers->nbServers; index++) {
         server = &xmlServers->servers[index];
@@ -152,7 +151,7 @@ LOADERS_ERROR_E unloadServersXml_f(LOADERS_S *obj, XML_SERVERS_S *xmlServers)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           CALLBACKS                                          */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
@@ -164,14 +163,15 @@ static void onServerStartCb(void *userData, const char **attrs)
     
     (void)attrs;
     
-    XML_SERVERS_S *xmlServers = (XML_SERVERS_S*)userData;
+    struct xml_servers_s *xmlServers = (struct xml_servers_s*)userData;
     
     Logd("Adding server %u", (xmlServers->nbServers + 1));
     
-    xmlServers->servers = realloc(xmlServers->servers, (xmlServers->nbServers + 1) * sizeof(XML_SERVER_S));
+    xmlServers->servers = realloc(xmlServers->servers,
+                                  (xmlServers->nbServers + 1) * sizeof(struct xml_server_s));
     assert(xmlServers->servers);
     
-    memset(&xmlServers->servers[xmlServers->nbServers], '\0', sizeof(XML_SERVER_S));
+    memset(&xmlServers->servers[xmlServers->nbServers], 0, sizeof(struct xml_server_s));
 }
 
 /*!
@@ -181,7 +181,7 @@ static void onServerEndCb(void *userData)
 {
     assert(userData);
     
-    XML_SERVERS_S *xmlServers = (XML_SERVERS_S*)userData;
+    struct xml_servers_s *xmlServers = (struct xml_servers_s*)userData;
 
     xmlServers->nbServers++;
     
@@ -195,12 +195,12 @@ static void onGeneralCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_SERVERS_S *xmlServers = (XML_SERVERS_S*)userData;
-    XML_SERVER_S *server      = &xmlServers->servers[xmlServers->nbServers];
-    CONTEXT_S *ctx            = (CONTEXT_S*)xmlServers->reserved;
-    PARSER_S *parserObj       = ctx->parserObj;
+    struct xml_servers_s *xmlServers = (struct xml_servers_s*)userData;
+    struct xml_server_s *server      = &xmlServers->servers[xmlServers->nbServers];
+    struct context_s *ctx            = (struct context_s*)xmlServers->reserved;
+    struct parser_s *parserObj       = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_NAME,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -269,12 +269,12 @@ static void onInetCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_SERVERS_S *xmlServers = (XML_SERVERS_S*)userData;
-    XML_SERVER_S *server      = &xmlServers->servers[xmlServers->nbServers];
-    CONTEXT_S *ctx            = (CONTEXT_S*)xmlServers->reserved;
-    PARSER_S *parserObj       = ctx->parserObj;
+    struct xml_servers_s *xmlServers = (struct xml_servers_s*)userData;
+    struct xml_server_s *server      = &xmlServers->servers[xmlServers->nbServers];
+    struct context_s *ctx            = (struct context_s*)xmlServers->reserved;
+    struct parser_s *parserObj       = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_HOST,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
@@ -313,12 +313,12 @@ static void onUnixCb(void *userData, const char **attrs)
 {
     assert(userData);
     
-    XML_SERVERS_S *xmlServers = (XML_SERVERS_S*)userData;
-    XML_SERVER_S *server      = &xmlServers->servers[xmlServers->nbServers];
-    CONTEXT_S *ctx            = (CONTEXT_S*)xmlServers->reserved;
-    PARSER_S *parserObj       = ctx->parserObj;
+    struct xml_servers_s *xmlServers = (struct xml_servers_s*)userData;
+    struct xml_server_s *server      = &xmlServers->servers[xmlServers->nbServers];
+    struct context_s *ctx            = (struct context_s*)xmlServers->reserved;
+    struct parser_s *parserObj       = ctx->parserObj;
     
-    PARSER_ATTR_HANDLER_S attrHandlers[] = {
+    struct parser_attr_handler_s attrHandlers[] = {
     	{
     	    .attrName          = XML_ATTR_SOCKET_NAME,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,

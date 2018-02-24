@@ -20,9 +20,9 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   FbDev.h
-* \brief  Framebuffer device management
-*         IMPORTANT : Mmstreamer engine must be run as root to make it have rights to use fbDev
+* \file FbDev.h
+* \brief Framebuffer device management
+*        IMPORTANT : Mmstreamer engine must be run as root to make it have rights to use fbDev
 * \author Boubacar DIENE
 */
 
@@ -34,38 +34,40 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "utils/Common.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum fbdev_error_e;
+
+struct fbdev_infos_s;
+struct fbdev_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum   FBDEV_ERROR_E     FBDEV_ERROR_E;
+typedef enum fbdev_error_e (*fbdev_open_f)(struct fbdev_s *obj, const char *fbName);
+typedef enum fbdev_error_e (*fbdev_is_opened_f)(struct fbdev_s *obj, uint8_t *opened);
+typedef enum fbdev_error_e (*fbdev_close_f)(struct fbdev_s *obj);
 
-typedef struct FBDEV_INFOS_S     FBDEV_INFOS_S;
-typedef struct FBDEV_S           FBDEV_S;
+typedef enum fbdev_error_e (*fbdev_get_infos_f)(struct fbdev_s *obj,
+                                                struct fbdev_infos_s *fbInfos);
+typedef enum fbdev_error_e (*fbdev_set_depth_f)(struct fbdev_s *obj, uint32_t depth);
 
-typedef struct fb_var_screeninfo FBDEV_VSCREENINFO;
-typedef struct fb_fix_screeninfo FBDEV_FSCREENINFO;
+typedef enum fbdev_error_e (*fbdev_clear_f)(struct fbdev_s *obj);
+typedef enum fbdev_error_e (*fbdev_restore_f)(struct fbdev_s *obj);
 
-typedef FBDEV_ERROR_E (*FBDEV_OPEN_F     )(FBDEV_S *obj, const char *fbName);
-typedef FBDEV_ERROR_E (*FBDEV_IS_OPENED_F)(FBDEV_S *obj, uint8_t *opened);
-typedef FBDEV_ERROR_E (*FBDEV_CLOSE_F    )(FBDEV_S *obj);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef FBDEV_ERROR_E (*FBDEV_GET_INFOS_F)(FBDEV_S *obj, FBDEV_INFOS_S *fbInfos);
-typedef FBDEV_ERROR_E (*FBDEV_SET_DEPTH_F)(FBDEV_S *obj, uint32_t depth);
-
-typedef FBDEV_ERROR_E (*FBDEV_CLEAR_F  )(FBDEV_S *obj);
-typedef FBDEV_ERROR_E (*FBDEV_RESTORE_F)(FBDEV_S *obj);
-
-enum FBDEV_ERROR_E {
+enum fbdev_error_e {
     FBDEV_ERROR_NONE,
     FBDEV_ERROR_INIT,
     FBDEV_ERROR_UNINIT,
@@ -73,33 +75,37 @@ enum FBDEV_ERROR_E {
     FBDEV_ERROR_IO
 };
 
-struct FBDEV_INFOS_S {
+struct fbdev_infos_s {
     uint32_t width;
     uint32_t height;
 
     uint32_t depth;
 };
 
-struct FBDEV_S {
-    FBDEV_OPEN_F      open;
-    FBDEV_IS_OPENED_F isOpened;
-    FBDEV_CLOSE_F     close;
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-    FBDEV_GET_INFOS_F getInfos;
-    FBDEV_SET_DEPTH_F setDepth;
+struct fbdev_s {
+    fbdev_open_f      open;
+    fbdev_is_opened_f isOpened;
+    fbdev_close_f     close;
 
-    FBDEV_CLEAR_F     clear;
-    FBDEV_RESTORE_F   restore;
+    fbdev_get_infos_f getInfos;
+    fbdev_set_depth_f setDepth;
 
-    void              *pData;
+    fbdev_clear_f     clear;
+    fbdev_restore_f   restore;
+
+    void *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-FBDEV_ERROR_E FbDev_Init  (FBDEV_S **obj);
-FBDEV_ERROR_E FbDev_UnInit(FBDEV_S **obj);
+enum fbdev_error_e FbDev_Init(struct fbdev_s **obj);
+enum fbdev_error_e FbDev_UnInit(struct fbdev_s **obj);
 
 #ifdef __cplusplus
 }

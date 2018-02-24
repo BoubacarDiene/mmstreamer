@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Task.h
+* \file Task.h
 * \author Boubacar DIENE
 */
 
@@ -32,34 +32,42 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "utils/Common.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* //////////////////////////////////// TYPES DECLARATION ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+enum task_error_e;
+
+struct task_params_s;
+struct task_s;
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef enum TASK_ERROR_E    TASK_ERROR_E;
+typedef void (*task_function_f)(struct task_params_s *params);
+typedef void (*task_atExit_f)(struct task_params_s *params);
 
-typedef struct TASK_PARAMS_S TASK_PARAMS_S;
-typedef struct TASK_S        TASK_S;
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-typedef void (*TASK_FUNCTION_F)(TASK_PARAMS_S *params);
-typedef void (*TASK_ATEXIT_F  )(TASK_PARAMS_S *params);
+typedef enum task_error_e (*task_create_f)(struct task_s *obj, struct task_params_s *params);
+typedef enum task_error_e (*task_destroy_f)(struct task_s *obj, struct task_params_s *params);
 
-typedef TASK_ERROR_E (*TASK_CREATE_F )(TASK_S *obj, TASK_PARAMS_S *params);
-typedef TASK_ERROR_E (*TASK_DESTROY_F)(TASK_S *obj, TASK_PARAMS_S *params);
+typedef enum task_error_e (*task_start_f)(struct task_s *obj, struct task_params_s *params);
+typedef enum task_error_e (*task_stop_f)(struct task_s *obj, struct task_params_s *params);
 
-typedef TASK_ERROR_E (*TASK_START_F)(TASK_S *obj, TASK_PARAMS_S *params);
-typedef TASK_ERROR_E (*TASK_STOP_F )(TASK_S *obj, TASK_PARAMS_S *params);
+/* -------------------------------------------------------------------------------------------- */
+/* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
 
-enum TASK_ERROR_E {
+enum task_error_e {
     TASK_ERROR_NONE,
     TASK_ERROR_INIT,
     TASK_ERROR_UNINIT,
@@ -69,33 +77,38 @@ enum TASK_ERROR_E {
     TASK_ERROR_STOP
 };
 
-struct TASK_PARAMS_S {
+struct task_params_s {
     char            name[MAX_NAME_SIZE];
-    PRIORITY_E      priority;
-    TASK_FUNCTION_F fct;
+    enum priority_e priority;
+
+    task_function_f fct;
     void            *fctData;
     void            *userData;
-    TASK_ATEXIT_F   atExit;
+    task_atExit_f   atExit;
     
     void            *reserved;
 };
 
-struct TASK_S {
-    TASK_CREATE_F  create;
-    TASK_DESTROY_F destroy;
-    
-    TASK_START_F   start;
-    TASK_STOP_F    stop;
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////////////// MAIN CONTEXT /////////////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+struct task_s {
+    task_create_f  create;
+    task_destroy_f destroy;
+
+    task_start_f   start;
+    task_stop_f    stop;
           
-    void           *pData;
+    void *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-TASK_ERROR_E Task_Init  (TASK_S **obj);
-TASK_ERROR_E Task_UnInit(TASK_S **obj);
+enum task_error_e Task_Init(struct task_s **obj);
+enum task_error_e Task_UnInit(struct task_s **obj);
 
 #ifdef __cplusplus
 }

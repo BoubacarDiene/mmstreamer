@@ -20,67 +20,65 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file   Handlers.c
-* \brief  TODO
+* \file Handlers.c
+* \brief TODO
 * \author Boubacar DIENE
 */
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           INCLUDE                                            */
+/* ////////////////////////////////////////// HEADERS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #include "control/Handlers.h"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           DEFINE                                            */
+/* ////////////////////////////////////////// MACROS ////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 #undef  TAG
 #define TAG "Handlers"
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                           TYPEDEF                                            */
+/* /////////////////////////////// PUBLIC FUNCTIONS PROTOTYPES //////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+static enum handlers_error_e getCommandHandler_f(struct handlers_s *obj, const char *handlerName,
+                                                 handlers_command_f *out);
+static enum handlers_error_e getElementIndex_f(struct handlers_s *obj, char *elementName,
+                                               uint32_t *index);
+static enum handlers_error_e getSubstring_f(struct handlers_s *obj, const char *haystack,
+                                            const char *needle, char *out, uint32_t *offset);
+
 /* -------------------------------------------------------------------------------------------- */
-/*                                         PROTOTYPES                                           */
+/* ///////////////////////////////////// GLOBAL VARIABLES ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static HANDLERS_ERROR_E getCommandHandler_f(HANDLERS_S *obj, const char *handlerName, HANDLERS_COMMAND_F *out);
-static HANDLERS_ERROR_E getElementIndex_f(HANDLERS_S *obj, char *elementName, uint32_t *index);
-static HANDLERS_ERROR_E getSubstring_f   (HANDLERS_S *obj, const char *haystack, const char *needle, char *out, uint32_t *offset);
-
-/* -------------------------------------------------------------------------------------------- */
-/*                                          VARIABLES                                           */
-/* -------------------------------------------------------------------------------------------- */
-
-extern HANDLERS_COMMANDS_S gSingleInputHandlers[];
+extern struct handlers_commands_s gSingleInputHandlers[];
 extern uint32_t gNbSingleInputHandlers;
 
-extern HANDLERS_COMMANDS_S gMultiInputsHandlers[];
+extern struct handlers_commands_s gMultiInputsHandlers[];
 extern uint32_t gNbMultiInputsHandlers;
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                      PUBLIC FUNCTIONS                                        */
+/* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 /*!
  *
  */
-HANDLERS_ERROR_E Handlers_Init(HANDLERS_S **obj, HANDLERS_PARAMS_S *handlersParams)
+enum handlers_error_e Handlers_Init(struct handlers_s **obj,
+                                    struct handlers_params_s *handlersParams)
 {
-    assert(obj && handlersParams && (*obj = calloc(1, sizeof(HANDLERS_S))));
+    assert(obj && handlersParams && (*obj = calloc(1, sizeof(struct handlers_s))));
 
-    HANDLERS_PRIVATE_DATA_S *pData;
-    assert((pData = calloc(1, sizeof(HANDLERS_PRIVATE_DATA_S))));
+    struct handlers_private_data_s *pData;
+    assert((pData = calloc(1, sizeof(struct handlers_private_data_s))));
 
     (*obj)->getCommandHandler = getCommandHandler_f;
     (*obj)->getElementIndex   = getElementIndex_f;
     (*obj)->getSubstring      = getSubstring_f;
 
-    pData->handlersParams.ctx                    = handlersParams->ctx;
-    pData->handlersParams.onModuleStateChangedCb = handlersParams->onModuleStateChangedCb;
-    pData->handlersParams.userData               = handlersParams->userData;
+    pData->handlersParams        = *handlersParams;
 
     pData->nbSingleInputHandlers = gNbSingleInputHandlers;
     pData->singleInputHandlers   = gSingleInputHandlers;
@@ -96,11 +94,11 @@ HANDLERS_ERROR_E Handlers_Init(HANDLERS_S **obj, HANDLERS_PARAMS_S *handlersPara
 /*!
  *
  */
-HANDLERS_ERROR_E Handlers_UnInit(HANDLERS_S **obj)
+enum handlers_error_e Handlers_UnInit(struct handlers_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    assert(obj && *obj);
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)((*obj)->pData);
+    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)((*obj)->pData);
 
     pData->handlersParams.ctx                    = NULL;
     pData->handlersParams.onModuleStateChangedCb = NULL;
@@ -119,17 +117,19 @@ HANDLERS_ERROR_E Handlers_UnInit(HANDLERS_S **obj)
 }
 
 /* -------------------------------------------------------------------------------------------- */
-/*                                     PRIVATE FUNCTIONS                                        */
+/* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
+
 
 /*!
  *
  */
-static HANDLERS_ERROR_E getCommandHandler_f(HANDLERS_S *obj, const char *handlerName, HANDLERS_COMMAND_F *out)
+static enum handlers_error_e getCommandHandler_f(struct handlers_s *obj, const char *handlerName,
+                                                 handlers_command_f *out)
 {
     assert(obj && obj->pData && handlerName && out);
 
-    HANDLERS_PRIVATE_DATA_S *pData = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
+    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
 
     uint32_t i = 0;
     while ((i < pData->nbSingleInputHandlers)
@@ -166,14 +166,15 @@ exit:
 /*!
  *
  */
-static HANDLERS_ERROR_E getElementIndex_f(HANDLERS_S *obj, char *elementName, uint32_t *index)
+static enum handlers_error_e getElementIndex_f(struct handlers_s *obj, char *elementName,
+                                                                       uint32_t *index)
 {
     assert(obj && obj->pData && elementName && index);
 
-    HANDLERS_PRIVATE_DATA_S *pData  = (HANDLERS_PRIVATE_DATA_S*)(obj->pData);
-    GRAPHICS_INFOS_S *graphicsInfos = &pData->handlersParams.ctx->params.graphicsInfos;
-    uint32_t nbGfxElements          = graphicsInfos->nbGfxElements;
-    GFX_ELEMENT_S **gfxElements     = graphicsInfos->gfxElements;
+    struct handlers_private_data_s *pData  = (struct handlers_private_data_s*)(obj->pData);
+    struct graphics_infos_s *graphicsInfos = &pData->handlersParams.ctx->params.graphicsInfos;
+    uint32_t nbGfxElements                 = graphicsInfos->nbGfxElements;
+    struct gfx_element_s **gfxElements     = graphicsInfos->gfxElements;
 
     for (*index = 0; *index < nbGfxElements; (*index)++) {
         if (strcmp(gfxElements[*index]->name, elementName) == 0) {
@@ -192,11 +193,10 @@ static HANDLERS_ERROR_E getElementIndex_f(HANDLERS_S *obj, char *elementName, ui
 /*!
  *
  */
-HANDLERS_ERROR_E getSubstring_f(HANDLERS_S *obj, const char *haystack, const char *needle, char *out, uint32_t *offset)
+enum handlers_error_e getSubstring_f(struct handlers_s *obj, const char * const haystack,
+                                     const char * const needle, char *out, uint32_t *offset)
 {
     assert(obj && obj->pData);
-
-    (void)obj;
 
     if (!haystack || !needle || !out || !offset) {
         Loge("Bad params");
@@ -210,7 +210,7 @@ HANDLERS_ERROR_E getSubstring_f(HANDLERS_S *obj, const char *haystack, const cha
 
     int32_t len = strlen(haystack + *offset) - strlen(result);
     if (len > 0) {
-        strncpy(out, haystack + *offset, len);
+        snprintf(out, len + 1, "%s", haystack + *offset);
     }
 
     *offset += len + 1;
