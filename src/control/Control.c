@@ -648,7 +648,6 @@ static void onCommandCb(void *userData, struct controller_command_s *command)
             if (gCommandsList[index].id != command->id) {
                 continue;
             }
-            strcpy(handlerName, gCommandsList[index].str);
             break;
         }
 
@@ -657,8 +656,8 @@ static void onCommandCb(void *userData, struct controller_command_s *command)
             return;
         }
     }
-    snprintf(handlerName, sizeof(handlerName), "%s", gCommandsList[index].str);
 
+    snprintf(handlerName, sizeof(handlerName), "%s", gCommandsList[index].str);
     cmd.id          = command->id;
     cmd.handlerName = handlerName;
 
