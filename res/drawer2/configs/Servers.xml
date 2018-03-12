@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - \file   Servers.xml
+  - \author Boubacar DIENE <boubacar.diene@gmail.com>
+  - \date   2016 - 2018
+
+  - \brief  Here are listed some informations needed by the "Servers" module
+
+            More than one server can be simultaneously started to dispatch received
+            data to connected clients.
+
+            Note that "Servers" module is also built as a dynamic library to make it
+            usable alone without taking other modules into account.
+-->
+
+<Servers>
+
+  <Server>
+    <!--
+      General
+
+      - name       : Server's name
+
+      - type       : Stream type
+                     0 <=> Video
+
+      - link       : 0 <=> Inet stream (TCP)
+                     1 <=> Inet datagram (UDP)
+                     2 <=> Unix stream
+                     3 <=> Unix datagram
+
+      - mode       : 0 <=> Standard - No additional data added. It works the same way as classical socket.
+                     1 <=> Http     - To be used to interact with HTTP clients
+                     2 <=> Custom   - To be used to interact with "Clients" module
+
+      - acceptMode : 0 <=> Automatic - Dispatch data to all clients once connected - No need to use addReceiver()
+                                       fuction in the source code
+                     1 <=> Manual    - Wait until client is added to receivers' list before streaming toward it
+
+      - priority   : Internal threads' priority
+                     0 <=> Lowest
+                     1 <=> Default
+                     2 <=> Highest
+
+      - maxClients : Max number of clients that server can accept
+
+      - mime       : Mime type (Useful for HTTP clients - depends on video format (mjpeg, ...))
+    -->
+    <General name="inet-videoServer"
+            type="0"
+            link="0"
+            mode="1"
+            acceptMode="0"
+            priority="2"
+            maxClients="5"
+            mime="image/jpeg" />
+
+    <!--
+      Inet
+
+        - host    : IP address / hostname server is listening to (E.g: localhost or 127.0.0.1)
+        - service : Protocol that server is using (E.g: http or 80)
+        - path    : Resource on the server that clients should use to get stream
+    -->
+    <Inet host="localhost" service="9090" path="/webcam" />
+  </Server>
+
+  <Server>
+    <!--
+      General
+
+      - name       : Server's name
+
+      - type       : Stream type
+                     0 <=> Video
+
+      - link       : 0 <=> Inet stream (TCP)
+                     1 <=> Inet datagram (UDP)
+                     2 <=> Unix stream
+                     3 <=> Unix datagram
+
+      - mode       : 0 <=> Standard - No additional data added. It works the same way as classical socket.
+                     1 <=> Http     - To be used to interact with HTTP clients
+                     2 <=> Custom   - To be used to interact with "Clients" module
+
+      - acceptMode : 0 <=> Automatic - Dispatch data to all clients once connected - No need to use addReceiver()
+                                       fuction in the source code
+                     1 <=> Manual    - Wait until client is added to receivers' list before streaming toward it
+
+      - priority   : Internal threads' priority
+                     0 <=> Lowest
+                     1 <=> Default
+                     2 <=> Highest
+
+      - maxClients : Max number of clients that server can accept
+
+      - mime       : Mime type (Useful for HTTP clients - depends on video format (mjpeg, ...))
+    -->
+    <General name="unix-videoServer"
+            type="0"
+            link="3"
+            mode="2"
+            acceptMode="0"
+            priority="2"
+            maxClients="5"
+            mime="image/jpeg" />
+
+    <!--
+      Unix
+
+      - socketName : Server socket
+    -->
+    <Unix socketName="unix-videoserver.sock" />
+  </Server>
+
+</Servers>
+

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -339,13 +339,13 @@ static void onDeviceCb(void *userData, const char **attrs)
     	    .attrName          = XML_ATTR_WIDTH,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&video->deviceArea.width,
-    	    .attrGetter.scalar = parserObj->getUint32
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    .attrName          = XML_ATTR_HEIGHT,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&video->deviceArea.height,
-    	    .attrGetter.scalar = parserObj->getUint32
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    NULL,
@@ -389,13 +389,13 @@ static void onCroppingAreaCb(void *userData, const char **attrs)
     	    .attrName          = XML_ATTR_WIDTH,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&video->croppingArea.width,
-    	    .attrGetter.scalar = parserObj->getUint32
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    .attrName          = XML_ATTR_HEIGHT,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&video->croppingArea.height,
-    	    .attrGetter.scalar = parserObj->getUint32
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    NULL,
@@ -427,25 +427,25 @@ static void onComposingAreaCb(void *userData, const char **attrs)
     	    .attrName          = XML_ATTR_LEFT,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&video->composingArea.left,
-    	    .attrGetter.scalar = parserObj->getUint32
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    .attrName          = XML_ATTR_TOP,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&video->composingArea.top,
-    	    .attrGetter.scalar = parserObj->getUint32
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    .attrName          = XML_ATTR_WIDTH,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&video->composingArea.width,
-    	    .attrGetter.scalar = parserObj->getUint32
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    .attrName          = XML_ATTR_HEIGHT,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&video->composingArea.height,
-    	    .attrGetter.scalar = parserObj->getUint32
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    NULL,

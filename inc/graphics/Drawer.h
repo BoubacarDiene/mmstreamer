@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -57,17 +57,30 @@ typedef enum drawer_error_e (*drawer_uninit_screen_f)(struct drawer_s *obj);
 typedef enum drawer_error_e (*drawer_draw_video_f)(struct drawer_s *obj, struct gfx_rect_s *rect,
                                                    struct buffer_s *buffer);
 typedef enum drawer_error_e (*drawer_draw_image_f)(struct drawer_s *obj, struct gfx_rect_s *rect,
-                                                   struct gfx_image_s *image);
+                                                   struct gfx_image_s *image,
+                                                   enum gfx_target_e target);
 typedef enum drawer_error_e (*drawer_draw_text_f)(struct drawer_s *obj, struct gfx_rect_s *rect,
-                                                  struct gfx_text_s *text);
+                                                  struct gfx_text_s *text,
+                                                  enum gfx_target_e target);
 
-typedef enum drawer_error_e (*drawer_set_bgcolor_f)(struct drawer_s *obj, struct gfx_rect_s *rect,
-                                                    struct gfx_color_s *color);
+typedef enum drawer_error_e (*drawer_set_background_color_f)(struct drawer_s *obj,
+                                                             struct gfx_rect_s *rect,
+                                                             struct gfx_color_s *color,
+                                                             enum gfx_target_e target);
+typedef enum drawer_error_e (*drawer_restore_background_color_f)(struct drawer_s *obj,
+                                                                 struct gfx_rect_s *rect,
+                                                                 struct gfx_color_s *fallbackColor,
+                                                                 enum gfx_target_e target);
+
+typedef enum drawer_error_e (*drawer_start_drawing_in_background_f)(struct drawer_s *obj);
+typedef enum drawer_error_e (*drawer_stop_drawing_in_background_f)(struct drawer_s *obj);
 
 typedef enum drawer_error_e (*drawer_save_buffer_f)(struct drawer_s *obj, struct buffer_s *buffer,
                                                     struct gfx_image_s *inOut);
-typedef enum drawer_error_e (*drawer_save_screen_f)(struct drawer_s *obj,
-                                                    struct gfx_image_s *inOut);
+typedef enum drawer_error_e (*drawer_save_target_f)(struct drawer_s *obj,
+                                                    struct gfx_image_s *inOut,
+                                                    struct gfx_rect_s *srcRect,
+                                                    enum gfx_target_e target);
 
 typedef enum drawer_error_e (*drawer_get_event_f)(struct drawer_s *obj,
                                                   struct gfx_event_s *gfxEvent);
@@ -85,7 +98,9 @@ enum drawer_error_e {
     DRAWER_ERROR_EVENT,
     DRAWER_ERROR_DRAW,
     DRAWER_ERROR_LOCK,
-    DRAWER_ERROR_SAVE
+    DRAWER_ERROR_SAVE,
+    DRAWER_ERROR_BLEND,
+    DRAWER_ERROR_TIMEOUT
 };
 
 /* -------------------------------------------------------------------------------------------- */
@@ -93,21 +108,25 @@ enum drawer_error_e {
 /* -------------------------------------------------------------------------------------------- */
 
 struct drawer_s {
-    drawer_init_screen_f         initScreen;
-    drawer_uninit_screen_f       uninitScreen;
-    
-    drawer_draw_video_f          drawVideo;
-    drawer_draw_image_f          drawImage;
-    drawer_draw_text_f           drawText;
-    
-    drawer_set_bgcolor_f         setBgColor;
-    
-    drawer_save_buffer_f         saveBuffer;
-    drawer_save_screen_f         saveScreen;
-    
-    drawer_get_event_f           getEvent;
-    drawer_stop_awaiting_event_f stopAwaitingEvent;
-    
+    drawer_init_screen_f                 initScreen;        // Mandatory
+    drawer_uninit_screen_f               uninitScreen;      // Mandatory
+
+    drawer_draw_video_f                  drawVideo;         // Mandatory
+    drawer_draw_image_f                  drawImage;         // Mandatory
+    drawer_draw_text_f                   drawText;          // Mandatory
+
+    drawer_set_background_color_f        setBgColor;        // Mandatory
+    drawer_restore_background_color_f    restoreBgColor;    // Opttional
+
+    drawer_start_drawing_in_background_f startDrawingInBg;  // Opttional
+    drawer_stop_drawing_in_background_f  stopDrawingInBg;   // Opttional
+
+    drawer_save_buffer_f                 saveBuffer;        // Mandatory
+    drawer_save_target_f                 saveTarget;        // Mandatory
+
+    drawer_get_event_f                   getEvent;          // Mandatory
+    drawer_stop_awaiting_event_f         stopAwaitingEvent; // Mandatory
+
     void *pData;
 };
 

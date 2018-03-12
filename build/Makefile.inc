@@ -3,7 +3,7 @@
 # \file Makefile.inc
 #
 # \author Boubacar DIENE <boubacar.diene@gmail.com>
-# \date   September 04, 2016
+# \date   2016 - 2018
 #
 # \brief  Common settings
 #
@@ -16,29 +16,6 @@
 # Project
 PROJECT_NAME    := mmstreamer
 PROJECT_VERSION := 0.9
-
-# Path
-LOCAL := ${shell pwd}
-
-DEPS := ${LOCAL}/deps
-INC  := ${LOCAL}/inc
-RES  := ${LOCAL}/res
-SRC  := ${LOCAL}/src
-
-OUT             := ${LOCAL}/out
-OUT_BUILD       := ${OUT}/build
-OUT_RELEASE     := ${OUT}/${PROJECT_NAME}
-OUT_RELEASE_BIN := ${OUT_RELEASE}/bin
-OUT_RELEASE_INC := ${OUT_RELEASE}/inc
-OUT_RELEASE_LIB := ${OUT_RELEASE}/lib
-OUT_RELEASE_RES := ${OUT_RELEASE}/res
-
-# Utils
-COMMON := utils/Common
-LIST   := utils/List
-LOG    := utils/Log
-PARSER := utils/Parser
-TASK   := utils/Task
 
 # Build
 DEBUG     := no
@@ -81,21 +58,40 @@ else
     SDL_TTF_VERSION   := 2.0.11
 endif
 
+RES_VERSION := "drawer"${SDL_BUILD_VERSION}
+
+# Path
+LOCAL := ${shell pwd}
+
+DEPS := ${LOCAL}/deps
+INC  := ${LOCAL}/inc
+RES  := ${LOCAL}/res/${RES_VERSION}
+SRC  := ${LOCAL}/src
+
+OUT             := ${LOCAL}/out
+OUT_BUILD       := ${OUT}/build
+OUT_RELEASE     := ${OUT}/${PROJECT_NAME}
+OUT_RELEASE_BIN := ${OUT_RELEASE}/bin
+OUT_RELEASE_INC := ${OUT_RELEASE}/inc
+OUT_RELEASE_LIB := ${OUT_RELEASE}/lib
+OUT_RELEASE_RES := ${OUT_RELEASE}/res
+
+# Utils
+COMMON := utils/Common
+LIST   := utils/List
+LOG    := utils/Log
+PARSER := utils/Parser
+TASK   := utils/Task
+
 #################################################################
 #                             Prepare                           #
 #################################################################
 
 prepare-release:
 	${PRINT} ***** Preparing release *****
-	if [ ! -d ${OUT_RELEASE_BIN} ]; then \
-	    ${MKDIR} ${OUT_RELEASE_BIN};     \
-	fi
-	if [ ! -d ${OUT_RELEASE_INC} ]; then \
-	    ${MKDIR} ${OUT_RELEASE_INC};     \
-	fi
-	if [ ! -d ${OUT_RELEASE_LIB} ]; then \
-	    ${MKDIR} ${OUT_RELEASE_LIB};     \
-	fi
-	if [ ! -d ${OUT_RELEASE_RES} ]; then \
-	    ${MKDIR} ${OUT_RELEASE_RES};     \
-	fi
+	${RM} ${OUT_RELEASE}/* ||:
+
+	${MKDIR} ${OUT_RELEASE_BIN}
+	${MKDIR} ${OUT_RELEASE_INC}
+	${MKDIR} ${OUT_RELEASE_LIB}
+	${MKDIR} ${OUT_RELEASE_RES}

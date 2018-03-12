@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - \file   Videos.xml
+  - \author Boubacar DIENE <boubacar.diene@gmail.com>
+  - \date   2016 - 2018
+
+  - \brief  Here are listed some informations needed by the videos module
+
+            Note that this latter is also built as a dynamic library to make it
+            usable alone in order to control video devices.
+
+            It's possible to simultaneously capture from several video devices.
+-->
+
+<Videos>
+
+  <Video>
+
+    <!--
+      General
+
+      - priority     : Internal threads' priority
+                       0 <=> Lowest
+                       1 <=> Default
+                       2 <=> Highest
+
+      - configChoice : Config from which retrieve v4l2 parameters
+                       (Cf. <Configs> tag below to add more configs)
+
+      - gfxDest      : Name of graphics element where captured video frames are drawn.
+                       Attention ! Make sure that element is defined in Graphics.xml
+
+      - serverDest   : Name of server used to stream captured video frames.
+                       Attention ! Make sure that server is defined in Servers.xml
+
+      Note : Obviously, gfxDest and serverDest are only used if the related modules are enabled
+             (see Main.xml)
+    -->
+    <General priority="1" configChoice="0" gfxDest="videoZoneFromDevice" serverDest="inet-videoServer" />
+
+    <!--
+      Device
+
+      - name : Unique name of this video device (Define what you want)
+
+      - src  : Path to video device to use
+
+      - width / height : Device's resolution. If not supported, the closest one should be used instead
+                         by the driver
+    -->
+    <Device name="camera0" src="/dev/video0" width="640" height="480" />
+
+    <!--
+      Cropping area : Part of video frame to display
+
+        - left / top : Starting point from the top-left corner
+
+        - width / height : Area dimensions
+    -->
+    <CroppingArea left="0" top="0" width="640" height="480" />
+
+    <!--
+      Composing area : Area where "cropping area" is scaled to
+
+        - left / top : Starting point from the top-left corner
+
+        - width / height : Area dimensions
+    -->
+    <ComposingArea left="0" top="0" width="640" height="480" />
+
+    <!--
+      Buffer
+
+      - nbBuffers  : Provided to v4l2 when requesting buffers
+
+      - desiredFps : Used to set the number of frames to get per second
+                     The provided value needs to be supported by the driver otherwise it won't be
+                     taken into account.
+    -->
+    <Buffer nbBuffers="4" desiredFps="25" />
+
+  </Video>
+
+  <!--
+    Video configuration choices
+
+    - Capabilities : List of v4l2 capabilities the selected video device has to support.
+                     See <linux/videodev2.h> for more details about v4l2 capabilities (Macros whose name
+                     starts with "V4L2_CAP_")
+
+    - BufferType   : Possible values are listed in "v4l2_buf_type" enum (Cf. <linux/videodev2.h>)
+
+    - PixelFormat  : See macros whose name starts with "V4L2_PIX_FMT_" in <linux/videodev2.h>
+
+    - Colorspace   : Possible values are listed in "v4l2_colorspace" enum (Cf. <linux/videodev2.h>)
+
+    - Memory       : "V4L2_MEMORY_MMAP" or "V4L2_MEMORY_USERPTR" (From "v4l2_memory" enum in <linux/videodev2.h>)
+
+    - AwaitMode    : It determines how "Videos" module waits for data to be available on video device before
+                     dequeuing buffer :
+                     "VIDEO_AWAIT_MODE_BLOCKING"     => Waiting indefinitely until data are available for reading
+                     "VIDEO_AWAIT_MODE_NON_BLOCKING" => Checking regularly (currently every 2s) if data are available
+
+    Note : Only the following 4 configs have been tested for now!! 
+  -->
+  <Configs>
+
+    <!-- Choice 0 : MJPEG - MMAP -->
+    <Config>
+      <Capabilities>
+        <Item      value="V4L2_CAP_VIDEO_CAPTURE" />
+        <Item      value="V4L2_CAP_STREAMING" />
+      </Capabilities>
+      <BufferType  value="V4L2_BUF_TYPE_VIDEO_CAPTURE" />
+      <PixelFormat value="V4L2_PIX_FMT_MJPEG" />
+      <Colorspace  value="V4L2_COLORSPACE_JPEG" />
+      <Memory      value="V4L2_MEMORY_MMAP" />
+      <AwaitMode   value="VIDEO_AWAIT_MODE_BLOCKING" />
+    </Config>
+
+    <!-- Choice 1 : MJPEG - USERPTR -->
+    <Config>
+      <Capabilities>
+        <Item      value="V4L2_CAP_VIDEO_CAPTURE" />
+        <Item      value="V4L2_CAP_STREAMING" />
+      </Capabilities>
+      <BufferType  value="V4L2_BUF_TYPE_VIDEO_CAPTURE" />
+      <PixelFormat value="V4L2_PIX_FMT_MJPEG" />
+      <Colorspace  value="V4L2_COLORSPACE_JPEG" />
+      <Memory      value="V4L2_MEMORY_USERPTR" />
+      <AwaitMode   value="VIDEO_AWAIT_MODE_BLOCKING" />
+    </Config>
+
+    <!-- Choice 2 : YVYU - MMAP -->
+    <Config>
+      <Capabilities>
+        <Item      value="V4L2_CAP_VIDEO_CAPTURE" />
+        <Item      value="V4L2_CAP_STREAMING" />
+      </Capabilities>
+      <BufferType  value="V4L2_BUF_TYPE_VIDEO_CAPTURE" />
+      <PixelFormat value="V4L2_PIX_FMT_YVYU" />
+      <Colorspace  value="V4L2_COLORSPACE_SMPTE170M" />
+      <Memory      value="V4L2_MEMORY_MMAP" />
+      <AwaitMode   value="VIDEO_AWAIT_MODE_BLOCKING" />
+    </Config>
+
+    <!-- Choice 3 : YVYU - USERPTR -->
+    <Config>
+      <Capabilities>
+        <Item      value="V4L2_CAP_VIDEO_CAPTURE" />
+        <Item      value="V4L2_CAP_STREAMING" />
+      </Capabilities>
+      <BufferType  value="V4L2_BUF_TYPE_VIDEO_CAPTURE" />
+      <PixelFormat value="V4L2_PIX_FMT_YVYU" />
+      <Colorspace  value="V4L2_COLORSPACE_SMPTE170M" />
+      <Memory      value="V4L2_MEMORY_USERPTR" />
+      <AwaitMode   value="VIDEO_AWAIT_MODE_BLOCKING" />
+    </Config>
+
+  </Configs>
+
+</Videos>
+

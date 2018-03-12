@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -43,33 +43,12 @@ extern "C" {
 
 enum loaders_error_e;
 
-struct xml_color_s;
-struct xml_colors_s;
-struct xml_font_s;
-struct xml_fonts_s;
-struct xml_image_s;
-struct xml_images_s;
-struct xml_string_s;
-struct xml_strings_s;
-struct xml_capability_s;
-struct xml_config_s;
-struct xml_video_area_s;
-struct xml_video_s;
 struct xml_videos_s;
-struct xml_common_files_s;
 struct xml_common_s;
 struct xml_screen_s;
-struct xml_element_text_s;
-struct xml_element_image_s;
-struct xml_element_nav_s;
-struct xml_element_click_s;
-struct xml_element_s;
 struct xml_graphics_s;
-struct xml_server_s;
 struct xml_servers_s;
-struct xml_client_s;
 struct xml_clients_s;
-struct xml_s;
 struct loaders_s;
 
 /* -------------------------------------------------------------------------------------------- */
@@ -117,6 +96,59 @@ enum loaders_error_e {
     LOADERS_ERROR_XML
 };
 
+/* ////////////////////////////////////// -- VIDEOS -- //////////////////////////////////////// */
+
+struct xml_capability_s {
+    char *item;
+};
+
+struct xml_config_s {
+    uint8_t                 nbItems;
+    struct xml_capability_s *capabilities;
+
+    char                    *bufferType;
+    char                    *pixelFormat;
+    char                    *colorspace;
+    char                    *memory;
+    char                    *awaitMode;
+};
+
+struct xml_video_area_s {
+    int32_t left;
+    int32_t top;
+    int32_t width;
+    int32_t height;
+};
+
+struct xml_video_s {
+    uint8_t                 priority;
+    uint32_t                configChoice;
+    char                    *graphicsDest;
+    char                    *serverDest;
+
+    char                    *deviceName;
+    char                    *deviceSrc;
+
+    struct xml_video_area_s deviceArea;
+    struct xml_video_area_s croppingArea;
+    struct xml_video_area_s composingArea;
+    
+    uint8_t                 nbBuffers;
+    uint8_t                 desiredFps;
+};
+
+struct xml_videos_s {
+    uint8_t             nbVideos;
+    struct xml_video_s  *videos;
+
+    uint8_t             nbConfigs;
+    struct xml_config_s *configs;
+
+    void                *reserved;
+};
+
+/* ///////////////////////////////////// -- GRAPHICS -- /////////////////////////////////////// */
+
 struct xml_color_s {
     uint8_t red;
     uint8_t green;
@@ -158,55 +190,6 @@ struct xml_strings_s {
     struct xml_string_s *strings;
 };
 
-struct xml_capability_s {
-    char *item;
-};
-
-struct xml_config_s {
-    uint8_t                 nbItems;
-    struct xml_capability_s *capabilities;
-
-    char                    *bufferType;
-    char                    *pixelFormat;
-    char                    *colorspace;
-    char                    *memory;
-    char                    *awaitMode;
-};
-
-struct xml_video_area_s {
-    uint32_t left;
-    uint32_t top;
-    uint32_t width;
-    uint32_t height;
-};
-
-struct xml_video_s {
-    uint8_t                 priority;
-    uint32_t                configChoice;
-    char                    *graphicsDest;
-    char                    *serverDest;
-
-    char                    *deviceName;
-    char                    *deviceSrc;
-
-    struct xml_video_area_s deviceArea;
-    struct xml_video_area_s croppingArea;
-    struct xml_video_area_s composingArea;
-    
-    uint8_t                 nbBuffers;
-    uint8_t                 desiredFps;
-};
-
-struct xml_videos_s {
-    uint8_t             nbVideos;
-    struct xml_video_s  *videos;
-
-    uint8_t             nbConfigs;
-    struct xml_config_s *configs;
-
-    void                *reserved;
-};
-
 struct xml_common_files_s {
     char colors[MAX_PATH_SIZE];
     char images[MAX_PATH_SIZE];
@@ -228,26 +211,43 @@ struct xml_common_s {
     void                      *reserved;
 };
 
-struct xml_screen_s {
+struct xml_gfx_video_s {
     char     *name;
-    uint16_t width;
-    uint16_t height;
-    char     *fbDeviceName;
-    uint8_t  bitsPerPixel;
-    uint8_t  fullscreen;
-    uint8_t  showCursor;
-    char     *caption;
-    
+
+    uint32_t pixelFormat;
+
     uint8_t  useColor;
-    uint32_t BgColorId;
+    uint32_t bgColorId;
     
-    uint32_t BgImageId;
-    int32_t  BgHiddenColorId;
+    uint32_t bgImageId;
+    int32_t  bgHiddenColorId;
+
+    int32_t  x;
+    int32_t  y;
+    int32_t  width;
+    int32_t  height;
+};
+
+struct xml_screen_s {
+    char                   *name;
+    int32_t                width;
+    int32_t                height;
+    char                   *fbDeviceName;
+    uint8_t                bitsPerPixel;
+    uint8_t                fullscreen;
+    uint8_t                showCursor;
+    char                   *caption;
     
-    uint32_t iconImageId;
-    int32_t  iconHiddenColorId;
+    uint8_t                useColor;
+    uint32_t               bgColorId;
     
-    uint32_t videoFormat;
+    uint32_t               bgImageId;
+    int32_t                bgHiddenColorId;
+    
+    uint32_t               iconImageId;
+    int32_t                iconHiddenColorId;
+
+    struct xml_gfx_video_s gfxVideo;
 };
 
 struct xml_element_text_s {
@@ -282,10 +282,10 @@ struct xml_element_s {
     
     uint8_t                    type;
     
-    uint32_t                   x;
-    uint32_t                   y;
-    uint32_t                   width;
-    uint32_t                   height;
+    int32_t                    x;
+    int32_t                    y;
+    int32_t                    width;
+    int32_t                    height;
     
     uint8_t                    visible;
     uint8_t                    clickable;
@@ -320,6 +320,8 @@ struct xml_graphics_s {
     void                 *reserved;
 };
 
+/* ////////////////////////////////////// -- SERVERS -- /////////////////////////////////////// */
+
 struct xml_server_s {
     char     *name;
     uint8_t  type;
@@ -344,6 +346,8 @@ struct xml_servers_s {
     void                *reserved;
 };
 
+/* ////////////////////////////////////// -- CLIENTS -- /////////////////////////////////////// */
+
 struct xml_client_s {
     char    *name;
     uint8_t type;
@@ -366,6 +370,8 @@ struct xml_clients_s {
     
     void                *reserved;
 };
+
+/* //////////////////////////////////////// -- ALL -- ///////////////////////////////////////// */
 
 struct xml_s {
     struct xml_common_s   xmlCommon;

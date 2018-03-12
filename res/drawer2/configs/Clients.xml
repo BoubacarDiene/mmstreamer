@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - \file   Clients.xml
+  - \author Boubacar DIENE <boubacar.diene@gmail.com>
+  - \date   2016 - 2018
+
+  - \brief  Here are listed some informations needed by the "Clients" module
+
+            "Clients" has been designed to interact with "Servers" module defined
+            in Servers.xml. When connecting to a server, it first receives / sends
+            some useful informations from / to server (max buffer length, ...) before
+            starting to get real data (video, ...).
+
+            However, it can also be used to connect to any other kind of servers.
+
+            Note that "Clients" module is also built as a dynamic library to make it
+            usable alone without taking other modules into account.
+-->
+
+<Clients>
+
+  <Client>
+    <!--
+      General
+
+      - name       : Client's name
+
+      - type       : Stream type
+                     0 <=> Video
+
+      - link       : 0 <=> Inet stream (TCP)
+                     1 <=> Inet datagram (UDP)
+                     2 <=> Unix stream
+                     3 <=> Unix datagram
+
+      - mode       : 0 <=> Standard - No additional data added. It works the same way as classical socket.
+                     1 <=> Http     - To be used to interact with HTTP streamers
+                     2 <=> Custom   - To be used to interact with "Servers" module
+
+      - priority   : Internal threads' priority
+                     0 <=> Lowest
+                     1 <=> Default
+                     2 <=> Highest
+
+      - gfxDest    : Name of graphics element where received data are drawn.
+                     Attention ! Make sure that element is defined in Graphics.xml
+
+      - serverDest : Name of server used to stream received data. This is useful if data come from an
+                     external server such as vlc.
+                     Attention ! Make sure that server is defined in Servers.xml
+
+      Note : Obviously, gfxDest and serverDest are only used if the related modules are enabled
+             (see Main.xml). It's up to you to properly set configs so as to avoid conflicts (E.g.
+             In case videos module already feeds the same server and/or graphics element, there's
+             no need to enable client for the same purpose.
+    -->
+    <General name="inet-videoClient"
+            type="0"
+            link="0"
+            mode="1"
+            priority="2"
+            gfxDest="videoZoneFromClient"
+            serverDest="" />
+
+    <!--
+      Inet
+      - host    : IP address / hostname of server to connect to (E.g: localhost or 127.0.0.1)
+      - service : Protocol that server is using (E.g: http or 80)
+      - path    : Resource on the server where to get stream from
+    -->
+    <Inet host="localhost" service="9090" path="/webcam" />
+  </Client>
+
+  <Client>
+    <!--
+      General
+
+      - name       : Client's name
+
+      - type       : Stream type
+                     0 <=> Video
+
+      - link       : 0 <=> Inet stream (TCP)
+                     1 <=> Inet datagram (UDP)
+                     2 <=> Unix stream
+                     3 <=> Unix datagram
+
+      - mode       : 0 <=> Standard - No additional data added. It works the same way as classical socket.
+                     1 <=> Http     - To be used to interact with HTTP streamers
+                     2 <=> Custom   - To be used to interact with server module
+
+      - priority   : Internal threads' priority
+                     0 <=> Lowest
+                     1 <=> Default
+                     2 <=> Highest
+
+      - gfxDest    : Name of graphics element where received data are drawn.
+                     Attention ! Make sure that element is defined in Graphics.xml
+
+      - serverDest : Name of server used to stream received data. This is useful if data come from an
+                     external server such as vlc.
+                     Attention ! Make sure that server is defined in Servers.xml
+
+      Note : Obviously, gfxDest and serverDest are only used if the related modules are enabled
+             (see Main.xml). It's up to you to properly set configs so as to avoid conflicts (E.g.
+             In case videos module already feeds the same server and/or graphics element, there's
+             no need to enable client for the same purpose.
+    -->
+    <General name="unix-videoClient"
+            type="0"
+            link="3"
+            mode="2"
+            priority="2"
+            gfxDest=""
+            serverDest="inet-videoServer" />
+
+    <!--
+      Unix
+
+      - socketName : Server socket
+    -->
+    <Unix serverSocketName="unix-videoserver.sock" />
+  </Client>
+
+</Clients>
+

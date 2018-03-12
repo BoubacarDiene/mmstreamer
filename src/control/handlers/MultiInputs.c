@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -42,12 +42,16 @@
 /* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
+static enum handlers_error_e saveVideoElement(struct handlers_s *obj, char *targetName,
+                                              void *pData, char *handlerData);
+
 static enum handlers_error_e updateText(struct handlers_s *obj, char *targetName, void *pData,
                                         char *handlerData);
 static enum handlers_error_e updateImage(struct handlers_s *obj, char *targetName, void *pData,
                                          char *handlerData);
 static enum handlers_error_e updateNav(struct handlers_s *obj, char *targetName, void *pData,
                                        char *handlerData);
+
 static enum handlers_error_e sendGfxEvent(struct handlers_s *obj, char *targetName, void *pData,
                                           char *handlerData);
 
@@ -56,11 +60,12 @@ static enum handlers_error_e sendGfxEvent(struct handlers_s *obj, char *targetNa
 /* -------------------------------------------------------------------------------------------- */
 
 struct handlers_commands_s gMultiInputsHandlers[] = {
-	{ HANDLERS_COMMAND_UPDATE_TEXT,     NULL,  updateText   },
-	{ HANDLERS_COMMAND_UPDATE_IMAGE,    NULL,  updateImage  },
-	{ HANDLERS_COMMAND_UPDATE_NAV,      NULL,  updateNav    },
-	{ HANDLERS_COMMAND_SEND_GFX_EVENT,  NULL,  sendGfxEvent },
-	{ NULL,                             NULL,  NULL         }
+	{ HANDLERS_COMMAND_SAVE_VIDEO_ELEMENT,  NULL,  saveVideoElement },
+	{ HANDLERS_COMMAND_UPDATE_TEXT,         NULL,  updateText       },
+	{ HANDLERS_COMMAND_UPDATE_IMAGE,        NULL,  updateImage      },
+	{ HANDLERS_COMMAND_UPDATE_NAV,          NULL,  updateNav        },
+	{ HANDLERS_COMMAND_SEND_GFX_EVENT,      NULL,  sendGfxEvent     },
+	{ NULL,                                 NULL,  NULL             }
 };
 
 uint32_t gNbMultiInputsHandlers = (uint32_t)(sizeof(gMultiInputsHandlers)
@@ -73,12 +78,10 @@ uint32_t gNbMultiInputsHandlers = (uint32_t)(sizeof(gMultiInputsHandlers)
 /*!
  *
  */
-static enum handlers_error_e updateText(struct handlers_s *obj, char *targetName, void *pData,
-                                        char *handlerData)
+static enum handlers_error_e saveVideoElement(struct handlers_s *obj, char *targetName,
+                                              void *pData, char *handlerData)
 {
     assert(obj && obj->pData && targetName);
-
-    (void)pData;
 
     if (!handlerData) {
         Loge("Handler data is expected");
@@ -94,22 +97,87 @@ static enum handlers_error_e updateText(struct handlers_s *obj, char *targetName
         return HANDLERS_ERROR_STATE;
     }
 
-    enum handlers_error_e ret = HANDLERS_ERROR_NONE;
+    struct input_s *input = &ctx->input;
+    struct stat st;
 
-    uint32_t index;
-    if ((ret = obj->getElementIndex(obj, targetName, &index)) != HANDLERS_ERROR_NONE) {
-        return ret;
+    if (stat(input->appDataDir, &st) < 0) {
+        Logd("Creating direcory : \"%s\"", input->appDataDir);
+        if (mkdir(input->appDataDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
+            Loge("%s", strerror(errno));
+            return HANDLERS_ERROR_IO;
+        }
     }
 
+    Logd("Saving video element \"%s\"", targetName);
+
+    uint32_t imageFormat     = (uint32_t)atoi(handlerData);
+    struct gfx_image_s image = {0};
+
+    switch (imageFormat) {
+        case GFX_IMAGE_FORMAT_JPG:
+            sprintf(image.path, "%s/picture_%ld.jpeg", input->appDataDir, time(NULL));
+            image.format = GFX_IMAGE_FORMAT_JPG;
+            break;
+
+        case GFX_IMAGE_FORMAT_PNG:
+            sprintf(image.path, "%s/picture_%ld.png", input->appDataDir, time(NULL));
+            image.format = GFX_IMAGE_FORMAT_PNG;
+            break;
+
+        default:
+            sprintf(image.path, "%s/picture_%ld.bmp", input->appDataDir, time(NULL));
+            image.format = GFX_IMAGE_FORMAT_BMP;
+    }
+
+    struct graphics_s *graphicsObj = ctx->modules.graphicsObj;
+    if (graphicsObj->saveVideoElement(graphicsObj, targetName, &image) != GRAPHICS_ERROR_NONE) {
+        Loge("saveVideoElement() failed for element \"%s\"", targetName);
+        return HANDLERS_ERROR_COMMAND;
+    }
+
+    return HANDLERS_ERROR_NONE;
+}
+
+/*!
+ *
+ */
+static enum handlers_error_e updateText(struct handlers_s *obj, char *targetName, void *pData,
+                                        char *handlerData)
+{
+    assert(obj && obj->pData && targetName);
+
+    if (!handlerData) {
+        Loge("Handler data is expected");
+        return HANDLERS_ERROR_PARAMS;
+    }
+
+    struct handlers_private_data_s *pvData = (struct handlers_private_data_s*)(obj->pData);
+    struct context_s *ctx                  = pvData->handlersParams.ctx;
+    struct graphics_infos_s *graphicsInfos = &ctx->params.graphicsInfos;
+
+    if (graphicsInfos->state != MODULE_STATE_STARTED) {
+        Loge("Graphics module not started - current state : %u", graphicsInfos->state);
+        return HANDLERS_ERROR_STATE;
+    }
+
+    enum handlers_error_e ret                  = HANDLERS_ERROR_NONE;
     struct graphics_s *graphicsObj             = ctx->modules.graphicsObj;
-    struct gfx_element_s *gfxElement           = graphicsInfos->gfxElements[index];
-    struct control_element_data_s *elementData = (struct control_element_data_s*)gfxElement->pData;
+    struct control_element_data_s *elementData = (struct control_element_data_s*)pData;
+
+    if (!elementData) {
+        uint32_t index;
+        if ((ret = obj->getElementIndex(obj, targetName, &index)) != HANDLERS_ERROR_NONE) {
+            return ret;
+        }
+
+        elementData = (struct control_element_data_s*)(graphicsInfos->gfxElements[index])->pData;
+    }
 
     uint32_t stringId, fontId, fontSize, colorId;
     sscanf(handlerData, "%u;%u;%u;%u", &stringId, &fontId, &fontSize, &colorId);
 
     Logd("Updating text of element \"%s\" / Params : %u | %u | %u | %u",
-            gfxElement->name, stringId, fontId, fontSize, colorId);
+            targetName, stringId, fontId, fontSize, colorId);
 
     struct gfx_text_s text = {0};
     elementData->getters.getString(elementData->getters.userData,
@@ -122,8 +190,8 @@ static enum handlers_error_e updateText(struct handlers_s *obj, char *targetName
 
     elementData->getters.getColor(elementData->getters.userData, colorId, &text.color);
 
-    if (graphicsObj->setData(graphicsObj, gfxElement->name, (void*)&text) != GRAPHICS_ERROR_NONE) {
-        Loge("setData() failed for element \"%s\"", gfxElement->name);
+    if (graphicsObj->setData(graphicsObj, targetName, (void*)&text) != GRAPHICS_ERROR_NONE) {
+        Loge("setData() failed for element \"%s\"", targetName);
         ret = HANDLERS_ERROR_COMMAND;
     }
 
@@ -138,8 +206,6 @@ static enum handlers_error_e updateImage(struct handlers_s *obj, char *targetNam
 {
     assert(obj && obj->pData && targetName);
 
-    (void)pData;
-
     if (!handlerData) {
         Loge("Handler data is expected");
         return HANDLERS_ERROR_PARAMS;
@@ -154,23 +220,25 @@ static enum handlers_error_e updateImage(struct handlers_s *obj, char *targetNam
         return HANDLERS_ERROR_STATE;
     }
 
-    enum handlers_error_e ret = HANDLERS_ERROR_NONE;
-
-    uint32_t index;
-    if ((ret = obj->getElementIndex(obj, targetName, &index)) != HANDLERS_ERROR_NONE) {
-        return ret;
-    }
-
+    enum handlers_error_e ret                  = HANDLERS_ERROR_NONE;
     struct graphics_s *graphicsObj             = ctx->modules.graphicsObj;
-    struct gfx_element_s *gfxElement           = graphicsInfos->gfxElements[index];
-    struct control_element_data_s *elementData = (struct control_element_data_s*)gfxElement->pData;
+    struct control_element_data_s *elementData = (struct control_element_data_s*)pData;
+
+    if (!elementData) {
+        uint32_t index;
+        if ((ret = obj->getElementIndex(obj, targetName, &index)) != HANDLERS_ERROR_NONE) {
+            return ret;
+        }
+
+        elementData = (struct control_element_data_s*)(graphicsInfos->gfxElements[index])->pData;
+    }
 
     uint32_t imageId;
     int32_t hiddenColorId;
     sscanf(handlerData, "%u;%d", &imageId, &hiddenColorId);
 
     Logd("Updating image of element \"%s\" / Params : %u | %d",
-            gfxElement->name, imageId, hiddenColorId);
+            targetName, imageId, hiddenColorId);
 
     struct gfx_image_s image = {0};
     elementData->getters.getImage(elementData->getters.userData, imageId, &image);
@@ -182,8 +250,8 @@ static enum handlers_error_e updateImage(struct handlers_s *obj, char *targetNam
     }
 
     if (graphicsObj->setData(graphicsObj,
-                             gfxElement->name, (void*)&image) != GRAPHICS_ERROR_NONE) {
-        Loge("setData() failed for element \"%s\"", gfxElement->name);
+                             targetName, (void*)&image) != GRAPHICS_ERROR_NONE) {
+        Loge("setData() failed for element \"%s\"", targetName);
         ret = HANDLERS_ERROR_COMMAND;
     }
 
@@ -214,18 +282,11 @@ static enum handlers_error_e updateNav(struct handlers_s *obj, char *targetName,
         return HANDLERS_ERROR_STATE;
     }
 
-    enum handlers_error_e ret = HANDLERS_ERROR_NONE;
+    enum handlers_error_e ret      = HANDLERS_ERROR_NONE;
+    struct graphics_s *graphicsObj = ctx->modules.graphicsObj;
 
-    uint32_t index;
-    if ((ret = obj->getElementIndex(obj, targetName, &index)) != HANDLERS_ERROR_NONE) {
-        return ret;
-    }
-
-    struct graphics_s *graphicsObj   = ctx->modules.graphicsObj;
-    struct gfx_element_s *gfxElement = graphicsInfos->gfxElements[index];
-
-    struct gfx_nav_s nav   = {0};
-    uint32_t offset = 0;
+    struct gfx_nav_s nav = {0};
+    uint32_t offset      = 0;
 
     ret = obj->getSubstring(obj, handlerData, ";", nav.left, &offset);
     if (ret != HANDLERS_ERROR_NONE) {
@@ -250,10 +311,10 @@ static enum handlers_error_e updateNav(struct handlers_s *obj, char *targetName,
     }
 
     Logd("Updating nav of element \"%s\" / Params : %s | %s | %s | %s",
-            gfxElement->name, nav.left, nav.up, nav.right, nav.down);
+            targetName, nav.left, nav.up, nav.right, nav.down);
 
-    if (graphicsObj->setNav(graphicsObj, gfxElement->name, &nav) != GRAPHICS_ERROR_NONE) {
-        Loge("setNav() failed for element \"%s\"", gfxElement->name);
+    if (graphicsObj->setNav(graphicsObj, targetName, &nav) != GRAPHICS_ERROR_NONE) {
+        Loge("setNav() failed for element \"%s\"", targetName);
         ret = HANDLERS_ERROR_COMMAND;
     }
 

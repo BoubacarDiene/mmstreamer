@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -115,10 +115,10 @@ struct video_listener_s {
 };
 
 struct video_area_s {
-    uint32_t left;
-    uint32_t top;
-    uint32_t width;
-    uint32_t height;
+    int32_t left;
+    int32_t top;
+    int32_t width;
+    int32_t height;
 };
 
 struct video_params_s {

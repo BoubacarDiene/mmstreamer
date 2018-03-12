@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - \file   Colors.xml
+  - \author Boubacar DIENE <boubacar.diene@gmail.com>
+  - \date   2016 - 2018
+
+  - \brief  Here are listed colors used by this application.
+-->
+
+<Colors>
+
+  <Color red="0"   green="0"   blue="0"   alpha="255" /><!-- id=0 -->
+  <Color red="255" green="255" blue="255" alpha="255" /><!-- id=1 -->
+  <Color red="255" green="0"   blue="255" alpha="255" /><!-- id=2 -->
+  <Color red="255" green="0"   blue="0"   alpha="255" /><!-- id=3 -->
+  <Color red="68"  green="68"  blue="68"  alpha="255" /><!-- id=4 -->
+  <Color red="0"   green="0"   blue="255" alpha="255" /><!-- id=5 -->
+  <Color red="75"  green="75"  blue="75"  alpha="255" /><!-- id=6 -->
+  <Color red="0"   green="255" blue="0"   alpha="255" /><!-- id=7 -->
+
+</Colors>
+

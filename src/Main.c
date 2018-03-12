@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -632,13 +632,13 @@ static void onGeneralCb(void *userData, const char **attrs)
     	{
     	    .attrName          = XML_ATTR_KEEP_ALIVE_METHOD,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void**)&input->keepAliveMethod,
+    	    .attrValue.scalar  = (void*)&input->keepAliveMethod,
     	    .attrGetter.scalar = parserObj->getUint8
         },
     	{
     	    .attrName          = XML_ATTR_TIMEOUT_S,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void**)&input->timeout_s,
+    	    .attrValue.scalar  = (void*)&input->timeout_s,
     	    .attrGetter.scalar = parserObj->getUint32
         },
     	{

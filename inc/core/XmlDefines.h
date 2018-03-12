@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -58,6 +58,7 @@ extern "C" {
 #define XML_TAG_SCREEN                   "Screen"
 #define XML_TAG_BACKGROUND               "Background"
 #define XML_TAG_ICON                     "Icon"
+#define XML_TAG_GFX_VIDEO                "GfxVideo"
 #define XML_TAG_ELEMENTS                 "Elements"
 #define XML_TAG_ELEMENT                  "Element"
 #define XML_TAG_CONFIGS                  "Configs"
@@ -118,7 +119,7 @@ extern "C" {
 #define XML_ATTR_FULLSCREEN              "fullscreen"
 #define XML_ATTR_SHOW_CURSOR             "showCursor"
 #define XML_ATTR_CAPTION                 "caption"
-#define XML_ATTR_VIDEOFORMAT             "videoFormat"
+#define XML_ATTR_PIXEL_FORMAT            "pixelFormat"
 #define XML_ATTR_USE_COLOR               "useColor"
 #define XML_ATTR_STRING_ID               "stringId"
 #define XML_ATTR_FONT_ID                 "fontId"

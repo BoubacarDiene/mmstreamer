@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -23,6 +23,10 @@
 * \file Drawer1.c
 * \brief Graphics elements drawer based on SDLv1
 * \author Boubacar DIENE
+*
+* \warning Drawer1 works as expected but please, use Drawer2 (based on SDLv2)
+*          which is more up to date !!!
+*          From now, updates will only be done to keep it "compilable" and working
 */
 
 /* -------------------------------------------------------------------------------------------- */
@@ -86,19 +90,27 @@ static enum drawer_error_e uninitScreen_f(struct drawer_s *obj);
 static enum drawer_error_e drawVideo_f(struct drawer_s *obj, struct gfx_rect_s *rect,
                                        struct buffer_s *buffer);
 static enum drawer_error_e drawImage_f(struct drawer_s *obj, struct gfx_rect_s *rect,
-                                       struct gfx_image_s *image);
+                                       struct gfx_image_s *image, enum gfx_target_e target);
 static enum drawer_error_e drawText_f(struct drawer_s *obj, struct gfx_rect_s *rect,
-                                      struct gfx_text_s *text);
+                                      struct gfx_text_s *text, enum gfx_target_e target);
 
 static enum drawer_error_e setBgColor_f(struct drawer_s *obj, struct gfx_rect_s *rect,
-                                        struct gfx_color_s *color);
+                                        struct gfx_color_s *color, enum gfx_target_e target);
 
 static enum drawer_error_e saveBuffer_f(struct drawer_s *obj, struct buffer_s *buffer,
                                         struct gfx_image_s *inOut);
-static enum drawer_error_e saveScreen_f(struct drawer_s *obj, struct gfx_image_s *inOut);
+static enum drawer_error_e saveTarget_f(struct drawer_s *obj, struct gfx_image_s *inOut,
+                                        struct gfx_rect_s *srcRect, enum gfx_target_e target);
 
 static enum drawer_error_e getEvent_f(struct drawer_s *obj, struct gfx_event_s *gfxEvent);
 static enum drawer_error_e stopAwaitingEvent_f(struct drawer_s *obj);
+
+/* -------------------------------------------------------------------------------------------- */
+/* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static enum drawer_error_e adjustDrawingRect_f(struct drawer_s *obj, enum gfx_target_e target,
+                                               SDL_Rect *inOut);
 
 /* -------------------------------------------------------------------------------------------- */
 /* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
@@ -124,7 +136,7 @@ enum drawer_error_e Drawer_Init(struct drawer_s **obj)
     (*obj)->setBgColor        = setBgColor_f;
     
     (*obj)->saveBuffer        = saveBuffer_f;
-    (*obj)->saveScreen        = saveScreen_f;
+    (*obj)->saveTarget        = saveTarget_f;
     
     (*obj)->getEvent          = getEvent_f;
     (*obj)->stopAwaitingEvent = stopAwaitingEvent_f;
@@ -247,31 +259,51 @@ static enum drawer_error_e initScreen_f(struct drawer_s *obj, struct gfx_screen_
     }
     
     // Write window's title - " " to avoid "Untitled window"
-    SDL_WM_SetCaption(screenParams->isTitleBarUsed ? screenParams->caption : " ", NULL);
+    SDL_WM_SetCaption(screenParams->isTitleBarUsed ? screenParams->caption : "", NULL);
     
     // Set screen background
     if (!screenParams->isBgImageUsed) {
         if (setBgColor_f(obj, &screenParams->rect,
-                              &screenParams->background.color) != DRAWER_ERROR_NONE) {
+                              &screenParams->background.color,
+                              GFX_TARGET_SCREEN) != DRAWER_ERROR_NONE) {
             Loge("Setting screen's background color has failed");
             goto exit;
         }
     }
     else {
         if (drawImage_f(obj, &screenParams->rect,
-                             &screenParams->background.image) != DRAWER_ERROR_NONE) {
+                             &screenParams->background.image,
+                             GFX_TARGET_SCREEN) != DRAWER_ERROR_NONE) {
             Loge("Setting screen's background image has failed");
             goto exit;
         }
     }
     
-    switch (screenParams->videoFormat) {
-        case GFX_VIDEO_FORMAT_MJPEG:
-            Logd("Video format : GFX_VIDEO_FORMAT_MJPEG");
+    // Set video area's background
+    if (!screenParams->video.isBgImageUsed) {
+        if (setBgColor_f(obj, &screenParams->video.rect,
+                              &screenParams->video.background.color,
+                              GFX_TARGET_SCREEN) != DRAWER_ERROR_NONE) {
+            Loge("Setting screen's background color has failed");
+            goto exit;
+        }
+    }
+    else {
+        if (drawImage_f(obj, &screenParams->video.rect,
+                             &screenParams->video.background.image,
+                             GFX_TARGET_SCREEN) != DRAWER_ERROR_NONE) {
+            Loge("Setting screen's background image has failed");
+            goto exit;
+        }
+    }
+    
+    switch (screenParams->video.pixelFormat) {
+        case GFX_PIXEL_FORMAT_MJPEG:
+            Logd("Video format : GFX_PIXEL_FORMAT_MJPEG");
             break;
             
-        case GFX_VIDEO_FORMAT_YVYU:
-            Logd("Video format : GFX_VIDEO_FORMAT_YVYU");
+        case GFX_PIXEL_FORMAT_YVYU:
+            Logd("Video format : GFX_PIXEL_FORMAT_YVYU");
             pData->videoFmt = SDL_YVYU_OVERLAY;
             break;
             
@@ -299,8 +331,8 @@ static enum drawer_error_e uninitScreen_f(struct drawer_s *obj)
 
     // Clear screen (double buffering enabled => 2 flip necessary to clear both buffers)
     struct gfx_color_s black = {0};
-    setBgColor_f(obj, NULL, &black);
-    setBgColor_f(obj, NULL, &black);
+    setBgColor_f(obj, NULL, &black, GFX_TARGET_SCREEN);
+    setBgColor_f(obj, NULL, &black, GFX_TARGET_SCREEN);
     
     if (pData->video.overlay) {
         SDL_FreeYUVOverlay(pData->video.overlay);
@@ -337,7 +369,9 @@ static enum drawer_error_e drawVideo_f(struct drawer_s *obj, struct gfx_rect_s *
     pData->rect.y = rect->y;
     pData->rect.w = rect->w;
     pData->rect.h = rect->h;
-    
+
+    (void)adjustDrawingRect_f(obj, GFX_TARGET_VIDEO, &pData->rect);
+
     if ((pData->videoFmt != -1)
         && !pData->video.overlay
         && !(pData->video.overlay = SDL_CreateYUVOverlay(pData->rect.w, pData->rect.h,
@@ -360,7 +394,8 @@ static enum drawer_error_e drawVideo_f(struct drawer_s *obj, struct gfx_rect_s *
         SDL_FreeSurface(pData->video.mjpeg);
         SDL_RWclose(pData->rwops);
 
-        pData->video.mjpeg = NULL;
+        pData->video.mjpeg = NULL; // Very important otherwise pData->video.overlay
+                                   // would be not NULL on next call leading to a segfault
     }
     
     SDL_Flip(pData->screen);
@@ -374,10 +409,10 @@ static enum drawer_error_e drawVideo_f(struct drawer_s *obj, struct gfx_rect_s *
  *
  */
 static enum drawer_error_e drawImage_f(struct drawer_s *obj, struct gfx_rect_s *rect,
-                                       struct gfx_image_s *image)
+                                       struct gfx_image_s *image, enum gfx_target_e target)
 {
     assert(obj && obj->pData);
-    
+
     if (!rect || !image) {
         Loge("Bad arguments");
         return DRAWER_ERROR_PARAMS;
@@ -435,6 +470,8 @@ static enum drawer_error_e drawImage_f(struct drawer_s *obj, struct gfx_rect_s *
         pData->rect.h = rect->h;
     }
     
+    (void)adjustDrawingRect_f(obj, target, &pData->rect);
+    
     //SDL_SetAlpha(pData->image, SDL_SRCALPHA, 50);
     SDL_BlitSurface(pData->image, NULL, pData->screen, &pData->rect);
     
@@ -452,10 +489,10 @@ exit:
  *
  */
 static enum drawer_error_e drawText_f(struct drawer_s *obj, struct gfx_rect_s *rect,
-                                      struct gfx_text_s *text)
+                                      struct gfx_text_s *text, enum gfx_target_e target)
 {
     assert(obj && obj->pData);
-    
+
     if (!rect || !text) {
         Loge("Bad arguments");
         return DRAWER_ERROR_PARAMS;
@@ -506,6 +543,8 @@ static enum drawer_error_e drawText_f(struct drawer_s *obj, struct gfx_rect_s *r
         pData->rect.h = rect->h;
     }
 
+    (void)adjustDrawingRect_f(obj, target, &pData->rect);
+
     SDL_BlitSurface(pData->text, NULL, pData->screen, &pData->rect);
 
     SDL_FreeSurface(pData->text);
@@ -527,7 +566,7 @@ exit:
  *
  */
 static enum drawer_error_e setBgColor_f(struct drawer_s *obj, struct gfx_rect_s *rect,
-                                        struct gfx_color_s *color)
+                                        struct gfx_color_s *color, enum gfx_target_e target)
 {
     assert(obj && obj->pData);
     
@@ -549,6 +588,8 @@ static enum drawer_error_e setBgColor_f(struct drawer_s *obj, struct gfx_rect_s 
         pData->rect.w = rect->w;
         pData->rect.h = rect->h;
     }
+    
+    (void)adjustDrawingRect_f(obj, target, &pData->rect);
     
     SDL_FillRect(pData->screen, rect ? &pData->rect : NULL,
                                 SDL_MapRGB(pData->screen->format,
@@ -641,9 +682,13 @@ exit:
 /*!
  *
  */
-static enum drawer_error_e saveScreen_f(struct drawer_s *obj, struct gfx_image_s *inOut)
+static enum drawer_error_e saveTarget_f(struct drawer_s *obj, struct gfx_image_s *inOut,
+                                        struct gfx_rect_s *srcRect, enum gfx_target_e target)
 {
     assert(obj && obj->pData && inOut);
+
+    (void)srcRect;
+    (void)target;
 
     struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
 
@@ -749,6 +794,46 @@ static enum drawer_error_e stopAwaitingEvent_f(struct drawer_s *obj)
     SDL_Event userEvent;
     userEvent.type = SDL_USEREVENT;
     SDL_PushEvent(&userEvent);
+
+    return DRAWER_ERROR_NONE;
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* ///////////////////////////// PRIVATE FUNCTIONS IMPLEMENTATION ///////////////////////////// */
+/* -------------------------------------------------------------------------------------------- */
+
+static enum drawer_error_e adjustDrawingRect_f(struct drawer_s *obj, enum gfx_target_e target,
+                                               SDL_Rect *inOut)
+{
+    assert(obj && obj->pData);
+    
+    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
+
+    if (!inOut) {
+        Loge("Invalid parameters");
+        return DRAWER_ERROR_PARAMS;
+    }
+
+    // In Graphics.xml, gfx elements sharing the same group as video have
+    // video window {x; y} coordinates as reference point.
+    //
+    // In fullscreen mode, video is rendered to the same window as screen
+    // Thus, those gfx elements' top-left pixel have to be re-positioned
+    // with the top-left corner of the screen as their new reference point
+    if (target != GFX_TARGET_VIDEO) {
+        Logd("AdjustDrawingRect only needed for gfx elements inside video area");
+        return DRAWER_ERROR_NONE;
+    }
+
+    uint8_t isGfxVideoArea = ((inOut->x == pData->screenParams.rect.x)
+                             && (inOut->y == pData->screenParams.rect.y)
+                             && (inOut->w == pData->screenParams.rect.w)
+                             && (inOut->h == pData->screenParams.rect.h));
+
+    if (!isGfxVideoArea) {
+        inOut->x += pData->screenParams.video.rect.x;
+        inOut->y += pData->screenParams.video.rect.y;
+    }
 
     return DRAWER_ERROR_NONE;
 }

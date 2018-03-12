@@ -2,7 +2,7 @@
 <!--
   - \file   Clients.xml
   - \author Boubacar DIENE <boubacar.diene@gmail.com>
-  - \date   September 04, 2016
+  - \date   2016 - 2018
 
   - \brief  Here are listed some informations needed by the "Clients" module
 
@@ -59,8 +59,8 @@
             link="0"
             mode="1"
             priority="2"
-            gfxDest="videoZone"
-            serverDest="inet-videoServer" />
+            gfxDest="videoZoneFromClient"
+            serverDest="" />
 
     <!--
       Inet
@@ -68,7 +68,7 @@
       - service : Protocol that server is using (E.g: http or 80)
       - path    : Resource on the server where to get stream from
     -->
-    <Inet host="localhost" service="8090" path="/" />
+    <Inet host="localhost" service="9090" path="/webcam" />
   </Client>
 
   <Client>

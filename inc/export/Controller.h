@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -28,7 +28,7 @@
 *        - By user using graphics elements on the UI (See Graphics.xml)
 *        - By an external library without any user action
 *
-* Such libraries are listed in Main.xml and are simply called "controllers". Controller have
+* Such libraries are listed in Main.xml and are simply called "controllers". Controllers have
 * to implement this header (Controller.h)
 *
 * Following 4 functions are REQUIRED in each controller:
@@ -36,6 +36,14 @@
 * - controller_uninit_f
 * - controller_on_command_cb
 * - controller_on_event_cb
+*
+* \note A controller can also be used to extend mmstreamer's features. For examples, mmstreamer
+*       engine does currently neighter manage audio nor motion detection.
+*       As it is possible for controllers to exchange data, one could be the "conductor":
+*       - Send commands to mmstreamer engine to start video, server, ...
+*       - Ask "libmmcontroller-audio-1.0" to play audio, record audio, ...
+*       - Start "libmmcontroller-motion-1.5" for motion detection based on screenshots you can
+*         regularly ask mmstreamer engine to take
 *
 * \see controller_init_f
 * \see controller_uninit_f
@@ -62,8 +70,7 @@ extern "C" {
  * \brief Expected format when sending commands that require an integer (Cf. see section)
  *        to mmstreamer engine
  *
- * Format is "extension" where extension can have the following values (However, only BMP
- * is currently supported):
+ * Format is "imageFormat" where imageFormat can have the following values:
  * - 0 => BMP
  * - 1 => PNG
  * - 2 => JPEG
@@ -71,6 +78,20 @@ extern "C" {
  * \see CONTROLLER_COMMAND_TAKE_SCREENSHOT
  */
 #define CONTROLLER_FORMAT_INTEGER "%u"
+
+/*!
+ * \def CONTROLLER_FORMAT_SAVE
+ * \brief Expected format when sending commands to mmstreamer engine to convert element into image
+ *        (Cf. see section)
+ *
+ * Format is "elementName;imageFormat" where imageFormat can have the following values:
+ * - 0 => BMP
+ * - 1 => PNG
+ * - 2 => JPEG
+ *
+ * \see CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT
+ */
+#define CONTROLLER_FORMAT_SAVE "%s;%u"
 
 /*!
  * \def CONTROLLER_FORMAT_STRING
@@ -81,7 +102,6 @@ extern "C" {
  * - "newLanguage" (Cf. Strings.xml)
  *       + CONTROLLER_COMMAND_CHANGE_LANGUAGE
  * - "nameOfGraphicsElement" (Cf. Graphics.xml)
- *       + CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT
  *       + CONTROLLER_COMMAND_HIDE_ELEMENT
  *       + CONTROLLER_COMMAND_SHOW_ELEMENT
  *       + CONTROLLER_COMMAND_SET_FOCUS
@@ -102,7 +122,7 @@ extern "C" {
  *       + CONTROLLER_COMMAND_STOP_CLIENT
  *       + CONTROLLER_COMMAND_START_CLIENT
  *
- * \see CONTROLLER_COMMAND_TAKE_SCREENSHOT
+ * \see CONTROLLER_COMMAND_CHANGE_LANGUAGE
  * \see CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT
  * \see CONTROLLER_COMMAND_HIDE_ELEMENT
  * \see CONTROLLER_COMMAND_SHOW_ELEMENT
@@ -212,7 +232,7 @@ enum controller_command_e {
     CONTROLLER_COMMAND_CLOSE_APPLICATION,  /**< No data expected */
     CONTROLLER_COMMAND_CHANGE_LANGUAGE,    /**< See CONTROLLER_FORMAT_STRING */
 
-    CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT, /**< See CONTROLLER_FORMAT_STRING */
+    CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT, /**< See CONTROLLER_FORMAT_SAVE */
     CONTROLLER_COMMAND_TAKE_SCREENSHOT,    /**< See CONTROLLER_FORMAT_INTEGER */
 
     CONTROLLER_COMMAND_HIDE_ELEMENT,       /**< See CONTROLLER_FORMAT_STRING */
@@ -303,6 +323,8 @@ struct controller_event_s {
 /*!
  * \struct controller_command_s
  * \brief Used by your controller to send "data" to mmstreamer engine
+ *        "senderPdata" can be provided to store some data (E.g. a context) you
+ *        want to work with when actionDoneCb will be called
  * \note The format of "data" depends on "id"
  *
  * \see controller_command_e
@@ -311,13 +333,18 @@ struct controller_event_s {
 struct controller_command_s {
     enum controller_command_e id;
     char                      *data;
+
+    void                      *senderPdata;
 };
 
 /*!
  * \struct controller_library_s
  * \brief Used to send "data" to controller named "valueOf(name)"
+ *        "senderPdata" can be provided to store some data (E.g. a context) you
+ *        want to work with when actionDoneCb will be called
  * \note "data" can contain anything you want and can also be dynamically
  *       allocated but then "actionDoneCb" should be provided
+ * \warning "name" corresponds to remote controller's name (See Main.xml#libName)
  * \warning Obviously, the receiver must be able to know how to decode "data"
  *
  * \see sendToLibrary
@@ -325,6 +352,8 @@ struct controller_command_s {
 struct controller_library_s {
     char *name;
     void *data;
+
+    void *senderPdata;
 };
 
 /*!

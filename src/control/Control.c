@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -104,7 +104,7 @@ static void onModuleStateChangedCb(void *userData, char *name, enum module_state
 static struct control_commands_list_s gCommandsList[] = {
     { CONTROLLER_COMMAND_CLOSE_APPLICATION,   HANDLERS_COMMAND_CLOSE_APPLICATION,   0,  0 },
     { CONTROLLER_COMMAND_CHANGE_LANGUAGE,     HANDLERS_COMMAND_CHANGE_LANGUAGE,     1,  0 },
-    { CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT,  HANDLERS_COMMAND_SAVE_VIDEO_ELEMENT,  0,  0 },
+    { CONTROLLER_COMMAND_SAVE_VIDEO_ELEMENT,  HANDLERS_COMMAND_SAVE_VIDEO_ELEMENT,  1,  1 },
     { CONTROLLER_COMMAND_TAKE_SCREENSHOT,     HANDLERS_COMMAND_TAKE_SCREENSHOT,     0,  0 },
     { CONTROLLER_COMMAND_HIDE_ELEMENT,        HANDLERS_COMMAND_HIDE_ELEMENT,        0,  0 },
     { CONTROLLER_COMMAND_SHOW_ELEMENT,        HANDLERS_COMMAND_SHOW_ELEMENT,        0,  0 },
@@ -123,9 +123,9 @@ static struct control_commands_list_s gCommandsList[] = {
     { CONTROLLER_COMMAND_RESUME_SERVER,       HANDLERS_COMMAND_RESUME_SERVER,       0,  0 },
     { CONTROLLER_COMMAND_STOP_CLIENT,         HANDLERS_COMMAND_STOP_CLIENT,         0,  0 },
     { CONTROLLER_COMMAND_START_CLIENT,        HANDLERS_COMMAND_START_CLIENT,        0,  0 },
-    { CONTROLLER_COMMAND_UPDATE_TEXT,         HANDLERS_COMMAND_UPDATE_TEXT,         0,  1 },
-    { CONTROLLER_COMMAND_UPDATE_IMAGE,        HANDLERS_COMMAND_UPDATE_IMAGE,        0,  1 },
-    { CONTROLLER_COMMAND_UPDATE_NAV,          HANDLERS_COMMAND_UPDATE_NAV,          0,  1 },
+    { CONTROLLER_COMMAND_UPDATE_TEXT,         HANDLERS_COMMAND_UPDATE_TEXT,         1,  1 },
+    { CONTROLLER_COMMAND_UPDATE_IMAGE,        HANDLERS_COMMAND_UPDATE_IMAGE,        1,  1 },
+    { CONTROLLER_COMMAND_UPDATE_NAV,          HANDLERS_COMMAND_UPDATE_NAV,          1,  1 },
     { CONTROLLER_COMMAND_SEND_GFX_EVENT,      HANDLERS_COMMAND_SEND_GFX_EVENT,      0,  0 }
 };
 

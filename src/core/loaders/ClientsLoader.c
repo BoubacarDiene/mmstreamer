@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -292,7 +292,7 @@ static void onInetCb(void *userData, const char **attrs)
     	{
     	    .attrName          = XML_ATTR_SERVICE,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void*)&client->serverService,
+    	    .attrValue.vector  = (void**)&client->serverService,
     	    .attrGetter.vector = parserObj->getString
         },
     	{

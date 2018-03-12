@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - \file   Strings.xml
+  - \author Boubacar DIENE <boubacar.diene@gmail.com>
+  - \date   2016 - 2018
+
+  - \brief  Here are listed strings used by this application.
+-->
+
+<Strings>
+
+  <!-- English -->
+  <StrGroup language="en">
+    <String str="Close"             /><!-- id=0 -->
+    <String str="Translate"         /><!-- id=1 -->
+    <String str="Show"              /><!-- id=2 -->
+    <String str="Selfy"             /><!-- id=3 -->
+    <String str="mmstreamer vx.y"   /><!-- id=4 -->
+    <String str="Text inside video" /><!-- id=5 -->
+    <String str="Screenshot"        /><!-- id=6 -->
+    <String str="Start"             /><!-- id=7 -->
+    <String str="Stop"              /><!-- id=8 -->
+  </StrGroup>
+
+  <!-- French -->
+  <StrGroup language="fr">
+    <String str="Fermer"           /><!-- id=0 -->
+    <String str="Traduire"         /><!-- id=1 -->
+    <String str="Montrer"          /><!-- id=2 -->
+    <String str="Selfie"           /><!-- id=3 -->
+    <String str="mmstreamer vx.y"  /><!-- id=4 -->
+    <String str="Texte dans video" /><!-- id=5 -->
+    <String str="Capture"          /><!-- id=6 -->
+    <String str="Demarrer"         /><!-- id=7 -->
+    <String str="Arreter"          /><!-- id=8 -->
+  </StrGroup>
+
+</Strings>
+

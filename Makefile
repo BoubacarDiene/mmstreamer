@@ -3,7 +3,7 @@
 # \file Makefile
 #
 # \author Boubacar DIENE <boubacar.diene@gmail.com>
-# \date   September 04, 2016
+# \date   2016 - 2018
 #
 # \brief  Build libraries:
 #         - libvideo-x.y.so

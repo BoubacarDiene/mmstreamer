@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -313,6 +313,7 @@ static enum core_error_e loadGraphicsParams_f(struct core_s *obj)
     
     struct gfx_screen_s *screenParams = &graphicsParams->screenParams;
 
+    // Screen
     if (xmlGraphics->screen.name) {
         strncpy(screenParams->name, xmlGraphics->screen.name, sizeof(screenParams->name));
     }
@@ -339,6 +340,7 @@ static enum core_error_e loadGraphicsParams_f(struct core_s *obj)
         screenParams->isTitleBarUsed = 0;
     }
     
+    // Icon
     getImage_f((void*)xmlCommon, xmlGraphics->screen.iconImageId, &screenParams->icon);
     
     if (xmlGraphics->screen.iconHiddenColorId >= 0) {
@@ -347,24 +349,51 @@ static enum core_error_e loadGraphicsParams_f(struct core_s *obj)
                                      screenParams->icon.hiddenColor);
     }
 
+    // Background
     if (!(screenParams->isBgImageUsed = !xmlGraphics->screen.useColor)) {
-        getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->screen.BgColorId,
+        getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->screen.bgColorId,
                                      &screenParams->background.color);
     }
     else {
-        getImage_f((void*)xmlCommon, xmlGraphics->screen.BgImageId,
+        getImage_f((void*)xmlCommon, xmlGraphics->screen.bgImageId,
                                      &screenParams->background.image);
         
-        int32_t BgHiddenColorId = xmlGraphics->screen.BgHiddenColorId;
-        if (BgHiddenColorId >= 0) {
+        int32_t bgHiddenColorId = xmlGraphics->screen.bgHiddenColorId;
+        if (bgHiddenColorId >= 0) {
             screenParams->background.image.hiddenColor = calloc(1, sizeof(struct gfx_color_s));
             assert(screenParams->background.image.hiddenColor);
             getColor_f((void*)xmlCommon,
-                       BgHiddenColorId, screenParams->background.image.hiddenColor);
+                       bgHiddenColorId, screenParams->background.image.hiddenColor);
         }
     }
 
-    screenParams->videoFormat = xmlGraphics->screen.videoFormat;
+    // GfxVideo
+    struct gfx_video_s *gfxVideo = &screenParams->video;
+
+    strncpy(gfxVideo->name, xmlGraphics->screen.gfxVideo.name, sizeof(gfxVideo->name));
+    gfxVideo->pixelFormat = xmlGraphics->screen.gfxVideo.pixelFormat;
+
+    if (!(gfxVideo->isBgImageUsed = !xmlGraphics->screen.gfxVideo.useColor)) {
+        getColor_f((void*)xmlCommon, (int32_t)xmlGraphics->screen.gfxVideo.bgColorId,
+                                     &gfxVideo->background.color);
+    }
+    else {
+        getImage_f((void*)xmlCommon, xmlGraphics->screen.gfxVideo.bgImageId,
+                                     &gfxVideo->background.image);
+        
+        int32_t gfxVideoBgHiddenColorId = xmlGraphics->screen.gfxVideo.bgHiddenColorId;
+        if (gfxVideoBgHiddenColorId >= 0) {
+            gfxVideo->background.image.hiddenColor = calloc(1, sizeof(struct gfx_color_s));
+            assert(gfxVideo->background.image.hiddenColor);
+            getColor_f((void*)xmlCommon,
+                       gfxVideoBgHiddenColorId, gfxVideo->background.image.hiddenColor);
+        }
+    }
+    
+    gfxVideo->rect.x = xmlGraphics->screen.gfxVideo.x;
+    gfxVideo->rect.y = xmlGraphics->screen.gfxVideo.y;
+    gfxVideo->rect.w = xmlGraphics->screen.gfxVideo.width;
+    gfxVideo->rect.h = xmlGraphics->screen.gfxVideo.height;
     
     Logd("Setting graphics elements");
     
@@ -539,6 +568,11 @@ badConfig_exit:
         (*gfxElements) = NULL;
     }
     
+    if (gfxVideo->background.image.hiddenColor) {
+        free(gfxVideo->background.image.hiddenColor);
+        gfxVideo->background.image.hiddenColor = NULL;
+    }
+    
     if (screenParams->background.image.hiddenColor) {
         free(screenParams->background.image.hiddenColor);
         screenParams->background.image.hiddenColor = NULL;
@@ -600,6 +634,11 @@ static enum core_error_e unloadGraphicsParams_f(struct core_s *obj)
         (void)graphicsObj->removeAll(graphicsObj);
         free((*gfxElements));
         (*gfxElements) = NULL;
+    }
+    
+    if (screenParams->video.background.image.hiddenColor) {
+        free(screenParams->video.background.image.hiddenColor);
+        screenParams->video.background.image.hiddenColor = NULL;
     }
     
     if (screenParams->background.image.hiddenColor) {

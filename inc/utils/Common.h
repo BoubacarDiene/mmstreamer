@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -66,7 +66,8 @@ extern "C" {
 #define WAIT_TIME_10MS   WAIT_TIME_1MS * 10
 #define WAIT_TIME_1S     WAIT_TIME_10MS * 100
 #define WAIT_TIME_2S     WAIT_TIME_1S  * 2
-#define WAIT_TIME_10S    WAIT_TIME_2S  * 5
+#define WAIT_TIME_5S     WAIT_TIME_1S  * 5
+#define WAIT_TIME_10S    WAIT_TIME_5S  * 2
 
 /* -------------------------------------------------------------------------------------------- */
 /* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */

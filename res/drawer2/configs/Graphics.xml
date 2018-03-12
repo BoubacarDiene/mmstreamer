@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - \file   Graphics.xml
+  - \author Boubacar DIENE <boubacar.diene@gmail.com>
+  - \date   2016 - 2018
+
+  - \brief  Here are defined all elements to draw on screen
+-->
+
+<Graphics>
+
+  <!--
+    Common resources
+
+    - defaulLanguage : Default UI language
+
+    - Colors  : All used colors are listed inside
+    - Images  : All used images are listed inside
+    - Fonts   : All used fonts are listed inside
+    - Strings : All used strings are listed inside by language
+  -->
+  <Common defaultLanguage="en">
+    <Colors  xmlFile="common/Colors.xml"  />
+    <Images  xmlFile="common/Images.xml"  />
+    <Fonts   xmlFile="common/Fonts.xml"   />
+    <Strings xmlFile="common/Strings.xml" />
+  </Common>
+
+  <!--
+    Screen configuration
+
+      - width / height : Screen size
+
+      - fbDeviceName   : Name of active framebuffer (fb0, fb1, ...)
+                         Used to update depth if different from bitsPerPixel below.
+                         IMPORTANT: mmstreamer must be run as root to avoid "Permission denied" error
+
+      - bitsPerPixel   : Bits per pixel
+                         Examples : 8, 16, 24, 32
+
+      - fullScreen     : 1 <=> Application is launched in fullscreen mode
+                         0 <=> width and height are used
+
+      - showCursor     : Show mouse cursor or not
+                         0 <=> Hide
+                         1 <=> Show
+
+      - caption        : Window title
+                         If empty, winddow's title bar will be hidden
+  -->
+  <Screen name="Gfx"
+          width="965"
+          height="680"
+          fbDeviceName="fb0"
+          bitsPerPixel="32"
+          fullscreen="0"
+          showCursor="0"
+          caption="">
+    <!--
+      Background
+
+      useColor      : Choose between using color (colorId) and image (imageId and hiddenColorId)
+                      1 <=> Color
+                      0 <=> Image
+
+      colorId       : Background color (See Colors.xml)
+      imageId       : Background image (See Images.xml)
+      hiddenColorId : Color to hide in background image (See Colors.xml)
+                      -1 if not used
+    -->
+    <Background useColor="1" colorId="5" imageId="" hiddenColorId="-1" />
+
+    <!--
+      Icon
+
+      imageId       : Image to use as icon (See Images.xml)
+      hiddenColorId : Color to hide in image (See Colors.xml)
+                      -1 if not used
+    -->
+    <Icon imageId="0" hiddenColorId="1" />
+
+    <!--
+      Mainly used by SDL2-based drawer (Default) which draws videos elements in a dedicated window
+      IMPORTANT: Position videos elements relatively to GfxVideo
+
+      name          : Elements drawn inside GfxVideo must be added in group with this name
+
+      pixelFormat   : If videos elements are drawn using data provided by "Videos" module,
+                          see "configChoice" in Video.xml to determine which value to use
+                      If videos elements are drawn using data provided by "Clients" module
+                          (configured as HTTP client), MJPEG is the value you need
+
+                      0 <=> SDL_PIXELFORMAT_ARGB8888 for MJPEG (MMAP / USERPTR)
+                      1 <=> SDL_PIXELFORMAT_YVYU / SDL_YVYU_OVERLAY for YVYU (MMAP / USERPTR)
+
+      useColor      : Choose between using color (colorId) and image (imageId and hiddenColorId)
+                      1 <=> Color
+                      0 <=> Image
+
+      colorId       : Background color (See Colors.xml)
+      imageId       : Background image (See Images.xml)
+      hiddenColorId : Color to hide in background image (See Colors.xml)
+                      -1 if not used
+
+      x, y, width, height : Coordinates of the rectangle where all video elements are drawn
+    -->
+    <GfxVideo name="videoView" pixelFormat="0"
+              useColor="1" colorId="0"
+              imageId="" hiddenColorId="-1"
+              x="225" y="170" width="640" height="480" />
+
+    <!--
+      List of graphics elements
+
+      group     : Group name to which belongs the element.
+                  When, for example, elementA is smaller than elementB and both share the same
+                  surface, drawing B after A will make A hidden.
+                  To avoid that, A and B may be put in the same group so when updating B, user
+                  just has to choose to update other elements belonging to that group by the same
+                  time => A is redrawn each time B is updated.
+
+      redrawGroup : Tell whether or not elements sharing the same group as the one being drawn have
+                    to be redrawn when data of this latter have changed
+
+      type      : Type of element
+                  0 <=> Video
+                  1 <=> Image
+                  2 <=> Text
+
+      x, y, width, height : Coordinates of the rectangle where element is drawn
+                            Reference point is {GfxVideo_x, y} for video elements
+                            and {0, 0} for others
+
+      visible   : 0 <=> Element is hidden
+                  1 <=> Element is displayed
+
+      clickable : 0 <=> Element is not clickable i.e click on it will have no effect
+                  1 <=> Element is clickable, "click event" is sent to listeners
+
+      focusable : 0 <=> Element is not focusable i.e it does not support navigation
+                  1 <=> Element is focusable
+
+      hasFocus  : 0 <=> Element has focus
+                  1 <=> Element does not have focus
+
+                  Note: Only one element must have default focus. It's your responsibility to
+                        guarantee that.
+
+      stringId, fontId, colorId and imageId : Respectively defined in Strings.xml, Fonts.xml,
+                                              Colors.xml and Images.xml
+
+      Nav : left  <=> Element at left of current element which gains focus when user moves to left
+            up    <=> Element at top of current element which gains focus when user moves up
+            right <=> Element at right of current element which gains focus when user moves to right
+            down  <=> Element at bottom of current element which gains focus when user moves down
+
+      OnClick : Handlers are called sequentially according to their order of definition
+
+                Here is the list of predefined click handlers :
+
+                01- closeApplication : "data" is not used
+
+                02- changeLanguage   : "data" empty => next language in Strings.xml is chosen
+                                       "data" can also be used to set a specific language ("en, "fr", ...)
+
+                03- hideElement      : "data" contains the name of graphics element to hide
+
+                04- showElement      : "data" contains the name of graphics element to display
+
+                05- hideGroup        : "data" contains the group's name to hide (=> all elements which
+                                       belong to that group are hidden)
+
+                06- showGroup        : "data" contains the group's name to display (=> all elements which
+                                       belong to that group are displayed)
+
+                07- setFocus         : "data" contains the name of graphics element that gains focus
+
+                08- takeScreenshot   : "data" contains image format (Only BMP is supported by SDL1-based drawer
+                                       but SDL2-based drawer which is the default supports them all) :
+                                       0 => BMP
+                                       1 => PNG
+                                       2 => JPEG
+
+                09- setClickable     : "data" contains the name of graphics element that becomes clickable
+
+                10- setNotClickable  : "data" contains the name of graphics element that becomes not clickable
+
+                11- stopGraphics     : "data" is not used
+
+                12- startGraphics    : "data" is not used
+
+                13- stopVideo        : "data" contains the name of video device to stop
+                                       Note: It is recommended to suspend server(s) first !
+
+                14- startVideo       : "data" contains the name of video device to start
+                                       Note: Do not forget to resume server(s) if suspended before
+
+                15- stopServer       : "data" contains the name of server to stop
+
+                16- startServer      : "data" contains the name of server to start
+
+                17- suspendServer    : "data" contains the name of server to suspend
+
+                18- resumeServer     : "data" contains the name of server to resume
+
+                19- stopCient        : "data" contains the name of client to stop
+
+                20- startClient      : "data" contains the name of client to start
+
+                21- multiInputs      : "data" must have the following format :
+                                       functionName;targetName;param1;param2;param3;...
+
+                                       where functionName is the name of function to call and
+                                       param1;param2;param3;... the list of expected parameters.
+
+                                       Examples:
+                                       <Handler name="multiInputs" data="saveVideoElement;videoElementName;imageFormat" />
+                                       <Handler name="multiInputs" data="updateNav;elementName;left;up;right;down" />
+                                       <Handler name="multiInputs" data="updateText;elementName;stringId;fontId;fontSize;colorId" />
+                                       <Handler name="multiInputs" data="updateImage;elementName;imageId;hidenColorId" />
+
+                                       Note: imageFormat in saveVideoElement can have one of following values (Only BMP is supported
+                                             by SDL1-based drawer but SDL2-based drawer (Default) supports them all)
+                                             0 => BMP
+                                             1 => PNG
+                                             2 => JPEG
+    -->
+    <Elements>
+
+      <!-- Title -->
+      <Element name="projectTitle" group="title" redrawGroup="0" type="2" x="365" y="50" width="280" height="50">
+        <Config visible="1" clickable="0" focusable="0" hasFocus="0" />
+        <Text stringId="4" fontId="2" colorId="0" size="100" />
+      </Element>
+
+      <!-- Elements inside video area -->
+      <Element name="videoZoneFromDevice" group="videoView" redrawGroup="1" type="0" x="10" y="10" width="300" height="210">
+        <Config visible="1" clickable="0" focusable="0" hasFocus="0" />
+      </Element>
+
+      <Element name="videoZoneFromClient" group="videoView" redrawGroup="1" type="0" x="330" y="260" width="300" height="210">
+        <Config visible="1" clickable="0" focusable="0" hasFocus="0" />
+      </Element>
+
+      <Element name="textInsideVideoView" group="videoView" redrawGroup="1" type="2" x="220" y="225" width="200" height="30">
+        <Config visible="1" clickable="0" focusable="0" hasFocus="0" />
+        <Text stringId="5" fontId="1" colorId="1" size="40" />
+      </Element>
+      
+      <Element name="emoji1" group="videoView" redrawGroup="1" type="1" x="135" y="273" width="50" height="50">
+        <Config visible="0" clickable="0" focusable="0" hasFocus="0" />
+        <Image imageId="0" hiddenColorId="1" />
+      </Element>
+      
+      <Element name="emoji2" group="videoView" redrawGroup="1" type="1" x="135" y="321" width="50" height="50">
+        <Config visible="0" clickable="0" focusable="0" hasFocus="0" />
+        <Image imageId="0" hiddenColorId="1" />
+      </Element>
+      
+      <Element name="emoji3" group="videoView" redrawGroup="1" type="1" x="135" y="369" width="50" height="50">
+        <Config visible="0" clickable="0" focusable="0" hasFocus="0" />
+        <Image imageId="0" hiddenColorId="1" />
+      </Element>
+      
+      <Element name="emoji4" group="videoView" redrawGroup="1" type="1" x="87" y="321" width="50" height="50">
+        <Config visible="0" clickable="0" focusable="0" hasFocus="0" />
+        <Image imageId="0" hiddenColorId="1" />
+      </Element>
+      
+      <Element name="emoji5" group="videoView" redrawGroup="1" type="1" x="183" y="321" width="50" height="50">
+        <Config visible="0" clickable="0" focusable="0" hasFocus="0" />
+        <Image imageId="0" hiddenColorId="1" />
+      </Element>
+
+      <!-- Button to close application -->
+      <Element name="closeBtn" group="menu" redrawGroup="0" type="2" x="20" y="105" width="100" height="100">
+        <Config visible="1" clickable="1" focusable="1" hasFocus="1" />
+        <Text stringId="0" fontId="2" colorId="7" size="25" />
+        <Nav left="" up="startClientBtn" right="selfyBtn" down="showEmojisBtn" />
+        <OnClick>
+            <Handler name="closeApplication" data="" />
+        </OnClick>
+      </Element>
+
+      <!-- Image button to display emojis -->
+      <Element name="showEmojisBtn" group="menu" redrawGroup="0" type="1" x="20" y="255" width="100" height="100">
+        <Config visible="1" clickable="1" focusable="1" hasFocus="0" />
+        <Image imageId="0" hiddenColorId="1" />
+        <Nav left="" up="closeBtn" right="hideEmojisBtn" down="translateBtn" />
+        <OnClick>
+            <Handler name="showElement" data="emoji1" />
+            <Handler name="showElement" data="emoji2" />
+            <Handler name="showElement" data="emoji3" />
+            <Handler name="showElement" data="emoji4" />
+            <Handler name="showElement" data="emoji5" />
+        </OnClick>
+      </Element>
+
+      <!-- Button to translate texts -->
+      <Element name="translateBtn" group="menu" redrawGroup="0" type="2" x="20" y="405" width="100" height="100">
+        <Config visible="1" clickable="1" focusable="1" hasFocus="0" />
+        <Text stringId="1" fontId="1" colorId="0" size="15" />
+        <Nav left="" up="showEmojisBtn" right="screenshotBtn" down="startClientBtn" />
+        <OnClick>
+            <Handler name="changeLanguage" data="" />
+        </OnClick>
+      </Element>
+
+      <!-- Button to start client (=> video displayed on right of video area) -->
+      <Element name="startClientBtn" group="menu" redrawGroup="0" type="2" x="20" y="555" width="100" height="100">
+        <Config visible="1" clickable="0" focusable="1" hasFocus="0" />
+        <Text stringId="7" fontId="2" colorId="1" size="20" />
+        <Nav left="" up="translateBtn" right="stopClientBtn" down="selfyBtn" />
+        <OnClick>
+            <Handler name="startClient" data="inet-videoClient" />
+            <Handler name="setNotClickable" data="startClientBtn" />
+            <Handler name="setClickable" data="stopClientBtn" />
+        </OnClick>
+      </Element>
+
+      <Element name="selfyBtn" group="menu" redrawGroup="0" type="2" x="845" y="105" width="100" height="100">
+        <Config visible="1" clickable="1" focusable="1" hasFocus="0" />
+        <Text stringId="3" fontId="2" colorId="7" size="25" />
+        <Nav left="closeBtn" up="stopClientBtn" right="" down="hideEmojisBtn" />
+        <OnClick>
+            <Handler name="multiInputs" data="saveVideoElement;videoZoneFromDevice;0" />
+        </OnClick>
+      </Element>
+
+      <!-- Image button to hide emojis -->
+      <Element name="hideEmojisBtn" group="menu" redrawGroup="0" type="1" x="845" y="255" width="100" height="100">
+        <Config visible="1" clickable="1" focusable="1" hasFocus="0" />
+        <Image imageId="0" hiddenColorId="1" />
+        <Nav left="showEmojisBtn" up="selfyBtn" right="" down="screenshotBtn" />
+        <OnClick>
+            <Handler name="hideElement" data="emoji1" />
+            <Handler name="hideElement" data="emoji2" />
+            <Handler name="hideElement" data="emoji3" />
+            <Handler name="hideElement" data="emoji4" />
+            <Handler name="hideElement" data="emoji5" />
+        </OnClick>
+      </Element>
+
+      <!-- Button to take screenshot -->
+      <Element name="screenshotBtn" group="menu" redrawGroup="0" type="2" x="845" y="405" width="100" height="100">
+        <Config visible="1" clickable="1" focusable="1" hasFocus="0" />
+        <Text stringId="6" fontId="1" colorId="0" size="15" />
+        <Nav left="translateBtn" up="hideEmojisBtn" right="" down="stopClientBtn" />
+        <OnClick>
+            <Handler name="takeScreenshot" data="0" />
+        </OnClick>
+      </Element>
+
+      <!-- Button to stop client (=> video displayed on right of video area) -->
+      <Element name="stopClientBtn" group="menu" redrawGroup="0" type="2" x="845" y="555" width="100" height="100">
+        <Config visible="1" clickable="1" focusable="1" hasFocus="0" />
+        <Text stringId="8" fontId="2" colorId="1" size="20" />
+        <Nav left="startClientBtn" up="screenshotBtn" right="" down="closeBtn" />
+        <OnClick>
+            <Handler name="stopClient" data="inet-videoClient" />
+            <Handler name="setNotClickable" data="stopClientBtn" />
+            <Handler name="setClickable" data="startClientBtn" />
+        </OnClick>
+      </Element>
+
+    </Elements>
+
+  </Screen>
+
+  <!--
+      Colors to apply when element's state changed
+
+      Note that unlike SDL1-based drawer, SDL2-based drawer uses "Reset" as a fallback
+      color in case it fails restoring area with its content before any element is drawn.
+      That content might be an image or a color; drawer handles it internally
+
+      Focus : Element gains focus
+      Blur  : Element looses focus
+      Reset : Element becomes invisible
+  -->
+  <Focus colorId="3" />
+  <Blur  colorId="4" />
+  <Reset colorId="5" />
+
+</Graphics>
+

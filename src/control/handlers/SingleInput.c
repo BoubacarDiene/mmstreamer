@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -60,8 +60,6 @@ static enum handlers_error_e showGroup(struct handlers_s *obj, char *gfxElementN
 static enum handlers_error_e setFocus(struct handlers_s *obj, char *gfxElementName,
                                       void *gfxElementData, char *handlerData);
 
-static enum handlers_error_e saveVideoElement(struct handlers_s *obj, char *gfxElementName,
-                                              void *gfxElementData, char *handlerData);
 static enum handlers_error_e takeScreenshot(struct handlers_s *obj, char *gfxElementName,
                                             void *gfxElementData, char *handlerData);
 
@@ -105,7 +103,6 @@ static enum handlers_error_e multiInputs(struct handlers_s *obj, char *gfxElemen
 struct handlers_commands_s gSingleInputHandlers[] = {
 	{ HANDLERS_COMMAND_CLOSE_APPLICATION,   NULL,  closeApplication },
 	{ HANDLERS_COMMAND_CHANGE_LANGUAGE,     NULL,  changeLanguage   },
-	{ HANDLERS_COMMAND_SAVE_VIDEO_ELEMENT,  NULL,  saveVideoElement },
 	{ HANDLERS_COMMAND_TAKE_SCREENSHOT,     NULL,  takeScreenshot   },
 	{ HANDLERS_COMMAND_HIDE_ELEMENT,        NULL,  hideElement      },
 	{ HANDLERS_COMMAND_SHOW_ELEMENT,        NULL,  showElement      },
@@ -224,6 +221,7 @@ static enum handlers_error_e changeLanguage(struct handlers_s *obj, char *gfxEle
     uint32_t index;
     struct gfx_text_s text;
     struct control_element_data_s *data;
+    char str[MAX_STR_SIZE] = {0};
     
     for (index = 0; index < nbGfxElements; index++) {
         if (gfxElements[index]->type != GFX_ELEMENT_TYPE_TEXT) {
@@ -232,11 +230,22 @@ static enum handlers_error_e changeLanguage(struct handlers_s *obj, char *gfxEle
         
         data = (struct control_element_data_s*)gfxElements[index]->pData;
         
-        memcpy(&text, &gfxElements[index]->data.text, sizeof(struct gfx_text_s));
-        memset(text.str, '\0', sizeof(text.str));
+        memset(str, '\0', sizeof(str));
         elementData->getters.getString(elementData->getters.userData, data->ids.text.stringId,
-                                                                      nextLanguage, text.str);
-        
+                                                                      nextLanguage, str);
+        if (str[0] == '\0') {
+            Logw("Translation not available for language \"%s\"", nextLanguage);
+            continue;
+        }
+
+        memcpy(&text, &gfxElements[index]->data.text, sizeof(struct gfx_text_s));
+        if (strncmp(text.str, str, sizeof(str)) == 0) {
+            Logw("Translated text is the same for language \"%s\"", nextLanguage);
+            continue;
+        }
+
+        snprintf(text.str, sizeof(text.str), "%s", str);
+
         if (graphicsObj->setData(graphicsObj, gfxElements[index]->name,
                                               (void*)&text) != GRAPHICS_ERROR_NONE) {
             Loge("setData() failed for element \"%s\"", gfxElements[index]->name);
@@ -451,57 +460,6 @@ static enum handlers_error_e setFocus(struct handlers_s *obj, char *gfxElementNa
 
     if (graphicsObj->setFocus(graphicsObj, handlerData) != GRAPHICS_ERROR_NONE) {
         Loge("setFocus() failed for element \"%s\"", handlerData);
-        return HANDLERS_ERROR_COMMAND;
-    }
-
-    return HANDLERS_ERROR_NONE;
-}
-
-/*!
- *
- */
-static enum handlers_error_e saveVideoElement(struct handlers_s *obj, char *gfxElementName,
-                                              void *gfxElementData, char *handlerData)
-{
-    assert(obj && obj->pData);
-
-    (void)gfxElementName;
-    (void)gfxElementData;
-
-    if (!handlerData) {
-        Loge("Handler data is expected");
-        return HANDLERS_ERROR_PARAMS;
-    }
-
-    Logd("Saving video element \"%s\"", handlerData);
-
-    struct handlers_private_data_s *pData  = (struct handlers_private_data_s*)(obj->pData);
-    struct context_s *ctx                  = pData->handlersParams.ctx;
-    struct graphics_s *graphicsObj         = ctx->modules.graphicsObj;
-    struct graphics_infos_s *graphicsInfos = &ctx->params.graphicsInfos;
-    struct input_s *input                  = &ctx->input;
-
-    if (graphicsInfos->state != MODULE_STATE_STARTED) {
-        Logw("Graphics module not started - current state : %u", graphicsInfos->state);
-        return HANDLERS_ERROR_STATE;
-    }
-
-    struct gfx_image_s image;
-    struct stat st;
-
-    if (stat(input->appDataDir, &st) < 0) {
-        Logd("Creating direcory : \"%s\"", input->appDataDir);
-        if (mkdir(input->appDataDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
-            Loge("%s", strerror(errno));
-            return HANDLERS_ERROR_IO;
-        }
-    }
-
-    sprintf(image.path, "%s/picture_%ld.bmp", input->appDataDir, time(NULL));
-    image.format = GFX_IMAGE_FORMAT_BMP;
-
-    if (graphicsObj->saveVideoElement(graphicsObj, handlerData, &image) != GRAPHICS_ERROR_NONE) {
-        Loge("saveVideoElement() failed for element \"%s\"", handlerData);
         return HANDLERS_ERROR_COMMAND;
     }
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - \file   Fonts.xml
+  - \author Boubacar DIENE <boubacar.diene@gmail.com>
+  - \date   2016 - 2018
+
+  - \brief  Here are listed fonts files used by this application.
+-->
+
+<Fonts>
+
+  <Font file="fonts/CaviarDreams.ttf"            /><!-- id=0 -->
+  <Font file="fonts/CaviarDreams_Bold.ttf"       /><!-- id=1 -->
+  <Font file="fonts/CaviarDreams_BoldItalic.ttf" /><!-- id=2 -->
+  <Font file="fonts/CaviarDreams_Italic.ttf"     /><!-- id=3 -->
+
+</Fonts>
+

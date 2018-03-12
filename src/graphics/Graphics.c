@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -52,6 +52,11 @@
 /* -------------------------------------------------------------------------------------------- */
 /* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
+
+struct gfx_element_reserved_s {
+    enum gfx_target_e target;
+    uint8_t           surfaceUpdated;
+};
 
 struct graphics_list_element_s {
     time_t             seconds;
@@ -364,7 +369,7 @@ static enum graphics_error_e createDrawer_f(struct graphics_s *obj,
     }
 
     pData->params = *params;
-    
+
     if (Drawer_Init(&pData->drawerObj) != DRAWER_ERROR_NONE) {
         Loge("Failed to init drawer");
         goto drawerInitExit;
@@ -481,6 +486,7 @@ static enum graphics_error_e createElement_f(struct graphics_s *obj,
     }
     
     assert((*newGfxElement = calloc(1, sizeof(struct gfx_element_s))));
+    assert(((*newGfxElement)->reserved = calloc(1, sizeof(struct gfx_element_reserved_s))));
 
     (void)pthread_mutex_unlock(&pData->gfxLock);
     
@@ -622,8 +628,8 @@ static enum graphics_error_e setVisible_f(struct graphics_s *obj, char *gfxEleme
         goto elementExit;
     }
     
-    gfxElement->isVisible      = isVisible;
-    gfxElement->surfaceUpdated = 0;
+    gfxElement->isVisible               = isVisible;
+    gfxElement->reserved->surfaceUpdated = 0;
  
     if ((ret = updateGroup_f(obj, gfxElement->groupName, NULL)) != GRAPHICS_ERROR_NONE) {
         Loge("Failed to update group : \"%s\"", gfxElement->groupName);
@@ -855,7 +861,9 @@ static enum graphics_error_e setData_f(struct graphics_s *obj, char *gfxElementN
     else if ((ret = getElement_f(obj, gfxElementName, &gfxElement)) != GRAPHICS_ERROR_NONE) {
         goto elementExit;
     }
-        
+
+    enum drawer_error_e drawerErr = DRAWER_ERROR_NONE;
+
     switch (gfxElement->type) {
         case GFX_ELEMENT_TYPE_VIDEO:
             gfxElement->data.buffer.data   = ((struct buffer_s*)data)->data;
@@ -882,12 +890,26 @@ static enum graphics_error_e setData_f(struct graphics_s *obj, char *gfxElementN
             break;
                 
         case GFX_ELEMENT_TYPE_TEXT:
-            if (pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect,
-                                             &pData->params.colorOnReset) != DRAWER_ERROR_NONE) {
-                Loge("Failed to set background color of element \"%s\"", gfxElement->name);
+            // restoreBgColor() preferred to setBgColor() because it first tries to redraw area
+            // with its content (color, image) before any element is drawn. If such operation fails,
+            // it then use provided fallback color
+            if (pData->drawerObj->restoreBgColor) {
+                drawerErr = pData->drawerObj->restoreBgColor(pData->drawerObj, &gfxElement->rect,
+                                                             &pData->params.colorOnReset,
+                                                             gfxElement->reserved->target);
+            }
+            else {
+                drawerErr = pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect,
+                                                         &pData->params.colorOnReset,
+                                                         gfxElement->reserved->target);
+            }
+
+            if (drawerErr != DRAWER_ERROR_NONE) {
+                Loge("Failed to restore background of element \"%s\"", gfxElement->name);
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto elementExit;
             }
+
             memcpy(&gfxElement->data.text, (struct gfx_text_s*)data, sizeof(struct gfx_text_s));
             break;
                 
@@ -982,7 +1004,7 @@ static enum graphics_error_e saveVideoElement_f(struct graphics_s *obj, char *gf
     assert(obj && obj->pData && gfxElementName && inOut);
 
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
-    enum graphics_error_e ret             = GRAPHICS_ERROR_PARAMS;
+    enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
 
     if (pthread_mutex_lock(&pData->gfxLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -1000,16 +1022,13 @@ static enum graphics_error_e saveVideoElement_f(struct graphics_s *obj, char *gf
         goto lockExit;
     }
 
-    struct buffer_s videoBuffer = {0};
+    struct gfx_element_s *gfxElement = NULL;
 
-    if (!pData->videoElement
+    if (pData->videoElement
         && (strncmp(pData->videoElement->name, gfxElementName, MAX_NAME_SIZE) == 0)) {
-        videoBuffer.data   = pData->videoElement->data.buffer.data;
-        videoBuffer.length = pData->videoElement->data.buffer.length;
+        gfxElement = pData->videoElement;
     }
     else {
-        struct gfx_element_s *gfxElement = NULL;
-
         if (getElement_f(obj, gfxElementName, &gfxElement) != GRAPHICS_ERROR_NONE) {
             Loge("Element \"%s\" not found", gfxElementName);
             goto elementExit;
@@ -1019,23 +1038,12 @@ static enum graphics_error_e saveVideoElement_f(struct graphics_s *obj, char *gf
             Loge("\"%s\" is not a video element", gfxElementName);
             goto elementExit;
         }
-
-        if (!gfxElement->data.buffer.data || (gfxElement->data.buffer.length == 0)) {
-            Logw("No video frame to save");
-            goto elementExit;
-        }
-
-        videoBuffer.data   = gfxElement->data.buffer.data;
-        videoBuffer.length = gfxElement->data.buffer.length;
     }
 
-    if (pData->drawerObj->saveBuffer(pData->drawerObj,
-                                     &videoBuffer, inOut) != DRAWER_ERROR_NONE) {
+    if (pData->drawerObj->saveTarget(pData->drawerObj, inOut, &gfxElement->rect,
+                                     GFX_TARGET_VIDEO) != DRAWER_ERROR_NONE) {
         ret = GRAPHICS_ERROR_DRAWER;
-        goto elementExit;
     }
-
-    ret = GRAPHICS_ERROR_NONE;
 
 elementExit:
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
@@ -1061,11 +1069,18 @@ static enum graphics_error_e takeScreenshot_f(struct graphics_s *obj, struct gfx
         return GRAPHICS_ERROR_LOCK;
     }
 
-    if (!pData->drawerObj
-        || (pData->drawerObj->saveScreen(pData->drawerObj, inOut) != DRAWER_ERROR_NONE)) {
+    if (!pData->drawerObj) {
+        Loge("Drawer not initialized yet");
+        ret = GRAPHICS_ERROR_DRAWER;
+        goto lockExit;
+    }
+
+    if (pData->drawerObj->saveTarget(pData->drawerObj, inOut, NULL,
+                                     GFX_TARGET_SCREEN) != DRAWER_ERROR_NONE) {
         ret = GRAPHICS_ERROR_DRAWER;
     }
 
+lockExit:
     (void)pthread_mutex_unlock(&pData->gfxLock);
 
     return ret;
@@ -1085,17 +1100,31 @@ static enum graphics_error_e drawAllElements_f(struct graphics_s *obj)
         Loge("pthread_mutex_lock() failed");
         return GRAPHICS_ERROR_LOCK;
     }
-    
+
+    if (!pData->drawerObj) {
+        Loge("Drawer not initialized yet");
+        ret = GRAPHICS_ERROR_DRAWER;
+        goto lockExit;
+    }
+
     if (pData->gfxElementsList->lock(pData->gfxElementsList) != LIST_ERROR_NONE) {
         ret = GRAPHICS_ERROR_LOCK;
         goto lockExit;
     }
-    
+
+    if (pData->drawerObj->startDrawingInBg) {
+        (void)pData->drawerObj->startDrawingInBg(pData->drawerObj);
+    }
+
     if (pData->gfxElementsList->browseElements(pData->gfxElementsList, obj) != LIST_ERROR_NONE) {
         Loge("Failed to browse elements' list");
         ret = GRAPHICS_ERROR_LIST;
     }
-    
+
+    if (pData->drawerObj->stopDrawingInBg) {
+        (void)pData->drawerObj->stopDrawingInBg(pData->drawerObj);
+    }
+
     (void)pData->gfxElementsList->unlock(pData->gfxElementsList);
 
 lockExit:
@@ -1219,7 +1248,8 @@ static enum graphics_error_e updateGroup_f(struct graphics_s *obj, char *groupNa
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
     struct gfx_element_s *gfxElement      = NULL;
-    
+    uint8_t drawInBg                      = 0;
+
     uint32_t nbElements;
     if (pData->gfxElementsList->getNbElements(pData->gfxElementsList,
                                               &nbElements) != LIST_ERROR_NONE) {
@@ -1227,7 +1257,14 @@ static enum graphics_error_e updateGroup_f(struct graphics_s *obj, char *groupNa
         ret = GRAPHICS_ERROR_LIST;
         goto exit;
     }
-        
+
+    // Background drawing is only available for screen
+    // Video is always directly rendered on its dedicated window/surface
+    drawInBg = (strcmp(pData->params.screenParams.video.name, groupName) != 0);
+    if (drawInBg && pData->drawerObj->startDrawingInBg) {
+        (void)pData->drawerObj->startDrawingInBg(pData->drawerObj);
+    }
+
     while (nbElements > 0) {
         if (pData->gfxElementsList->getElement(pData->gfxElementsList,
                                                (void*)&gfxElement) != LIST_ERROR_NONE) {
@@ -1235,20 +1272,25 @@ static enum graphics_error_e updateGroup_f(struct graphics_s *obj, char *groupNa
             ret = GRAPHICS_ERROR_LIST;
             goto exit;
         }
-        
+
         if (!strncmp(gfxElement->groupName, groupName, MAX_NAME_SIZE)
             && (!gfxElementToIgnore
                 || strncmp(gfxElement->name, gfxElementToIgnore, MAX_NAME_SIZE))) {
-            if ((ret = updateElement_f(obj, gfxElement)) != GRAPHICS_ERROR_NONE) {
-                Loge("Failed to update element : \"%s\"", gfxElement->name);
-                goto exit;
+            if (updateElement_f(obj, gfxElement) != GRAPHICS_ERROR_NONE) {
+                //Loge("Failed to update element : \"%s\"", gfxElement->name);
+                // Do not stop updating other elements of the group;
+                // Needed to display gfx elements drawn in videoZone while video streaming
+                // is disabled
             }
         }
-        
+
         nbElements--;
     }
     
 exit:
+    if (drawInBg && pData->drawerObj->stopDrawingInBg) {
+        (void)pData->drawerObj->stopDrawingInBg(pData->drawerObj);
+    }
 
     return ret;
 }
@@ -1270,16 +1312,31 @@ static enum graphics_error_e updateElement_f(struct graphics_s *obj,
     }
 
     if (!gfxElement->isVisible) {
-        // Clear surface
-        if (!gfxElement->surfaceUpdated
-            && pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect,
-                                            &pData->params.colorOnReset) != DRAWER_ERROR_NONE) {
-            Loge("Failed to set background color of element \"%s\"", gfxElement->name);
-            ret = GRAPHICS_ERROR_DRAWER;
-            goto exit;
+        // Reset surface
+        // restoreBgColor() preferred to setBgColor() because it first tries to redraw area
+        // with its content (color, image) before any element is drawn. If such operation fails,
+        // it then use provided fallback color
+        if (!gfxElement->reserved->surfaceUpdated) {
+            enum drawer_error_e drawerErr = DRAWER_ERROR_NONE;
+            if (pData->drawerObj->restoreBgColor) {
+                drawerErr = pData->drawerObj->restoreBgColor(pData->drawerObj, &gfxElement->rect,
+                                                             &pData->params.colorOnReset,
+                                                             gfxElement->reserved->target);
+            }
+            else {
+                drawerErr = pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect,
+                                                         &pData->params.colorOnReset,
+                                                         gfxElement->reserved->target);
+            }
+
+            if (drawerErr != DRAWER_ERROR_NONE) {
+                Loge("Failed to restore background of element \"%s\"", gfxElement->name);
+                ret = GRAPHICS_ERROR_DRAWER;
+                goto exit;
+            }
         }
 
-        gfxElement->surfaceUpdated = 1;
+        gfxElement->reserved->surfaceUpdated = 1;
 
         // Change focused element if required
         if (pData->focusedElement
@@ -1297,8 +1354,9 @@ static enum graphics_error_e updateElement_f(struct graphics_s *obj,
                         gfxElement->name, pData->focusedElement->name);
                 pData->focusedElement->hasFocus = 0;
                 if (pData->drawerObj->setBgColor(pData->drawerObj,
-                                                &pData->focusedElement->rect,
-                                                &pData->params.colorOnBlur) != DRAWER_ERROR_NONE) {
+                                                 &pData->focusedElement->rect,
+                                                 &pData->params.colorOnBlur,
+                                                 gfxElement->reserved->target) != DRAWER_ERROR_NONE) {
                     Loge("Failed to set colorOnBlur on \"%s\"", pData->focusedElement->name);
                     ret = GRAPHICS_ERROR_DRAWER;
                     goto exit;
@@ -1311,7 +1369,8 @@ static enum graphics_error_e updateElement_f(struct graphics_s *obj,
             }
             
             if (pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect,
-                                             &pData->params.colorOnFocus) != DRAWER_ERROR_NONE) {
+                                             &pData->params.colorOnFocus,
+                                             gfxElement->reserved->target) != DRAWER_ERROR_NONE) {
                 Loge("Failed to set colorOnFocus on \"%s\"", gfxElement->name);
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
@@ -1331,7 +1390,8 @@ static enum graphics_error_e updateElement_f(struct graphics_s *obj,
         }
         else if (gfxElement->isFocusable
                  && pData->drawerObj->setBgColor(pData->drawerObj, &gfxElement->rect,
-                                                 &pData->params.colorOnBlur) != DRAWER_ERROR_NONE) {
+                                                 &pData->params.colorOnBlur,
+                                                 gfxElement->reserved->target) != DRAWER_ERROR_NONE) {
             Loge("Failed to set colorOnBlur on \"%s\"", gfxElement->name);
             ret = GRAPHICS_ERROR_DRAWER;
             goto exit;
@@ -1370,30 +1430,32 @@ static enum graphics_error_e drawElement_f(struct graphics_s *obj,
             }
             pData->videoElement = gfxElement;
             break;
-                
+
         case GFX_ELEMENT_TYPE_IMAGE:
             if (pData->drawerObj->drawImage(pData->drawerObj, &gfxElement->rect,
-                                            &gfxElement->data.image) != DRAWER_ERROR_NONE) {
+                                            &gfxElement->data.image,
+                                            gfxElement->reserved->target) != DRAWER_ERROR_NONE) {
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
             }
             break;
-                
+
         case GFX_ELEMENT_TYPE_TEXT:
             if (pData->drawerObj->drawText(pData->drawerObj, &gfxElement->rect,
-                                           &gfxElement->data.text) != DRAWER_ERROR_NONE) {
+                                           &gfxElement->data.text,
+                                           gfxElement->reserved->target) != DRAWER_ERROR_NONE) {
                 ret = GRAPHICS_ERROR_DRAWER;
                 goto exit;
             }
             break;
-                
+
         default:
             ret = GRAPHICS_ERROR_DRAWER;
             goto exit;
     }
-        
+
     pData->lastDrawnElement = gfxElement;
-    
+
 exit:
 
     return ret;
@@ -1702,6 +1764,8 @@ static void releaseElementCb(struct list_s *obj, void *element)
     
     gfxElement->pData = NULL;
     
+    free(gfxElement->reserved);
+    
     free(gfxElement);
     gfxElement = NULL;
 }
@@ -1713,10 +1777,22 @@ static void browseElementsCb(struct list_s *obj, void *element, void *userData)
 {
     assert(obj && element);
     
-    struct gfx_element_s *gfxElement = (struct gfx_element_s*)element;
-    struct graphics_s *gfxObj        = (struct graphics_s*)userData;
-    
-    if (updateElement_f(gfxObj, gfxElement) != GRAPHICS_ERROR_NONE) {
+    struct gfx_element_s *gfxElement      = (struct gfx_element_s*)element;
+    struct graphics_s *gfxObj             = (struct graphics_s*)userData;
+    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(gfxObj->pData);
+
+    if ((gfxElement->type == GFX_ELEMENT_TYPE_VIDEO)
+        || !strcmp(gfxElement->groupName, pData->params.screenParams.video.name)) {
+        gfxElement->reserved->target = GFX_TARGET_VIDEO;
+        Logd("Element \"%s\" will be rendered to \"Video\"", gfxElement->name);
+    }
+    else {
+        gfxElement->reserved->target = GFX_TARGET_SCREEN;
+        Logd("Element \"%s\" will be rendered to \"screen\"", gfxElement->name);
+    }
+
+    if (gfxElement->isVisible // Screen initialized with visible elements
+        && updateElement_f(gfxObj, gfxElement) != GRAPHICS_ERROR_NONE) {
         //Loge("Failed to update element : \"%s\"", gfxElement->name);
     }
 }

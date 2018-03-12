@@ -2,7 +2,7 @@
 <!--
   - \file   Videos.xml
   - \author Boubacar DIENE <boubacar.diene@gmail.com>
-  - \date   September 04, 2016
+  - \date   2016 - 2018
 
   - \brief  Here are listed some informations needed by the videos module
 
@@ -36,7 +36,7 @@
       Note : Obviously, gfxDest and serverDest are only used if the related modules are enabled
              (see Main.xml)
     -->
-    <General priority="1" configChoice="0" gfxDest="videoZone" serverDest="inet-videoServer" />
+    <General priority="1" configChoice="0" gfxDest="videoZoneFromDevice" serverDest="inet-videoServer" />
 
     <!--
       Device

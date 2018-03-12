@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -154,7 +154,7 @@ static enum v4l2_error_e openDevice_f(struct v4l2_s *obj,
     enum v4l2_error_e ret = V4L2_ERROR_NONE;
     
     if (access(params->path, F_OK) != 0) {
-        Loge("\"%s\" does not exist", params->path);
+        Loge("\"%s\" does not exist (Please, disable Videos in Main.xml i.e \"enable=0\" to test other modules)", params->path);
         ret = V4L2_ERROR_UNKNOWN_DEVICE;
         goto exit;
     }

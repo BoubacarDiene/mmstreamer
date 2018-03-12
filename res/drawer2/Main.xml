@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - \file   Main.xml
+  - \author Boubacar DIENE <boubacar.diene@gmail.com>
+  - \date   2016 - 2018
+
+  - \brief  This is the main config file i.e the entry point of the application.
+
+            The application parses Main.xml first mainly to retrieve path to
+            modules' xml config files. Depending on whether the corresponding
+            module is enabled or not, those config files are then parsed so as
+            to fill in internal structures.
+-->
+
+<Main>
+
+  <!--
+    General
+
+    - appDataDir      : Files created at runtime are stored in this directory (screenshots, ...)
+
+    - resRootDir      : Relative or absolute path to directory containing resources files (xml,
+                        images, fonts, ...). It is concatenated to filenames specified in other xml
+                        files (Graphics.xml, ...) to get the real path to resources.
+
+                        Usually : "/etc/res/"
+
+    - libRootDir      : Relative or absolute path to directory containing dynamic libraries control
+                        mmstreamer engine. t is concatenated to lib. names specified below to get the
+                        real path to them.
+
+                        Usually : "/usr/lib/"
+
+    - keepAliveMethod : Method to use to keep app running
+                        0 => Events_based    : Can be used when keyEvents are handled by graphics module
+                                               E.g: Click on Close button or Press Escape key
+                        1 => Semaphore_based : Can be used when you want to handle keyEvents differently
+                        2 => Timer_based     : Can be used when you want to run the application in a limited
+                                               time
+
+                                               Note: Attribute timeout_s="<value in seconds>" is ignored if
+                                               method is not Timer_based.
+
+    - maxBufferSize   : Maximum size of buffer used in "Servers" and "Clients" modules (in bytes)
+                        -1 => Let app choose the most suitable value
+  -->
+  <General appDataDir="/tmp/mmstreamer"
+           resRootDir="./out/mmstreamer/res/"
+           libRootDir="./out/mmstreamer/lib/"
+           keepAliveMethod="0"
+           timeout_s="10"
+           maxBufferSize="-1" />
+
+  <!--
+    Controllers i.e list of libraries loaded once mmstreamer engine is ready and through which it can be
+    controlled.
+
+    - priority : Internal threads' priority
+                 0 <=> Lowest
+                 1 <=> Default
+                 2 <=> Highest
+
+    - libName     : Name of the dynamic library (Real path : libRootDir/libName)
+    - initFn      : Name of function used to initialize the library
+    - uninitFn    : Name of function used to uninitialize the library
+    - onCommandCb : Name of function used to notify the library about commands from other libraries
+    - onEventCb   : Name of function used to notify the library about click events, ...
+  -->
+  <Controllers priority="1">
+    <!--Item libName="libmmcontroller-test-0.1.so"
+          initFn="Test_Init"
+          uninitFn="Test_UnInit"
+          onCommandCb="Test_OnCommandCb"
+          onEventCb="Test_OnEventCb" /-->
+  </Controllers>
+
+  <!--
+    Modules
+
+    4 independent modules are currently defined:
+
+        + Videos   : Capture video signal from video devices
+        + Servers  : Stream video frames using unix or inet socket
+        + Clients  : Get video from a local or a remote streamer
+        + Graphics : Locally display video and control some features
+
+    - enable  : Choose whether to initialize the module or not
+                0 => NO
+                1 => YES
+
+    - autoStart : Choose to automatically or manually start the module
+                  0 => Manual start i.e it is just initialized in Main.c to let
+                       you start it later
+                  1 => Automatic start i.e iniatialized and started in Main.c but
+                       you can restart it whenever you want
+
+    - xmlFile : Path to the config file of the module
+  -->
+  <Graphics enable="1" autoStart="1" xmlFile="configs/Graphics.xml"/>
+  <Videos   enable="1" autoStart="1" xmlFile="configs/Videos.xml"  />
+  <Servers  enable="1" autoStart="1" xmlFile="configs/Servers.xml" />
+  <Clients  enable="1" autoStart="1" xmlFile="configs/Clients.xml" />
+
+</Main>
+

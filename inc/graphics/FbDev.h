@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -76,8 +76,8 @@ enum fbdev_error_e {
 };
 
 struct fbdev_infos_s {
-    uint32_t width;
-    uint32_t height;
+    int32_t  width;
+    int32_t  height;
 
     uint32_t depth;
 };

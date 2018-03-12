@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                              //
-//              Copyright © 2016, 2017 Boubacar DIENE                                           //
+//              Copyright © 2016, 2018 Boubacar DIENE                                           //
 //                                                                                              //
 //              This file is part of mmstreamer project.                                        //
 //                                                                                              //
@@ -65,6 +65,7 @@ static void onStringsCb(void *userData, const char **attrs);
 static void onScreenCb(void *userData, const char **attrs);
 static void onBackgroundCb(void *userData, const char **attrs);
 static void onIconCb(void *userData, const char **attrs);
+static void onGfxVideoCb(void *userData, const char **attrs);
 
 static void onElementStartCb(void *userData, const char **attrs);
 static void onElementEndCb(void *userData);
@@ -119,6 +120,7 @@ enum loaders_error_e loadGraphicsXml_f(struct loaders_s *obj, struct context_s *
         { XML_TAG_SCREEN,      onScreenCb,             NULL,                 NULL },
         { XML_TAG_BACKGROUND,  onBackgroundCb,         NULL,                 NULL },
         { XML_TAG_ICON,        onIconCb,               NULL,                 NULL },
+        { XML_TAG_GFX_VIDEO,   onGfxVideoCb,           NULL,                 NULL },
         { XML_TAG_ELEMENT,     onElementStartCb,       onElementEndCb,       NULL },
         { XML_TAG_CONFIG,      onElementConfigCb,      NULL,                 NULL },
         { XML_TAG_TEXT,        onElementTextCb,        NULL,                 NULL },
@@ -194,6 +196,11 @@ enum loaders_error_e unloadGraphicsXml_f(struct loaders_s *obj, struct xml_graph
     if (xmlGraphics->screen.caption) {
         free(xmlGraphics->screen.caption);
         xmlGraphics->screen.caption = NULL;
+    }
+    
+    if (xmlGraphics->screen.gfxVideo.name) {
+        free(xmlGraphics->screen.gfxVideo.name);
+        xmlGraphics->screen.gfxVideo.name = NULL;
     }
     
     uint32_t index, handlerIndex;
@@ -621,25 +628,25 @@ static void onScreenCb(void *userData, const char **attrs)
     	{
     	    .attrName          = XML_ATTR_NAME,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void*)&screen->name,
+    	    .attrValue.vector  = (void**)&screen->name,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
     	    .attrName          = XML_ATTR_WIDTH,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&screen->width,
-    	    .attrGetter.scalar = parserObj->getUint16
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    .attrName          = XML_ATTR_HEIGHT,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&screen->height,
-    	    .attrGetter.scalar = parserObj->getUint16
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    .attrName          = XML_ATTR_FRAMEBUFFER_DEVICE_NAME,
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
-    	    .attrValue.vector  = (void*)&screen->fbDeviceName,
+    	    .attrValue.vector  = (void**)&screen->fbDeviceName,
     	    .attrGetter.vector = parserObj->getString
         },
     	{
@@ -665,12 +672,6 @@ static void onScreenCb(void *userData, const char **attrs)
     	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
     	    .attrValue.vector  = (void**)&screen->caption,
     	    .attrGetter.vector = parserObj->getString
-        },
-    	{
-    	    .attrName          = XML_ATTR_VIDEOFORMAT,
-    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&screen->videoFormat,
-    	    .attrGetter.scalar = parserObj->getUint32
         },
     	{
     	    NULL,
@@ -707,19 +708,19 @@ static void onBackgroundCb(void *userData, const char **attrs)
     	{
     	    .attrName          = XML_ATTR_COLOR_ID,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&screen->BgColorId,
+    	    .attrValue.scalar  = (void*)&screen->bgColorId,
     	    .attrGetter.scalar = parserObj->getUint32
         },
     	{
     	    .attrName          = XML_ATTR_IMAGE_ID,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&screen->BgImageId,
+    	    .attrValue.scalar  = (void*)&screen->bgImageId,
     	    .attrGetter.scalar = parserObj->getUint32
         },
     	{
     	    .attrName          = XML_ATTR_HIDDEN_COLOR_ID,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
-    	    .attrValue.scalar  = (void*)&screen->BgHiddenColorId,
+    	    .attrValue.scalar  = (void*)&screen->bgHiddenColorId,
     	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
@@ -758,6 +759,92 @@ static void onIconCb(void *userData, const char **attrs)
     	    .attrName          = XML_ATTR_HIDDEN_COLOR_ID,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&screen->iconHiddenColorId,
+    	    .attrGetter.scalar = parserObj->getInt32
+        },
+    	{
+    	    NULL,
+    	    PARSER_ATTR_TYPE_NONE,
+    	    NULL,
+    	    NULL
+        }
+    };
+    
+    if (parserObj->getAttributes(parserObj, attrHandlers, attrs) != PARSER_ERROR_NONE) {
+    	Loge("Failed to retrieve attributes in \"Icon\" tag");
+    }
+}
+
+/*!
+ *
+ */
+static void onGfxVideoCb(void *userData, const char **attrs)
+{
+    assert(userData);
+    
+    struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
+    struct xml_gfx_video_s *gfxVideo   = &xmlGraphics->screen.gfxVideo;
+    struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
+    struct parser_s *parserObj         = ctx->parserObj;
+    
+    struct parser_attr_handler_s attrHandlers[] = {
+    	{
+    	    .attrName          = XML_ATTR_NAME,
+    	    .attrType          = PARSER_ATTR_TYPE_VECTOR,
+    	    .attrValue.vector  = (void**)&gfxVideo->name,
+    	    .attrGetter.vector = parserObj->getString
+        },
+    	{
+    	    .attrName          = XML_ATTR_PIXEL_FORMAT,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&gfxVideo->pixelFormat,
+    	    .attrGetter.scalar = parserObj->getUint32
+        },
+    	{
+    	    .attrName          = XML_ATTR_USE_COLOR,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&gfxVideo->useColor,
+    	    .attrGetter.scalar = parserObj->getUint8
+        },
+    	{
+    	    .attrName          = XML_ATTR_COLOR_ID,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&gfxVideo->bgColorId,
+    	    .attrGetter.scalar = parserObj->getUint32
+        },
+    	{
+    	    .attrName          = XML_ATTR_IMAGE_ID,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&gfxVideo->bgImageId,
+    	    .attrGetter.scalar = parserObj->getUint32
+        },
+    	{
+    	    .attrName          = XML_ATTR_HIDDEN_COLOR_ID,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&gfxVideo->bgHiddenColorId,
+    	    .attrGetter.scalar = parserObj->getInt32
+        },
+    	{
+    	    .attrName          = XML_ATTR_X,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&gfxVideo->x,
+    	    .attrGetter.scalar = parserObj->getInt32
+        },
+    	{
+    	    .attrName          = XML_ATTR_Y,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&gfxVideo->y,
+    	    .attrGetter.scalar = parserObj->getInt32
+        },
+    	{
+    	    .attrName          = XML_ATTR_WIDTH,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&gfxVideo->width,
+    	    .attrGetter.scalar = parserObj->getInt32
+        },
+    	{
+    	    .attrName          = XML_ATTR_HEIGHT,
+    	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
+    	    .attrValue.scalar  = (void*)&gfxVideo->height,
     	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
@@ -823,25 +910,25 @@ static void onElementStartCb(void *userData, const char **attrs)
     	    .attrName          = XML_ATTR_X,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&element->x,
-    	    .attrGetter.scalar = parserObj->getUint32
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    .attrName          = XML_ATTR_Y,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&element->y,
-    	    .attrGetter.scalar = parserObj->getUint32
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    .attrName          = XML_ATTR_WIDTH,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&element->width,
-    	    .attrGetter.scalar = parserObj->getUint32
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    .attrName          = XML_ATTR_HEIGHT,
     	    .attrType          = PARSER_ATTR_TYPE_SCALAR,
     	    .attrValue.scalar  = (void*)&element->height,
-    	    .attrGetter.scalar = parserObj->getUint32
+    	    .attrGetter.scalar = parserObj->getInt32
         },
     	{
     	    NULL,
