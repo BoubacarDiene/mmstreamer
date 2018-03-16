@@ -62,7 +62,7 @@ enum controllers_error_e uninitCmdsTask_f(struct controllers_s *obj);
 enum controllers_error_e startCmdsTask_f(struct controllers_s *obj);
 enum controllers_error_e stopCmdsTask_f(struct controllers_s *obj);
 
-void sendToEngine_f(void *userData, struct controller_command_s *command,
+void sendToEngine_f(void *enginePrivateData, struct controller_command_s *command,
                     controllers_command_action_done_cb actionDoneCb);
 
 /* -------------------------------------------------------------------------------------------- */
@@ -234,12 +234,12 @@ enum controllers_error_e stopCmdsTask_f(struct controllers_s *obj)
 /*!
  *+
  */
-void sendToEngine_f(void *userData, struct controller_command_s *command,
+void sendToEngine_f(void *enginePrivateData, struct controller_command_s *command,
                     controllers_command_action_done_cb actionDoneCb)
 {
-    assert(userData && command);
+    assert(enginePrivateData && command);
 
-    struct controllers_lib_s *lib            = (struct controllers_lib_s*)userData;
+    struct controllers_lib_s *lib            = (struct controllers_lib_s*)enginePrivateData;
     struct controllers_s *controllersObj     = (struct controllers_s*)(lib->pData);
     struct controllers_task_s *cmdsTask      = &controllersObj->tasksMngt[CONTROLLERS_TASK_CMDS].task;
     struct list_s *cmdsList                  = cmdsTask->list;
@@ -347,9 +347,5 @@ static void releaseCb(struct list_s *obj, void *element)
         elementToRemove->actionDoneCb(elementToRemove->command);
     }
 
-    elementToRemove->command      = NULL;
-    elementToRemove->actionDoneCb = NULL;
-
     free(elementToRemove);
-    elementToRemove = NULL;
 }

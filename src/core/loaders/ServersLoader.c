@@ -118,27 +118,21 @@ enum loaders_error_e unloadServersXml_f(struct loaders_s *obj, struct xml_server
         server = &xmlServers->servers[index];
         if (server->name) {
             free(server->name);
-            server->name = NULL;
         }
         if (server->mime) {
             free(server->mime);
-            server->mime = NULL;
         }
         if (server->host) {
             free(server->host);
-            server->host = NULL;
         }
         if (server->service) {
             free(server->service);
-            server->service = NULL;
         }
         if (server->path) {
             free(server->path);
-            server->path = NULL;
         }
         if (server->socketName) {
             free(server->socketName);
-            server->socketName = NULL;
         }
     }
     

@@ -165,8 +165,6 @@ exit:
     LinkHelper_UnInit(&pData->linkHelper);
 
     free(pData);
-    pData = NULL;
-    
     free(*obj);
     *obj = NULL;
     
@@ -187,8 +185,6 @@ enum client_error_e Client_UnInit(struct client_s **obj)
     (void)List_UnInit(&pData->clientsList);
     
     free(pData);
-    pData = NULL;
-    
     free(*obj);
     *obj = NULL;
     
@@ -306,7 +302,6 @@ sem_exit:
 
 exit:
     free(ctx);
-    ctx = NULL;
 
     return CLIENT_ERROR_START;
 }
@@ -933,8 +928,5 @@ static void releaseCb(struct list_s *obj, void *element)
     (void)closeClientSocket_f(ctx);
     
     /* Release resources */
-    ctx->params.userData = NULL;
-    
     free(ctx);
-    ctx = NULL;
 }

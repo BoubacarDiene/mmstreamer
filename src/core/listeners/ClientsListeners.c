@@ -120,8 +120,6 @@ enum listeners_error_e unsetClientsListeners_f(struct listeners_s *obj)
     }
     
     if (pData) {
-        pData->listenersParams = NULL;
-        pData->buffer.data     = NULL;
         free(pData);
     }
     

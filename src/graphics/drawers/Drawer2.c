@@ -230,8 +230,6 @@ enum drawer_error_e Drawer_UnInit(struct drawer_s **obj)
     SDL_DestroyMutex(pData->lock);
     
     free(pData);
-    pData = NULL;
-    
     free(*obj);
     *obj = NULL;
     

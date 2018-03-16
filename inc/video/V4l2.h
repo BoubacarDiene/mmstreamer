@@ -44,6 +44,7 @@ extern "C" {
 /* -------------------------------------------------------------------------------------------- */
 
 enum v4l2_error_e;
+enum v4l2_pipe_e;
 
 struct v4l2_open_device_params_s;
 struct v4l2_configure_device_params_s;
@@ -92,6 +93,12 @@ enum v4l2_error_e {
     V4L2_ERROR_TIMEOUT,
     V4L2_ERROR_UNKNOWN_DEVICE,
     V4L2_ERROR_BAD_CAPS
+};
+
+enum v4l2_pipe_e {
+    V4L2_PIPE_READ,
+    V4L2_PIPE_WRITE,
+    V4L2_PIPE_COUNT
 };
 
 struct v4l2_open_device_params_s {
@@ -153,7 +160,7 @@ struct v4l2_s {
 
     char                         path[MAX_PATH_SIZE];
     int32_t                      deviceFd;
-    int32_t                      quitFd[PIPE_COUNT];
+    int32_t                      quitFd[V4L2_PIPE_COUNT];
 
     struct v4l2_capability       caps;
     struct v4l2_format           format;

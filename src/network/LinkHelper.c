@@ -267,8 +267,6 @@ void LinkHelper_UnInit(struct link_helper_s **obj)
     assert(obj && *obj);
     
     free((*obj)->pData);
-    (*obj)->pData = NULL;
-    
     free(*obj);
     *obj = NULL;
 }
@@ -396,7 +394,6 @@ static void parseHttpGet_f(struct link_helper_s *obj, struct http_get_s *inOut)
     }
     
     free(str);
-    str = NULL;
 }
 
 /*!
@@ -546,7 +543,6 @@ static void parseHttpContent_f(struct link_helper_s *obj, struct http_content_s 
 
 exit:
     free(str);
-    str = NULL;
 }
 
 /*!

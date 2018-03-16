@@ -98,18 +98,7 @@ enum handlers_error_e Handlers_UnInit(struct handlers_s **obj)
 {
     assert(obj && *obj);
 
-    struct handlers_private_data_s *pData = (struct handlers_private_data_s*)((*obj)->pData);
-
-    pData->handlersParams.ctx                    = NULL;
-    pData->handlersParams.onModuleStateChangedCb = NULL;
-    pData->handlersParams.userData               = NULL;
-
-    pData->singleInputHandlers = NULL;
-    pData->multiInputsHandlers = NULL;
-
     free((*obj)->pData);
-    (*obj)->pData = NULL;
-
     free(*obj);
     *obj = NULL;
 

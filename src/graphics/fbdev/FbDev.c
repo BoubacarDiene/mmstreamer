@@ -114,11 +114,7 @@ enum fbdev_error_e FbDev_UnInit(struct fbdev_s **obj)
 {
     assert(obj && *obj && (*obj)->pData);
     
-    struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)((*obj)->pData);
-    
-    free(pData);
-    pData = NULL;
-    
+    free((*obj)->pData);
     free(*obj);
     *obj = NULL;
     

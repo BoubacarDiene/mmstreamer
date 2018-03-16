@@ -144,22 +144,18 @@ enum loaders_error_e unloadVideosXml_f(struct loaders_s *obj, struct xml_videos_
         video = &xmlVideos->videos[i];
         if (video->graphicsDest) {
             free(video->graphicsDest);
-            video->graphicsDest = NULL;
         }
     
         if (video->serverDest) {
             free(video->serverDest);
-            video->serverDest = NULL;
         }
     
         if (video->deviceSrc) {
             free(video->deviceSrc);
-            video->deviceSrc = NULL;
         }
     
         if (video->deviceName) {
             free(video->deviceName);
-            video->deviceName = NULL;
         }
     }
     
@@ -171,36 +167,29 @@ enum loaders_error_e unloadVideosXml_f(struct loaders_s *obj, struct xml_videos_
         for (j = 0; j < config->nbItems; j++) {
             if (config->capabilities[j].item) {
                 free(config->capabilities[j].item);
-                config->capabilities[j].item = NULL;
             }
         }
         
         free(config->capabilities);
-        config->capabilities = NULL;
 
         if (config->bufferType) {
             free(config->bufferType);
-            config->bufferType = NULL;
         }
     
         if (config->pixelFormat) {
             free(config->pixelFormat);
-            config->pixelFormat = NULL;
         }
     
         if (config->colorspace) {
             free(config->colorspace);
-            config->colorspace = NULL;
         }
     
         if (config->memory) {
             free(config->memory);
-            config->memory = NULL;
         }
     
         if (config->awaitMode) {
             free(config->awaitMode);
-            config->awaitMode = NULL;
         }
     }
     

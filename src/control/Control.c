@@ -207,8 +207,6 @@ HandlersInitExit:
 
 lockExit:
     free(pData);
-    pData = NULL;
-
     free(*obj);
     *obj = NULL;
 
@@ -229,11 +227,7 @@ enum control_error_e Control_UnInit(struct control_s **obj)
 
     (void)pthread_mutex_destroy(&pData->lock);
 
-    pData->ctx = NULL;
-
-    free((*obj)->pData);
-    (*obj)->pData = NULL;
-
+    free(pData);
     free(*obj);
     *obj = NULL;
 
@@ -267,9 +261,7 @@ enum control_error_e uninitElementData_f(struct control_s *obj, void **data)
     assert(obj && data && *data);
 
     struct control_element_data_s *elementData = (struct control_element_data_s*)(*data);
-
     free(elementData);
-    elementData = NULL;
 
     return CONTROL_ERROR_NONE;
 }
@@ -393,13 +385,10 @@ enum control_error_e unsetCommandHandlers_f(struct control_s *obj, void *data)
     for (i = 0; i < elementData->nbCommandHandlers; i++) {
         if ((elementData->commandHandlers[i]).name) {
             free((elementData->commandHandlers[i]).name);
-            (elementData->commandHandlers[i]).name = NULL;
         }
         if ((elementData->commandHandlers[i]).data) {
             free((elementData->commandHandlers[i]).data);
-            (elementData->commandHandlers[i]).data = NULL;
         }
-        (elementData->commandHandlers[i]).fct = NULL;
     }
 
     if (elementData->commandHandlers) {

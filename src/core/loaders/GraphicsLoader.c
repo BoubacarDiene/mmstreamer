@@ -210,39 +210,30 @@ enum loaders_error_e unloadGraphicsXml_f(struct loaders_s *obj, struct xml_graph
         element = &xmlGraphics->elements[index];
         if (element->name) {
             free(element->name);
-            element->name = NULL;
         }
         if (element->groupName) {
             free(element->groupName);
-            element->groupName = NULL;
         }
         if (element->text) {
             free(element->text);
-            element->text = NULL;
         }
         if (element->nav) {
             if (element->nav->left) {
                 free(element->nav->left);
-                element->nav->left = NULL;
             }
             if (element->nav->up) {
                 free(element->nav->up);
-                element->nav->up = NULL;
             }
             if (element->nav->right) {
                 free(element->nav->right);
-                element->nav->right = NULL;
             }
             if (element->nav->down) {
                 free(element->nav->down);
-                element->nav->down = NULL;
             }
             free(element->nav);
-            element->nav = NULL;
         }
         if (element->image) {
             free(element->image);
-            element->image = NULL;
         }
         if (element->clickHandlers) {
             struct xml_element_click_s *handler;
@@ -250,15 +241,12 @@ enum loaders_error_e unloadGraphicsXml_f(struct loaders_s *obj, struct xml_graph
                 handler = &element->clickHandlers[handlerIndex];
                 if (handler->name) {
                     free(handler->name);
-                    handler->name = NULL;
                 }
                 if (handler->data) {
                     free(handler->data);
-                    handler->data = NULL;
                 }
             }
             free(element->clickHandlers);
-            element->clickHandlers = NULL;
         }
     }
     
@@ -401,7 +389,6 @@ enum loaders_error_e unloadCommonXml_f(struct loaders_s *obj, struct xml_common_
             image = &xmlImages->images[index];
             if (image->file) {
                 free(image->file);
-                image->file = NULL;
             }
         }
         free(xmlImages->images);
@@ -415,7 +402,6 @@ enum loaders_error_e unloadCommonXml_f(struct loaders_s *obj, struct xml_common_
             font = &xmlFonts->fonts[index];
             if (font->file) {
                 free(font->file);
-                font->file = NULL;
             }
         }
         free(xmlFonts->fonts);
@@ -430,22 +416,18 @@ enum loaders_error_e unloadCommonXml_f(struct loaders_s *obj, struct xml_common_
         for (index = 0; index < nbXmlStrings; index++) {
             if (xmlStrings[index].language) {
                 free(xmlStrings[index].language);
-                xmlStrings[index].language = NULL;
             }
             if (xmlStrings[index].strings) {
                 nbStrings = xmlStrings[index].nbStrings;
                 for (strCount = 0; strCount < nbStrings; strCount++) {
                     if (xmlStrings[index].strings[strCount].str) {
                         free(xmlStrings[index].strings[strCount].str);
-                        xmlStrings[index].strings[strCount].str = NULL;
                     }
                 }
                 free(xmlStrings[index].strings);
-                xmlStrings[index].strings = NULL;
             }
         }
         free(xmlStrings);
-        xmlStrings = NULL;
     }
     
     xmlCommon->reserved = NULL;
@@ -1435,7 +1417,6 @@ static void onImageCb(void *userData, const char **attrs)
         snprintf(image->file, len, "%s/%s", input->resRootDir, temp);
         
         free(temp);
-        temp = NULL;
     }
     
     xmlImages->nbImages++;
@@ -1492,7 +1473,6 @@ static void onFontCb(void *userData, const char **attrs)
         snprintf(font->file, len, "%s/%s", input->resRootDir, temp);
         
         free(temp);
-        temp = NULL;
     }
     
     xmlFonts->nbFonts++;

@@ -116,8 +116,6 @@ enum task_error_e Task_UnInit(struct task_s **obj)
     }
     
     free(pData);
-    pData = NULL;
-    
     free(*obj);
     *obj = NULL;
     
@@ -214,7 +212,6 @@ semStartExit:
 
 semQuitExit:
     free(reserved);
-    reserved = NULL;
     
     return TASK_ERROR_CREATE;
 }
@@ -237,7 +234,6 @@ static enum task_error_e destroy_f(struct task_s *obj, struct task_params_s *par
     }
     
     free(reserved);
-    reserved = NULL;
     
     if (params->atExit) {
         params->atExit(params);

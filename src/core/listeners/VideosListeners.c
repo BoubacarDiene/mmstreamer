@@ -148,15 +148,15 @@ enum listeners_error_e unsetVideosListeners_f(struct listeners_s *obj)
 {
     assert(obj);
     
-    struct listeners_params_s *listenersParams = &obj->params;
-    struct videos_infos_s *videosInfos         = &listenersParams->ctx->params.videosInfos;
-    struct video_device_s ***videoDevices      = &videosInfos->devices;
-    struct video_device_s *videoDevice         = NULL;
-    uint8_t nbDevices                          = videosInfos->nbDevices;
-    uint8_t nbVideoListeners                   = 0;
-    struct video_listener_s  ***videoListeners = NULL;
-    struct video_listener_s  **videoListener   = NULL;
-    struct videos_listeners_private_data_s *pData     = NULL;
+    struct listeners_params_s *listenersParams    = &obj->params;
+    struct videos_infos_s *videosInfos            = &listenersParams->ctx->params.videosInfos;
+    struct video_device_s ***videoDevices         = &videosInfos->devices;
+    struct video_device_s *videoDevice            = NULL;
+    uint8_t nbDevices                             = videosInfos->nbDevices;
+    uint8_t nbVideoListeners                      = 0;
+    struct video_listener_s  ***videoListeners    = NULL;
+    struct video_listener_s  **videoListener      = NULL;
+    struct videos_listeners_private_data_s *pData = NULL;
 
     uint8_t videoIndex, listenerIndex;
     for (videoIndex = 0; videoIndex < nbDevices; videoIndex++) {
@@ -170,12 +170,9 @@ enum listeners_error_e unsetVideosListeners_f(struct listeners_s *obj)
             (*videoListener)->userData = NULL;
 
             free(*videoListener);
-            *videoListener = NULL;
         }
 
         if (pData) {
-            pData->listenersParams = NULL;
-            pData->buffer.data     = NULL;
             free(pData);
         }
 

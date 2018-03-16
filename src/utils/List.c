@@ -110,8 +110,6 @@ enum list_error_e List_Init(struct list_s **obj, struct list_params_s *params)
 
 exit:
     free(pData);
-    pData = NULL;
-
     free(*obj);
     *obj = NULL;
 
@@ -134,8 +132,6 @@ enum list_error_e List_UnInit(struct list_s **obj)
     }
     
     free(pData);
-    pData = NULL;
-    
     free(*obj);
     *obj = NULL;
     
@@ -205,7 +201,6 @@ static enum list_error_e remove_f(struct list_s *obj, void *userData)
             }
             obj->params.releaseCb(obj, current->element);
             free(current);
-            current = NULL;
             pData->nbElements--;
             break;
         }

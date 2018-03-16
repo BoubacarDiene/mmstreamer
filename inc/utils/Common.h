@@ -36,7 +36,6 @@ extern "C" {
 
 #include <assert.h>
 #include <errno.h>
-#include <math.h>
 #include <semaphore.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -79,21 +78,9 @@ enum priority_e {
     PRIORITY_HIGHEST
 };
 
-enum pipe_e {
-    PIPE_READ,
-    PIPE_WRITE,
-    PIPE_COUNT
-};
-
 struct buffer_s {
     void    *data;
     ssize_t length;
-};
-
-struct recipient_s {
-    char host[MAX_ADDRESS_SIZE];
-    char service[MIN_STR_SIZE];
-    char path[MAX_PATH_SIZE];
 };
 
 #ifdef __cplusplus

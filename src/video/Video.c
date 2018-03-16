@@ -158,8 +158,6 @@ enum video_error_e Video_Init(struct video_s **obj)
 
 exit:
     free(pData);
-    pData = NULL;
-
     free(*obj);
     *obj = NULL;
 
@@ -510,7 +508,6 @@ list_exit:
 exit:
     if (ctx) {
         free(ctx);
-        ctx = NULL;
     }
 
     return VIDEO_ERROR_START;
@@ -979,9 +976,5 @@ static void releaseListenerCb(struct list_s *obj, void *element)
     assert(obj && element);
     
     struct video_listener_s *listener = (struct video_listener_s*)element;
-    
-    listener->userData = NULL;
-    
     free(listener);
-    listener = NULL;
 }

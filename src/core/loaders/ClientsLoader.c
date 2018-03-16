@@ -118,31 +118,24 @@ enum loaders_error_e unloadClientsXml_f(struct loaders_s *obj, struct xml_client
         client = &xmlClients->clients[index];
         if (client->name) {
             free(client->name);
-            client->name = NULL;
         }
         if (client->graphicsDest) {
             free(client->graphicsDest);
-            client->graphicsDest = NULL;
         }
         if (client->serverDest) {
             free(client->serverDest);
-            client->serverDest = NULL;
         }
         if (client->serverHost) {
             free(client->serverHost);
-            client->serverHost = NULL;
         }
         if (client->serverService) {
             free(client->serverService);
-            client->serverService = NULL;
         }
         if (client->serverPath) {
             free(client->serverPath);
-            client->serverPath = NULL;
         }
         if (client->serverSocketName) {
             free(client->serverSocketName);
-            client->serverSocketName = NULL;
         }
     }
     

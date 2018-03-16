@@ -297,8 +297,6 @@ evtLockExit:
 
 gfxLockExit:
     free(pData);
-    pData = NULL;
-    
     free(*obj);
     *obj = NULL;
 
@@ -335,9 +333,7 @@ enum graphics_error_e Graphics_UnInit(struct graphics_s **obj)
     (void)pthread_mutex_destroy(&pData->evtLock);
     (void)pthread_mutex_destroy(&pData->gfxLock);
 
-    free((*obj)->pData);
-    (*obj)->pData = NULL;
-    
+    free(pData);
     free(*obj);
     *obj = NULL;
     
@@ -1759,15 +1755,8 @@ static void releaseElementCb(struct list_s *obj, void *element)
 {
     assert(obj && element);
     
-    struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
-    struct gfx_element_s *gfxElement      = (struct gfx_element_s*)element;
-    
-    gfxElement->pData = NULL;
-    
-    free(gfxElement->reserved);
-    
+    struct gfx_element_s *gfxElement = (struct gfx_element_s*)element;
     free(gfxElement);
-    gfxElement = NULL;
 }
 
 /*!
@@ -1812,7 +1801,5 @@ static void releaseEventCb(struct list_s *obj, void *element)
     assert(obj && element);
 
     struct graphics_list_element_s *elementToRemove = (struct graphics_list_element_s*)element;
-
     free(elementToRemove);
-    elementToRemove = NULL;
 }

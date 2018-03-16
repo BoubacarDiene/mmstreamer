@@ -89,10 +89,7 @@ enum listeners_error_e Listeners_Init(struct listeners_s **obj,
 enum listeners_error_e Listeners_UnInit(struct listeners_s **obj)
 {
     assert(obj && *obj);
-    
-    (*obj)->params.ctx        = NULL;
-    (*obj)->params.controlObj = NULL;
-    
+
     free(*obj);
     *obj = NULL;
     

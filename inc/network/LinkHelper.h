@@ -76,6 +76,7 @@ enum link_mode_e;
 enum state_e;
 enum stream_type_e;
 
+struct recipient_s;
 struct custom_header_s;
 struct custom_content_s;
 struct http_get_s;
@@ -169,6 +170,12 @@ enum state_e {
 enum stream_type_e {
     STREAM_TYPE_VIDEO,
     STREAM_TYPE_MAX
+};
+
+struct recipient_s {
+    char host[MAX_ADDRESS_SIZE];
+    char service[MIN_STR_SIZE];
+    char path[MAX_PATH_SIZE];
 };
 
 struct custom_header_s {

@@ -107,10 +107,6 @@ enum controllers_error_e Controllers_UnInit(struct controllers_s **obj)
 {
     assert(obj && *obj);
 
-    (*obj)->params.ctx         = NULL;
-    (*obj)->params.onCommandCb = NULL;
-    (*obj)->params.userData    = NULL;
-
     free(*obj);
     *obj = NULL;
 

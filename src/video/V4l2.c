@@ -191,10 +191,10 @@ caps_exit:
     obj->deviceFd = -1;
 
 open_exit:
-    close(obj->quitFd[PIPE_READ]);
-    obj->quitFd[PIPE_READ] = -1;
-    close(obj->quitFd[PIPE_WRITE]);
-    obj->quitFd[PIPE_WRITE] = -1;
+    close(obj->quitFd[V4L2_PIPE_READ]);
+    obj->quitFd[V4L2_PIPE_READ] = -1;
+    close(obj->quitFd[V4L2_PIPE_WRITE]);
+    obj->quitFd[V4L2_PIPE_WRITE] = -1;
 
 pipe_exit:
 exit:
@@ -217,9 +217,9 @@ static enum v4l2_error_e closeDevice_f(struct v4l2_s *obj)
         obj->deviceFd = -1;
     }
 
-    if (obj->quitFd[PIPE_READ] != -1) {
-        close(obj->quitFd[PIPE_READ]);
-        close(obj->quitFd[PIPE_WRITE]);
+    if (obj->quitFd[V4L2_PIPE_READ] != -1) {
+        close(obj->quitFd[V4L2_PIPE_READ]);
+        close(obj->quitFd[V4L2_PIPE_WRITE]);
     }
 
     return V4L2_ERROR_NONE;
@@ -671,9 +671,9 @@ static enum v4l2_error_e awaitData_f(struct v4l2_s *obj, int32_t timeout_ms)
 
     FD_ZERO(&fds);
     FD_SET(obj->deviceFd, &fds);
-    FD_SET(obj->quitFd[PIPE_READ], &fds);
+    FD_SET(obj->quitFd[V4L2_PIPE_READ], &fds);
 
-    maxFd = (obj->deviceFd > obj->quitFd[PIPE_READ] ? obj->deviceFd : obj->quitFd[PIPE_READ]);
+    maxFd = (obj->deviceFd > obj->quitFd[V4L2_PIPE_READ] ? obj->deviceFd : obj->quitFd[V4L2_PIPE_READ]);
 
     if (timeout_ms > 0) {
         assert((tv = calloc(1, sizeof(struct timeval))));
@@ -685,7 +685,6 @@ static enum v4l2_error_e awaitData_f(struct v4l2_s *obj, int32_t timeout_ms)
     
     if (tv) {
         free(tv);
-        tv = NULL;
     }
 
     if (selectRetval == -1) { /* Interrupted */
@@ -712,9 +711,9 @@ exit:
  */
 static enum v4l2_error_e stopAwaitingData_f(struct v4l2_s *obj)
 {
-    assert(obj && (obj->quitFd[PIPE_WRITE] != -1));
+    assert(obj && (obj->quitFd[V4L2_PIPE_WRITE] != -1));
 
-    if (write(obj->quitFd[PIPE_WRITE], "\n", 1) < 0) {
+    if (write(obj->quitFd[V4L2_PIPE_WRITE], "\n", 1) < 0) {
         Loge("Writing to pipe failed - %s", strerror(errno));
         return V4L2_ERROR_IO;
     }

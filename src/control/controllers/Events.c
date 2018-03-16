@@ -62,8 +62,8 @@ enum controllers_error_e stopEvtsTask_f(struct controllers_s *obj);
 
 enum controllers_error_e notify_f(struct controllers_s *obj, struct controller_event_s *event);
 
-void registerEvents_f(void *userData, int32_t eventsMask);
-void unregisterEvents_f(void *userData, int32_t eventsMask);
+void registerEvents_f(void *enginePrivateData, int32_t eventsMask);
+void unregisterEvents_f(void *enginePrivateData, int32_t eventsMask);
 
 /* -------------------------------------------------------------------------------------------- */
 /* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
@@ -286,11 +286,11 @@ enum controllers_error_e notify_f(struct controllers_s *obj, struct controller_e
 /*!
  *
  */
-void registerEvents_f(void *userData, int32_t eventsMask)
+void registerEvents_f(void *enginePrivateData, int32_t eventsMask)
 {
-    assert(userData);
+    assert(enginePrivateData);
 
-    struct controllers_lib_s *lib        = (struct controllers_lib_s*)userData;
+    struct controllers_lib_s *lib        = (struct controllers_lib_s*)enginePrivateData;
     struct controllers_s *controllersObj = (struct controllers_s*)(lib->pData);
     struct controllers_task_s *evtsTask  = &controllersObj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
 
@@ -309,11 +309,11 @@ void registerEvents_f(void *userData, int32_t eventsMask)
 /*!
  *
  */
-void unregisterEvents_f(void *userData, int32_t eventsMask)
+void unregisterEvents_f(void *enginePrivateData, int32_t eventsMask)
 {
-    assert(userData);
+    assert(enginePrivateData);
 
-    struct controllers_lib_s *lib        = (struct controllers_lib_s*)userData;
+    struct controllers_lib_s *lib        = (struct controllers_lib_s*)enginePrivateData;
     struct controllers_s *controllersObj = (struct controllers_s*)(lib->pData);
     struct controllers_task_s *evtsTask  = &controllersObj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
 
@@ -419,9 +419,7 @@ static void releaseCb(struct list_s *obj, void *element)
 
     if (event->name) {
         free(event->name);
-        event->name = NULL;
     }
 
     free(elementToRemove);
-    elementToRemove = NULL;
 }

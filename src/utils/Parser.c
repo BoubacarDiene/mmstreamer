@@ -148,8 +148,6 @@ enum parser_error_e Parser_UnInit(struct parser_s **obj)
     assert(obj && *obj && (*obj)->pData);
     
     free((*obj)->pData);
-    (*obj)->pData = NULL;
-    
     free(*obj);
     *obj = NULL;
     
@@ -266,7 +264,6 @@ exit:
     
     if (encoding) {
         free(encoding);
-        encoding = NULL;
     }
 
     return ret;

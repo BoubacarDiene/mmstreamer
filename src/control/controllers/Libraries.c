@@ -62,16 +62,16 @@ enum controllers_error_e uninitLibsTask_f(struct controllers_s *obj);
 enum controllers_error_e startLibsTask_f(struct controllers_s *obj);
 enum controllers_error_e stopLibsTask_f(struct controllers_s *obj);
 
-void sendToLibrary_f(void *userData, struct controller_library_s *library,
+extern void registerEvents_f(void *enginePrivateData, int32_t eventsMask);
+extern void unregisterEvents_f(void *enginePrivateData, int32_t eventsMask);
+
+void sendToLibrary_f(void *enginePrivateData, struct controller_library_s *library,
                      controllers_library_action_done_cb actionDoneCb);
-extern void sendToEngine_f(void *userData, struct controller_command_s *command,
+extern void sendToEngine_f(void *enginePrivateData, struct controller_command_s *command,
                            controllers_command_action_done_cb actionDoneCb);
 
 enum controllers_error_e loadLibs_f(struct controllers_s *obj);
 enum controllers_error_e unloadLibs_f(struct controllers_s *obj);
-
-extern void registerEvents_f(void *userData, int32_t eventsMask);
-extern void unregisterEvents_f(void *userData, int32_t eventsMask);
 
 /* -------------------------------------------------------------------------------------------- */
 /* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
@@ -242,12 +242,12 @@ enum controllers_error_e stopLibsTask_f(struct controllers_s *obj)
 /*!
  *
  */
-void sendToLibrary_f(void *userData, struct controller_library_s *library,
+void sendToLibrary_f(void *enginePrivateData, struct controller_library_s *library,
                      controllers_library_action_done_cb actionDoneCb)
 {
-    assert(userData && library);
+    assert(enginePrivateData && library);
 
-    struct controllers_lib_s *lib            = (struct controllers_lib_s*)userData;
+    struct controllers_lib_s *lib            = (struct controllers_lib_s*)enginePrivateData;
     struct controllers_s *controllersObj     = (struct controllers_s*)(lib->pData);
     struct controllers_task_s *libsTask      = &controllersObj->tasksMngt[CONTROLLERS_TASK_LIBS].task;
     struct list_s *libsList                  = libsTask->list;
@@ -362,22 +362,13 @@ libExit:
         lib = &obj->libs[count];
 
         lib->uninit(&lib->obj);
-        lib->obj = NULL;
-
-        lib->init        = NULL;
-        lib->uninit      = NULL;
-        lib->onCommandCb = NULL;
-        lib->onEventCb   = NULL;
-        lib->pData       = NULL;
 
         if (lib->handle) {
             dlclose(lib->handle);
-            lib->handle = NULL;
         }
 
         if (lib->path) {
             free(lib->path);
-            lib->path = NULL;
         }
 
         --index;
@@ -407,22 +398,13 @@ enum controllers_error_e unloadLibs_f(struct controllers_s *obj)
         lib = &obj->libs[index];
 
         lib->uninit(&lib->obj);
-        lib->obj = NULL;
-
-        lib->init        = NULL;
-        lib->uninit      = NULL;
-        lib->onCommandCb = NULL;
-        lib->onEventCb   = NULL;
-        lib->pData       = NULL;
 
         if (lib->handle) {
             dlclose(lib->handle);
-            lib->handle = NULL;
         }
 
         if (lib->path) {
             free(lib->path);
-            lib->path = NULL;
         }
     }
 
@@ -522,9 +504,5 @@ static void releaseCb(struct list_s *obj, void *element)
         elementToRemove->actionDoneCb(elementToRemove->library);
     }
 
-    elementToRemove->library      = NULL;
-    elementToRemove->actionDoneCb = NULL;
-
     free(elementToRemove);
-    elementToRemove = NULL;
 }

@@ -195,8 +195,6 @@ exit:
     LinkHelper_UnInit(&pData->linkHelper);
     
     free(pData);
-    pData = NULL;
-    
     free(*obj);
     *obj = NULL;
     
@@ -217,8 +215,6 @@ enum server_error_e Server_UnInit(struct server_s **obj)
     (void)List_UnInit(&pData->serversList);
     
     free(pData);
-    pData = NULL;
-    
     free(*obj);
     *obj = NULL;
     
@@ -1023,7 +1019,6 @@ standard:
 
 exit_calloc:
     free(client->pData);
-    client->pData = NULL;
  
 exit:
     if (client->sock != INVALID_SOCKET) {
@@ -1031,7 +1026,6 @@ exit:
     }
     
     free(client);
-    client = NULL;
 }
 
 /*!
@@ -1212,7 +1206,6 @@ static void releaseServerCb(struct list_s *obj, void *element)
     (void)closeServerSocket_f(ctx);
     
     free(ctx);
-    ctx = NULL;
 }
 
 /*!
@@ -1241,9 +1234,7 @@ static void releaseClientCb(struct list_s *obj, void *element)
     
     if (client->pData) {
         free(client->pData);
-        client->pData = NULL;
     }
     
     free(client);
-    client = NULL;
 }

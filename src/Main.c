@@ -94,9 +94,6 @@ static void setPriority(struct options_s *in);
 /* /////////////////////////////////////////// MAIN /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-/*!
- * main() function
- */
 int main(int argc, char **argv)
 {
     int32_t ret = EXIT_FAILURE;
@@ -519,17 +516,14 @@ graphicsInitExit:
 parserParseExit:
     if (input->appDataDir) {
         free(input->appDataDir);
-        input->appDataDir = NULL;
     }
 
     if (input->resRootDir) {
         free(input->resRootDir);
-        input->resRootDir = NULL;
     }
 
     if (input->libRootDir) {
         free(input->libRootDir);
-        input->libRootDir = NULL;
     }
 
     uint8_t count;
@@ -537,50 +531,40 @@ parserParseExit:
         count = input->nbCtrlLibs - 1;
         if (input->ctrlLibs[count].path) {
             free(input->ctrlLibs[count].path);
-            input->ctrlLibs[count].path = NULL;
         }
         if (input->ctrlLibs[count].initFn) {
             free(input->ctrlLibs[count].initFn);
-            input->ctrlLibs[count].initFn = NULL;
         }
         if (input->ctrlLibs[count].uninitFn) {
             free(input->ctrlLibs[count].uninitFn);
-            input->ctrlLibs[count].uninitFn = NULL;
         }
         if (input->ctrlLibs[count].onCommandCb) {
             free(input->ctrlLibs[count].onCommandCb);
-            input->ctrlLibs[count].onCommandCb = NULL;
         }
         if (input->ctrlLibs[count].onEventCb) {
             free(input->ctrlLibs[count].onEventCb);
-            input->ctrlLibs[count].onEventCb = NULL;
         }
         --input->nbCtrlLibs;
     }
 
     if (input->ctrlLibs) {
         free(input->ctrlLibs);
-        input->ctrlLibs = NULL;
     }
 
     if (input->clientsConfig.xml) {
         free(input->clientsConfig.xml);
-        input->clientsConfig.xml = NULL;
     }
     
     if (input->serversConfig.xml) {
         free(input->serversConfig.xml);
-        input->serversConfig.xml = NULL;
     }
     
     if (input->videosConfig.xml) {
         free(input->videosConfig.xml);
-        input->videosConfig.xml = NULL;
     }
     
     if (input->graphicsConfig.xml) {
         free(input->graphicsConfig.xml);
-        input->graphicsConfig.xml = NULL;
     }
     
     if (mCtx->parserObj) {
@@ -590,7 +574,6 @@ parserParseExit:
 
 parserInitExit:
     free(mCtx);
-    mCtx = NULL;
     
     return ret;
 }
@@ -782,7 +765,6 @@ static void onItemCb(void *userData, const char **attrs)
         snprintf(ctrlLib->path, len, "%s/%s", input->libRootDir, temp);
 
         free(temp);
-        temp = NULL;
     }
 
     Logd("Control library - path : \"%s\" / \

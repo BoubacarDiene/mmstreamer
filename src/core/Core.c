@@ -159,9 +159,7 @@ control_exit:
     (void)Configs_UnInit(&pData->configsObj);
 
 configs_exit:
-    free((*obj)->pData);
-    (*obj)->pData = NULL;
-    
+    free(pData);
     free(*obj);
     *obj = NULL;
   
@@ -182,11 +180,7 @@ enum core_error_e Core_UnInit(struct core_s **obj)
     (void)Control_UnInit(&pData->controlObj);
     (void)Configs_UnInit(&pData->configsObj);
     
-    pData->ctx = NULL;
-    
-    free((*obj)->pData);
-    (*obj)->pData = NULL;
-    
+    free(pData);
     free(*obj);
     *obj = NULL;
     
@@ -559,7 +553,6 @@ badConfig_exit:
                 if (((*gfxElements)[index]->type == GFX_ELEMENT_TYPE_IMAGE)
                     && (*gfxElements)[index]->data.image.hiddenColor) {
                     free((*gfxElements)[index]->data.image.hiddenColor);
-                    (*gfxElements)[index]->data.image.hiddenColor = NULL;
                 }
             }
         }
@@ -570,7 +563,6 @@ badConfig_exit:
     
     if (gfxVideo->background.image.hiddenColor) {
         free(gfxVideo->background.image.hiddenColor);
-        gfxVideo->background.image.hiddenColor = NULL;
     }
     
     if (screenParams->background.image.hiddenColor) {
@@ -626,7 +618,6 @@ static enum core_error_e unloadGraphicsParams_f(struct core_s *obj)
                 if (((*gfxElements)[index]->type == GFX_ELEMENT_TYPE_IMAGE)
                     && (*gfxElements)[index]->data.image.hiddenColor) {
                     free((*gfxElements)[index]->data.image.hiddenColor);
-                    (*gfxElements)[index]->data.image.hiddenColor = NULL;
                 }
             }
         }
@@ -638,7 +629,6 @@ static enum core_error_e unloadGraphicsParams_f(struct core_s *obj)
     
     if (screenParams->video.background.image.hiddenColor) {
         free(screenParams->video.background.image.hiddenColor);
-        screenParams->video.background.image.hiddenColor = NULL;
     }
     
     if (screenParams->background.image.hiddenColor) {
@@ -765,16 +755,13 @@ badConfig_exit:
     for (index = 0; index < *nbDevices; index++) {
         if (((*videoDevices)[index])->serverDest) {
             free(((*videoDevices)[index])->serverDest);
-            ((*videoDevices)[index])->serverDest = NULL;
         }
     
         if (((*videoDevices)[index])->graphicsDest) {
             free(((*videoDevices)[index])->graphicsDest);
-            ((*videoDevices)[index])->graphicsDest = NULL;
         }
 
         free(((*videoDevices)[index]));
-        (*videoDevices)[index] = NULL;
     }
 
     if (*videoDevices) {
@@ -807,16 +794,13 @@ static enum core_error_e unloadVideosParams_f(struct core_s *obj)
     for (index = 0; index < nbDevices; index++) {
         if (((*videoDevices)[index])->serverDest) {
             free(((*videoDevices)[index])->serverDest);
-            ((*videoDevices)[index])->serverDest = NULL;
         }
     
         if (((*videoDevices)[index])->graphicsDest) {
             free(((*videoDevices)[index])->graphicsDest);
-            ((*videoDevices)[index])->graphicsDest = NULL;
         }
 
         free(((*videoDevices)[index]));
-        (*videoDevices)[index] = NULL;
     }
 
     if (*videoDevices) {
@@ -912,7 +896,6 @@ static enum core_error_e loadServersParams_f(struct core_s *obj)
 badConfig_exit:
     for (index = 0; index < *nbServers; index++) {
         free((*serverInfos)[index]);
-        (*serverInfos)[index] = NULL;
     }
     
     if (*serverInfos) {
@@ -943,7 +926,6 @@ static enum core_error_e unloadServersParams_f(struct core_s *obj)
     uint8_t index;
     for (index = 0; index < nbServers; index++) {
         free((*serverInfos)[index]);
-        (*serverInfos)[index] = NULL;
     }
     
     if (*serverInfos) {
@@ -1046,16 +1028,13 @@ badConfig_exit:
     for (index = 0; index < *nbClients; index++) {
         if (((*clientInfos)[index])->graphicsDest) {
             free(((*clientInfos)[index])->graphicsDest);
-            ((*clientInfos)[index])->graphicsDest = NULL;
         }
         
         if (((*clientInfos)[index])->serverDest) {
             free(((*clientInfos)[index])->serverDest);
-            ((*clientInfos)[index])->serverDest = NULL;
         }
 
         free((*clientInfos)[index]);
-        (*clientInfos)[index] = NULL;
     }
     
     if (*clientInfos) {
@@ -1087,16 +1066,13 @@ static enum core_error_e unloadClientsParams_f(struct core_s *obj)
     for (index = 0; index < nbClients; index++) {
         if (((*clientInfos)[index])->graphicsDest) {
             free(((*clientInfos)[index])->graphicsDest);
-            ((*clientInfos)[index])->graphicsDest = NULL;
         }
         
         if (((*clientInfos)[index])->serverDest) {
             free(((*clientInfos)[index])->serverDest);
-            ((*clientInfos)[index])->serverDest = NULL;
         }
 
         free((*clientInfos)[index]);
-        (*clientInfos)[index] = NULL;
     }
     
     if (*clientInfos) {
