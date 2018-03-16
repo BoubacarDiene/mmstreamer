@@ -15,7 +15,7 @@
 
 # Project
 PROJECT_NAME    := mmstreamer
-PROJECT_VERSION := 0.9
+PROJECT_VERSION := 1.0
 
 # Build
 DEBUG     := no
