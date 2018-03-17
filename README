@@ -82,7 +82,7 @@ gradually adding new features taking advantage of possibilities offered by v4l2 
 
 3- License
 
-mmstreamer is distributed under the GNU GENERAL PUBLIC LICENSE (GPL) version 3 or later.
+mmstreamer is distributed under the GNU GENERAL PUBLIC LICENSE (GPL) version 2.
 Please, see <http://www.gnu.org/licenses/> for more details.
 
 4- Maintenance and support
