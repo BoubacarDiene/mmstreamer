@@ -59,6 +59,7 @@
       Inet
 
         - host    : IP address / hostname server is listening to (E.g: localhost or 127.0.0.1)
+                    "-1" means listen to all network interfaces i.e use wildcard IP address
         - service : Protocol that server is using (E.g: http or 80)
         - path    : Resource on the server that clients should use to get stream
     -->

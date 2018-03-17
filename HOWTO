@@ -27,11 +27,17 @@
     If you are using default xml config files provided in github, you should see
     video signal appeared in surface drawn by graphics module.
 
-  1.2- Type the following address in your browser
+  1.2- Connect to inet server
 
-    http://127.0.0.1:9090/webcam or http://localhost:9090/webcam
+    From your local computer:
+        http://127.0.0.1:9090/webcam or http://localhost:9090/webcam
 
-    Without the "/webcam" part, you get an error page containing a redirection link.
+    From a remote device (phone, computer, ...) connected to same network as the server:
+        http://<your_ip_address>:9090/webcam
+
+    Notes:
+    - Without the "/webcam" part, you get an error page containing a redirection link
+    - To get <your_ip_address>, open a terminal and type "ifconfig" command
 
 2- How to update mmstreamer's configuration
 

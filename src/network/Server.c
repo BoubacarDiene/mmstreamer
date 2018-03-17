@@ -576,10 +576,15 @@ static enum server_error_e openServerSocket_f(struct server_context_s *ctx,
     if (ctx->server->domain != AF_UNIX) {
         ctx->hints.ai_family   = ctx->server->domain;
         ctx->hints.ai_socktype = ctx->server->type;
+        ctx->hints.ai_flags    = AI_PASSIVE; // For wildcard IP address
 
-        int status = getaddrinfo(ctx->params.recipient.server.host,
-                                    ctx->params.recipient.server.service,
-                                    &ctx->hints, &ctx->result);
+        const char *host = NULL;
+        if (strcmp(ctx->params.recipient.server.host,"-1") != 0) {
+            host = ctx->params.recipient.server.host;
+        }
+        int status = getaddrinfo(host,
+                                 ctx->params.recipient.server.service,
+                                 &ctx->hints, &ctx->result);
         if (status != 0) {
             Loge("getaddrinfo() failed - %s", gai_strerror(status));
             goto getaddrinfo_exit;
