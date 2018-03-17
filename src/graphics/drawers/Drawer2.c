@@ -1128,11 +1128,11 @@ static enum drawer_error_e convertSdlEvent_f(struct drawer_s *obj, SDL_Event *ev
 	        //
 	        // Doing the following helps avoid this kind of behaviour
 	        keyState = SDL_GetKeyboardState(NULL);
-            if (keyState && keyState[event->key.keysym.scancode]) {
-                Logw("Key \"%s\" still active", SDL_GetKeyName(event->key.keysym.sym));
-                ret = DRAWER_ERROR_EVENT;
-                break;
-            }
+	        if (keyState && keyState[event->key.keysym.scancode]) {
+	            Loge("Key \"%s\" still active", SDL_GetKeyName(event->key.keysym.sym));
+	            ret = DRAWER_ERROR_EVENT;
+	            break;
+	        }
 
 	        switch(event->key.keysym.sym) {
 	            case SDLK_ESCAPE:
