@@ -93,6 +93,8 @@ struct drawer_screen_s {
     SDL_Texture         *initialBgTexture;
 
     uint32_t            windowID;
+
+    volatile uint8_t    update;
 };
 
 struct drawer_private_data_s {
@@ -689,9 +691,13 @@ static enum drawer_error_e setBgColor_f(struct drawer_s *obj, struct gfx_rect_s 
         Loge("SDL_RenderFillRect() failed - %s", SDL_GetError());
         goto exit;
     }
-    
-    SDL_RenderPresent(renderer);
 
+    // In fullscreen, unlike SDL 2.0.5, SDL 2.0.8 does not refresh screen if
+    // RenderPresent() is called outside the main thread i.e thread that set
+    // the video mode
+    pData->screen.update = pData->screen.params.isFullScreen;
+
+    SDL_RenderPresent(renderer);
     ret = DRAWER_ERROR_NONE;
 
 exit:
@@ -766,7 +772,12 @@ static enum drawer_error_e restoreBgColor_f(struct drawer_s *obj, struct gfx_rec
             Loge("SDL_RenderFillRect() failed - %s", SDL_GetError());
             goto exit;
         }
-        
+
+        // In fullscreen, unlike SDL 2.0.5, SDL 2.0.8 does not refresh screen if
+        // RenderPresent() is called outside the main thread i.e thread that set
+        // the video mode
+        pData->screen.update = pData->screen.params.isFullScreen;
+
         SDL_RenderPresent(renderer);
         ret = DRAWER_ERROR_NONE;
     }
@@ -999,12 +1010,40 @@ static enum drawer_error_e getEvent_f(struct drawer_s *obj, struct gfx_event_s *
     
     struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
     enum drawer_error_e ret             = DRAWER_ERROR_EVENT;
+    int newEventReceived                = 0;
     
     gfxEvent->type = GFX_EVENT_TYPE_COUNT;
 
-    if (SDL_WaitEvent(&pData->event)) {
+    // In fullscreen, unlike SDL 2.0.5, SDL 2.0.8 does not refresh screen if
+    // RenderPresent() is called outside the main thread i.e thread that set
+    // the video mode
+    // As a consequence, video area is redrawn only after an event is received
+    // and convertSdlEvent_f() below called because this latter ends with a call
+    // to RenderPresent()
+    //
+    // getEvent_f() is called in the main thread so in fullscreen mode, RenderPresent()
+    // could be called here. To do so, waiting for events should not be a blocking call
+    // as SDL_WaitEvent() does
+    //
+    // => SDL_PollEvent() used in fullscreen mode otherwise SDL_WaitEvent() is used
+    //
+    // The main drawback of using PollEvent() and refreshing screen here might be an
+    // excessive CPU consumption
+    if (pData->screen.params.isFullScreen) {
+        newEventReceived = SDL_PollEvent(&pData->event);
+    }
+    else {
+        newEventReceived = SDL_WaitEvent(&pData->event);
+    }
+
+    if (newEventReceived) {
         Logd("Event received - type : %d", pData->event.type);
         ret =  convertSdlEvent_f(obj, &pData->event, gfxEvent);
+    }
+
+    if (pData->screen.update) {
+        pData->screen.update = 0;
+        SDL_RenderPresent(pData->screen.renderer);
     }
 
     return ret;
@@ -1690,6 +1729,11 @@ static enum drawer_error_e renderTexture_f(struct drawer_s *obj, enum gfx_target
         return DRAWER_ERROR_DRAW;
     }
 
+    // In fullscreen, unlike SDL 2.0.5, SDL 2.0.8 does not refresh screen if
+    // RenderPresent() is called outside the main thread i.e thread that set
+    // the video mode
+    pData->screen.update = pData->screen.params.isFullScreen;
+
     SDL_RenderPresent(renderer);
 
     return DRAWER_ERROR_NONE;
@@ -1785,7 +1829,7 @@ static enum drawer_error_e writeSurfaceToFile_f(struct drawer_s *obj, SDL_Surfac
             break;
 
         case GFX_IMAGE_FORMAT_JPG:
-            //IMG_SaveJPG(surface, inOut->path, 100); // Required : SDL2.0.8 and SDL_image2.0.3
+            IMG_SaveJPG(surface, inOut->path, 100);
             break;
 
         default:

@@ -324,7 +324,7 @@
         <Text stringId="3" fontId="2" colorId="7" size="25" />
         <Nav left="closeBtn" up="stopClientBtn" right="" down="hideEmojisBtn" />
         <OnClick>
-            <Handler name="multiInputs" data="saveVideoElement;videoZoneFromDevice;0" />
+            <Handler name="multiInputs" data="saveVideoElement;videoZoneFromDevice;1" />
         </OnClick>
       </Element>
 
@@ -348,7 +348,7 @@
         <Text stringId="6" fontId="1" colorId="0" size="15" />
         <Nav left="translateBtn" up="hideEmojisBtn" right="" down="stopClientBtn" />
         <OnClick>
-            <Handler name="takeScreenshot" data="0" />
+            <Handler name="takeScreenshot" data="1" />
         </OnClick>
       </Element>
 
