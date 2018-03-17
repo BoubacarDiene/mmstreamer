@@ -228,7 +228,7 @@
     <Elements>
 
       <!-- Title -->
-      <Element name="projectTitle" group="title" redrawGroup="0" type="2" x="365" y="50" width="280" height="50">
+      <Element name="projectTitle" group="title" redrawGroup="0" type="2" x="335" y="50" width="280" height="50">
         <Config visible="1" clickable="0" focusable="0" hasFocus="0" />
         <Text stringId="4" fontId="2" colorId="0" size="100" />
       </Element>
