@@ -12,7 +12,6 @@
 #
 #         - libexpat
 #         - libfreetype
-#         - libjpeg
 #         - libSDL
 #         - libSDL_image
 #         - libSDL_ttf
@@ -99,7 +98,7 @@ ifeq (${SDL_BUILD_VERSION},2)
 else
     DEPS_LDFLAGS += -lSDL -lSDL_image -lSDL_ttf
 endif
-DEPS_LDFLAGS     += -lfreetype -ljpeg -lexpat
+DEPS_LDFLAGS     += -lfreetype -lpng -ljpeg -lz -lexpat
 LDFLAGS          += ${DEPS_LDFLAGS}
 
 # Files

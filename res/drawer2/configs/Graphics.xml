@@ -318,6 +318,7 @@
         </OnClick>
       </Element>
 
+      <!-- Button to take a "screenshot" from from content of videoZoneFromDevice element -->
       <Element name="selfyBtn" group="menu" redrawGroup="0" type="2" x="845" y="105" width="100" height="100">
         <Config visible="1" clickable="1" focusable="1" hasFocus="0" />
         <Text stringId="3" fontId="2" colorId="7" size="25" />

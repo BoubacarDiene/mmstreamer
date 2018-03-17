@@ -253,7 +253,7 @@ static enum drawer_error_e initScreen_f(struct drawer_s *obj, struct gfx_screen_
     pData->screen.params = *screenParams;
     pData->video.params  = screenParams->video;
 
-    ret = initSdlComponents_f(obj, IMG_INIT_JPG);
+    ret = initSdlComponents_f(obj, IMG_INIT_JPG|IMG_INIT_PNG);
     if (ret != DRAWER_ERROR_NONE) {
         Loge("Failed to init SDL components");
         goto initSdlComponentsExit;
@@ -998,13 +998,16 @@ static enum drawer_error_e getEvent_f(struct drawer_s *obj, struct gfx_event_s *
     assert(obj && obj->pData && gfxEvent);
     
     struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
+    enum drawer_error_e ret             = DRAWER_ERROR_EVENT;
     
     gfxEvent->type = GFX_EVENT_TYPE_COUNT;
 
-	SDL_WaitEvent(&pData->event);
-	Logd("Event received - type : %d", pData->event.type);
+    if (SDL_WaitEvent(&pData->event)) {
+        Logd("Event received - type : %d", pData->event.type);
+        ret =  convertSdlEvent_f(obj, &pData->event, gfxEvent);
+    }
 
-    return convertSdlEvent_f(obj, &pData->event, gfxEvent);
+    return ret;
 }
 
 /*!
@@ -1778,9 +1781,11 @@ static enum drawer_error_e writeSurfaceToFile_f(struct drawer_s *obj, SDL_Surfac
             break;
 
         case GFX_IMAGE_FORMAT_PNG:
+            IMG_SavePNG(surface, inOut->path);
             break;
 
         case GFX_IMAGE_FORMAT_JPG:
+            //IMG_SaveJPG(surface, inOut->path, 100); // Required : SDL2.0.8 and SDL_image2.0.3
             break;
 
         default:

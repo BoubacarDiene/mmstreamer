@@ -7,7 +7,7 @@
 
   1.1- Launch binary
 
-    $ cd <path_to_root_directory>
+    $ cd <path_to_mmstreamer_sources>
     $ ./out/mmstreamer/bin/mmstreamer-<x.y>
 
     or in debug mode :
@@ -22,14 +22,14 @@
 
     - In case a "bitsPerPixel" different from the active framebuffer's depth is specified in
       Graphics.xml, mmstreamer will try to change depth. To make it work, "root" permission
-      is required
+      is required (E.g. Run mmstreamer as root))
 
     If you are using default xml config files provided in github, you should see
     video signal appeared in surface drawn by graphics module.
 
   1.2- Type the following address in your browser
 
-    http://127.0.0.1:8090/webcam or http://localhost:8090/webcam
+    http://127.0.0.1:9090/webcam or http://localhost:9090/webcam
 
     Without the "/webcam" part, you get an error page containing a redirection link.
 
@@ -50,7 +50,7 @@
 
   3.1- Open Makefile.in
 
-    $ cd <path_to_root_directory>
+    $ cd <path_to_mmstreamer_sources>
     $ vi build/Makefile.in
 
   3.2- Update macros

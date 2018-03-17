@@ -59,7 +59,7 @@
             link="0"
             mode="1"
             priority="2"
-            gfxDest="videoZoneFromClient"
+            gfxDest="videoZoneFromDevice"
             serverDest="" />
 
     <!--
