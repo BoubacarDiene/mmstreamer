@@ -4,7 +4,7 @@
 
 ### 1.1. Launch binary
 ```
-$ cd <path_to_mmstreamer_sources>
+$ cd mmstreamer_sources/
 $ ./out/mmstreamer/bin/mmstreamer-<x.y>
 ```
 or in debug mode :
@@ -58,7 +58,7 @@ http://<your_ip_address>:9090/webcam
 
 ### 3.1. Open Makefile.in
 ```
-$ cd <path_to_mmstreamer_sources>
+$ cd mmstreamer_sources/
 $ vi build/Makefile.in
 ```
 

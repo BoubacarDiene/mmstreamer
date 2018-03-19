@@ -83,7 +83,8 @@ of v4l2 API. It was only composed of one .c file which captured video signal fro
 personal webcam and made it available to HTTP clients.
 
 Because I think it can be useful to many people, I will make mmstreamer evolve by 
-gradually adding new features taking advantage of possibilities offered by v4l2 API:
+gradually adding new features taking advantage of possibilities offered by v4l2 API
+(among others) :
 
 - [x] Webcam video capture
 - [x] Simultaneously capture from several video devices
@@ -92,6 +93,8 @@ gradually adding new features taking advantage of possibilities offered by v4l2 
 - [x] Get frames from remote video streamers as a client
 - [x] Make mmstreamer extensible and controllable from [external libraries](https://github.com/BoubacarDiene/mmcontroller)
 - [ ] Play and stream local video files of any formats
+- [ ] Video recording
+- [ ] Motion detection
 - [ ] Support of TV tuners
 - [ ] Encryption to secure the data before transmission
 
