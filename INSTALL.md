@@ -2,14 +2,12 @@
 
 ## 1. Install dependencies
 
-### 1.1. Needed packages
-
 - build-essential
 - libv4l-dev
 - libx11-dev
 - libxext-dev
 - libjpeg8-dev
-- libpng16-dev
+- libpng16-dev (or libpng-dev)
 - zlib1g
 
 **Example on ubuntu 16.04 :**
@@ -24,15 +22,6 @@
     $ sudo apt install zlib1g-dev
 ```
 
-### 1.2. Maybe necessary to build SDL2_ttf
-```
-Create symbolic link to libGL.so.1
-
-Example on ubuntu 16.04 64 bits:
-
-$ sudo ln -s /usr/lib/x86_64-linux-gnu/mesa/libGL.so.1 /usr/lib/libGL.so
-```
-
 ## 2. Build / Reset
 
 ### 2.1. Build and install mmstreamer
@@ -42,21 +31,8 @@ $ cd mmstreamer_sources/
 $ make all install
 ```
 
-**Note** : mmstreamer_sources/out/ is created. It contains :
-```
-build/ : build informations
-mmstreamer/ :
-    |
-    --> Application's binary in bin/
-    |
-    --> .h files in inc/ (to use dynamic libraries)
-    |
-    --> Dynamic libraries in lib/ (Can be used alone; no need of other modules)
-    |
-    --> Xml config files in res/
-
-mmstreamer.tar.gz : "mmstreamer/" directory packaged
-```
+**Note** :
+Please, see [TROUBLESHOOT](TROUBLESHOOT.md) if you encounter problems compiling mmstreamer.
 
 ### 2.2. Clean build directory
 ```
