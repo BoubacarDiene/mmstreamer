@@ -3,7 +3,8 @@
 ## 0. Getting started
 
 - [INSTALL](INSTALL.md) : Prepare your environment and build mmstreamer project
-- [HOWTO](HOWTO.md)     : Run mmstreamer + update configuration files
+- [HOWTO](HOWTO.md) : Run mmstreamer + update configuration files
+- [TROUBLESHOOT](TROUBLESHOOT.md) : Fix issues encountered when building and/or running mmstreamer
 
 ## 1. Description
 

@@ -12,7 +12,8 @@ $ sudo ln -s x86_64-linux-gnu/mesa/libGL.so.1 libGL.so
 
 ## 2. Fix "/usr/bin/ld: cannot find -lpng"
 
-Create a symbolic link to the installed version of libpng.
+Supposing that "-dev" version of libpng is installed and "/usr/lib/x86_64-linux-gnu/libpng.so"
+does not exist, create a symbolic link to the installed version of libpng.
 Example on ubuntu 17.10 64 bits :
 
 ```
