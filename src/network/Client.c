@@ -779,6 +779,10 @@ static void watcherTaskFct_f(struct task_params_s *params)
                                              &ctx->httpBuffer, &ctx->nbRead) == ERROR)
                 || (ctx->nbRead == 0)) {
                 Loge("Failed to receive http content's header");
+                close(ctx->client->sock);
+                if (ctx->params.onLinkBrokenCb) {
+                    ctx->params.onLinkBrokenCb(&ctx->params, ctx->params.userData);
+                }
                 goto exitNoFree;
             }
             

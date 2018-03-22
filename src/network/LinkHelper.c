@@ -723,7 +723,22 @@ static int8_t readData_f(struct link_helper_s *obj, struct link_s *src, struct l
                 Loge("Failed to receive data - %s", strerror(errno));
                 break;
             }
-            
+
+            // From recvmsg manpage :
+            //
+            // "When a stream socket peer has performed an orderly shutdown, the return value
+            //  will be 0 (the traditional "end-of-file" return).
+            //
+            // Datagram sockets in various domains (e.g., the UNIX and Internet domains) permit
+            // zero-length datagrams.  When such a datagram is received, the  return value is 0.
+            //
+            // The value 0 may also be returned if the requested number of bytes to receive from a
+            // stream socket was 0"
+            if (nbBytes == 0) {
+                Loge("No more data received from server");
+                break;
+            }
+
             pData->nbBytesReceived += nbBytes;
         }
         while ((pData->nbBytesReceived < buffer->length) || (errno == EINTR));
