@@ -787,8 +787,8 @@ static void watcherTaskFct_f(struct task_params_s *params)
             }
             
             pData->linkHelper->parseHttpContent(pData->linkHelper, &ctx->httpContent);
-            Logd("Http Content : %s / read = %ld / bodyStart = %d",
-                    ctx->httpContent.str, ctx->nbRead, ctx->httpContent.bodyStart);
+            Logd("Http Content length : %ld / read = %ld / bodyStart = %d",
+                    ctx->httpContent.length, ctx->nbRead, ctx->httpContent.bodyStart);
             
             if (ctx->httpContent.length == 0) {
                 Logw("Bad HTTP response");
@@ -805,7 +805,12 @@ static void watcherTaskFct_f(struct task_params_s *params)
                 Loge("Failed to read from server");
                 goto exit;
             }
-            
+
+            if ((ctx->nbBodyRead + ctx->nbRead) != ctx->httpContent.length) {
+                Logw("Incomplete frame => ignored");
+                goto exit;
+            }
+
             // Adjust buffer size if necessary
             if (ctx->httpContent.length > ctx->params.maxBufferSize) {
                 Logw("Ajusting maxBufferSize from %lu bytes to %lu bytes",
@@ -818,13 +823,9 @@ static void watcherTaskFct_f(struct task_params_s *params)
             }
 
             // Copy received data
-            memcpy(ctx->bufferIn.data,
-                   ctx->httpContent.str + ctx->httpContent.bodyStart,
-                   ctx->nbBodyRead);
+            memcpy(ctx->bufferIn.data, ctx->httpContent.str + ctx->httpContent.bodyStart, ctx->nbBodyRead);
             memcpy(ctx->bufferIn.data + ctx->nbBodyRead, ctx->httpBuffer.data, ctx->nbRead);
             ctx->bufferIn.length = ctx->nbBodyRead + ctx->nbRead;
-            Logd("Http body length : read = %ld / expected : %ld",
-                    ctx->bufferIn.length, ctx->httpBuffer.length);
         }
         else if (pData->linkHelper->readData(pData->linkHelper,
                                              ctx->client, ctx->server,

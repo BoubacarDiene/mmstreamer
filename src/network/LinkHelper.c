@@ -498,7 +498,15 @@ static void prepareHttpContent_f(struct link_helper_s *obj, struct http_content_
 static void parseHttpContent_f(struct link_helper_s *obj, struct http_content_s *inOut)
 {
     assert(obj && inOut);
-    
+
+    // Ignore frames that do not start with a boundary
+    const char * const boundary = strstr(inOut->str, "--");
+    if (!boundary) {
+        Logw("No boundary => ignored");
+        inOut->length = 0;
+        return;
+    }
+
     memset(inOut->mime, '\0', sizeof(inOut->mime));
     
     const char * const CONTENT_TYPE   = "Content-Type: ";
