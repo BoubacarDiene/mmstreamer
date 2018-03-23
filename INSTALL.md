@@ -3,24 +3,26 @@
 ## 1. Install dependencies
 
 - build-essential
-- libv4l-dev
-- libx11-dev
-- libxext-dev
-- libjpeg8-dev
-- libpng16-dev (or libpng-dev)
-- zlib1g
+- libv4l
+- libx11
+- libxext
+- libjpeg
+- libpng
+- zlib
 
 **Example on ubuntu 16.04 :**
 ```
-    $ sudo apt update
-    $ sudo apt install build-essential
-    $ sudo apt install libv4l-dev
-    $ sudo apt install libx11-dev
-    $ sudo apt install libxext-dev
-    $ sudo apt install libjpeg8-dev
-    $ sudo apt install libpng16-dev
-    $ sudo apt install zlib1g-dev
+$ sudo apt update
+$ sudo apt install build-essential
+$ sudo apt install libv4l-dev
+$ sudo apt install libx11-dev
+$ sudo apt install libxext-dev
+$ sudo apt install libjpeg8-dev
+$ sudo apt install libpng16-dev
+$ sudo apt install zlib1g-dev
 ```
+
+**Note :** For libpng, try installing "libpng-dev" instead if above command fails
 
 ## 2. Build / Reset
 
