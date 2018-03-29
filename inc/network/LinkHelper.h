@@ -132,6 +132,8 @@ typedef void (*link_helper_parse_http_content_f)(struct link_helper_s *obj,
 
 typedef int8_t (*link_helper_get_peer_name_f)(struct link_helper_s *obj, struct link_s *link,
                                               struct recipient_s *result);
+typedef int8_t (*link_helper_get_sock_name_f)(struct link_helper_s *obj, struct link_s *link,
+                                              struct recipient_s *result);
 
 typedef int8_t (*link_helper_set_blocking_f)(struct link_helper_s *obj, struct link_s *link,
                                              uint8_t blocking);
@@ -286,6 +288,7 @@ struct link_helper_s {
     link_helper_parse_http_content_f           parseHttpContent;
 
     link_helper_get_peer_name_f                getPeerName;
+    link_helper_get_sock_name_f                getSockName;
 
     link_helper_set_blocking_f                 setBlocking;
     link_helper_is_ready_for_writing_f         isReadyForWriting;

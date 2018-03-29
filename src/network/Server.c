@@ -896,10 +896,31 @@ static void watcherTaskFct_f(struct task_params_s *params)
             if (!ctx->httpGet.isHttpGet
                 || strcmp(ctx->params.recipient.server.path, ctx->httpGet.path)) {
                 Loge("Bad HTTP request");
-                
+
+                // A redirect link is included in Http 400/404 answer. It can be used by user
+                // to go to the suitable location of the stream.
+                // However, when creating server with INADDR_ANY, it listens to all network
+                // interfaces so "0.0.0.0" is considered to be its address. Thus, we have to
+                // get the true IP address and that needs the socket returned by "accept()"
+                // call meaning that this has to be done each time a client is connected
+                // E.g. 127.0.0.1 is returned when connecting with the computer on wich the
+                //                   server is running
+                //      192.168.1.2 when using a device on the same sub-network as the server
+                //      <IP address of a 3rd interface> ...
+                char *ipstr   = ctx->ipstr;
+                uint16_t port = ctx->port;
+
+                if (ctx->ipstr[0] == '0') {
+                    struct recipient_s result = {0};
+                    if (pData->linkHelper->getSockName(pData->linkHelper, client, &result) == DONE) {
+                        ipstr = result.host;
+                        port  = (uint16_t)atoi(result.service);
+                    }
+                }
+
                 if (!ctx->httpGet.isHttpGet) {
-                    strcpy(ctx->http400BadRequest.ip, ctx->ipstr);
-                    ctx->http400BadRequest.port = ctx->port;
+                    strcpy(ctx->http400BadRequest.ip, ipstr);
+                    ctx->http400BadRequest.port = port;
                     strcpy(ctx->http400BadRequest.path, ctx->params.recipient.server.path);
                         
                     pData->linkHelper->prepareHttp400BadRequest(pData->linkHelper,
@@ -910,8 +931,8 @@ static void watcherTaskFct_f(struct task_params_s *params)
                     ctx->watcherTempBuffer.length = strlen(ctx->http400BadRequest.str);
                 }
                 else {
-                    strcpy(ctx->http404NotFound.ip, ctx->ipstr);
-                    ctx->http404NotFound.port = ctx->port;
+                    strcpy(ctx->http404NotFound.ip, ipstr);
+                    ctx->http404NotFound.port = port;
                     strcpy(ctx->http404NotFound.path, ctx->params.recipient.server.path);
                     strcpy(ctx->http404NotFound.requestedPath, ctx->httpGet.path);
 

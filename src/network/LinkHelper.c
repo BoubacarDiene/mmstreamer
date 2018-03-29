@@ -194,6 +194,8 @@ static void parseHttpContent_f(struct link_helper_s *obj, struct http_content_s 
 
 static int8_t getPeerName_f(struct link_helper_s *obj, struct link_s *link,
                             struct recipient_s *result);
+static int8_t getSockName_f(struct link_helper_s *obj, struct link_s *link,
+                            struct recipient_s *result);
 
 static int8_t setBlocking_f(struct link_helper_s *obj, struct link_s *link, uint8_t blocking);
 static uint8_t isReadyForWriting_f(struct link_helper_s *obj, struct link_s *link,
@@ -250,6 +252,7 @@ void LinkHelper_Init(struct link_helper_s **obj)
     (*obj)->parseHttpContent         = parseHttpContent_f;
     
     (*obj)->getPeerName              = getPeerName_f;
+    (*obj)->getSockName              = getSockName_f;
     
     (*obj)->setBlocking              = setBlocking_f;
     (*obj)->isReadyForWriting        = isReadyForWriting_f;
@@ -588,6 +591,43 @@ static int8_t getPeerName_f(struct link_helper_s *obj, struct link_s *link,
 
     Logd("Peer IP address: %s", result->host);
     Logd("Peer port      : %s", result->service);
+
+    return DONE;
+}
+
+/*!
+ *
+ */
+static int8_t getSockName_f(struct link_helper_s *obj, struct link_s *link,
+                            struct recipient_s *result)
+{
+    assert(obj && link && result);
+    
+    socklen_t len;
+    struct sockaddr_storage addr;
+
+    len = sizeof(struct sockaddr_storage);
+
+    if (getsockname(link->sock, (struct sockaddr*)&addr, &len) < 0) {
+        Loge("getsockname() failed - %s", strerror(errno));
+        return ERROR;
+    }
+
+    if (addr.ss_family == AF_INET) {
+        struct sockaddr_in *s = (struct sockaddr_in*)&addr;
+
+        inet_ntop(AF_INET, &s->sin_addr, result->host, sizeof(result->host));
+        sprintf(result->service, "%d", ntohs(s->sin_port));
+    }
+    else {
+        struct sockaddr_in6 *s = (struct sockaddr_in6*)&addr;
+
+        inet_ntop(AF_INET6, &s->sin6_addr, result->host, sizeof(result->host));
+        sprintf(result->service, "%d", ntohs(s->sin6_port));
+    }
+
+    Logd("Sock IP address: %s", result->host);
+    Logd("Sock port      : %s", result->service);
 
     return DONE;
 }
