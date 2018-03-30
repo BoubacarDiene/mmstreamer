@@ -1,5 +1,7 @@
 # mmstreamer
 
+[![Build Status](https://travis-ci.org/BoubacarDiene/mmstreamer.svg?branch=master)](https://travis-ci.org/BoubacarDiene/mmstreamer)
+
 ## 0. Getting started
 
 - [INSTALL](INSTALL.md) : Prepare your environment and build mmstreamer project
@@ -98,6 +100,7 @@ gradually adding new features taking advantage of possibilities offered by v4l2 
 - [ ] Motion detection
 - [ ] Support of TV tuners
 - [ ] Encryption to secure the data before transmission
+- [ ] Code cleaning
 
 ## 3. License
 

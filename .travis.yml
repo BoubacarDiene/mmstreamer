@@ -1,0 +1,26 @@
+language: c
+
+sudo: true
+
+os:
+  - linux
+
+compiler:
+  - gcc
+
+install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y build-essential
+  - sudo apt-get install -y libv4l-dev
+  - sudo apt-get install -y libx11-dev
+  - sudo apt-get install -y libxext-dev
+  - sudo apt-get install -y libjpeg8-dev
+  - sudo apt-get install -y libpng-dev
+  - sudo apt-get install -y zlib1g-dev
+
+before_script:
+  - sudo ln -s /usr/lib/x86_64-linux-gnu/mesa/libGL.so.1 /usr/lib/libGL.so
+
+script:
+  - make all install
+
