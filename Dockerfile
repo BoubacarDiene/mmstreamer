@@ -1,6 +1,6 @@
 ##
 # docker build -t  mmstreamer_docker_image .
-# docker run --rm -w="/mmstreamer" -v $(pwd):/mmstreamer -it mmstreamer_docker_image:latest /bin/bash
+# docker run -it -u $(id -u) --rm -w="/mmstreamer" -v $(pwd):/mmstreamer mmstreamer_docker_image:latest /bin/bash
 ##
 
 # Download base image ubuntu 16.04
@@ -20,6 +20,9 @@ RUN apt-get update && apt-get -y upgrade && apt-get install -y \
         libx11-dev \
         libxext-dev \
         openssh-server \
+        tree \
+        valgrind \
+        vim \
         zlib1g-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
