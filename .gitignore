@@ -1,0 +1,5 @@
+# Folders
+build/artifacts/
+build/logs/
+build/temp/
+build/test/
