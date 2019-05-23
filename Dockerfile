@@ -20,6 +20,7 @@ RUN apt-get update && apt-get -y upgrade && apt-get install -y \
         libx11-dev \
         libxext-dev \
         openssh-server \
+        ruby \
         tree \
         valgrind \
         vim \
@@ -28,6 +29,9 @@ RUN apt-get update && apt-get -y upgrade && apt-get install -y \
 
 # Create symlinks
 RUN cd /usr/lib/ && ln -s x86_64-linux-gnu/mesa/libGL.so.1 libGL.so && cd -
+
+# Install ceedling
+RUN gem install ceedling
 
 # Expose SSH port
 EXPOSE 22
