@@ -76,7 +76,7 @@ static void onVideo4ServerCb(struct video_buffer_s *videoBuffer, void *userData)
  */
 enum listeners_error_e setVideosListeners_f(struct listeners_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
     
     struct listeners_params_s *listenersParams = &obj->params;
     struct input_s *input                      = &listenersParams->ctx->input;
@@ -107,9 +107,9 @@ enum listeners_error_e setVideosListeners_f(struct listeners_s *obj)
         if (*nbVideoListeners > 0) {
             struct videos_listeners_private_data_s *pData;
 
-            assert((*videoListeners = calloc(*nbVideoListeners,
+            ASSERT((*videoListeners = calloc(*nbVideoListeners,
                                              sizeof(struct video_listener_s*))));
-            assert((pData = calloc(1, sizeof(struct videos_listeners_private_data_s))));
+            ASSERT((pData = calloc(1, sizeof(struct videos_listeners_private_data_s))));
 
             pData->videoIndex      = videoIndex;
             pData->listenersParams = listenersParams;
@@ -118,7 +118,7 @@ enum listeners_error_e setVideosListeners_f(struct listeners_s *obj)
 
             if (input->graphicsConfig.enable && videoDevice->graphicsDest) {
                 (*videoListeners)[listenerIndex] = calloc(1, sizeof(struct video_listener_s));
-                assert((*videoListeners)[listenerIndex]);
+                ASSERT((*videoListeners)[listenerIndex]);
 
                 videoListener = (*videoListeners)[listenerIndex];
                 strcpy(videoListener->name, VIDEO_LISTENER4GFX_NAME);
@@ -130,7 +130,7 @@ enum listeners_error_e setVideosListeners_f(struct listeners_s *obj)
         
             if (input->serversConfig.enable && videoDevice->serverDest) {
                 (*videoListeners)[listenerIndex] = calloc(1, sizeof(struct video_listener_s));
-                assert((*videoListeners)[listenerIndex]);
+                ASSERT((*videoListeners)[listenerIndex]);
 
                 videoListener = (*videoListeners)[listenerIndex];
                 strcpy(videoListener->name, VIDEO_LISTENER4SERVER_NAME);
@@ -148,7 +148,7 @@ enum listeners_error_e setVideosListeners_f(struct listeners_s *obj)
  */
 enum listeners_error_e unsetVideosListeners_f(struct listeners_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
     
     struct listeners_params_s *listenersParams    = &obj->params;
     struct videos_infos_s *videosInfos            = &listenersParams->ctx->params.videosInfos;
@@ -194,7 +194,7 @@ enum listeners_error_e unsetVideosListeners_f(struct listeners_s *obj)
  */
 static void onVideo4GfxCb(struct video_buffer_s *videoBuffer, void *userData)
 {
-    assert(videoBuffer && userData);
+    ASSERT(videoBuffer && userData);
     
     struct videos_listeners_private_data_s *pData = (struct videos_listeners_private_data_s*)userData;
     struct context_s *ctx                         = pData->listenersParams->ctx;
@@ -237,7 +237,7 @@ static void onVideo4GfxCb(struct video_buffer_s *videoBuffer, void *userData)
  */
 static void onVideo4ServerCb(struct video_buffer_s *videoBuffer, void *userData)
 {
-    assert(videoBuffer && userData);
+    ASSERT(videoBuffer && userData);
     
     struct videos_listeners_private_data_s *pData = (struct videos_listeners_private_data_s*)userData;
     struct context_s *ctx                         = pData->listenersParams->ctx;

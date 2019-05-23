@@ -123,10 +123,10 @@ static enum drawer_error_e adjustDrawingRect_f(struct drawer_s *obj, enum gfx_ta
  */
 enum drawer_error_e Drawer_Init(struct drawer_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(struct drawer_s))));
+    ASSERT(obj && (*obj = calloc(1, sizeof(struct drawer_s))));
     
     struct drawer_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct drawer_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct drawer_private_data_s))));
     
     (*obj)->initScreen        = initScreen_f;
     (*obj)->uninitScreen      = uninitScreen_f;
@@ -145,7 +145,7 @@ enum drawer_error_e Drawer_Init(struct drawer_s **obj)
     
     pData->videoFmt = -1;
     
-    assert((pData->lock = SDL_CreateMutex()));
+    ASSERT((pData->lock = SDL_CreateMutex()));
     
     (*obj)->pData = (void*)pData;
     
@@ -157,7 +157,7 @@ enum drawer_error_e Drawer_Init(struct drawer_s **obj)
  */
 enum drawer_error_e Drawer_UnInit(struct drawer_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    ASSERT(obj && *obj && (*obj)->pData);
     
     struct drawer_private_data_s *pData = (struct drawer_private_data_s*)((*obj)->pData);
     
@@ -179,7 +179,7 @@ enum drawer_error_e Drawer_UnInit(struct drawer_s **obj)
  */
 static enum drawer_error_e initScreen_f(struct drawer_s *obj, struct gfx_screen_s *screenParams)
 {
-    assert(obj && obj->pData && screenParams);
+    ASSERT(obj && obj->pData && screenParams);
     
     struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
     
@@ -325,7 +325,7 @@ exit:
  */
 static enum drawer_error_e uninitScreen_f(struct drawer_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
 
@@ -351,7 +351,7 @@ static enum drawer_error_e uninitScreen_f(struct drawer_s *obj)
 static enum drawer_error_e drawVideo_f(struct drawer_s *obj, struct gfx_rect_s *rect,
                                        struct buffer_s *buffer)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     if (!rect || !buffer || !buffer->data) {
         //Loge("Bad arguments --> Probably initializing screen");
@@ -411,7 +411,7 @@ static enum drawer_error_e drawVideo_f(struct drawer_s *obj, struct gfx_rect_s *
 static enum drawer_error_e drawImage_f(struct drawer_s *obj, struct gfx_rect_s *rect,
                                        struct gfx_image_s *image, enum gfx_target_e target)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     if (!rect || !image) {
         Loge("Bad arguments");
@@ -491,7 +491,7 @@ exit:
 static enum drawer_error_e drawText_f(struct drawer_s *obj, struct gfx_rect_s *rect,
                                       struct gfx_text_s *text, enum gfx_target_e target)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     if (!rect || !text) {
         Loge("Bad arguments");
@@ -568,7 +568,7 @@ exit:
 static enum drawer_error_e setBgColor_f(struct drawer_s *obj, struct gfx_rect_s *rect,
                                         struct gfx_color_s *color, enum gfx_target_e target)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     if (!color) {
         Loge("Bad arguments");
@@ -608,7 +608,7 @@ static enum drawer_error_e setBgColor_f(struct drawer_s *obj, struct gfx_rect_s 
 static enum drawer_error_e saveBuffer_f(struct drawer_s *obj, struct buffer_s *buffer,
                                         struct gfx_image_s *inOut)
 {
-    assert(obj && obj->pData && buffer && inOut);
+    ASSERT(obj && obj->pData && buffer && inOut);
 
     if (!buffer->data) {
         Loge("No data provided");
@@ -685,7 +685,7 @@ exit:
 static enum drawer_error_e saveTarget_f(struct drawer_s *obj, struct gfx_image_s *inOut,
                                         struct gfx_rect_s *srcRect, enum gfx_target_e target)
 {
-    assert(obj && obj->pData && inOut);
+    ASSERT(obj && obj->pData && inOut);
 
     (void)srcRect;
     (void)target;
@@ -726,7 +726,7 @@ static enum drawer_error_e saveTarget_f(struct drawer_s *obj, struct gfx_image_s
  */
 static enum drawer_error_e getEvent_f(struct drawer_s *obj, struct gfx_event_s *gfxEvent)
 {
-    assert(obj && obj->pData && gfxEvent);
+    ASSERT(obj && obj->pData && gfxEvent);
     
     struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
     
@@ -789,7 +789,7 @@ static enum drawer_error_e getEvent_f(struct drawer_s *obj, struct gfx_event_s *
  */
 static enum drawer_error_e stopAwaitingEvent_f(struct drawer_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     SDL_Event userEvent;
     userEvent.type = SDL_USEREVENT;
@@ -805,7 +805,7 @@ static enum drawer_error_e stopAwaitingEvent_f(struct drawer_s *obj)
 static enum drawer_error_e adjustDrawingRect_f(struct drawer_s *obj, enum gfx_target_e target,
                                                SDL_Rect *inOut)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
 

@@ -75,7 +75,7 @@ extern enum controllers_error_e notify_f(struct controllers_s *obj,
 enum controllers_error_e Controllers_Init(struct controllers_s **obj,
                                           struct controllers_params_s *params)
 {
-    assert(obj && params && (*obj = calloc(1, sizeof(struct controllers_s))));
+    ASSERT(obj && params && (*obj = calloc(1, sizeof(struct controllers_s))));
 
     (*obj)->loadLibs   = loadLibs_f;
     (*obj)->unloadLibs = unloadLibs_f;
@@ -107,7 +107,7 @@ enum controllers_error_e Controllers_Init(struct controllers_s **obj,
  */
 enum controllers_error_e Controllers_UnInit(struct controllers_s **obj)
 {
-    assert(obj && *obj);
+    ASSERT(obj && *obj);
 
     free(*obj);
     *obj = NULL;

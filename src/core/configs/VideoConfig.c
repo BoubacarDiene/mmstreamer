@@ -154,7 +154,7 @@ uint32_t gNbVideoAwaitModes = (uint32_t)(sizeof(gVideoAwaitModes) / sizeof(gVide
 enum configs_error_e getVideoConfig_f(struct configs_s *obj, struct video_config_s *config,
                                       struct video_config_choice_s *configChoice)
 {
-    assert(obj && config && configChoice);
+    ASSERT(obj && config && configChoice);
 
     uint32_t i, j;
 

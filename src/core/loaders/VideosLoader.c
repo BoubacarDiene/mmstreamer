@@ -87,7 +87,7 @@ static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 enum loaders_error_e loadVideosXml_f(struct loaders_s *obj, struct context_s *ctx,
                                      struct xml_videos_s *xmlVideos)
 {
-    assert(obj && ctx && xmlVideos);
+    ASSERT(obj && ctx && xmlVideos);
     
     struct parser_s *parserObj = ctx->parserObj;
     struct input_s *input      = &ctx->input;
@@ -136,7 +136,7 @@ enum loaders_error_e loadVideosXml_f(struct loaders_s *obj, struct context_s *ct
  */
 enum loaders_error_e unloadVideosXml_f(struct loaders_s *obj, struct xml_videos_s *xmlVideos)
 {
-    assert(obj && xmlVideos);
+    ASSERT(obj && xmlVideos);
     
     uint8_t i, j;
     struct xml_video_s *video;
@@ -212,7 +212,7 @@ enum loaders_error_e unloadVideosXml_f(struct loaders_s *obj, struct xml_videos_
  */
 static void onVideoStartCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     (void)attrs;
     
@@ -222,7 +222,7 @@ static void onVideoStartCb(void *userData, const char **attrs)
     
     xmlVideos->videos = realloc(xmlVideos->videos,
                                 (xmlVideos->nbVideos + 1) * sizeof(struct xml_video_s));
-    assert(xmlVideos->videos);
+    ASSERT(xmlVideos->videos);
     
     memset(&xmlVideos->videos[xmlVideos->nbVideos], 0, sizeof(struct xml_video_s));
 }
@@ -232,7 +232,7 @@ static void onVideoStartCb(void *userData, const char **attrs)
  */
 static void onVideoEndCb(void *userData)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
 
@@ -246,7 +246,7 @@ static void onVideoEndCb(void *userData)
  */
 static void onGeneralCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     struct xml_video_s *video      = &xmlVideos->videos[xmlVideos->nbVideos];
@@ -306,7 +306,7 @@ static void onGeneralCb(void *userData, const char **attrs)
  */
 static void onDeviceCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     struct xml_video_s *video      = &xmlVideos->videos[xmlVideos->nbVideos];
@@ -356,7 +356,7 @@ static void onDeviceCb(void *userData, const char **attrs)
  */
 static void onCroppingAreaCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
 
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     struct xml_video_s *video      = &xmlVideos->videos[xmlVideos->nbVideos];
@@ -406,7 +406,7 @@ static void onCroppingAreaCb(void *userData, const char **attrs)
  */
 static void onComposingAreaCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
 
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     struct xml_video_s *video      = &xmlVideos->videos[xmlVideos->nbVideos];
@@ -456,7 +456,7 @@ static void onComposingAreaCb(void *userData, const char **attrs)
  */
 static void onBufferCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     struct xml_video_s *video      = &xmlVideos->videos[xmlVideos->nbVideos];
@@ -494,7 +494,7 @@ static void onBufferCb(void *userData, const char **attrs)
  */
 static void onConfigStartCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     (void)attrs;
     
@@ -504,7 +504,7 @@ static void onConfigStartCb(void *userData, const char **attrs)
     
     xmlVideos->configs = realloc(xmlVideos->configs,
                                  (xmlVideos->nbConfigs + 1) * sizeof(struct xml_config_s));
-    assert(xmlVideos->configs);
+    ASSERT(xmlVideos->configs);
     
     memset(&xmlVideos->configs[xmlVideos->nbConfigs], 0, sizeof(struct xml_config_s));
 }
@@ -514,7 +514,7 @@ static void onConfigStartCb(void *userData, const char **attrs)
  */
 static void onConfigEndCb(void *userData)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
 
@@ -528,7 +528,7 @@ static void onConfigEndCb(void *userData)
  */
 static void onCapabilitiesStartCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     (void)attrs;
 
@@ -540,7 +540,7 @@ static void onCapabilitiesStartCb(void *userData, const char **attrs)
  */
 static void onCapabilitiesEndCb(void *userData)
 {
-    assert(userData);
+    ASSERT(userData);
 
     Logd("End parsing capabilities");
 }
@@ -550,7 +550,7 @@ static void onCapabilitiesEndCb(void *userData)
  */
 static void onItemCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     struct xml_config_s *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
@@ -561,7 +561,7 @@ static void onItemCb(void *userData, const char **attrs)
     
     config->capabilities = realloc(config->capabilities,
                                    (config->nbItems + 1) * sizeof(struct xml_capability_s));
-    assert(config->capabilities);
+    ASSERT(config->capabilities);
     
     memset(&config->capabilities[config->nbItems], 0, sizeof(struct xml_capability_s));
 
@@ -597,7 +597,7 @@ static void onItemCb(void *userData, const char **attrs)
  */
 static void onBufferTypeCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     struct xml_config_s *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
@@ -632,7 +632,7 @@ static void onBufferTypeCb(void *userData, const char **attrs)
  */
 static void onPixelFormatCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     struct xml_config_s *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
@@ -667,7 +667,7 @@ static void onPixelFormatCb(void *userData, const char **attrs)
  */
 static void onColorspaceCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     struct xml_config_s *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
@@ -702,7 +702,7 @@ static void onColorspaceCb(void *userData, const char **attrs)
  */
 static void onMemoryCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     struct xml_config_s *config    = &xmlVideos->configs[xmlVideos->nbConfigs];
@@ -737,7 +737,7 @@ static void onMemoryCb(void *userData, const char **attrs)
  */
 static void onAwaitModeCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_videos_s *xmlVideos = (struct xml_videos_s*)userData;
     struct xml_config_s *config    = &xmlVideos->configs[xmlVideos->nbConfigs];

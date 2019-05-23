@@ -83,7 +83,7 @@ uint32_t gNbMultiInputsHandlers = (uint32_t)(sizeof(gMultiInputsHandlers)
 static enum handlers_error_e saveVideoElement(struct handlers_s *obj, char *targetName,
                                               void *pData, char *handlerData)
 {
-    assert(obj && obj->pData && targetName);
+    ASSERT(obj && obj->pData && targetName);
 
     if (!handlerData) {
         Loge("Handler data is expected");
@@ -146,7 +146,7 @@ static enum handlers_error_e saveVideoElement(struct handlers_s *obj, char *targ
 static enum handlers_error_e updateText(struct handlers_s *obj, char *targetName, void *pData,
                                         char *handlerData)
 {
-    assert(obj && obj->pData && targetName);
+    ASSERT(obj && obj->pData && targetName);
 
     if (!handlerData) {
         Loge("Handler data is expected");
@@ -206,7 +206,7 @@ static enum handlers_error_e updateText(struct handlers_s *obj, char *targetName
 static enum handlers_error_e updateImage(struct handlers_s *obj, char *targetName, void *pData,
                                          char *handlerData)
 {
-    assert(obj && obj->pData && targetName);
+    ASSERT(obj && obj->pData && targetName);
 
     if (!handlerData) {
         Loge("Handler data is expected");
@@ -266,7 +266,7 @@ static enum handlers_error_e updateImage(struct handlers_s *obj, char *targetNam
 static enum handlers_error_e updateNav(struct handlers_s *obj, char *targetName, void *pData,
                                        char *handlerData)
 {
-    assert(obj && obj->pData && targetName);
+    ASSERT(obj && obj->pData && targetName);
 
     (void)pData;
 
@@ -329,7 +329,7 @@ static enum handlers_error_e updateNav(struct handlers_s *obj, char *targetName,
 static enum handlers_error_e sendGfxEvent(struct handlers_s *obj, char *targetName, void *pData,
                                           char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)targetName;
     (void)pData;

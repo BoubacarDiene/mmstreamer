@@ -134,13 +134,13 @@ static void releaseCb(struct list_s *obj, void *element);
  */
 enum client_error_e Client_Init(struct client_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(struct client_s))));
+    ASSERT(obj && (*obj = calloc(1, sizeof(struct client_s))));
 
     struct client_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct client_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct client_private_data_s))));
     
     LinkHelper_Init(&pData->linkHelper);
-    assert(pData->linkHelper);
+    ASSERT(pData->linkHelper);
     
     struct list_params_s listParams = {0};
     listParams.compareCb = compareCb;
@@ -178,7 +178,7 @@ exit:
  */
 enum client_error_e Client_UnInit(struct client_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    ASSERT(obj && *obj && (*obj)->pData);
     
     struct client_private_data_s *pData = (struct client_private_data_s*)((*obj)->pData);
     
@@ -202,7 +202,7 @@ enum client_error_e Client_UnInit(struct client_s **obj)
  */
 static enum client_error_e start_f(struct client_s *obj, struct client_params_s *params)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
 
     struct client_context_s *ctx = NULL;
 
@@ -213,7 +213,7 @@ static enum client_error_e start_f(struct client_s *obj, struct client_params_s 
     }
 
     /* Init context */
-    assert((ctx = calloc(1, sizeof(struct client_context_s))));
+    ASSERT((ctx = calloc(1, sizeof(struct client_context_s))));
     ctx->params = *params;
     
     /* Init socket */
@@ -313,7 +313,7 @@ exit:
  */
 static enum client_error_e stop_f(struct client_s *obj, struct client_params_s *params)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
 
     struct client_context_s *ctx = NULL;
     enum client_error_e ret      = CLIENT_ERROR_NONE;
@@ -346,7 +346,7 @@ exit:
 static enum client_error_e sendData_f(struct client_s *obj, struct client_params_s *params,
                                       struct buffer_s *buffer)
 {
-    assert(obj && obj->pData && params && buffer);
+    ASSERT(obj && obj->pData && params && buffer);
 
     struct client_private_data_s *pData = (struct client_private_data_s*)(obj->pData);
     
@@ -391,14 +391,14 @@ exit:
 static enum client_error_e openClientSocket_f(struct client_context_s *ctx,
                                               struct link_helper_s *linkHelper)
 {
-    assert(ctx && linkHelper);
+    ASSERT(ctx && linkHelper);
     
     if ((ctx->params.mode == LINK_MODE_HTTP) && (ctx->params.link != LINK_TYPE_INET_STREAM)) {
         Loge("Bad config : mode = HTTP but link != INET_STREAM");
         return CLIENT_ERROR_PARAMS;
     }
     
-    assert((ctx->client = calloc(1, sizeof(struct link_s)))
+    ASSERT((ctx->client = calloc(1, sizeof(struct link_s)))
             && (ctx->server = calloc(1, sizeof(struct link_s))));
     
     ctx->client->domain = ((ctx->params.link == LINK_TYPE_INET_STREAM)
@@ -599,7 +599,7 @@ getaddrinfo_exit:
  */
 static enum client_error_e closeClientSocket_f(struct client_context_s *ctx)
 {
-    assert(ctx);
+    ASSERT(ctx);
     
     // Close socket
     if (ctx->client->sock != INVALID_SOCKET) {
@@ -628,7 +628,7 @@ static enum client_error_e closeClientSocket_f(struct client_context_s *ctx)
 static enum client_error_e getClientContext_f(struct client_s *obj, char *clientName,
                                               struct client_context_s **ctxOut, uint8_t lock)
 {
-    assert(obj && obj->pData && clientName && ctxOut);
+    ASSERT(obj && obj->pData && clientName && ctxOut);
 
     struct client_private_data_s *pData = (struct client_private_data_s*)(obj->pData);
 
@@ -685,7 +685,7 @@ exit:
  */
 static void watcherTaskFct_f(struct task_params_s *params)
 {
-    assert(params && params->fctData && params->userData);
+    ASSERT(params && params->fctData && params->userData);
     
     struct client_context_s *ctx        = (struct client_context_s*)params->fctData;
     struct client_private_data_s *pData = (struct client_private_data_s*)params->userData;
@@ -762,7 +762,7 @@ static void watcherTaskFct_f(struct task_params_s *params)
             goto exit;
         }
         
-        assert((ctx->bufferIn.data = calloc(1, ctx->params.maxBufferSize)));
+        ASSERT((ctx->bufferIn.data = calloc(1, ctx->params.maxBufferSize)));
         ctx->bufferIn.length = ctx->params.maxBufferSize;
         
         ctx->ackReceived = 1;
@@ -798,7 +798,7 @@ static void watcherTaskFct_f(struct task_params_s *params)
             ctx->nbBodyRead        = ctx->nbRead - ctx->httpContent.bodyStart;
             ctx->httpBuffer.length = ctx->httpContent.length - ctx->nbBodyRead;
             
-            assert((ctx->httpBuffer.data = calloc(1, ctx->httpBuffer.length)));
+            ASSERT((ctx->httpBuffer.data = calloc(1, ctx->httpBuffer.length)));
             if (pData->linkHelper->readData(pData->linkHelper,
                                             ctx->client, NULL,
                                             &ctx->httpBuffer, &ctx->nbRead) == ERROR) {
@@ -819,7 +819,7 @@ static void watcherTaskFct_f(struct task_params_s *params)
 
                 ctx->bufferIn.length       = ctx->httpContent.length;
                 ctx->params.maxBufferSize  = ctx->httpContent.length;
-                assert((ctx->bufferIn.data = calloc(1, ctx->bufferIn.length)));
+                ASSERT((ctx->bufferIn.data = calloc(1, ctx->bufferIn.length)));
             }
 
             // Copy received data
@@ -857,7 +857,7 @@ exitNoFree:
  */
 static void receiverTaskFct_f(struct task_params_s *params)
 {
-    assert(params && params->fctData && params->userData);
+    ASSERT(params && params->fctData && params->userData);
     
     struct client_context_s *ctx = (struct client_context_s*)params->fctData;
     
@@ -876,7 +876,7 @@ static void receiverTaskFct_f(struct task_params_s *params)
     }
     
     ctx->bufferOut.length = ctx->bufferIn.length;
-    assert((ctx->bufferOut.data = calloc(1, ctx->bufferIn.length)));
+    ASSERT((ctx->bufferOut.data = calloc(1, ctx->bufferIn.length)));
     memcpy(ctx->bufferOut.data, ctx->bufferIn.data, ctx->bufferIn.length);
     
     (void)pthread_mutex_unlock(&ctx->lock);
@@ -897,7 +897,7 @@ static void receiverTaskFct_f(struct task_params_s *params)
  */
 static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
-    assert(obj && elementToCheck && userData);
+    ASSERT(obj && elementToCheck && userData);
     
     struct client_context_s *ctx = (struct client_context_s*)elementToCheck;
     char *nameOfElementToRemove  = (char*)userData;
@@ -910,7 +910,7 @@ static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userDat
  */
 static void releaseCb(struct list_s *obj, void *element)
 {
-    assert(obj && element);
+    ASSERT(obj && element);
     
     struct client_context_s *ctx = (struct client_context_s*)element;
        

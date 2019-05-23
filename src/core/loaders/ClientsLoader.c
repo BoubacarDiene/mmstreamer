@@ -72,7 +72,7 @@ static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 enum loaders_error_e loadClientsXml_f(struct loaders_s *obj, struct context_s *ctx,
                                       struct xml_clients_s *xmlClients)
 {
-    assert(obj && ctx && xmlClients);
+    ASSERT(obj && ctx && xmlClients);
     
     struct parser_s *parserObj = ctx->parserObj;
     struct input_s *input      = &ctx->input;
@@ -111,7 +111,7 @@ enum loaders_error_e loadClientsXml_f(struct loaders_s *obj, struct context_s *c
  */
 enum loaders_error_e unloadClientsXml_f(struct loaders_s *obj, struct xml_clients_s *xmlClients)
 {
-    assert(obj && xmlClients);
+    ASSERT(obj && xmlClients);
     
     uint8_t index;
     struct xml_client_s *client;
@@ -158,7 +158,7 @@ enum loaders_error_e unloadClientsXml_f(struct loaders_s *obj, struct xml_client
  */
 static void onClientStartCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     (void)attrs;
     
@@ -168,7 +168,7 @@ static void onClientStartCb(void *userData, const char **attrs)
     
     xmlClients->clients = realloc(xmlClients->clients,
                                   (xmlClients->nbClients + 1) * sizeof(struct xml_client_s));
-    assert(xmlClients->clients);
+    ASSERT(xmlClients->clients);
     
     memset(&xmlClients->clients[xmlClients->nbClients], 0, sizeof(struct xml_client_s));
 }
@@ -178,7 +178,7 @@ static void onClientStartCb(void *userData, const char **attrs)
  */
 static void onClientEndCb(void *userData)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_clients_s *xmlClients = (struct xml_clients_s*)userData;
 
@@ -192,7 +192,7 @@ static void onClientEndCb(void *userData)
  */
 static void onGeneralCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_clients_s *xmlClients = (struct xml_clients_s*)userData;
     struct xml_client_s *client      = &xmlClients->clients[xmlClients->nbClients];
@@ -270,7 +270,7 @@ static void onGeneralCb(void *userData, const char **attrs)
  */
 static void onInetCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_clients_s *xmlClients = (struct xml_clients_s*)userData;
     struct xml_client_s *client      = &xmlClients->clients[xmlClients->nbClients];
@@ -314,7 +314,7 @@ static void onInetCb(void *userData, const char **attrs)
  */
 static void onUnixCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_clients_s *xmlClients = (struct xml_clients_s*)userData;
     struct xml_client_s *client      = &xmlClients->clients[xmlClients->nbClients];

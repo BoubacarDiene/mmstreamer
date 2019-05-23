@@ -78,7 +78,7 @@ extern enum loaders_error_e unloadClientsXml_f(struct loaders_s *obj,
  */
 enum loaders_error_e Loaders_Init(struct loaders_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(struct loaders_s))));
+    ASSERT(obj && (*obj = calloc(1, sizeof(struct loaders_s))));
     
     (*obj)->loadGraphicsXml   = loadGraphicsXml_f;
     (*obj)->unloadGraphicsXml = unloadGraphicsXml_f;
@@ -103,7 +103,7 @@ enum loaders_error_e Loaders_Init(struct loaders_s **obj)
  */
 enum loaders_error_e Loaders_UnInit(struct loaders_s **obj)
 {
-    assert(obj && *obj);
+    ASSERT(obj && *obj);
     
     free(*obj);
     *obj = NULL;

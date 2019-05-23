@@ -89,7 +89,7 @@ static void releaseCb(struct list_s *obj, void *element);
  */
 enum controllers_error_e initCmdsTask_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct controllers_task_s *cmdsTask = &obj->tasksMngt[CONTROLLERS_TASK_CMDS].task;
     struct input_s *input               = &obj->params.ctx->input;
@@ -154,7 +154,7 @@ listExit:
  */
 enum controllers_error_e uninitCmdsTask_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct controllers_task_s *cmdsTask = &obj->tasksMngt[CONTROLLERS_TASK_CMDS].task;
     struct input_s *input               = &obj->params.ctx->input;
@@ -185,7 +185,7 @@ enum controllers_error_e uninitCmdsTask_f(struct controllers_s *obj)
  */
 enum controllers_error_e startCmdsTask_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct controllers_task_s *cmdsTask = &obj->tasksMngt[CONTROLLERS_TASK_CMDS].task;
     struct input_s *input               = &obj->params.ctx->input;
@@ -210,7 +210,7 @@ enum controllers_error_e startCmdsTask_f(struct controllers_s *obj)
  */
 enum controllers_error_e stopCmdsTask_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct controllers_task_s *cmdsTask = &obj->tasksMngt[CONTROLLERS_TASK_CMDS].task;
     struct input_s *input               = &obj->params.ctx->input;
@@ -239,7 +239,7 @@ enum controllers_error_e stopCmdsTask_f(struct controllers_s *obj)
 void sendToEngine_f(void *enginePrivateData, struct controller_command_s *command,
                     controllers_command_action_done_cb actionDoneCb)
 {
-    assert(enginePrivateData && command);
+    ASSERT(enginePrivateData && command);
 
     struct controllers_lib_s *lib            = (struct controllers_lib_s*)enginePrivateData;
     struct controllers_s *controllersObj     = (struct controllers_s*)(lib->pData);
@@ -259,7 +259,7 @@ void sendToEngine_f(void *enginePrivateData, struct controller_command_s *comman
 
     Logd("Send command - id : \"%u\" / data : \"%s\"", command->id, command->data);
 
-    assert((element = calloc(1, sizeof(struct commands_list_element_s))));
+    ASSERT((element = calloc(1, sizeof(struct commands_list_element_s))));
     element->seconds      = time(NULL);
     element->command      = command;
     element->actionDoneCb = actionDoneCb;
@@ -277,7 +277,7 @@ void sendToEngine_f(void *enginePrivateData, struct controller_command_s *comman
 
 static void taskFct_f(struct task_params_s *params)
 {
-    assert(params && params->fctData);
+    ASSERT(params && params->fctData);
 
     struct controllers_s *controllersObj    = (struct controllers_s*)(params->fctData);
     struct controllers_task_s *cmdsTask     = &controllersObj->tasksMngt[CONTROLLERS_TASK_CMDS].task;
@@ -331,7 +331,7 @@ lockExit:
 
 static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
-    assert(obj && elementToCheck && userData);
+    ASSERT(obj && elementToCheck && userData);
 
     struct commands_list_element_s *element = (struct commands_list_element_s*)elementToCheck;
     time_t secondsOfElementToRemove         = *((time_t*)userData);
@@ -341,7 +341,7 @@ static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userDat
 
 static void releaseCb(struct list_s *obj, void *element)
 {
-    assert(obj && element);
+    ASSERT(obj && element);
 
     struct commands_list_element_s *elementToRemove = (struct commands_list_element_s*)element;
 

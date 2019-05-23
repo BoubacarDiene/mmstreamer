@@ -70,6 +70,17 @@ extern "C" {
 #define WAIT_TIME_5S     WAIT_TIME_1S  * 5
 #define WAIT_TIME_10S    WAIT_TIME_5S  * 2
 
+#if TEST
+    #include "CException.h"
+    #define ASSERT(condition) if (!(condition)) Throw(0)
+#else
+    #ifdef NDEBUG
+        #define ASSERT(condition) if (!(condition)) ((void)0)
+    #else
+        #define ASSERT(condition) assert(condition)
+    #endif
+#endif
+
 /* -------------------------------------------------------------------------------------------- */
 /* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */

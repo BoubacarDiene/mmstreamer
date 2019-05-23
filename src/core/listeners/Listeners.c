@@ -66,7 +66,7 @@ extern enum listeners_error_e unsetClientsListeners_f(struct listeners_s *obj);
 enum listeners_error_e Listeners_Init(struct listeners_s **obj,
                                       struct listeners_params_s *params)
 {
-    assert(obj && params && (*obj = calloc(1, sizeof(struct listeners_s))));
+    ASSERT(obj && params && (*obj = calloc(1, sizeof(struct listeners_s))));
     
     (*obj)->setGraphicsListeners   = setGraphicsListeners_f;
     (*obj)->unsetGraphicsListeners = unsetGraphicsListeners_f;
@@ -90,7 +90,7 @@ enum listeners_error_e Listeners_Init(struct listeners_s **obj,
  */
 enum listeners_error_e Listeners_UnInit(struct listeners_s **obj)
 {
-    assert(obj && *obj);
+    ASSERT(obj && *obj);
 
     free(*obj);
     *obj = NULL;

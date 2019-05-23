@@ -89,10 +89,10 @@ static enum fbdev_error_e restore_f(struct fbdev_s *obj);
  */
 enum fbdev_error_e FbDev_Init(struct fbdev_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(struct fbdev_s))));
+    ASSERT(obj && (*obj = calloc(1, sizeof(struct fbdev_s))));
 
     struct fbdev_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct fbdev_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct fbdev_private_data_s))));
 
     (*obj)->open     = open_f;
     (*obj)->isOpened = isOpened_f;
@@ -114,7 +114,7 @@ enum fbdev_error_e FbDev_Init(struct fbdev_s **obj)
  */
 enum fbdev_error_e FbDev_UnInit(struct fbdev_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    ASSERT(obj && *obj && (*obj)->pData);
     
     free((*obj)->pData);
     free(*obj);
@@ -132,7 +132,7 @@ enum fbdev_error_e FbDev_UnInit(struct fbdev_s **obj)
  */
 static enum fbdev_error_e open_f(struct fbdev_s *obj, const char *fbName)
 {
-    assert(obj && obj->pData && fbName);
+    ASSERT(obj && obj->pData && fbName);
 
     struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
@@ -156,7 +156,7 @@ static enum fbdev_error_e open_f(struct fbdev_s *obj, const char *fbName)
  */
 static enum fbdev_error_e isOpened_f(struct fbdev_s *obj, uint8_t *opened)
 {
-    assert(obj && obj->pData && opened);
+    ASSERT(obj && obj->pData && opened);
 
     struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
@@ -170,7 +170,7 @@ static enum fbdev_error_e isOpened_f(struct fbdev_s *obj, uint8_t *opened)
  */
 static enum fbdev_error_e close_f(struct fbdev_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
@@ -192,7 +192,7 @@ static enum fbdev_error_e close_f(struct fbdev_s *obj)
  */
 static enum fbdev_error_e getInfos_f(struct fbdev_s *obj, struct fbdev_infos_s *fbInfos)
 {
-    assert(obj && obj->pData && fbInfos);
+    ASSERT(obj && obj->pData && fbInfos);
 
     struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
@@ -227,7 +227,7 @@ static enum fbdev_error_e getInfos_f(struct fbdev_s *obj, struct fbdev_infos_s *
  */
 static enum fbdev_error_e setDepth_f(struct fbdev_s *obj, uint32_t depth)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
@@ -255,7 +255,7 @@ static enum fbdev_error_e setDepth_f(struct fbdev_s *obj, uint32_t depth)
  */
 static enum fbdev_error_e clear_f(struct fbdev_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 
@@ -289,7 +289,7 @@ static enum fbdev_error_e clear_f(struct fbdev_s *obj)
  */
 static enum fbdev_error_e restore_f(struct fbdev_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     struct fbdev_private_data_s *pData = (struct fbdev_private_data_s*)(obj->pData);
 

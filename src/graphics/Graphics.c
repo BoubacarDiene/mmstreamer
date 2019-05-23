@@ -175,10 +175,10 @@ static void releaseEventCb(struct list_s *obj, void *element);
  */
 enum graphics_error_e Graphics_Init(struct graphics_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(struct graphics_s))));
+    ASSERT(obj && (*obj = calloc(1, sizeof(struct graphics_s))));
     
     struct graphics_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct graphics_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct graphics_private_data_s))));
 
     if (pthread_mutex_init(&pData->gfxLock, NULL) != 0) {
         Loge("pthread_mutex_init() failed");
@@ -310,7 +310,7 @@ gfxLockExit:
  */
 enum graphics_error_e Graphics_UnInit(struct graphics_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    ASSERT(obj && *obj && (*obj)->pData);
     
     struct graphics_private_data_s *pData   = (struct graphics_private_data_s*)((*obj)->pData);
     struct graphics_task_s *simulateEvtTask = &pData->simulateEvtTask;
@@ -352,7 +352,7 @@ enum graphics_error_e Graphics_UnInit(struct graphics_s **obj)
 static enum graphics_error_e createDrawer_f(struct graphics_s *obj,
                                             struct graphics_params_s *params)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
 
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
 
@@ -430,7 +430,7 @@ drawerInitExit:
  */
 static enum graphics_error_e destroyDrawer_f(struct graphics_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -474,7 +474,7 @@ exit:
 static enum graphics_error_e createElement_f(struct graphics_s *obj,
                                              struct gfx_element_s **newGfxElement)
 {
-    assert(obj && obj->pData && newGfxElement);
+    ASSERT(obj && obj->pData && newGfxElement);
 
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
 
@@ -483,8 +483,8 @@ static enum graphics_error_e createElement_f(struct graphics_s *obj,
         return GRAPHICS_ERROR_LOCK;
     }
     
-    assert((*newGfxElement = calloc(1, sizeof(struct gfx_element_s))));
-    assert(((*newGfxElement)->reserved = calloc(1, sizeof(struct gfx_element_reserved_s))));
+    ASSERT((*newGfxElement = calloc(1, sizeof(struct gfx_element_s))));
+    ASSERT(((*newGfxElement)->reserved = calloc(1, sizeof(struct gfx_element_reserved_s))));
 
     (void)pthread_mutex_unlock(&pData->gfxLock);
     
@@ -497,7 +497,7 @@ static enum graphics_error_e createElement_f(struct graphics_s *obj,
 static enum graphics_error_e pushElement_f(struct graphics_s *obj,
                                            struct gfx_element_s *gfxElement)
 {
-    assert(obj && obj->pData && gfxElement);
+    ASSERT(obj && obj->pData && gfxElement);
 
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -527,7 +527,7 @@ exit:
  */
 static enum graphics_error_e removeElement_f(struct graphics_s *obj, char *gfxElementName)
 {
-    assert(obj && obj->pData && gfxElementName);
+    ASSERT(obj && obj->pData && gfxElementName);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -557,7 +557,7 @@ exit:
  */
 static enum graphics_error_e removeAll_f(struct graphics_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -588,7 +588,7 @@ exit:
 static enum graphics_error_e setVisible_f(struct graphics_s *obj, char *gfxElementName,
                                                                   uint8_t isVisible)
 {
-    assert(obj && obj->pData && gfxElementName);
+    ASSERT(obj && obj->pData && gfxElementName);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -653,7 +653,7 @@ lockExit:
  */
 static enum graphics_error_e setFocus_f(struct graphics_s *obj, char *gfxElementName)
 {
-    assert(obj && obj->pData && gfxElementName);
+    ASSERT(obj && obj->pData && gfxElementName);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -718,7 +718,7 @@ lockExit:
 static enum graphics_error_e setClickable_f(struct graphics_s *obj, char *gfxElementName,
                                             uint8_t isClickable)
 {
-    assert(obj && obj->pData && gfxElementName);
+    ASSERT(obj && obj->pData && gfxElementName);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -773,7 +773,7 @@ lockExit:
 static enum graphics_error_e setNav_f(struct graphics_s *obj, char *gfxElementName,
                                       struct gfx_nav_s *nav)
 {
-    assert(obj && obj->pData && gfxElementName && nav);
+    ASSERT(obj && obj->pData && gfxElementName && nav);
 
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -822,7 +822,7 @@ lockExit:
  */
 static enum graphics_error_e setData_f(struct graphics_s *obj, char *gfxElementName, void *data)
 {
-    assert(obj && obj->pData && gfxElementName && data);
+    ASSERT(obj && obj->pData && gfxElementName && data);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -880,7 +880,7 @@ static enum graphics_error_e setData_f(struct graphics_s *obj, char *gfxElementN
             }
             else {
                 if (!gfxElement->data.image.hiddenColor) {
-                    assert((gfxElement->data.image.hiddenColor = calloc(1, sizeof(struct gfx_color_s))));
+                    ASSERT((gfxElement->data.image.hiddenColor = calloc(1, sizeof(struct gfx_color_s))));
                 }
                 memcpy(gfxElement->data.image.hiddenColor, ((struct gfx_image_s*)data)->hiddenColor,
                                                            sizeof(struct gfx_color_s));
@@ -940,7 +940,7 @@ lockExit:
 static enum graphics_error_e saveVideoFrame_f(struct graphics_s *obj, struct buffer_s *buffer,
                                               struct gfx_image_s *inOut)
 {
-    assert(obj && obj->pData && inOut);
+    ASSERT(obj && obj->pData && inOut);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_DRAWER;
@@ -999,7 +999,7 @@ lockExit:
 static enum graphics_error_e saveVideoElement_f(struct graphics_s *obj, char *gfxElementName,
                                                 struct gfx_image_s *inOut)
 {
-    assert(obj && obj->pData && gfxElementName && inOut);
+    ASSERT(obj && obj->pData && gfxElementName && inOut);
 
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -1057,7 +1057,7 @@ lockExit:
  */
 static enum graphics_error_e takeScreenshot_f(struct graphics_s *obj, struct gfx_image_s *inOut)
 {
-    assert(obj && obj->pData && inOut);
+    ASSERT(obj && obj->pData && inOut);
 
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -1089,7 +1089,7 @@ lockExit:
  */
 static enum graphics_error_e drawAllElements_f(struct graphics_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -1137,7 +1137,7 @@ lockExit:
 static enum graphics_error_e simulateGfxEvent_f(struct graphics_s *obj,
                                                 struct gfx_event_s *gfxEvent)
 {
-    assert(obj && obj->pData && gfxEvent);
+    ASSERT(obj && obj->pData && gfxEvent);
 
     struct graphics_private_data_s *pData   = (struct graphics_private_data_s*)(obj->pData);
     struct graphics_task_s *simulateEvtTask = &pData->simulateEvtTask;
@@ -1156,7 +1156,7 @@ static enum graphics_error_e simulateGfxEvent_f(struct graphics_s *obj,
 
     Logd("Adding gfx event - type : \"%u\"", gfxEvent->type);
 
-    assert((element = calloc(1, sizeof(struct graphics_list_element_s))));
+    ASSERT((element = calloc(1, sizeof(struct graphics_list_element_s))));
     element->seconds = time(NULL);
     memcpy(&element->event, gfxEvent, sizeof(struct gfx_event_s));
 
@@ -1174,7 +1174,7 @@ static enum graphics_error_e simulateGfxEvent_f(struct graphics_s *obj,
  */
 static enum graphics_error_e handleGfxEvents_f(struct graphics_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
 
@@ -1204,7 +1204,7 @@ static enum graphics_error_e handleGfxEvents_f(struct graphics_s *obj)
  */
 static enum graphics_error_e quit_f(struct graphics_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
 
@@ -1236,7 +1236,7 @@ static enum graphics_error_e quit_f(struct graphics_s *obj)
 static enum graphics_error_e updateGroup_f(struct graphics_s *obj, char *groupName,
                                            char *gfxElementToIgnore)
 {
-    assert(obj && obj->pData && groupName);
+    ASSERT(obj && obj->pData && groupName);
     
     if (groupName[0] == '\0') {
         Loge("Invalid group name");
@@ -1299,7 +1299,7 @@ exit:
 static enum graphics_error_e updateElement_f(struct graphics_s *obj,
                                              struct gfx_element_s *gfxElement)
 {
-    assert(obj && obj->pData && gfxElement);
+    ASSERT(obj && obj->pData && gfxElement);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -1409,7 +1409,7 @@ exit:
 static enum graphics_error_e drawElement_f(struct graphics_s *obj,
                                            struct gfx_element_s *gfxElement)
 {
-    assert(obj && obj->pData && gfxElement);
+    ASSERT(obj && obj->pData && gfxElement);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -1465,7 +1465,7 @@ exit:
 static enum graphics_error_e getElement_f(struct graphics_s *obj, char *gfxElementName,
                                           struct gfx_element_s **gfxElement)
 {
-    assert(obj && obj->pData && gfxElementName);
+    ASSERT(obj && obj->pData && gfxElementName);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     enum graphics_error_e ret             = GRAPHICS_ERROR_NONE;
@@ -1509,7 +1509,7 @@ exit:
 static enum graphics_error_e getClickedElement_f(struct graphics_s *obj,
                                                  struct gfx_event_s *gfxEvent)
 {
-    assert(obj && obj->pData && gfxEvent);
+    ASSERT(obj && obj->pData && gfxEvent);
     
     struct graphics_private_data_s *pData = (struct graphics_private_data_s*)(obj->pData);
     
@@ -1568,7 +1568,7 @@ exit:
 static enum graphics_error_e handleGfxEvent_f(struct graphics_s *obj,
                                               struct gfx_event_s *gfxEvent)
 {
-    assert(obj && obj->pData && gfxEvent);
+    ASSERT(obj && obj->pData && gfxEvent);
 
     if (gfxEvent->gfxElementName || gfxEvent->gfxElementPData) {
         Loge("Bad params - Element's name and pData should be null");
@@ -1688,7 +1688,7 @@ static enum graphics_error_e handleGfxEvent_f(struct graphics_s *obj,
 
 static void taskFct_f(struct task_params_s *params)
 {
-    assert(params && params->fctData);
+    ASSERT(params && params->fctData);
 
     struct graphics_s *obj                  = (struct graphics_s*)(params->fctData);
     struct graphics_private_data_s *pData   = (struct graphics_private_data_s*)(obj->pData);
@@ -1742,7 +1742,7 @@ lockExit:
  */
 static uint8_t compareElementsCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
-    assert(obj && elementToCheck && userData);
+    ASSERT(obj && elementToCheck && userData);
     
     struct gfx_element_s *gfxElement = (struct gfx_element_s*)elementToCheck;
     char *nameOfElementToRemove      = (char*)userData;
@@ -1755,7 +1755,7 @@ static uint8_t compareElementsCb(struct list_s *obj, void *elementToCheck, void 
  */
 static void releaseElementCb(struct list_s *obj, void *element)
 {
-    assert(obj && element);
+    ASSERT(obj && element);
     
     struct gfx_element_s *gfxElement = (struct gfx_element_s*)element;
     free(gfxElement);
@@ -1766,7 +1766,7 @@ static void releaseElementCb(struct list_s *obj, void *element)
  */
 static void browseElementsCb(struct list_s *obj, void *element, void *userData)
 {
-    assert(obj && element);
+    ASSERT(obj && element);
     
     struct gfx_element_s *gfxElement      = (struct gfx_element_s*)element;
     struct graphics_s *gfxObj             = (struct graphics_s*)userData;
@@ -1790,7 +1790,7 @@ static void browseElementsCb(struct list_s *obj, void *element, void *userData)
 
 static uint8_t compareEventsCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
-    assert(obj && elementToCheck && userData);
+    ASSERT(obj && elementToCheck && userData);
 
     struct graphics_list_element_s *element = (struct graphics_list_element_s*)elementToCheck;
     time_t secondsOfElementToRemove         = *((time_t*)userData);
@@ -1800,7 +1800,7 @@ static uint8_t compareEventsCb(struct list_s *obj, void *elementToCheck, void *u
 
 static void releaseEventCb(struct list_s *obj, void *element)
 {
-    assert(obj && element);
+    ASSERT(obj && element);
 
     struct graphics_list_element_s *elementToRemove = (struct graphics_list_element_s*)element;
     free(elementToRemove);

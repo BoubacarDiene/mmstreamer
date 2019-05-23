@@ -132,10 +132,10 @@ static void releaseListenerCb(struct list_s *obj, void *element);
  */
 enum video_error_e Video_Init(struct video_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(struct video_s))));
+    ASSERT(obj && (*obj = calloc(1, sizeof(struct video_s))));
 
     struct video_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct video_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct video_private_data_s))));
 
     struct list_params_s listParams = {0};
     listParams.compareCb = compareVideoCb;
@@ -171,7 +171,7 @@ exit:
  */
 enum video_error_e Video_UnInit(struct video_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    ASSERT(obj && *obj && (*obj)->pData);
 
     struct video_private_data_s *pData = (*obj)->pData;
 
@@ -195,7 +195,7 @@ enum video_error_e Video_UnInit(struct video_s **obj)
 static enum video_error_e registerListener_f(struct video_s *obj, struct video_params_s *params,
                                              struct video_listener_s *listener)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
 
     if (!listener || !listener->name || !listener->onVideoBufferAvailableCb) {
         Loge("Bad params");
@@ -225,7 +225,7 @@ static enum video_error_e registerListener_f(struct video_s *obj, struct video_p
     }
 
     struct video_listener_s *newListener;
-    assert((newListener = calloc(1, sizeof(struct video_listener_s))));
+    ASSERT((newListener = calloc(1, sizeof(struct video_listener_s))));
 
     strncpy(newListener->name, listener->name, sizeof(newListener->name));
     newListener->onVideoBufferAvailableCb = listener->onVideoBufferAvailableCb;
@@ -247,7 +247,7 @@ exit:
 static enum video_error_e unregisterListener_f(struct video_s *obj, struct video_params_s *params,
                                                struct video_listener_s *listener)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
 
     if (!listener || !listener->name) {
         Loge("Bad params");
@@ -292,7 +292,7 @@ exit:
 static enum video_error_e getFinalVideoArea_f(struct video_s *obj, struct video_params_s *params,
                                               struct video_area_s *videoArea)
 {
-    assert(obj && obj->pData && params && videoArea);
+    ASSERT(obj && obj->pData && params && videoArea);
 
     struct video_context_s *ctx = NULL;
     enum video_error_e ret      = VIDEO_ERROR_NONE;
@@ -316,7 +316,7 @@ exit:
 static enum video_error_e getMaxBufferSize_f(struct video_s *obj, struct video_params_s *params,
                                              size_t *size)
 {
-    assert(obj && obj->pData && params && size);
+    ASSERT(obj && obj->pData && params && size);
 
     struct video_context_s *ctx = NULL;
     enum video_error_e ret      = VIDEO_ERROR_NONE;
@@ -345,7 +345,7 @@ exit:
  */
 static enum video_error_e startDeviceCapture_f(struct video_s *obj, struct video_params_s *params)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
 
     struct video_context_s *ctx = NULL;
 
@@ -520,7 +520,7 @@ exit:
  */
 static enum video_error_e stopDeviceCapture_f(struct video_s *obj, struct video_params_s *params)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
 
     struct video_context_s *ctx = NULL;
     enum video_error_e ret      = VIDEO_ERROR_NONE;
@@ -584,7 +584,7 @@ exit:
  */
 static enum video_error_e lockBuffer_f(struct video_s *obj, struct video_context_s *ctx)
 {
-    assert(obj && obj->pData && ctx);
+    ASSERT(obj && obj->pData && ctx);
 
     if (pthread_mutex_lock(&ctx->bufferLock) != 0) {
         Loge("pthread_mutex_lock() failed");
@@ -599,7 +599,7 @@ static enum video_error_e lockBuffer_f(struct video_s *obj, struct video_context
  */
 static enum video_error_e unlockBuffer_f(struct video_s *obj, struct video_context_s *ctx)
 {
-    assert(obj && obj->pData && ctx);
+    ASSERT(obj && obj->pData && ctx);
 
     if (pthread_mutex_unlock(&ctx->bufferLock) != 0) {
         Loge("pthread_mutex_unlock() failed");
@@ -615,8 +615,8 @@ static enum video_error_e unlockBuffer_f(struct video_s *obj, struct video_conte
 static enum video_error_e initVideoContext_f(struct video_context_s **ctx,
                                              struct video_params_s *params)
 {
-    assert(ctx && params);
-    assert((*ctx = calloc(1, sizeof(struct video_context_s))));
+    ASSERT(ctx && params);
+    ASSERT((*ctx = calloc(1, sizeof(struct video_context_s))));
 
     memcpy(&(*ctx)->params, params, sizeof(struct video_params_s));
 
@@ -694,7 +694,7 @@ list_exit:
  */
 static enum video_error_e uninitVideoContext_f(struct video_context_s **ctx)
 {
-    assert(ctx && *ctx);
+    ASSERT(ctx && *ctx);
 
     enum video_error_e ret = VIDEO_ERROR_NONE;
 
@@ -745,7 +745,7 @@ static enum video_error_e uninitVideoContext_f(struct video_context_s **ctx)
 static enum video_error_e getVideoContext_f(struct video_s *obj, char *videoName,
                                             struct video_context_s **ctxOut)
 {
-    assert(obj && obj->pData && videoName && ctxOut);
+    ASSERT(obj && obj->pData && videoName && ctxOut);
 
     struct video_private_data_s *pData = (struct video_private_data_s*)(obj->pData);
 
@@ -799,7 +799,7 @@ exit:
  */
 static void framesHandlerFct_f(struct task_params_s *params)
 {
-    assert(params && params->fctData && params->userData);
+    ASSERT(params && params->fctData && params->userData);
     
     struct video_s *video       = (struct video_s*)params->fctData;
     struct video_context_s *ctx = (struct video_context_s*)params->userData;
@@ -841,7 +841,7 @@ static void framesHandlerFct_f(struct task_params_s *params)
         (void)lockBuffer_f(video, ctx);
         
         if (!(video->buffer.data)) {
-            assert((video->buffer.data = calloc(1, ctx->v4l2->maxBufferSize)));
+            ASSERT((video->buffer.data = calloc(1, ctx->v4l2->maxBufferSize)));
         }
         
         video->buffer.index  = ctx->v4l2->map[i].index;
@@ -864,7 +864,7 @@ static void framesHandlerFct_f(struct task_params_s *params)
  */
 static void notificationFct_f(struct task_params_s *params)
 {
-    assert(params && params->fctData && params->userData);
+    ASSERT(params && params->fctData && params->userData);
     
     struct video_s *video       = (struct video_s*)params->fctData;
     struct video_context_s *ctx = (struct video_context_s*)params->userData;
@@ -916,7 +916,7 @@ exit:
  */
 static void framesHandlerAtExit_f(struct task_params_s *params)
 {
-    assert(params && params->fctData && params->userData);
+    ASSERT(params && params->fctData && params->userData);
     
     struct video_s *video       = (struct video_s*)params->fctData;
     struct video_context_s *ctx = (struct video_context_s*)params->userData;
@@ -937,7 +937,7 @@ static void framesHandlerAtExit_f(struct task_params_s *params)
  */
 static uint8_t compareVideoCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
-    assert(obj && elementToCheck && userData);
+    ASSERT(obj && elementToCheck && userData);
 
     struct video_context_s *ctx = (struct video_context_s*)elementToCheck;
     char *nameOfElementToRemove = (char*)userData;
@@ -950,7 +950,7 @@ static uint8_t compareVideoCb(struct list_s *obj, void *elementToCheck, void *us
  */
 static void releaseVideoCb(struct list_s *obj, void *element)
 {
-    assert(obj && element);
+    ASSERT(obj && element);
 
     struct video_context_s **ctx = (struct video_context_s**)&element;
 
@@ -962,7 +962,7 @@ static void releaseVideoCb(struct list_s *obj, void *element)
  */
 static uint8_t compareListenerCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
-    assert(obj && elementToCheck && userData);
+    ASSERT(obj && elementToCheck && userData);
     
     struct video_listener_s *listener  = (struct video_listener_s*)elementToCheck;
     char *nameOfElementToRemove = (char*)userData;
@@ -975,7 +975,7 @@ static uint8_t compareListenerCb(struct list_s *obj, void *elementToCheck, void 
  */
 static void releaseListenerCb(struct list_s *obj, void *element)
 {
-    assert(obj && element);
+    ASSERT(obj && element);
     
     struct video_listener_s *listener = (struct video_listener_s*)element;
     free(listener);

@@ -97,7 +97,7 @@ static void releaseCb(struct list_s *obj, void *element);
  */
 enum controllers_error_e initLibsTask_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct controllers_task_s *libsTask = &obj->tasksMngt[CONTROLLERS_TASK_LIBS].task;
     struct input_s *input               = &obj->params.ctx->input;
@@ -162,7 +162,7 @@ listExit:
  */
 enum controllers_error_e uninitLibsTask_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct controllers_task_s *libsTask = &obj->tasksMngt[CONTROLLERS_TASK_LIBS].task;
     struct input_s *input               = &obj->params.ctx->input;
@@ -193,7 +193,7 @@ enum controllers_error_e uninitLibsTask_f(struct controllers_s *obj)
  */
 enum controllers_error_e startLibsTask_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct controllers_task_s *libsTask = &obj->tasksMngt[CONTROLLERS_TASK_LIBS].task;
     struct input_s *input               = &obj->params.ctx->input;
@@ -218,7 +218,7 @@ enum controllers_error_e startLibsTask_f(struct controllers_s *obj)
  */
 enum controllers_error_e stopLibsTask_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct controllers_task_s *libsTask = &obj->tasksMngt[CONTROLLERS_TASK_LIBS].task;
     struct input_s *input               = &obj->params.ctx->input;
@@ -247,7 +247,7 @@ enum controllers_error_e stopLibsTask_f(struct controllers_s *obj)
 void sendToLibrary_f(void *enginePrivateData, struct controller_library_s *library,
                      controllers_library_action_done_cb actionDoneCb)
 {
-    assert(enginePrivateData && library);
+    ASSERT(enginePrivateData && library);
 
     struct controllers_lib_s *lib            = (struct controllers_lib_s*)enginePrivateData;
     struct controllers_s *controllersObj     = (struct controllers_s*)(lib->pData);
@@ -267,7 +267,7 @@ void sendToLibrary_f(void *enginePrivateData, struct controller_library_s *libra
 
     Logd("Send to library : \"%s\"", library->name);
 
-    assert((element = calloc(1, sizeof(struct libraries_list_element_s))));
+    ASSERT((element = calloc(1, sizeof(struct libraries_list_element_s))));
     element->seconds      = time(NULL);
     element->library      = library;
     element->actionDoneCb = actionDoneCb;
@@ -284,7 +284,7 @@ void sendToLibrary_f(void *enginePrivateData, struct controller_library_s *libra
  */
 enum controllers_error_e loadLibs_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct input_s *input      = &obj->params.ctx->input;
     struct library_s *ctrlLibs = input->ctrlLibs;
@@ -298,7 +298,7 @@ enum controllers_error_e loadLibs_f(struct controllers_s *obj)
 
     Logd("Load \"%u\" controller(s)", obj->nbLibs);
 
-    assert((obj->libs = calloc(obj->nbLibs, sizeof(struct controllers_lib_s))));
+    ASSERT((obj->libs = calloc(obj->nbLibs, sizeof(struct controllers_lib_s))));
 
     struct controller_functions_s fcts;
     fcts.registerEvents   = registerEvents_f;
@@ -386,7 +386,7 @@ libExit:
 
 enum controllers_error_e unloadLibs_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     if (obj->nbLibs == 0) {
         goto exit;
@@ -423,7 +423,7 @@ exit:
 
 static void taskFct_f(struct task_params_s *params)
 {
-    assert(params && params->fctData);
+    ASSERT(params && params->fctData);
 
     struct controllers_s *controllersObj     = (struct controllers_s*)(params->fctData);
     struct controllers_task_s *libsTask      = &controllersObj->tasksMngt[CONTROLLERS_TASK_LIBS].task;
@@ -488,7 +488,7 @@ lockExit:
 
 static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
-    assert(obj && elementToCheck && userData);
+    ASSERT(obj && elementToCheck && userData);
 
     struct libraries_list_element_s *element = (struct libraries_list_element_s*)elementToCheck;
     time_t secondsOfElementToRemove          = *((time_t*)userData);
@@ -498,7 +498,7 @@ static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userDat
 
 static void releaseCb(struct list_s *obj, void *element)
 {
-    assert(obj && element);
+    ASSERT(obj && element);
 
     struct libraries_list_element_s *elementToRemove = (struct libraries_list_element_s*)element;
 

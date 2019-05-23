@@ -109,7 +109,7 @@ int main(int argc, char **argv)
     setPriority(&options);
 
     struct context_s *mCtx;
-    assert((mCtx = calloc(1, sizeof(struct context_s))));
+    ASSERT((mCtx = calloc(1, sizeof(struct context_s))));
     
     struct params_s *params   = &mCtx->params;
     struct modules_s *modules = &mCtx->modules;
@@ -589,7 +589,7 @@ parserInitExit:
  */
 static void onGeneralCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
 	
     struct context_s *ctx      = (struct context_s*)userData;
     struct parser_s *parserObj = ctx->parserObj;
@@ -650,7 +650,7 @@ static void onGeneralCb(void *userData, const char **attrs)
  */
 static void onControllersStartCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
 
     (void)attrs;
 
@@ -687,7 +687,7 @@ static void onControllersStartCb(void *userData, const char **attrs)
  */
 static void onControllersEndCb(void *userData)
 {
-    assert(userData);
+    ASSERT(userData);
 
     Logd("End parsing Controllers");
 }
@@ -697,7 +697,7 @@ static void onControllersEndCb(void *userData)
  */
 static void onItemCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
 
     struct context_s *ctx      = (struct context_s*)userData;
     struct parser_s *parserObj = ctx->parserObj;
@@ -706,7 +706,7 @@ static void onItemCb(void *userData, const char **attrs)
     Logd("Adding control library %u", (input->nbCtrlLibs + 1));
 
     input->ctrlLibs = realloc(input->ctrlLibs, (input->nbCtrlLibs + 1) * sizeof(struct library_s));
-    assert(input->ctrlLibs);
+    ASSERT(input->ctrlLibs);
 
     memset(&input->ctrlLibs[input->nbCtrlLibs], '\0', sizeof(struct library_s));
 
@@ -761,7 +761,7 @@ static void onItemCb(void *userData, const char **attrs)
         char *temp   = strdup(ctrlLib->path);
         uint32_t len = (strlen(temp) + strlen(input->libRootDir) + 2) * sizeof(char);
 
-        assert((ctrlLib->path = realloc(ctrlLib->path, len)));
+        ASSERT((ctrlLib->path = realloc(ctrlLib->path, len)));
         memset(ctrlLib->path, '\0', len);
 
         snprintf(ctrlLib->path, len, "%s/%s", input->libRootDir, temp);
@@ -782,7 +782,7 @@ static void onItemCb(void *userData, const char **attrs)
  */
 static void onGraphicsCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
 
     struct context_s *ctx      = (struct context_s*)userData;
     struct parser_s *parserObj = ctx->parserObj;
@@ -825,7 +825,7 @@ static void onGraphicsCb(void *userData, const char **attrs)
  */
 static void onVideosCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
 
     struct context_s *ctx      = (struct context_s*)userData;
     struct parser_s *parserObj = ctx->parserObj;
@@ -868,7 +868,7 @@ static void onVideosCb(void *userData, const char **attrs)
  */
 static void onServersCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
 
     struct context_s *ctx      = (struct context_s*)userData;
     struct parser_s *parserObj = ctx->parserObj;
@@ -911,7 +911,7 @@ static void onServersCb(void *userData, const char **attrs)
  */
 static void onClientsCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
 
     struct context_s *ctx      = (struct context_s*)userData;
     struct parser_s *parserObj = ctx->parserObj;

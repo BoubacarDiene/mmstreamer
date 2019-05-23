@@ -156,13 +156,13 @@ static void releaseClientCb(struct list_s *obj, void *element);
  */
 enum server_error_e Server_Init(struct server_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(struct server_s))));
+    ASSERT(obj && (*obj = calloc(1, sizeof(struct server_s))));
 
     struct server_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct server_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct server_private_data_s))));
     
     LinkHelper_Init(&pData->linkHelper);
-    assert(pData->linkHelper);
+    ASSERT(pData->linkHelper);
     
     struct list_params_s listParams = {0};
     listParams.compareCb = compareServerCb;
@@ -208,7 +208,7 @@ exit:
  */
 enum server_error_e Server_UnInit(struct server_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    ASSERT(obj && *obj && (*obj)->pData);
     
     struct server_private_data_s *pData = (struct server_private_data_s*)((*obj)->pData);
     
@@ -232,7 +232,7 @@ enum server_error_e Server_UnInit(struct server_s **obj)
  */
 static enum server_error_e start_f(struct server_s *obj, struct server_params_s *params)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
 
     struct server_context_s *ctx = NULL;
 
@@ -243,7 +243,7 @@ static enum server_error_e start_f(struct server_s *obj, struct server_params_s 
     }
 
     /* Init context */
-    assert((ctx = calloc(1, sizeof(struct server_context_s))));
+    ASSERT((ctx = calloc(1, sizeof(struct server_context_s))));
     ctx->params = *params;
     
     /* Init socket */
@@ -351,7 +351,7 @@ exit:
  */
 static enum server_error_e stop_f(struct server_s *obj, struct server_params_s *params)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
 
     struct server_context_s *ctx = NULL;
     enum server_error_e ret      = SERVER_ERROR_NONE;
@@ -384,7 +384,7 @@ exit:
 static enum server_error_e addReceiver_f(struct server_s *obj, struct server_params_s *params,
                                          struct link_s *client)
 {
-    assert(obj && obj->pData && params && client);
+    ASSERT(obj && obj->pData && params && client);
     
     struct server_context_s *ctx = NULL;
     enum server_error_e ret      = SERVER_ERROR_NONE;
@@ -414,7 +414,7 @@ exit:
 static enum server_error_e removeReceiver_f(struct server_s *obj, struct server_params_s *params,
                                             struct link_s *client)
 {
-    assert(obj && obj->pData && params && client);
+    ASSERT(obj && obj->pData && params && client);
     
     struct server_context_s *ctx = NULL;
     enum server_error_e ret      = SERVER_ERROR_NONE;
@@ -443,7 +443,7 @@ exit:
  */
 static enum server_error_e suspendSender_f(struct server_s *obj, struct server_params_s *params)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
 
     struct server_context_s *ctx = NULL;
     enum server_error_e ret      = SERVER_ERROR_NONE;
@@ -478,7 +478,7 @@ exit:
  */
 static enum server_error_e resumeSender_f(struct server_s *obj, struct server_params_s *params)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
 
     struct server_context_s *ctx = NULL;
     enum server_error_e ret      = SERVER_ERROR_NONE;
@@ -500,7 +500,7 @@ exit:
 static enum server_error_e disconnectClient_f(struct server_s *obj, struct server_params_s *params,
                                               struct link_s *client)
 {
-    assert(obj && obj->pData && params && client);
+    ASSERT(obj && obj->pData && params && client);
     
     struct server_context_s *ctx = NULL;
     enum server_error_e ret      = SERVER_ERROR_NONE;
@@ -530,7 +530,7 @@ exit:
 static enum server_error_e sendData_f(struct server_s *obj, struct server_params_s *params,
                                       struct buffer_s *buffer)
 {
-    assert(obj && obj->pData && params && buffer);
+    ASSERT(obj && obj->pData && params && buffer);
     
     struct server_context_s *ctx = NULL;
     enum server_error_e ret      = SERVER_ERROR_NONE;
@@ -568,7 +568,7 @@ exit:
 static enum server_error_e openServerSocket_f(struct server_context_s *ctx,
                                               struct link_helper_s *linkHelper)
 {
-    assert(ctx && linkHelper && (ctx->server = calloc(1, sizeof(struct link_s))));
+    ASSERT(ctx && linkHelper && (ctx->server = calloc(1, sizeof(struct link_s))));
     
     ctx->server->domain = ((ctx->params.link == LINK_TYPE_INET_STREAM)
                           || (ctx->params.link == LINK_TYPE_INET_DGRAM)) ? AF_UNSPEC : AF_UNIX;
@@ -721,7 +721,7 @@ getaddrinfo_exit:
  */
 static enum server_error_e closeServerSocket_f(struct server_context_s *ctx)
 {
-    assert(ctx);
+    ASSERT(ctx);
     
     if (!ctx->server) {
         return SERVER_ERROR_NONE;
@@ -743,7 +743,7 @@ static enum server_error_e closeServerSocket_f(struct server_context_s *ctx)
 static enum server_error_e getServerContext_f(struct server_s *obj, char *serverName,
                                               struct server_context_s **ctxOut)
 {
-    assert(obj && obj->pData && serverName && ctxOut);
+    ASSERT(obj && obj->pData && serverName && ctxOut);
     
     struct server_private_data_s *pData = (struct server_private_data_s*)(obj->pData);
     
@@ -799,7 +799,7 @@ exit:
  */
 static void watcherTaskFct_f(struct task_params_s *params)
 {
-    assert(params && params->fctData && params->userData);
+    ASSERT(params && params->fctData && params->userData);
     
     struct server_context_s *ctx        = (struct server_context_s*)params->fctData;
     struct server_private_data_s *pData = (struct server_private_data_s*)params->userData;
@@ -810,7 +810,7 @@ static void watcherTaskFct_f(struct task_params_s *params)
     }
     
     struct link_s *client;
-    assert((client = calloc(1, sizeof(struct link_s))));
+    ASSERT((client = calloc(1, sizeof(struct link_s))));
     
     client->useDestAddress = ctx->server->useDestAddress;
     
@@ -1020,7 +1020,7 @@ standard:
         }
     }
 
-    assert((client->pData = calloc(1, sizeof(struct client_link_pdata_s))));
+    ASSERT((client->pData = calloc(1, sizeof(struct client_link_pdata_s))));
 
     if (ctx->clientsList->lock(ctx->clientsList) != LIST_ERROR_NONE) {
         Loge("Failed to lock clientsList");
@@ -1061,7 +1061,7 @@ exit:
  */
 static void senderTaskFct_f(struct task_params_s *params)
 {
-    assert(params && params->fctData && params->userData);
+    ASSERT(params && params->fctData && params->userData);
     
     struct server_context_s *ctx        = (struct server_context_s*)params->fctData;
     struct server_private_data_s *pData = (struct server_private_data_s*)params->userData;
@@ -1094,7 +1094,7 @@ static void senderTaskFct_f(struct task_params_s *params)
 
             if (ctx->bufferIn.data && (ctx->bufferIn.length != 0)) {
                 ctx->bufferOut.length = ctx->bufferIn.length;
-                assert((ctx->bufferOut.data = calloc(1, ctx->bufferOut.length)));
+                ASSERT((ctx->bufferOut.data = calloc(1, ctx->bufferOut.length)));
                 memcpy(ctx->bufferOut.data, ctx->bufferIn.data, ctx->bufferOut.length);
             }
             else {
@@ -1190,7 +1190,7 @@ exit:
  */
 static uint8_t compareServerCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
-    assert(obj && elementToCheck && userData);
+    ASSERT(obj && elementToCheck && userData);
     
     struct server_context_s *ctx = (struct server_context_s*)elementToCheck;
     char *nameOfElementToRemove  = (char*)userData;
@@ -1203,7 +1203,7 @@ static uint8_t compareServerCb(struct list_s *obj, void *elementToCheck, void *u
  */
 static void releaseServerCb(struct list_s *obj, void *element)
 {
-    assert(obj && element);
+    ASSERT(obj && element);
     
     struct server_context_s *ctx = (struct server_context_s*)element;;
     
@@ -1241,7 +1241,7 @@ static void releaseServerCb(struct list_s *obj, void *element)
  */
 static uint8_t compareClientCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
-    assert(obj && elementToCheck && userData);
+    ASSERT(obj && elementToCheck && userData);
     
     struct link_s *client        = (struct link_s*)elementToCheck;
     uint32_t idOfElementToRemove = *((uint32_t*)userData);
@@ -1254,7 +1254,7 @@ static uint8_t compareClientCb(struct list_s *obj, void *elementToCheck, void *u
  */
 static void releaseClientCb(struct list_s *obj, void *element)
 {
-    assert(obj && element);
+    ASSERT(obj && element);
     
     struct link_s *client = (struct link_s*)element;
     

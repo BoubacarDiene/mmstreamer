@@ -63,7 +63,7 @@ static void onClientStateChangedCb(struct server_params_s *params, struct link_s
  */
 enum listeners_error_e setServersListeners_f(struct listeners_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
     
     struct listeners_params_s *listenersParams = &obj->params;
     struct servers_infos_s *serversInfos       = &listenersParams->ctx->params.serversInfos;
@@ -85,7 +85,7 @@ enum listeners_error_e setServersListeners_f(struct listeners_s *obj)
  */
 enum listeners_error_e unsetServersListeners_f(struct listeners_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
     
     struct listeners_params_s *listenersParams = &obj->params;
     struct servers_infos_s *serversInfos       = &listenersParams->ctx->params.serversInfos;
@@ -110,7 +110,7 @@ enum listeners_error_e unsetServersListeners_f(struct listeners_s *obj)
 static void onClientStateChangedCb(struct server_params_s *params, struct link_s *client,
                                    enum state_e state, void *userData)
 {
-    assert(params && client && userData);
+    ASSERT(params && client && userData);
     
     Logd("Server-%s : Client with id %u %s",
         params->name,

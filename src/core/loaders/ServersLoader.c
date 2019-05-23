@@ -72,7 +72,7 @@ static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 enum loaders_error_e loadServersXml_f(struct loaders_s *obj, struct context_s *ctx,
                                       struct xml_servers_s *xmlServers)
 {
-    assert(obj && ctx && xmlServers);
+    ASSERT(obj && ctx && xmlServers);
     
     struct parser_s *parserObj = ctx->parserObj;
     struct input_s *input      = &ctx->input;
@@ -111,7 +111,7 @@ enum loaders_error_e loadServersXml_f(struct loaders_s *obj, struct context_s *c
  */
 enum loaders_error_e unloadServersXml_f(struct loaders_s *obj, struct xml_servers_s *xmlServers)
 {
-    assert(obj && xmlServers);
+    ASSERT(obj && xmlServers);
     
     uint8_t index;
     struct xml_server_s *server;
@@ -155,7 +155,7 @@ enum loaders_error_e unloadServersXml_f(struct loaders_s *obj, struct xml_server
  */
 static void onServerStartCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     (void)attrs;
     
@@ -165,7 +165,7 @@ static void onServerStartCb(void *userData, const char **attrs)
     
     xmlServers->servers = realloc(xmlServers->servers,
                                   (xmlServers->nbServers + 1) * sizeof(struct xml_server_s));
-    assert(xmlServers->servers);
+    ASSERT(xmlServers->servers);
     
     memset(&xmlServers->servers[xmlServers->nbServers], 0, sizeof(struct xml_server_s));
 }
@@ -175,7 +175,7 @@ static void onServerStartCb(void *userData, const char **attrs)
  */
 static void onServerEndCb(void *userData)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_servers_s *xmlServers = (struct xml_servers_s*)userData;
 
@@ -189,7 +189,7 @@ static void onServerEndCb(void *userData)
  */
 static void onGeneralCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_servers_s *xmlServers = (struct xml_servers_s*)userData;
     struct xml_server_s *server      = &xmlServers->servers[xmlServers->nbServers];
@@ -263,7 +263,7 @@ static void onGeneralCb(void *userData, const char **attrs)
  */
 static void onInetCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_servers_s *xmlServers = (struct xml_servers_s*)userData;
     struct xml_server_s *server      = &xmlServers->servers[xmlServers->nbServers];
@@ -307,7 +307,7 @@ static void onInetCb(void *userData, const char **attrs)
  */
 static void onUnixCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_servers_s *xmlServers = (struct xml_servers_s*)userData;
     struct xml_server_s *server      = &xmlServers->servers[xmlServers->nbServers];

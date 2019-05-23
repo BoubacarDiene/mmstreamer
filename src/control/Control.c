@@ -142,10 +142,10 @@ uint32_t gNbCommands = (uint32_t)(sizeof(gCommandsList) / sizeof(gCommandsList[0
  */
 enum control_error_e Control_Init(struct control_s **obj, struct context_s *ctx)
 {
-    assert(obj && ctx && (*obj = calloc(1, sizeof(struct control_s))));
+    ASSERT(obj && ctx && (*obj = calloc(1, sizeof(struct control_s))));
 
     struct control_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct control_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct control_private_data_s))));
 
     if (pthread_mutex_init(&pData->lock, NULL) != 0) {
         Loge("pthread_mutex_init() failed");
@@ -220,7 +220,7 @@ lockExit:
  */
 enum control_error_e Control_UnInit(struct control_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    ASSERT(obj && *obj && (*obj)->pData);
 
     struct control_private_data_s *pData = (struct control_private_data_s*)((*obj)->pData);
 
@@ -245,10 +245,10 @@ enum control_error_e Control_UnInit(struct control_s **obj)
  */
 enum control_error_e initElementData_f(struct control_s *obj, void **data)
 {
-    assert(obj && data);
+    ASSERT(obj && data);
 
     struct control_element_data_s *elementData;
-    assert((elementData = calloc(1, sizeof(struct control_element_data_s))));
+    ASSERT((elementData = calloc(1, sizeof(struct control_element_data_s))));
 
     *data = elementData;
 
@@ -260,7 +260,7 @@ enum control_error_e initElementData_f(struct control_s *obj, void **data)
  */
 enum control_error_e uninitElementData_f(struct control_s *obj, void **data)
 {
-    assert(obj && data && *data);
+    ASSERT(obj && data && *data);
 
     struct control_element_data_s *elementData = (struct control_element_data_s*)(*data);
     free(elementData);
@@ -274,7 +274,7 @@ enum control_error_e uninitElementData_f(struct control_s *obj, void **data)
 enum control_error_e setElementGetters_f(struct control_s *obj, void *data,
                                          struct control_getters_s *getters)
 {
-    assert(obj && data && getters);
+    ASSERT(obj && data && getters);
 
     ((struct control_element_data_s*)data)->getters = *getters;
 
@@ -286,7 +286,7 @@ enum control_error_e setElementGetters_f(struct control_s *obj, void *data,
  */
 enum control_error_e unsetElementGetters_f(struct control_s *obj, void *data)
 {
-    assert(obj && data);
+    ASSERT(obj && data);
 
     ((struct control_element_data_s*)data)->getters.userData = NULL;
 
@@ -299,7 +299,7 @@ enum control_error_e unsetElementGetters_f(struct control_s *obj, void *data)
 enum control_error_e setElementTextIds_f(struct control_s *obj, void *data,
                                          struct control_text_ids_s *textIds)
 {
-    assert(obj && data && textIds);
+    ASSERT(obj && data && textIds);
 
     ((struct control_element_data_s*)data)->ids.text = *textIds;
 
@@ -311,7 +311,7 @@ enum control_error_e setElementTextIds_f(struct control_s *obj, void *data,
  */
 enum control_error_e unsetElementTextIds_f(struct control_s *obj, void *data)
 {
-    assert(obj && data);
+    ASSERT(obj && data);
 
     return CONTROL_ERROR_NONE;
 }
@@ -322,7 +322,7 @@ enum control_error_e unsetElementTextIds_f(struct control_s *obj, void *data)
 enum control_error_e setElementImageIds_f(struct control_s *obj, void *data,
                                           struct control_image_ids_s *imageIds)
 {
-    assert(obj && data && imageIds);
+    ASSERT(obj && data && imageIds);
 
     ((struct control_element_data_s*)data)->ids.image = *imageIds;
 
@@ -334,7 +334,7 @@ enum control_error_e setElementImageIds_f(struct control_s *obj, void *data,
  */
 enum control_error_e unsetElementImageIds_f(struct control_s *obj, void *data)
 {
-    assert(obj && data);
+    ASSERT(obj && data);
 
     return CONTROL_ERROR_NONE;
 }
@@ -346,7 +346,7 @@ enum control_error_e setCommandHandlers_f(struct control_s *obj, void *data,
                                           struct handlers_id_s *handlers,
                                           uint32_t nbHandlers, uint32_t index)
 {
-    assert(obj && obj->pData && data);
+    ASSERT(obj && obj->pData && data);
 
     struct control_private_data_s *pData       = (struct control_private_data_s*)(obj->pData);
     struct control_element_data_s *elementData = (struct control_element_data_s*)data;
@@ -359,7 +359,7 @@ enum control_error_e setCommandHandlers_f(struct control_s *obj, void *data,
     }
 
     elementData->commandHandlers = calloc(1, nbHandlers * sizeof(struct handlers_commands_s));
-    assert(elementData->commandHandlers);
+    ASSERT(elementData->commandHandlers);
 
     uint32_t i;
     for (i = 0; i < nbHandlers; i++) {
@@ -379,7 +379,7 @@ enum control_error_e setCommandHandlers_f(struct control_s *obj, void *data,
  */
 enum control_error_e unsetCommandHandlers_f(struct control_s *obj, void *data)
 {
-    assert(obj && data);
+    ASSERT(obj && data);
 
     struct control_element_data_s *elementData = (struct control_element_data_s*)data;
 
@@ -406,7 +406,7 @@ enum control_error_e unsetCommandHandlers_f(struct control_s *obj, void *data)
  */
 static enum control_error_e loadControllers_f(struct control_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     struct control_private_data_s *pData      = (struct control_private_data_s*)(obj->pData);
     struct controllers_s *controllersObj      = pData->controllersObj;
@@ -482,7 +482,7 @@ initEvtsTaskExit:
  */
 static enum control_error_e unloadControllers_f(struct control_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     enum control_error_e ret                  = CONTROL_ERROR_NONE;
     enum controllers_error_e controllersError = CONTROLLERS_ERROR_NONE;
@@ -539,7 +539,7 @@ static enum control_error_e unloadControllers_f(struct control_s *obj)
  */
 enum control_error_e handleClick_f(struct control_s *obj, struct gfx_event_s *gfxEvent)
 {
-    assert(obj && obj->pData && gfxEvent);
+    ASSERT(obj && obj->pData && gfxEvent);
 
     struct control_private_data_s *pData       = (struct control_private_data_s*)(obj->pData);
     struct controllers_s *controllersObj       = pData->controllersObj;
@@ -583,7 +583,7 @@ enum control_error_e handleClick_f(struct control_s *obj, struct gfx_event_s *gf
 static enum control_error_e handleCommand_f(struct control_s *obj,
                                             struct controllers_command_s *command)
 {
-    assert(obj && obj->pData && command);
+    ASSERT(obj && obj->pData && command);
 
     struct control_private_data_s *pData = (struct control_private_data_s*)(obj->pData);
     struct handlers_s *handlersObj       = pData->handlersObj;
@@ -618,7 +618,7 @@ static enum control_error_e handleCommand_f(struct control_s *obj,
  */
 static void onCommandCb(void *userData, struct controller_command_s *command)
 {
-    assert(userData && command);
+    ASSERT(userData && command);
 
     struct control_s *obj                  = (struct control_s*)userData;
     struct control_private_data_s *pData   = (struct control_private_data_s*)(obj->pData);
@@ -700,7 +700,7 @@ static void onCommandCb(void *userData, struct controller_command_s *command)
  */
 static void onModuleStateChangedCb(void *userData, char *name, enum module_state_e state)
 {
-    assert(userData && name);
+    ASSERT(userData && name);
 
     struct control_s *obj                = (struct control_s*)userData;
     struct control_private_data_s *pData = (struct control_private_data_s*)(obj->pData);

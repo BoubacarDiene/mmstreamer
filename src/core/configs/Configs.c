@@ -58,7 +58,7 @@ extern enum configs_error_e getVideoConfig_f(struct configs_s *obj, struct video
  */
 enum configs_error_e Configs_Init(struct configs_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(struct configs_s))));
+    ASSERT(obj && (*obj = calloc(1, sizeof(struct configs_s))));
 
     (*obj)->getVideoConfig = getVideoConfig_f;
 
@@ -70,7 +70,7 @@ enum configs_error_e Configs_Init(struct configs_s **obj)
  */
 enum configs_error_e Configs_UnInit(struct configs_s **obj)
 {
-    assert(obj && *obj);
+    ASSERT(obj && *obj);
 
     free(*obj);
     *obj = NULL;

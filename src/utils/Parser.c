@@ -115,10 +115,10 @@ static void XMLCALL dataCb(void *userData, const char *value, int32_t len);
  */
 enum parser_error_e Parser_Init(struct parser_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(struct parser_s))));
+    ASSERT(obj && (*obj = calloc(1, sizeof(struct parser_s))));
     
     struct parser_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct parser_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct parser_private_data_s))));
     
     (*obj)->parse         = parse_f;
     (*obj)->getAttributes = getAttributes_f;
@@ -147,7 +147,7 @@ enum parser_error_e Parser_Init(struct parser_s **obj)
  */
 enum parser_error_e Parser_UnInit(struct parser_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    ASSERT(obj && *obj && (*obj)->pData);
     
     free((*obj)->pData);
     free(*obj);
@@ -165,7 +165,7 @@ enum parser_error_e Parser_UnInit(struct parser_s **obj)
  */
 static enum parser_error_e parse_f(struct parser_s *obj, struct parser_params_s *params)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
     
     if (access(params->path, F_OK) != 0) {
         Loge("File \"%s\" not found", params->path);
@@ -278,7 +278,7 @@ static enum parser_error_e getAttributes_f(struct parser_s *obj,
                                            struct parser_attr_handler_s *attrHandlers,
                                            const char **attrs)
 {
-    assert(obj);
+    ASSERT(obj);
 
     if (!attrHandlers || !attrs) {
         Loge("Bad arguments");
@@ -328,7 +328,7 @@ static enum parser_error_e getAttributes_f(struct parser_s *obj,
 static enum parser_error_e getString_f(struct parser_s *obj, void **attrValueOut,
                                        const char *attrValueIn)
 {
-    assert(obj);
+    ASSERT(obj);
 
     if (!attrValueOut || !attrValueIn) {
         return PARSER_ERROR_ATTR;
@@ -350,7 +350,7 @@ static enum parser_error_e getString_f(struct parser_s *obj, void **attrValueOut
 static enum parser_error_e getInt8_f(struct parser_s *obj, void *attrValueOut,
                                      const char *attrValueIn)
 {
-    assert(obj);
+    ASSERT(obj);
 
     if (!attrValueOut || !attrValueIn) {
         return PARSER_ERROR_ATTR;
@@ -367,7 +367,7 @@ static enum parser_error_e getInt8_f(struct parser_s *obj, void *attrValueOut,
 static enum parser_error_e getUint8_f(struct parser_s *obj, void *attrValueOut,
                                       const char *attrValueIn)
 {
-    assert(obj);
+    ASSERT(obj);
 
     if (!attrValueOut || !attrValueIn) {
         return PARSER_ERROR_ATTR;
@@ -384,7 +384,7 @@ static enum parser_error_e getUint8_f(struct parser_s *obj, void *attrValueOut,
 static enum parser_error_e getInt16_f(struct parser_s *obj, void *attrValueOut,
                                       const char *attrValueIn)
 {
-    assert(obj);
+    ASSERT(obj);
 
     if (!attrValueOut || !attrValueIn) {
         return PARSER_ERROR_ATTR;
@@ -401,7 +401,7 @@ static enum parser_error_e getInt16_f(struct parser_s *obj, void *attrValueOut,
 static enum parser_error_e getUint16_f(struct parser_s *obj, void *attrValueOut,
                                        const char *attrValueIn)
 {
-    assert(obj);
+    ASSERT(obj);
 
     if (!attrValueOut || !attrValueIn) {
         return PARSER_ERROR_ATTR;
@@ -418,7 +418,7 @@ static enum parser_error_e getUint16_f(struct parser_s *obj, void *attrValueOut,
 static enum parser_error_e getInt32_f(struct parser_s *obj, void *attrValueOut,
                                       const char *attrValueIn)
 {
-    assert(obj);
+    ASSERT(obj);
 
     if (!attrValueOut || !attrValueIn) {
         return PARSER_ERROR_ATTR;
@@ -435,7 +435,7 @@ static enum parser_error_e getInt32_f(struct parser_s *obj, void *attrValueOut,
 static enum parser_error_e getUint32_f(struct parser_s *obj, void *attrValueOut,
                                        const char *attrValueIn)
 {
-    assert(obj);
+    ASSERT(obj);
 
     if (!attrValueOut || !attrValueIn) {
         return PARSER_ERROR_ATTR;
@@ -452,7 +452,7 @@ static enum parser_error_e getUint32_f(struct parser_s *obj, void *attrValueOut,
 static enum parser_error_e getInt64_f(struct parser_s *obj, void *attrValueOut,
                                       const char *attrValueIn)
 {
-    assert(obj);
+    ASSERT(obj);
 
     if (!attrValueOut || !attrValueIn) {
         return PARSER_ERROR_ATTR;
@@ -469,7 +469,7 @@ static enum parser_error_e getInt64_f(struct parser_s *obj, void *attrValueOut,
 static enum parser_error_e getUint64_f(struct parser_s *obj, void *attrValueOut,
                                        const char *attrValueIn)
 {
-    assert(obj);
+    ASSERT(obj);
 
     if (!attrValueOut || !attrValueIn) {
         return PARSER_ERROR_ATTR;
@@ -489,7 +489,7 @@ static enum parser_error_e getUint64_f(struct parser_s *obj, void *attrValueOut,
  */
 static void XMLCALL startElementCb(void *userData, const char *name, const char **attrs)
 {
-    assert(userData && name);
+    ASSERT(userData && name);
 	
     struct parser_private_data_s *pData = (struct parser_private_data_s*)userData;
 	
@@ -519,7 +519,7 @@ static void XMLCALL startElementCb(void *userData, const char *name, const char 
  */
 static void XMLCALL endElementCb(void *userData, const char *name)
 {
-    assert(userData && name);
+    ASSERT(userData && name);
 	
     struct parser_private_data_s *pData = (struct parser_private_data_s*)userData;
 	
@@ -553,7 +553,7 @@ static void XMLCALL endElementCb(void *userData, const char *name)
  */
 static void XMLCALL dataCb(void *userData, const char *value, int32_t len)
 {
-    assert(userData);
+    ASSERT(userData);
 	
     if ((len == 0) || !value) {
         return;

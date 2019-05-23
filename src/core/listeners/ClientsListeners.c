@@ -73,7 +73,7 @@ static void onClientLinkCb(struct client_params_s *params, void *userData);
  */
 enum listeners_error_e setClientsListeners_f(struct listeners_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
     
     struct listeners_params_s *listenersParams = &obj->params;
     struct input_s *input                      = &listenersParams->ctx->input;
@@ -87,7 +87,7 @@ enum listeners_error_e setClientsListeners_f(struct listeners_s *obj)
         uint8_t index;
         
         struct clients_listeners_private_data_s *pData;
-        assert((pData = calloc(1, sizeof(struct clients_listeners_private_data_s))));
+        ASSERT((pData = calloc(1, sizeof(struct clients_listeners_private_data_s))));
         pData->listenersParams = listenersParams;
         
         for (index = 0; index < clientsInfos->nbClients; index++) {
@@ -107,7 +107,7 @@ enum listeners_error_e setClientsListeners_f(struct listeners_s *obj)
  */
 enum listeners_error_e unsetClientsListeners_f(struct listeners_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
     
     struct listeners_params_s *listenersParams     = &obj->params;
     struct clients_infos_s *clientsInfos           = &listenersParams->ctx->params.clientsInfos;
@@ -138,7 +138,7 @@ enum listeners_error_e unsetClientsListeners_f(struct listeners_s *obj)
 static void onClientDataCb(struct client_params_s *params,
                            struct buffer_s *buffer, void *userData)
 {
-    assert(params && buffer && userData);
+    ASSERT(params && buffer && userData);
     
     struct clients_listeners_private_data_s *pData = (struct clients_listeners_private_data_s*)userData;
     struct context_s *ctx                          = pData->listenersParams->ctx;
@@ -223,7 +223,7 @@ static void onClientDataCb(struct client_params_s *params,
  */
 static void onClientLinkCb(struct client_params_s *params, void *userData)
 {
-    assert(params && userData);
+    ASSERT(params && userData);
     
     Logd("Client link broken - name : \"%s\"", params->name);
 }

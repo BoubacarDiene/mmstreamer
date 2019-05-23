@@ -71,10 +71,10 @@ extern uint32_t gNbMultiInputsHandlers;
 enum handlers_error_e Handlers_Init(struct handlers_s **obj,
                                     struct handlers_params_s *handlersParams)
 {
-    assert(obj && handlersParams && (*obj = calloc(1, sizeof(struct handlers_s))));
+    ASSERT(obj && handlersParams && (*obj = calloc(1, sizeof(struct handlers_s))));
 
     struct handlers_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct handlers_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct handlers_private_data_s))));
 
     (*obj)->getCommandHandler = getCommandHandler_f;
     (*obj)->getElementIndex   = getElementIndex_f;
@@ -98,7 +98,7 @@ enum handlers_error_e Handlers_Init(struct handlers_s **obj,
  */
 enum handlers_error_e Handlers_UnInit(struct handlers_s **obj)
 {
-    assert(obj && *obj);
+    ASSERT(obj && *obj);
 
     free((*obj)->pData);
     free(*obj);
@@ -118,7 +118,7 @@ enum handlers_error_e Handlers_UnInit(struct handlers_s **obj)
 static enum handlers_error_e getCommandHandler_f(struct handlers_s *obj, const char *handlerName,
                                                  handlers_command_f *out)
 {
-    assert(obj && obj->pData && handlerName && out);
+    ASSERT(obj && obj->pData && handlerName && out);
 
     struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
 
@@ -160,7 +160,7 @@ exit:
 static enum handlers_error_e getElementIndex_f(struct handlers_s *obj, char *elementName,
                                                                        uint32_t *index)
 {
-    assert(obj && obj->pData && elementName && index);
+    ASSERT(obj && obj->pData && elementName && index);
 
     struct handlers_private_data_s *pData  = (struct handlers_private_data_s*)(obj->pData);
     struct graphics_infos_s *graphicsInfos = &pData->handlersParams.ctx->params.graphicsInfos;
@@ -187,7 +187,7 @@ static enum handlers_error_e getElementIndex_f(struct handlers_s *obj, char *ele
 enum handlers_error_e getSubstring_f(struct handlers_s *obj, const char * const haystack,
                                      const char * const needle, char *out, uint32_t *offset)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     if (!haystack || !needle || !out || !offset) {
         Loge("Bad params");

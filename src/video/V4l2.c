@@ -92,7 +92,7 @@ static enum v4l2_error_e v4l2Ioctl_f(int32_t fd, uint64_t req, void *args);
  */
 enum v4l2_error_e V4l2_Init(struct v4l2_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(struct v4l2_s))));
+    ASSERT(obj && (*obj = calloc(1, sizeof(struct v4l2_s))));
     
     (*obj)->openDevice       = openDevice_f;
     (*obj)->closeDevice      = closeDevice_f;
@@ -127,7 +127,7 @@ enum v4l2_error_e V4l2_Init(struct v4l2_s **obj)
  */
 enum v4l2_error_e V4l2_UnInit(struct v4l2_s **obj)
 {
-    assert(obj && *obj);
+    ASSERT(obj && *obj);
     
     free(*obj);
     *obj = NULL;
@@ -151,7 +151,7 @@ enum v4l2_error_e V4l2_UnInit(struct v4l2_s **obj)
 static enum v4l2_error_e openDevice_f(struct v4l2_s *obj,
                                       struct v4l2_open_device_params_s *params)
 {
-    assert(obj && params);
+    ASSERT(obj && params);
     
     enum v4l2_error_e ret = V4L2_ERROR_NONE;
     
@@ -212,7 +212,7 @@ exit:
  */
 static enum v4l2_error_e closeDevice_f(struct v4l2_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
     
     if (obj->deviceFd != -1) {
         close(obj->deviceFd);
@@ -239,7 +239,7 @@ static enum v4l2_error_e closeDevice_f(struct v4l2_s *obj)
 static enum v4l2_error_e configureDevice_f(struct v4l2_s *obj,
                                            struct v4l2_configure_device_params_s *params)
 {
-    assert(obj && (obj->deviceFd != -1) && params);
+    ASSERT(obj && (obj->deviceFd != -1) && params);
     
     enum v4l2_error_e ret = V4L2_ERROR_NONE;
 
@@ -308,7 +308,7 @@ exit:
 static enum v4l2_error_e setCroppingArea_f(struct v4l2_s *obj,
                                            struct v4l2_selection_params_s *cropRectInOut)
 {
-    assert(obj && (obj->deviceFd != -1) && cropRectInOut);
+    ASSERT(obj && (obj->deviceFd != -1) && cropRectInOut);
     
     enum v4l2_error_e ret = V4L2_ERROR_NONE;
 
@@ -394,7 +394,7 @@ static enum v4l2_error_e setCroppingArea_f(struct v4l2_s *obj,
 static enum v4l2_error_e setComposingArea_f(struct v4l2_s *obj,
                                             struct v4l2_selection_params_s *composeRectInOut)
 {
-    assert(obj && (obj->deviceFd != -1) && composeRectInOut);
+    ASSERT(obj && (obj->deviceFd != -1) && composeRectInOut);
     
     enum v4l2_error_e ret = V4L2_ERROR_NONE;
 
@@ -482,7 +482,7 @@ static enum v4l2_error_e setComposingArea_f(struct v4l2_s *obj,
 static enum v4l2_error_e requestBuffers_f(struct v4l2_s *obj,
                                           struct v4l2_request_buffers_params_s *params)
 {
-    assert(obj && (obj->deviceFd != -1) && params);
+    ASSERT(obj && (obj->deviceFd != -1) && params);
     
     enum v4l2_error_e ret = V4L2_ERROR_NONE;
 
@@ -508,7 +508,7 @@ static enum v4l2_error_e requestBuffers_f(struct v4l2_s *obj,
     }
     
     obj->nbBuffers = req.count;
-    assert((obj->map = calloc(obj->nbBuffers, sizeof(struct v4l2_mapping_buffer_s))));
+    ASSERT((obj->map = calloc(obj->nbBuffers, sizeof(struct v4l2_mapping_buffer_s))));
 
     uint32_t i;
     for (i = 0; i < obj->nbBuffers; i++) {
@@ -542,7 +542,7 @@ static enum v4l2_error_e requestBuffers_f(struct v4l2_s *obj,
                 break;
                 
             case V4L2_MEMORY_USERPTR:
-                assert((obj->map[i].start = calloc(1, buf.length)));
+                ASSERT((obj->map[i].start = calloc(1, buf.length)));
                 break;
                 
             default:
@@ -573,7 +573,7 @@ exit:
  */
 static enum v4l2_error_e releaseBuffers_f(struct v4l2_s *obj)
 {
-    assert(obj && (obj->deviceFd != -1));
+    ASSERT(obj && (obj->deviceFd != -1));
 
     if (obj->map) {
         uint32_t i;
@@ -624,7 +624,7 @@ static enum v4l2_error_e releaseBuffers_f(struct v4l2_s *obj)
  */
 static enum v4l2_error_e startCapture_f(struct v4l2_s *obj)
 {
-    assert(obj && (obj->deviceFd != -1));
+    ASSERT(obj && (obj->deviceFd != -1));
     
     if (v4l2Ioctl_f(obj->deviceFd, VIDIOC_STREAMON, &obj->format.type) != V4L2_ERROR_NONE) {
         Loge("Failed to start stream");
@@ -643,7 +643,7 @@ static enum v4l2_error_e startCapture_f(struct v4l2_s *obj)
  */
 static enum v4l2_error_e stopCapture_f(struct v4l2_s *obj)
 {
-    assert(obj && (obj->deviceFd != -1));
+    ASSERT(obj && (obj->deviceFd != -1));
     
     if (v4l2Ioctl_f(obj->deviceFd, VIDIOC_STREAMOFF, &obj->format.type) != V4L2_ERROR_NONE) {
         Loge("Failed to stop stream");
@@ -663,7 +663,7 @@ static enum v4l2_error_e stopCapture_f(struct v4l2_s *obj)
  */
 static enum v4l2_error_e awaitData_f(struct v4l2_s *obj, int32_t timeout_ms)
 {
-    assert(obj && (obj->deviceFd != -1));
+    ASSERT(obj && (obj->deviceFd != -1));
     
     int32_t selectRetval;
     int32_t maxFd;
@@ -678,7 +678,7 @@ static enum v4l2_error_e awaitData_f(struct v4l2_s *obj, int32_t timeout_ms)
     maxFd = (obj->deviceFd > obj->quitFd[V4L2_PIPE_READ] ? obj->deviceFd : obj->quitFd[V4L2_PIPE_READ]);
 
     if (timeout_ms > 0) {
-        assert((tv = calloc(1, sizeof(struct timeval))));
+        ASSERT((tv = calloc(1, sizeof(struct timeval))));
         tv->tv_sec  = 0;
         tv->tv_usec = timeout_ms * 1000;
     }
@@ -713,7 +713,7 @@ exit:
  */
 static enum v4l2_error_e stopAwaitingData_f(struct v4l2_s *obj)
 {
-    assert(obj && (obj->quitFd[V4L2_PIPE_WRITE] != -1));
+    ASSERT(obj && (obj->quitFd[V4L2_PIPE_WRITE] != -1));
 
     if (write(obj->quitFd[V4L2_PIPE_WRITE], "\n", 1) < 0) {
         Loge("Writing to pipe failed - %s", strerror(errno));
@@ -733,7 +733,7 @@ static enum v4l2_error_e stopAwaitingData_f(struct v4l2_s *obj)
  */
 static enum v4l2_error_e queueBuffer_f(struct v4l2_s *obj, uint32_t index)
 {
-    assert(obj && (obj->deviceFd != -1));
+    ASSERT(obj && (obj->deviceFd != -1));
     
     struct v4l2_buffer buffer = {0};
 
@@ -758,7 +758,7 @@ static enum v4l2_error_e queueBuffer_f(struct v4l2_s *obj, uint32_t index)
  */
 static enum v4l2_error_e dequeueBuffer_f(struct v4l2_s *obj)
 {
-    assert(obj && (obj->deviceFd != -1));
+    ASSERT(obj && (obj->deviceFd != -1));
     
     struct v4l2_buffer buffer = {0};
 
@@ -789,7 +789,7 @@ static enum v4l2_error_e dequeueBuffer_f(struct v4l2_s *obj)
             ;
     }
     
-    assert(i < obj->nbBuffers);
+    ASSERT(i < obj->nbBuffers);
 
     return V4L2_ERROR_NONE;
 }

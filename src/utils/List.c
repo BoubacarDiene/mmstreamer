@@ -83,14 +83,14 @@ static enum list_error_e unlock_f(struct list_s *obj);
  */
 enum list_error_e List_Init(struct list_s **obj, struct list_params_s *params)
 {
-    assert(obj && params);
+    ASSERT(obj && params);
     
-    assert((*obj = calloc(1, sizeof(struct list_s))));
+    ASSERT((*obj = calloc(1, sizeof(struct list_s))));
     
     (*obj)->params = *params;
     
     struct list_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct list_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct list_private_data_s))));
     
     if (pthread_mutex_init(&pData->lock, NULL) != 0) {
         Loge("pthread_mutex_init() failed");
@@ -123,7 +123,7 @@ exit:
  */
 enum list_error_e List_UnInit(struct list_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    ASSERT(obj && *obj && (*obj)->pData);
     
     enum list_error_e ret             = LIST_ERROR_NONE;
     struct list_private_data_s *pData = (struct list_private_data_s*)((*obj)->pData);
@@ -149,12 +149,12 @@ enum list_error_e List_UnInit(struct list_s **obj)
  */
 static enum list_error_e add_f(struct list_s *obj, void *element)
 {
-    assert(obj && obj->pData && element);
+    ASSERT(obj && obj->pData && element);
     
     struct list_element_s *newElement = NULL;
     struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
-    assert((newElement = calloc(1, sizeof(struct list_element_s))));
+    ASSERT((newElement = calloc(1, sizeof(struct list_element_s))));
     
     newElement->element = element;
     newElement->next    = NULL;
@@ -182,7 +182,7 @@ static enum list_error_e add_f(struct list_s *obj, void *element)
  */
 static enum list_error_e remove_f(struct list_s *obj, void *userData)
 {
-    assert(obj && obj->pData && userData);
+    ASSERT(obj && obj->pData && userData);
     
     struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
@@ -218,7 +218,7 @@ static enum list_error_e remove_f(struct list_s *obj, void *userData)
  */
 static enum list_error_e removeAll_f(struct list_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
@@ -248,7 +248,7 @@ static enum list_error_e removeAll_f(struct list_s *obj)
  */
 static enum list_error_e getNbElements_f(struct list_s *obj, uint32_t *nbElements)
 {
-    assert(obj && obj->pData && nbElements);
+    ASSERT(obj && obj->pData && nbElements);
     
     struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
@@ -262,7 +262,7 @@ static enum list_error_e getNbElements_f(struct list_s *obj, uint32_t *nbElement
  */
 static enum list_error_e getElement_f(struct list_s *obj, void **element)
 {
-    assert(obj && obj->pData && element);
+    ASSERT(obj && obj->pData && element);
     
     struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
@@ -280,7 +280,7 @@ static enum list_error_e getElement_f(struct list_s *obj, void **element)
  */
 static enum list_error_e browseElements_f(struct list_s *obj, void *userData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
@@ -299,7 +299,7 @@ static enum list_error_e browseElements_f(struct list_s *obj, void *userData)
  */
 static enum list_error_e lock_f(struct list_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     
@@ -318,7 +318,7 @@ static enum list_error_e lock_f(struct list_s *obj)
  */
 static enum list_error_e unlock_f(struct list_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
     

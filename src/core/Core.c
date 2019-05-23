@@ -98,10 +98,10 @@ static void getLanguage_f(void *userData, char *currentIn, char *nextOut);
  */
 enum core_error_e Core_Init(struct core_s **obj, struct context_s *ctx)
 {
-    assert(obj && ctx && (*obj = calloc(1, sizeof(struct core_s))));
+    ASSERT(obj && ctx && (*obj = calloc(1, sizeof(struct core_s))));
     
     struct core_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct core_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct core_private_data_s))));
     
     if (Configs_Init(&pData->configsObj) != CONFIGS_ERROR_NONE) {
         Loge("Configs_Init() failed");
@@ -173,7 +173,7 @@ configs_exit:
  */
 enum core_error_e Core_UnInit(struct core_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    ASSERT(obj && *obj && (*obj)->pData);
     
     struct core_private_data_s *pData = (struct core_private_data_s*)((*obj)->pData);
     
@@ -253,7 +253,7 @@ static enum core_error_e unloadAllParams_f(struct core_s *obj)
  */
 static enum core_error_e loadGraphicsParams_f(struct core_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct core_private_data_s *pData = (struct core_private_data_s*)(obj->pData);
     enum core_error_e ret             = CORE_ERROR_PARAMS;
@@ -293,7 +293,7 @@ static enum core_error_e loadGraphicsParams_f(struct core_s *obj)
     struct graphics_infos_s *graphicsInfos   = &pData->ctx->params.graphicsInfos;
     struct graphics_params_s *graphicsParams = &graphicsInfos->graphicsParams;
     
-    assert((graphicsInfos->currentLanguage = calloc(1, MIN_STR_SIZE)));
+    ASSERT((graphicsInfos->currentLanguage = calloc(1, MIN_STR_SIZE)));
     strncpy(graphicsInfos->currentLanguage, xmlCommon->defaultLanguage, MIN_STR_SIZE);
     
     Logd("Setting main colors");
@@ -340,7 +340,7 @@ static enum core_error_e loadGraphicsParams_f(struct core_s *obj)
     getImage_f((void*)xmlCommon, xmlGraphics->screen.iconImageId, &screenParams->icon);
     
     if (xmlGraphics->screen.iconHiddenColorId >= 0) {
-        assert((screenParams->icon.hiddenColor = calloc(1, sizeof(struct gfx_color_s))));
+        ASSERT((screenParams->icon.hiddenColor = calloc(1, sizeof(struct gfx_color_s))));
         getColor_f((void*)xmlCommon, xmlGraphics->screen.iconHiddenColorId,
                                      screenParams->icon.hiddenColor);
     }
@@ -357,7 +357,7 @@ static enum core_error_e loadGraphicsParams_f(struct core_s *obj)
         int32_t bgHiddenColorId = xmlGraphics->screen.bgHiddenColorId;
         if (bgHiddenColorId >= 0) {
             screenParams->background.image.hiddenColor = calloc(1, sizeof(struct gfx_color_s));
-            assert(screenParams->background.image.hiddenColor);
+            ASSERT(screenParams->background.image.hiddenColor);
             getColor_f((void*)xmlCommon,
                        bgHiddenColorId, screenParams->background.image.hiddenColor);
         }
@@ -380,7 +380,7 @@ static enum core_error_e loadGraphicsParams_f(struct core_s *obj)
         int32_t gfxVideoBgHiddenColorId = xmlGraphics->screen.gfxVideo.bgHiddenColorId;
         if (gfxVideoBgHiddenColorId >= 0) {
             gfxVideo->background.image.hiddenColor = calloc(1, sizeof(struct gfx_color_s));
-            assert(gfxVideo->background.image.hiddenColor);
+            ASSERT(gfxVideo->background.image.hiddenColor);
             getColor_f((void*)xmlCommon,
                        gfxVideoBgHiddenColorId, gfxVideo->background.image.hiddenColor);
         }
@@ -405,7 +405,7 @@ static enum core_error_e loadGraphicsParams_f(struct core_s *obj)
         Logw("No graphics element defined");
     }
     else {
-        assert((*gfxElements = calloc(*nbGfxElements, sizeof(struct gfx_element_s*))));
+        ASSERT((*gfxElements = calloc(*nbGfxElements, sizeof(struct gfx_element_s*))));
         
         for (index = 0; index < *nbGfxElements; index++) {
             if (graphicsObj->createElement(graphicsObj,
@@ -445,7 +445,7 @@ static enum core_error_e loadGraphicsParams_f(struct core_s *obj)
 	                
                     if (imageIds.hiddenColorId >= 0) {
                         (*gfxElements)[index]->data.image.hiddenColor = calloc(1, sizeof(struct gfx_color_s));
-                        assert((*gfxElements)[index]->data.image.hiddenColor);
+                        ASSERT((*gfxElements)[index]->data.image.hiddenColor);
                         getColor_f((void*)xmlCommon, imageIds.hiddenColorId,
                                                      (*gfxElements)[index]->data.image.hiddenColor);
                     }
@@ -588,7 +588,7 @@ unloadXml_exit:
  */
 static enum core_error_e unloadGraphicsParams_f(struct core_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct core_private_data_s *pData      = (struct core_private_data_s*)(obj->pData);
     struct xml_common_s *xmlCommon         = &pData->xml.xmlCommon;
@@ -656,7 +656,7 @@ static enum core_error_e unloadGraphicsParams_f(struct core_s *obj)
  */
 static enum core_error_e loadVideosParams_f(struct core_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct core_private_data_s *pData = (struct core_private_data_s*)(obj->pData);
     enum core_error_e ret             = CORE_ERROR_NONE;
@@ -678,12 +678,12 @@ static enum core_error_e loadVideosParams_f(struct core_s *obj)
     
     Logd("Setting videos params");
 
-    assert((*videoDevices = calloc(*nbDevices, sizeof(struct video_device_s*))));
+    ASSERT((*videoDevices = calloc(*nbDevices, sizeof(struct video_device_s*))));
 
     uint8_t index, configId;
     struct video_config_choice_s *configChoice;
     for (index = 0; index < *nbDevices; index++) {
-        assert(((*videoDevices)[index] = calloc(1, sizeof(struct video_device_s))));
+        ASSERT(((*videoDevices)[index] = calloc(1, sizeof(struct video_device_s))));
 
         if (xmlVideos->videos[index].configChoice >= xmlVideos->nbConfigs) {
             Loge("Bad video config choice - Choice : %u / Max : %u",
@@ -782,7 +782,7 @@ unloadXml_exit:
  */
 static enum core_error_e unloadVideosParams_f(struct core_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct core_private_data_s *pData     = (struct core_private_data_s*)(obj->pData);
     struct videos_infos_s *videosInfos    = &pData->ctx->params.videosInfos;
@@ -818,7 +818,7 @@ static enum core_error_e unloadVideosParams_f(struct core_s *obj)
  */
 static enum core_error_e loadServersParams_f(struct core_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct core_private_data_s *pData = (struct core_private_data_s*)(obj->pData);
     enum core_error_e ret             = CORE_ERROR_NONE;
@@ -840,11 +840,11 @@ static enum core_error_e loadServersParams_f(struct core_s *obj)
     
     Logd("Setting servers params");
     
-    assert((*serverInfos = calloc(*nbServers, sizeof(struct server_infos_s*))));
+    ASSERT((*serverInfos = calloc(*nbServers, sizeof(struct server_infos_s*))));
     
     uint8_t index;
     for (index = 0; index < *nbServers; index++) {
-        assert(((*serverInfos)[index] = calloc(1, sizeof(struct server_infos_s))));
+        ASSERT(((*serverInfos)[index] = calloc(1, sizeof(struct server_infos_s))));
 
         serverParams = &((*serverInfos)[index])->serverParams;
 
@@ -916,7 +916,7 @@ unloadXml_exit:
  */
 static enum core_error_e unloadServersParams_f(struct core_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct core_private_data_s *pData    = (struct core_private_data_s*)(obj->pData);
     struct servers_infos_s *serversInfos = &pData->ctx->params.serversInfos;
@@ -943,7 +943,7 @@ static enum core_error_e unloadServersParams_f(struct core_s *obj)
  */
 static enum core_error_e loadClientsParams_f(struct core_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct core_private_data_s *pData = (struct core_private_data_s*)(obj->pData);
     enum core_error_e ret             = CORE_ERROR_NONE;
@@ -965,11 +965,11 @@ static enum core_error_e loadClientsParams_f(struct core_s *obj)
     
     Logd("Setting clients params");
     
-    assert((*clientInfos = calloc(*nbClients, sizeof(struct client_infos_s*))));
+    ASSERT((*clientInfos = calloc(*nbClients, sizeof(struct client_infos_s*))));
     
     uint8_t index;
     for (index = 0; index < *nbClients; index++) {
-        assert(((*clientInfos)[index] = calloc(1, sizeof(struct client_infos_s))));
+        ASSERT(((*clientInfos)[index] = calloc(1, sizeof(struct client_infos_s))));
 
         clientParams = &((*clientInfos)[index])->clientParams;
 
@@ -1055,7 +1055,7 @@ unloadXml_exit:
  */
 static enum core_error_e unloadClientsParams_f(struct core_s *obj)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct core_private_data_s *pData    = (struct core_private_data_s*)(obj->pData);
     struct clients_infos_s *clientsInfos = &pData->ctx->params.clientsInfos;
@@ -1091,7 +1091,7 @@ static enum core_error_e unloadClientsParams_f(struct core_s *obj)
 static enum core_error_e keepAppRunning_f(struct core_s *obj, enum keep_alive_method_e method,
                                           uint32_t timeout_s)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
     
     struct core_private_data_s *pData = (struct core_private_data_s*)(obj->pData);
     struct context_s *ctx             = pData->ctx;
@@ -1154,7 +1154,7 @@ exit:
  */
 static void getString_f(void *userData, uint32_t stringId, char *language, char *strOut)
 {
-    assert(userData && language && strOut);
+    ASSERT(userData && language && strOut);
     
     struct xml_common_s *common   = (struct xml_common_s*)userData;
     uint32_t defaultLanguageIndex = 0;
@@ -1182,7 +1182,7 @@ static void getString_f(void *userData, uint32_t stringId, char *language, char 
  */
 static void getColor_f(void *userData, int32_t colorId, struct gfx_color_s *colorOut)
 {
-    assert(userData && colorOut);
+    ASSERT(userData && colorOut);
     
     struct xml_common_s *common = (struct xml_common_s*)userData;
     
@@ -1197,7 +1197,7 @@ static void getColor_f(void *userData, int32_t colorId, struct gfx_color_s *colo
  */
 static void getFont_f(void *userData, uint32_t fontId, char *ttfFontOut)
 {
-    assert(userData && ttfFontOut);
+    ASSERT(userData && ttfFontOut);
     
     struct xml_common_s *common = (struct xml_common_s*)userData;
     
@@ -1209,7 +1209,7 @@ static void getFont_f(void *userData, uint32_t fontId, char *ttfFontOut)
  */
 static void getImage_f(void *userData, uint32_t imageId, struct gfx_image_s *imageOut)
 {
-    assert(userData && imageOut);
+    ASSERT(userData && imageOut);
     
     struct xml_common_s *common = (struct xml_common_s*)userData;
     
@@ -1222,7 +1222,7 @@ static void getImage_f(void *userData, uint32_t imageId, struct gfx_image_s *ima
  */
 static void getLanguage_f(void *userData, char *currentIn, char *nextOut)
 {
-    assert(userData && currentIn && nextOut);
+    ASSERT(userData && currentIn && nextOut);
     
     struct xml_common_s *common = (struct xml_common_s*)userData;
     

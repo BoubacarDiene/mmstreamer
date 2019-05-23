@@ -87,10 +87,10 @@ static void* loop(void *args);
  */
 enum task_error_e Task_Init(struct task_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(struct task_s))));
+    ASSERT(obj && (*obj = calloc(1, sizeof(struct task_s))));
     
     struct task_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct task_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct task_private_data_s))));
     
     /* Initialize obj */
     (*obj)->create  = create_f;
@@ -108,7 +108,7 @@ enum task_error_e Task_Init(struct task_s **obj)
  */
 enum task_error_e Task_UnInit(struct task_s **obj)
 {
-    assert(obj && *obj && (*obj)->pData);
+    ASSERT(obj && *obj && (*obj)->pData);
     
     struct task_private_data_s *pData = (struct task_private_data_s*)((*obj)->pData);
     
@@ -133,10 +133,10 @@ enum task_error_e Task_UnInit(struct task_s **obj)
  */
 static enum task_error_e create_f(struct task_s *obj, struct task_params_s *params)
 {
-    assert(obj && obj->pData && params);
+    ASSERT(obj && obj->pData && params);
     
     struct task_reserved_data_s *reserved;
-    assert((reserved = calloc(1, sizeof(struct task_reserved_data_s))));
+    ASSERT((reserved = calloc(1, sizeof(struct task_reserved_data_s))));
     
     if (sem_init(&reserved->semQuit, 0, 0) != 0) {
         Loge("sem_init() failed - %s", strerror(errno));
@@ -223,7 +223,7 @@ semQuitExit:
  */
 static enum task_error_e destroy_f(struct task_s *obj, struct task_params_s *params)
 {
-    assert(obj && obj->pData && params && params->reserved);
+    ASSERT(obj && obj->pData && params && params->reserved);
     
     struct task_reserved_data_s *reserved = (struct task_reserved_data_s*)(params->reserved);
     
@@ -251,7 +251,7 @@ static enum task_error_e destroy_f(struct task_s *obj, struct task_params_s *par
  */
 static enum task_error_e start_f(struct task_s *obj, struct task_params_s *params)
 {
-    assert(obj && obj->pData && params && params->reserved);
+    ASSERT(obj && obj->pData && params && params->reserved);
     
     sem_post(&((struct task_reserved_data_s*)(params->reserved))->semStart);
     
@@ -263,7 +263,7 @@ static enum task_error_e start_f(struct task_s *obj, struct task_params_s *param
  */
 static enum task_error_e stop_f(struct task_s *obj, struct task_params_s *params)
 {
-    assert(obj && obj->pData && params && params->reserved);
+    ASSERT(obj && obj->pData && params && params->reserved);
     
     struct task_reserved_data_s *reserved = (struct task_reserved_data_s*)(params->reserved);
     
@@ -286,12 +286,12 @@ static enum task_error_e stop_f(struct task_s *obj, struct task_params_s *params
  */
 static void* loop(void *args)
 {
-    assert(args);
+    ASSERT(args);
     
     struct task_params_s *params          = (struct task_params_s*)args;
     struct task_reserved_data_s *reserved = (struct task_reserved_data_s*)(params->reserved);
     
-    assert(reserved);
+    ASSERT(reserved);
     
     /* Set task's name */
     if ((params->name)[0] != '\0') {

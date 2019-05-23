@@ -62,7 +62,7 @@ static void onGfxEventCb(struct gfx_event_s *gfxEvent, void *userData);
  */
 enum listeners_error_e setGraphicsListeners_f(struct listeners_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
     
     struct listeners_params_s *listenersParams = &obj->params;
     struct graphics_infos_s *graphicsInfos     = &listenersParams->ctx->params.graphicsInfos;
@@ -78,7 +78,7 @@ enum listeners_error_e setGraphicsListeners_f(struct listeners_s *obj)
  */
 enum listeners_error_e unsetGraphicsListeners_f(struct listeners_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
     
     struct listeners_params_s *listenersParams = &obj->params;
     struct graphics_infos_s *graphicsInfos     = &listenersParams->ctx->params.graphicsInfos;
@@ -98,7 +98,7 @@ enum listeners_error_e unsetGraphicsListeners_f(struct listeners_s *obj)
  */
 static void onGfxEventCb(struct gfx_event_s *gfxEvent, void *userData)
 {
-    assert(gfxEvent && userData);
+    ASSERT(gfxEvent && userData);
     
     struct listeners_params_s *listenersParams = (struct listeners_params_s*)userData;
     struct control_s *controlObj               = listenersParams->controlObj;

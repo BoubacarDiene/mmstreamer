@@ -104,7 +104,7 @@ static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 enum loaders_error_e loadGraphicsXml_f(struct loaders_s *obj, struct context_s *ctx,
                                        struct xml_graphics_s *xmlGraphics)
 {
-    assert(obj && ctx && xmlGraphics);
+    ASSERT(obj && ctx && xmlGraphics);
     
     struct parser_s *parserObj = ctx->parserObj;
     struct input_s *input      = &ctx->input;
@@ -158,7 +158,7 @@ enum loaders_error_e loadGraphicsXml_f(struct loaders_s *obj, struct context_s *
  */
 enum loaders_error_e unloadGraphicsXml_f(struct loaders_s *obj, struct xml_graphics_s *xmlGraphics)
 {
-    assert(obj && xmlGraphics);
+    ASSERT(obj && xmlGraphics);
     
     if (xmlGraphics->defaultLanguage) {
         free(xmlGraphics->defaultLanguage);
@@ -266,7 +266,7 @@ enum loaders_error_e unloadGraphicsXml_f(struct loaders_s *obj, struct xml_graph
 enum loaders_error_e loadCommonXml_f(struct loaders_s *obj, struct context_s *ctx,
                                      struct xml_common_s *xmlCommon)
 {
-    assert(obj && ctx && xmlCommon);
+    ASSERT(obj && ctx && xmlCommon);
     
     struct parser_s *parserObj = ctx->parserObj;
     struct input_s *input      = &ctx->input;
@@ -374,7 +374,7 @@ enum loaders_error_e loadCommonXml_f(struct loaders_s *obj, struct context_s *ct
  */
 enum loaders_error_e unloadCommonXml_f(struct loaders_s *obj, struct xml_common_s *xmlCommon)
 {
-    assert(obj && xmlCommon);
+    ASSERT(obj && xmlCommon);
 
     uint32_t index;
 
@@ -446,7 +446,7 @@ enum loaders_error_e unloadCommonXml_f(struct loaders_s *obj, struct xml_common_
  */
 static void onCommonCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
@@ -477,7 +477,7 @@ static void onCommonCb(void *userData, const char **attrs)
  */
 static void onColorsCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
@@ -508,7 +508,7 @@ static void onColorsCb(void *userData, const char **attrs)
  */
 static void onImagesCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
@@ -539,7 +539,7 @@ static void onImagesCb(void *userData, const char **attrs)
  */
 static void onFontsCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
@@ -570,7 +570,7 @@ static void onFontsCb(void *userData, const char **attrs)
  */
 static void onStringsCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
@@ -601,7 +601,7 @@ static void onStringsCb(void *userData, const char **attrs)
  */
 static void onScreenCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct xml_screen_s *screen        = &xmlGraphics->screen;
@@ -675,7 +675,7 @@ static void onScreenCb(void *userData, const char **attrs)
  */
 static void onBackgroundCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct xml_screen_s *screen        = &xmlGraphics->screen;
@@ -725,7 +725,7 @@ static void onBackgroundCb(void *userData, const char **attrs)
  */
 static void onIconCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct xml_screen_s *screen        = &xmlGraphics->screen;
@@ -763,7 +763,7 @@ static void onIconCb(void *userData, const char **attrs)
  */
 static void onGfxVideoCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct xml_gfx_video_s *gfxVideo   = &xmlGraphics->screen.gfxVideo;
@@ -849,7 +849,7 @@ static void onGfxVideoCb(void *userData, const char **attrs)
  */
 static void onElementStartCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
@@ -859,7 +859,7 @@ static void onElementStartCb(void *userData, const char **attrs)
     
     xmlGraphics->elements = realloc(xmlGraphics->elements,
                                     (xmlGraphics->nbElements + 1) * sizeof(struct xml_element_s));
-    assert(xmlGraphics->elements);
+    ASSERT(xmlGraphics->elements);
     
     memset(&xmlGraphics->elements[xmlGraphics->nbElements], 0, sizeof(struct xml_element_s));
     
@@ -932,7 +932,7 @@ static void onElementStartCb(void *userData, const char **attrs)
  */
 static void onElementEndCb(void *userData)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
 
@@ -946,7 +946,7 @@ static void onElementEndCb(void *userData)
  */
 static void onElementConfigCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
@@ -996,14 +996,14 @@ static void onElementConfigCb(void *userData, const char **attrs)
  */
 static void onElementTextCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
     struct parser_s *parserObj         = ctx->parserObj;
     struct xml_element_s *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
     
-    assert((element->text = calloc(1, sizeof(struct xml_element_text_s))));
+    ASSERT((element->text = calloc(1, sizeof(struct xml_element_text_s))));
     
     struct parser_attr_handler_s attrHandlers[] = {
     	{
@@ -1048,14 +1048,14 @@ static void onElementTextCb(void *userData, const char **attrs)
  */
 static void onElementNavCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
     struct parser_s *parserObj         = ctx->parserObj;
     struct xml_element_s *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
     
-    assert((element->nav = calloc(1, sizeof(struct xml_element_nav_s))));
+    ASSERT((element->nav = calloc(1, sizeof(struct xml_element_nav_s))));
     
     struct parser_attr_handler_s attrHandlers[] = {
     	{
@@ -1100,14 +1100,14 @@ static void onElementNavCb(void *userData, const char **attrs)
  */
 static void onElementImageCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
     struct parser_s *parserObj         = ctx->parserObj;
     struct xml_element_s *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
     
-    assert((element->image = calloc(1, sizeof(struct xml_element_image_s))));
+    ASSERT((element->image = calloc(1, sizeof(struct xml_element_image_s))));
     
     struct parser_attr_handler_s attrHandlers[] = {
     	{
@@ -1140,7 +1140,7 @@ static void onElementImageCb(void *userData, const char **attrs)
  */
 static void onElementClickStartCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
 
     (void)attrs;
 }
@@ -1150,7 +1150,7 @@ static void onElementClickStartCb(void *userData, const char **attrs)
  */
 static void onElementClickEndCb(void *userData)
 {
-    assert(userData);
+    ASSERT(userData);
 
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct xml_element_s *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
@@ -1163,7 +1163,7 @@ static void onElementClickEndCb(void *userData)
  */
 static void onElementHandlerCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
 
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
@@ -1173,7 +1173,7 @@ static void onElementHandlerCb(void *userData, const char **attrs)
     element->clickHandlers = realloc(element->clickHandlers,
                                      (element->nbClickHandlers + 1)
                                      * sizeof(struct xml_element_click_s));
-    assert(element->clickHandlers);
+    ASSERT(element->clickHandlers);
 
     memset(&element->clickHandlers[element->nbClickHandlers],
                        0, sizeof(struct xml_element_click_s));
@@ -1213,7 +1213,7 @@ static void onElementHandlerCb(void *userData, const char **attrs)
  */
 static void onFocusCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
@@ -1244,7 +1244,7 @@ static void onFocusCb(void *userData, const char **attrs)
  */
 static void onBlurCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
@@ -1275,7 +1275,7 @@ static void onBlurCb(void *userData, const char **attrs)
  */
 static void onResetCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct context_s *ctx              = (struct context_s*)xmlGraphics->reserved;
@@ -1306,7 +1306,7 @@ static void onResetCb(void *userData, const char **attrs)
  */
 static void onColorCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_common_s *xmlCommon = (struct xml_common_s*)userData;
     struct context_s *ctx          = (struct context_s*)xmlCommon->reserved;
@@ -1317,7 +1317,7 @@ static void onColorCb(void *userData, const char **attrs)
     
     xmlColors->colors = realloc(xmlColors->colors,
                                 (xmlColors->nbColors + 1) * sizeof(struct xml_color_s));
-    assert(xmlColors->colors);
+    ASSERT(xmlColors->colors);
     
     struct xml_color_s *color = &xmlColors->colors[xmlColors->nbColors];
     memset(color, 0, sizeof(struct xml_color_s));
@@ -1367,7 +1367,7 @@ static void onColorCb(void *userData, const char **attrs)
  */
 static void onImageCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_common_s *xmlCommon = (struct xml_common_s*)userData;
     struct context_s *ctx          = (struct context_s*)xmlCommon->reserved;
@@ -1379,7 +1379,7 @@ static void onImageCb(void *userData, const char **attrs)
     
     xmlImages->images = realloc(xmlImages->images,
                                 (xmlImages->nbImages + 1) * sizeof(struct xml_image_s));
-    assert(xmlImages->images);
+    ASSERT(xmlImages->images);
     
     struct xml_image_s *image = &xmlImages->images[xmlImages->nbImages];
     memset(image, 0, sizeof(struct xml_image_s));
@@ -1413,7 +1413,7 @@ static void onImageCb(void *userData, const char **attrs)
         char *temp   = strdup(image->file);
         uint32_t len = (strlen(temp) + strlen(input->resRootDir) + 2) * sizeof(char);
         
-        assert((image->file = realloc(image->file, len)));
+        ASSERT((image->file = realloc(image->file, len)));
         memset(image->file, '\0', len);
         
         snprintf(image->file, len, "%s/%s", input->resRootDir, temp);
@@ -1429,7 +1429,7 @@ static void onImageCb(void *userData, const char **attrs)
  */
 static void onFontCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_common_s *xmlCommon = (struct xml_common_s*)userData;
     struct context_s *ctx          = (struct context_s*)xmlCommon->reserved;
@@ -1441,7 +1441,7 @@ static void onFontCb(void *userData, const char **attrs)
     
     xmlFonts->fonts = realloc(xmlFonts->fonts,
                               (xmlFonts->nbFonts + 1) * sizeof(struct xml_font_s));
-    assert(xmlFonts->fonts);
+    ASSERT(xmlFonts->fonts);
     
     struct xml_font_s *font = &xmlFonts->fonts[xmlFonts->nbFonts];
     memset(font, 0, sizeof(struct xml_font_s));
@@ -1469,7 +1469,7 @@ static void onFontCb(void *userData, const char **attrs)
         char *temp   = strdup(font->file);
         uint32_t len = (strlen(temp) + strlen(input->resRootDir) + 2) * sizeof(char);
         
-        assert((font->file = realloc(font->file, len)));
+        ASSERT((font->file = realloc(font->file, len)));
         memset(font->file, '\0', len);
         
         snprintf(font->file, len, "%s/%s", input->resRootDir, temp);
@@ -1485,7 +1485,7 @@ static void onFontCb(void *userData, const char **attrs)
  */
 static void onStrGroupStartCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_common_s *xmlCommon    = (struct xml_common_s*)userData;
     struct xml_strings_s **xmlStrings = (struct xml_strings_s**)&xmlCommon->xmlStrings;
@@ -1496,7 +1496,7 @@ static void onStrGroupStartCb(void *userData, const char **attrs)
     Logd("Adding strGroup %u", (nbXmlStrings + 1));
     
     *xmlStrings = realloc(*xmlStrings, (nbXmlStrings + 1) * sizeof(struct xml_strings_s));
-    assert(*xmlStrings);
+    ASSERT(*xmlStrings);
     
     memset(&(*xmlStrings)[nbXmlStrings], 0, sizeof(struct xml_strings_s));
     
@@ -1525,7 +1525,7 @@ static void onStrGroupStartCb(void *userData, const char **attrs)
  */
 static void onStringCb(void *userData, const char **attrs)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_common_s *xmlCommon   = (struct xml_common_s*)userData;
     struct context_s *ctx            = (struct context_s*)xmlCommon->reserved;
@@ -1539,7 +1539,7 @@ static void onStringCb(void *userData, const char **attrs)
     Logd("Adding string %u", (*nbStrings + 1));
     
     *strings = realloc(*strings, (*nbStrings + 1) * sizeof(struct xml_string_s));
-    assert(*strings);
+    ASSERT(*strings);
     
     memset(&(*strings)[*nbStrings], 0, sizeof(struct xml_string_s));
     
@@ -1570,7 +1570,7 @@ static void onStringCb(void *userData, const char **attrs)
  */
 static void onStrGroupEndCb(void *userData)
 {
-    assert(userData);
+    ASSERT(userData);
     
     struct xml_common_s *xmlCommon = (struct xml_common_s*)userData;
     

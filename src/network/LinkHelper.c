@@ -223,10 +223,10 @@ static void signalHandler_f(int32_t signalNumber);
  */
 void LinkHelper_Init(struct link_helper_s **obj)
 {
-    assert(obj && (*obj = calloc(1, sizeof(struct link_helper_s))));
+    ASSERT(obj && (*obj = calloc(1, sizeof(struct link_helper_s))));
     
     struct link_helper_private_data_s *pData;
-    assert((pData = calloc(1, sizeof(struct link_helper_private_data_s))));
+    ASSERT((pData = calloc(1, sizeof(struct link_helper_private_data_s))));
     
     (*obj)->keepMeAlive              = keepMeAlive_f;
     
@@ -269,7 +269,7 @@ void LinkHelper_Init(struct link_helper_s **obj)
  */
 void LinkHelper_UnInit(struct link_helper_s **obj)
 {
-    assert(obj && *obj);
+    ASSERT(obj && *obj);
     
     free((*obj)->pData);
     free(*obj);
@@ -285,7 +285,7 @@ void LinkHelper_UnInit(struct link_helper_s **obj)
  */
 static void keepMeAlive_f(struct link_helper_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
     
     sigset_t         sigset;
     struct sigaction sa;
@@ -305,7 +305,7 @@ static void keepMeAlive_f(struct link_helper_s *obj)
  */
 static void prepareCustomHeader_f(struct link_helper_s *obj, struct custom_header_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
     
     memset(inOut->str, '\0', sizeof(inOut->str));
     strcpy(inOut->str, CUSTOM_HEADER);
@@ -316,7 +316,7 @@ static void prepareCustomHeader_f(struct link_helper_s *obj, struct custom_heade
  */
 static void parseCustomHeader_f(struct link_helper_s *obj, struct custom_header_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
 }
 
 /*!
@@ -324,7 +324,7 @@ static void parseCustomHeader_f(struct link_helper_s *obj, struct custom_header_
  */
 static void prepareCustomContent_f(struct link_helper_s *obj, struct custom_content_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
     
     memset(inOut->str, '\0', sizeof(inOut->str));
     sprintf(inOut->str, CUSTOM_CONTENT, inOut->mime, (uint32_t)inOut->maxBufferSize);
@@ -335,7 +335,7 @@ static void prepareCustomContent_f(struct link_helper_s *obj, struct custom_cont
  */
 static void parseCustomContent_f(struct link_helper_s *obj, struct custom_content_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
     
     memset(inOut->mime, '\0', sizeof(inOut->mime));
     sscanf(inOut->str, CUSTOM_CONTENT, inOut->mime, (uint32_t*)&inOut->maxBufferSize);
@@ -346,7 +346,7 @@ static void parseCustomContent_f(struct link_helper_s *obj, struct custom_conten
  */
 static void prepareHttpGet_f(struct link_helper_s *obj, struct http_get_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
     
     uint8_t offset = 0;
     if (inOut->path[0] == '/') {
@@ -362,7 +362,7 @@ static void prepareHttpGet_f(struct link_helper_s *obj, struct http_get_s *inOut
  */
 static void parseHttpGet_f(struct link_helper_s *obj, struct http_get_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
     
     memset(inOut->path, '\0', sizeof(inOut->path));
     memset(inOut->host, '\0', sizeof(inOut->host));
@@ -406,7 +406,7 @@ static void parseHttpGet_f(struct link_helper_s *obj, struct http_get_s *inOut)
  */
 static void prepareHttp200Ok_f(struct link_helper_s *obj, struct http_200_ok_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
     
     memset(inOut->str, '\0', sizeof(inOut->str));
     strcpy(inOut->str, HTTP_200_OK);
@@ -417,7 +417,7 @@ static void prepareHttp200Ok_f(struct link_helper_s *obj, struct http_200_ok_s *
  */
 static void parseHttp200Ok_f(struct link_helper_s *obj, struct http_200_ok_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
     
     inOut->is200Ok = (strstr(inOut->str, "200 OK") != NULL);
 }
@@ -428,7 +428,7 @@ static void parseHttp200Ok_f(struct link_helper_s *obj, struct http_200_ok_s *in
 static void prepareHttp400BadRequest_f(struct link_helper_s *obj,
                                        struct http_400_bad_request_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
     
     uint8_t offset = 0;
     if (inOut->path[0] == '/') {
@@ -445,7 +445,7 @@ static void prepareHttp400BadRequest_f(struct link_helper_s *obj,
 static void parseHttp400BadRequest_f(struct link_helper_s *obj,
                                      struct http_400_bad_request_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
     
     inOut->is400BadRequest = (strstr(inOut->str, "400 Bad Request") != NULL);
 }
@@ -456,7 +456,7 @@ static void parseHttp400BadRequest_f(struct link_helper_s *obj,
 static void prepareHttp404NotFound_f(struct link_helper_s *obj,
                                      struct http_404_not_found_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
     
     uint8_t offset1 = 0, offset2 = 0;
     
@@ -479,7 +479,7 @@ static void prepareHttp404NotFound_f(struct link_helper_s *obj,
  */
 static void parseHttp404NotFound_f(struct link_helper_s *obj, struct http_404_not_found_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
     
     inOut->is404NotFound = (strstr(inOut->str, "404 Not Found") != NULL);
 }
@@ -489,7 +489,7 @@ static void parseHttp404NotFound_f(struct link_helper_s *obj, struct http_404_no
  */
 static void prepareHttpContent_f(struct link_helper_s *obj, struct http_content_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
     
     memset(inOut->str, '\0', sizeof(inOut->str));
     sprintf(inOut->str, HTTP_CONTENT, inOut->mime, (uint32_t)inOut->length);
@@ -500,7 +500,7 @@ static void prepareHttpContent_f(struct link_helper_s *obj, struct http_content_
  */
 static void parseHttpContent_f(struct link_helper_s *obj, struct http_content_s *inOut)
 {
-    assert(obj && inOut);
+    ASSERT(obj && inOut);
 
     // Ignore frames that do not start with a boundary
     const char * const boundary = strstr(inOut->str, "--");
@@ -564,7 +564,7 @@ exit:
 static int8_t getPeerName_f(struct link_helper_s *obj, struct link_s *link,
                             struct recipient_s *result)
 {
-    assert(obj && link && result);
+    ASSERT(obj && link && result);
     
     socklen_t len;
     struct sockaddr_storage addr;
@@ -601,7 +601,7 @@ static int8_t getPeerName_f(struct link_helper_s *obj, struct link_s *link,
 static int8_t getSockName_f(struct link_helper_s *obj, struct link_s *link,
                             struct recipient_s *result)
 {
-    assert(obj && link && result);
+    ASSERT(obj && link && result);
     
     socklen_t len;
     struct sockaddr_storage addr;
@@ -637,10 +637,10 @@ static int8_t getSockName_f(struct link_helper_s *obj, struct link_s *link,
  */
 static int8_t setBlocking_f(struct link_helper_s *obj, struct link_s *link, uint8_t blocking)
 {
-    assert(obj && link);
+    ASSERT(obj && link);
     
     struct link_helper_private_data_s *pData = (struct link_helper_private_data_s*)(obj->pData);
-    assert(pData);
+    ASSERT(pData);
     
     if ((pData->sockFlags = fcntl(link->sock, F_GETFL, 0)) < 0) {
         return ERROR;
@@ -666,10 +666,10 @@ static int8_t setBlocking_f(struct link_helper_s *obj, struct link_s *link, uint
 static uint8_t isReadyForWriting_f(struct link_helper_s *obj, struct link_s *link,
                                    uint64_t timeout_ms)
 {
-    assert(obj && link);
+    ASSERT(obj && link);
     
     struct link_helper_private_data_s *pData = (struct link_helper_private_data_s*)(obj->pData);
-    assert(pData);
+    ASSERT(pData);
     
     FD_ZERO(&pData->wfds);
     FD_SET(link->sock, &pData->wfds);
@@ -694,10 +694,10 @@ static uint8_t isReadyForWriting_f(struct link_helper_s *obj, struct link_s *lin
 static uint8_t isReadyForReading_f(struct link_helper_s *obj, struct link_s *link,
                                    uint64_t timeout_ms)
 {
-    assert(obj && link);
+    ASSERT(obj && link);
     
     struct link_helper_private_data_s *pData = (struct link_helper_private_data_s*)(obj->pData);
-    assert(pData);
+    ASSERT(pData);
     
     FD_ZERO(&pData->rfds);
     FD_SET(link->sock, &pData->rfds);
@@ -722,10 +722,10 @@ static uint8_t isReadyForReading_f(struct link_helper_s *obj, struct link_s *lin
 static int8_t readData_f(struct link_helper_s *obj, struct link_s *src, struct link_s *dst,
                          struct buffer_s *buffer, ssize_t *nbRead)
 {
-    assert(obj && src && buffer);
+    ASSERT(obj && src && buffer);
     
     struct link_helper_private_data_s *pData = (struct link_helper_private_data_s*)(obj->pData);
-    assert(pData);
+    ASSERT(pData);
     
     pData->rIov.iov_base = buffer->data;
     pData->rIov.iov_len  = buffer->length;
@@ -810,10 +810,10 @@ static int8_t readData_f(struct link_helper_s *obj, struct link_s *src, struct l
 static int8_t writeData_f(struct link_helper_s *obj, struct link_s *src, struct link_s *dst,
                           struct buffer_s *buffer, ssize_t *nbWritten)
 {
-    assert(obj && src && buffer);
+    ASSERT(obj && src && buffer);
     
     struct link_helper_private_data_s *pData = (struct link_helper_private_data_s*)(obj->pData);
-    assert(pData);
+    ASSERT(pData);
     
     pData->wIov.iov_base = buffer->data;
     pData->wIov.iov_len  = buffer->length;

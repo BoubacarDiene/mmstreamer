@@ -142,7 +142,7 @@ uint32_t gNbSingleInputHandlers = (uint32_t)(sizeof(gSingleInputHandlers)
 static enum handlers_error_e closeApplication(struct handlers_s *obj, char *gfxElementName,
                                               void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -185,7 +185,7 @@ static enum handlers_error_e closeApplication(struct handlers_s *obj, char *gfxE
 static enum handlers_error_e changeLanguage(struct handlers_s *obj, char *gfxElementName,
                                             void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData && gfxElementData);
+    ASSERT(obj && obj->pData && gfxElementData);
 
     (void)gfxElementName;
 
@@ -268,7 +268,7 @@ static enum handlers_error_e changeLanguage(struct handlers_s *obj, char *gfxEle
 static enum handlers_error_e hideElement(struct handlers_s *obj, char *gfxElementName,
                                          void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -304,7 +304,7 @@ static enum handlers_error_e hideElement(struct handlers_s *obj, char *gfxElemen
 static enum handlers_error_e showElement(struct handlers_s *obj, char *gfxElementName,
                                          void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -340,7 +340,7 @@ static enum handlers_error_e showElement(struct handlers_s *obj, char *gfxElemen
 static enum handlers_error_e hideGroup(struct handlers_s *obj, char *gfxElementName,
                                        void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -389,7 +389,7 @@ static enum handlers_error_e hideGroup(struct handlers_s *obj, char *gfxElementN
 static enum handlers_error_e showGroup(struct handlers_s *obj, char *gfxElementName,
                                        void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -438,7 +438,7 @@ static enum handlers_error_e showGroup(struct handlers_s *obj, char *gfxElementN
 static enum handlers_error_e setFocus(struct handlers_s *obj, char *gfxElementName,
                                       void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -474,7 +474,7 @@ static enum handlers_error_e setFocus(struct handlers_s *obj, char *gfxElementNa
 static enum handlers_error_e takeScreenshot(struct handlers_s *obj, char *gfxElementName,
                                             void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -539,7 +539,7 @@ static enum handlers_error_e takeScreenshot(struct handlers_s *obj, char *gfxEle
 static enum handlers_error_e setClickable(struct handlers_s *obj, char *gfxElementName,
                                           void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -575,7 +575,7 @@ static enum handlers_error_e setClickable(struct handlers_s *obj, char *gfxEleme
 static enum handlers_error_e setNotClickable(struct handlers_s *obj, char *gfxElementName,
                                              void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -611,7 +611,7 @@ static enum handlers_error_e setNotClickable(struct handlers_s *obj, char *gfxEl
 static enum handlers_error_e stopGraphics(struct handlers_s *obj, char *gfxElementName,
                                           void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -653,7 +653,7 @@ static enum handlers_error_e stopGraphics(struct handlers_s *obj, char *gfxEleme
 static enum handlers_error_e startGraphics(struct handlers_s *obj, char *gfxElementName,
                                            void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -703,7 +703,7 @@ static enum handlers_error_e startGraphics(struct handlers_s *obj, char *gfxElem
 static enum handlers_error_e stopVideo(struct handlers_s *obj, char *gfxElementName,
                                        void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -781,7 +781,7 @@ static enum handlers_error_e stopVideo(struct handlers_s *obj, char *gfxElementN
 static enum handlers_error_e startVideo(struct handlers_s *obj, char *gfxElementName,
                                         void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -868,7 +868,7 @@ static enum handlers_error_e startVideo(struct handlers_s *obj, char *gfxElement
 static enum handlers_error_e stopServer(struct handlers_s *obj, char *gfxElementName,
                                         void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -927,7 +927,7 @@ static enum handlers_error_e stopServer(struct handlers_s *obj, char *gfxElement
 static enum handlers_error_e startServer(struct handlers_s *obj, char *gfxElementName,
                                          void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -986,7 +986,7 @@ static enum handlers_error_e startServer(struct handlers_s *obj, char *gfxElemen
 static enum handlers_error_e suspendServer(struct handlers_s *obj, char *gfxElementName,
                                            void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -1051,7 +1051,7 @@ static enum handlers_error_e suspendServer(struct handlers_s *obj, char *gfxElem
 static enum handlers_error_e resumeServer(struct handlers_s *obj, char *gfxElementName,
                                           void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -1116,7 +1116,7 @@ static enum handlers_error_e resumeServer(struct handlers_s *obj, char *gfxEleme
 static enum handlers_error_e stopCient(struct handlers_s *obj, char *gfxElementName,
                                        void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -1175,7 +1175,7 @@ static enum handlers_error_e stopCient(struct handlers_s *obj, char *gfxElementN
 static enum handlers_error_e startClient(struct handlers_s *obj, char *gfxElementName,
                                          void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;
@@ -1233,7 +1233,7 @@ static enum handlers_error_e startClient(struct handlers_s *obj, char *gfxElemen
 static enum handlers_error_e multiInputs(struct handlers_s *obj, char *gfxElementName,
                                          void *gfxElementData, char *handlerData)
 {
-    assert(obj && obj->pData);
+    ASSERT(obj && obj->pData);
 
     (void)gfxElementName;
     (void)gfxElementData;

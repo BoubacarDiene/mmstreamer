@@ -23,7 +23,7 @@ LOG_LEVEL := 1
 OPTIONS   := -Wall -Wextra -Wno-missing-braces -Wno-unused-parameter -Wno-unused-variable
 
 ifeq (${DEBUG},no)
-	OPTIONS += -O3 -s
+	OPTIONS += -O3 -s -DNDEBUG
 else
 	OPTIONS += -g
 endif

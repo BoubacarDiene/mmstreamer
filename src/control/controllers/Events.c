@@ -89,7 +89,7 @@ static void releaseCb(struct list_s *obj, void *element);
  */
 enum controllers_error_e initEvtsTask_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct controllers_task_s *evtsTask = &obj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
     struct input_s *input               = &obj->params.ctx->input;
@@ -162,7 +162,7 @@ listExit:
  */
 enum controllers_error_e uninitEvtsTask_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct controllers_task_s *evtsTask = &obj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
     struct input_s *input               = &obj->params.ctx->input;
@@ -194,7 +194,7 @@ enum controllers_error_e uninitEvtsTask_f(struct controllers_s *obj)
  */
 enum controllers_error_e startEvtsTask_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct controllers_task_s *evtsTask = &obj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
     struct input_s *input               = &obj->params.ctx->input;
@@ -219,7 +219,7 @@ enum controllers_error_e startEvtsTask_f(struct controllers_s *obj)
  */
 enum controllers_error_e stopEvtsTask_f(struct controllers_s *obj)
 {
-    assert(obj);
+    ASSERT(obj);
 
     struct controllers_task_s *evtsTask = &obj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
     struct input_s *input               = &obj->params.ctx->input;
@@ -247,7 +247,7 @@ enum controllers_error_e stopEvtsTask_f(struct controllers_s *obj)
  */
 enum controllers_error_e notify_f(struct controllers_s *obj, struct controller_event_s *event)
 {
-    assert(obj && event);
+    ASSERT(obj && event);
 
     struct controllers_task_s *evtsTask   = &obj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
     struct list_s *evtsList               = evtsTask->list;
@@ -271,7 +271,7 @@ enum controllers_error_e notify_f(struct controllers_s *obj, struct controller_e
 
     Logd("Notify contoller - event id : \"%u\"", event->id);
 
-    assert((element = calloc(1, sizeof(struct events_list_element_s))));
+    ASSERT((element = calloc(1, sizeof(struct events_list_element_s))));
     element->seconds    = time(NULL);
     element->event.id   = event->id;
     element->event.name = strdup(event->name);
@@ -290,7 +290,7 @@ enum controllers_error_e notify_f(struct controllers_s *obj, struct controller_e
  */
 void registerEvents_f(void *enginePrivateData, int32_t eventsMask)
 {
-    assert(enginePrivateData);
+    ASSERT(enginePrivateData);
 
     struct controllers_lib_s *lib        = (struct controllers_lib_s*)enginePrivateData;
     struct controllers_s *controllersObj = (struct controllers_s*)(lib->pData);
@@ -313,7 +313,7 @@ void registerEvents_f(void *enginePrivateData, int32_t eventsMask)
  */
 void unregisterEvents_f(void *enginePrivateData, int32_t eventsMask)
 {
-    assert(enginePrivateData);
+    ASSERT(enginePrivateData);
 
     struct controllers_lib_s *lib        = (struct controllers_lib_s*)enginePrivateData;
     struct controllers_s *controllersObj = (struct controllers_s*)(lib->pData);
@@ -337,7 +337,7 @@ void unregisterEvents_f(void *enginePrivateData, int32_t eventsMask)
 
 static void taskFct_f(struct task_params_s *params)
 {
-    assert(params && params->fctData);
+    ASSERT(params && params->fctData);
 
     struct controllers_s *controllersObj  = (struct controllers_s*)(params->fctData);
     struct controllers_task_s *evtsTask   = &controllersObj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
@@ -404,7 +404,7 @@ lockExit:
 
 static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
-    assert(obj && elementToCheck && userData);
+    ASSERT(obj && elementToCheck && userData);
 
     struct events_list_element_s *element = (struct events_list_element_s*)elementToCheck;
     time_t secondsOfElementToRemove       = *((time_t*)userData);
@@ -414,7 +414,7 @@ static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userDat
 
 static void releaseCb(struct list_s *obj, void *element)
 {
-    assert(obj && element);
+    ASSERT(obj && element);
 
     struct events_list_element_s *elementToRemove = (struct events_list_element_s*)element;
     struct controller_event_s *event              = &elementToRemove->event;
