@@ -74,3 +74,18 @@ $ make all install
 ## 4. How to extend mmstreamer
 - Implement [Controller.h](inc/export/Controller.h) - See [mmcontroller project](https://github.com/BoubacarDiene/mmcontroller) for more details
 - Update [Main.xml --> Controllers](res/drawer2/Main.xml) to add your newly created controller
+
+## 5. How to build and run unit tests
+
+### 5.1. Build and load docker image
+```
+$ cd mmstreamer_sources/
+$ docker build -t  mmstreamer_docker_image .
+$ docker run -it -u $(id -u) --rm -w="/mmstreamer" -v $(pwd):/mmstreamer mmstreamer_docker_image:latest /bin/bash
+```
+
+### 5.2. Run tests
+```
+$ ceedling
+```
+
