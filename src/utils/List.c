@@ -192,25 +192,32 @@ static enum list_error_e remove_f(struct list_s *obj, void *userData)
     
     struct list_element_s *previous = NULL;
     struct list_element_s *current  = pData->list;
+    uint32_t elementFound           = 0;
     
     while (current) {
-        if (obj->params.compareCb(obj, current->element, userData)) {
+        if (obj->params.compareCb
+            && obj->params.compareCb(obj, current->element, userData)) {
             if (!previous) {
                 pData->list = current->next;
             }
             else {
                 previous->next = current->next;
             }
-            obj->params.releaseCb(obj, current->element);
+            if (obj->params.releaseCb) {
+                // A release callback might be not needed in case there is no
+                // resource to release in "element" (E.g. a simple list of integers)
+                obj->params.releaseCb(obj, current->element);
+            }
             free(current);
             pData->nbElements--;
+            elementFound = 1;
             break;
         }
         previous = current;
         current  = current->next;
     }
     
-    return LIST_ERROR_NONE;
+    return elementFound ? LIST_ERROR_NONE : LIST_ERROR_PARAMS;
 }
 
 /*!
@@ -230,7 +237,9 @@ static enum list_error_e removeAll_f(struct list_s *obj)
     struct list_element_s *next    = current->next;
     
     while (current) {
-        obj->params.releaseCb(obj, current->element);
+        if (obj->params.releaseCb) {
+            obj->params.releaseCb(obj, current->element);
+        }
         free(current);
         if ((current = next)) {
             next = current->next;

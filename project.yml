@@ -1,24 +1,14 @@
 ---
 
-# Notes:
-# Sample project C code is not presently written to produce a release artifact.
-# As such, release build options are disabled.
-# This sample, therefore, only demonstrates running a collection of unit tests.
-
 :project:
   :use_exceptions: TRUE
   :use_test_preprocessor: TRUE
   :use_auxiliary_dependencies: TRUE
   :build_root: build
-#  :release_build: TRUE
   :test_file_prefix: test_
   :which_ceedling: vendor/ceedling
   :default_tasks:
     - test:all
-
-#:release_build:
-#  :output: MyApp.out
-#  :use_assembly: FALSE
 
 :environment:
 
@@ -64,15 +54,6 @@
 :gcov:
     :html_report_type: basic
 
-#:tools:
-# Ceedling defaults to using gcc for compiling, linking, etc.
-# As [:tools] is blank, gcc will be used (so long as it's in your system path)
-# See documentation to configure a given toolchain for use
-
-# LIBRARIES
-# These libraries are automatically injected into the build process. Those specified as
-# common will be used in all types of builds. Otherwise, libraries can be injected in just
-# tests or releases. These options are MERGED with the options in supplemental yaml files.
 :libraries:
   :placement: :end
   :flag: "${1}"  # or "-L ${1}" for example

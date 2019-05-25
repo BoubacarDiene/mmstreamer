@@ -22,11 +22,11 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-* \file assert_test_helpers.h
+* \file exception_test_helpers.h
 * \author Boubacar DIENE
 */
-#ifndef __ASSERT_TEST_HELPERS_H__
-#define __ASSERT_TEST_HELPERS_H__
+#ifndef __EXCEPTION_TEST_HELPERS_H__
+#define __EXCEPTION_TEST_HELPERS_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +51,7 @@ extern "C" {
 
 
 /*!
- * code_under_test is not expected to assert
+ * code_under_test is expected to not assert
  * If not, the test is considered as not successful
  */
 #define TEST_ASSERT_NOT_EXPECTED(code_under_test)                 \
@@ -64,8 +64,21 @@ extern "C" {
     }                                                             \
 }
 
+/*!
+ * code_under_test is expected to raise an exception (bad memory access, ...)
+ * If not, the test is considered as not successful
+ */
+#define TEST_BAD_MEMORY_ACCESS_EXPECTED(code_under_test)           \
+{                                                                  \
+    CEXCEPTION_T e=125;                                            \
+    Try {                                                          \
+        code_under_test;                                           \
+        TEST_FAIL_MESSAGE("A \"bad memory access\" was expected"); \
+    } Catch(e) {}                                                  \
+}
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif //__ASSERT_TEST_HELPERS_H__
+#endif //__EXCEPTION_TEST_HELPERS_H__
