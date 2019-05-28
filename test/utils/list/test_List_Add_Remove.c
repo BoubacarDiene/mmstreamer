@@ -54,7 +54,7 @@ void test_List_Add_Null_Parameter(void)
 
 /**
  Requirement:
- - List_UnInit() must "crash" when "obj" has not been obtained using List_Init()
+ - add() must "crash" when "obj" has not been obtained using List_Init()
  */
 void test_List_Add_Bad_Memory_Access(void)
 {

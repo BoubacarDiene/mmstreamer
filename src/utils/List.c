@@ -274,7 +274,11 @@ static enum list_error_e getElement_f(struct list_s *obj, void **element)
     ASSERT(obj && obj->pData && element);
     
     struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
-    
+
+    if (!pData->list) {
+        return LIST_ERROR_PARAMS;
+    }
+
     if (!pData->current) {
         pData->current = pData->list;
     }
@@ -292,7 +296,11 @@ static enum list_error_e browseElements_f(struct list_s *obj, void *userData)
     ASSERT(obj && obj->pData);
     
     struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
-    
+
+    if (!obj->params.browseCb || !pData->list) {
+        return LIST_ERROR_PARAMS;
+    }
+
     struct list_element_s *current = pData->list;
     
     while (current) {
