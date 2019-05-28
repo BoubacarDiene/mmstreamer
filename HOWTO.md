@@ -87,5 +87,8 @@ $ docker run -it -u $(id -u) --rm -w="/mmstreamer" -v $(pwd):/mmstreamer mmstrea
 ### 5.2. Run tests
 ```
 $ ceedling
+
+To also display code coverage summary, use:
+$ ceedling gcov:all
 ```
 
