@@ -1,4 +1,10 @@
-# Changelog
+# Changelog : Main changes
+
+## v1.2
+```
+- Http server: Always use the correct IP address in redirect link
+- Allow to disable assert() in release version
+```
 
 ## v1.1
 ```

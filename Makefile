@@ -83,23 +83,23 @@ OUT_BUILD_INC_DEPS := ${OUT_BUILD_DEPS}/include
 OUT_BUILD_LIB_DEPS := ${OUT_BUILD_DEPS}/lib
 
 # Build options
-HEADERS          := -I${OUT_BUILD_INC}          \
-                    -I${OUT_BUILD_INC_GRAPHICS} \
-                    -I${OUT_BUILD_INC_NETWORK}  \
-                    -I${OUT_BUILD_INC_CONTROL}  \
-                    -I${OUT_BUILD_INC_CORE}     \
-                    -I${OUT_BUILD_INC_VIDEO}    \
-                    -I${OUT_BUILD_INC_DEPS}
-CFLAGS           += ${HEADERS} -DMAIN_XML_FILE=\"${OUT_RELEASE}/res/Main.xml\"
+HEADERS := -I${OUT_BUILD_INC}          \
+           -I${OUT_BUILD_INC_GRAPHICS} \
+           -I${OUT_BUILD_INC_NETWORK}  \
+           -I${OUT_BUILD_INC_CONTROL}  \
+           -I${OUT_BUILD_INC_CORE}     \
+           -I${OUT_BUILD_INC_VIDEO}    \
+           -I${OUT_BUILD_INC_DEPS}
+CFLAGS  += ${HEADERS} -DMAIN_XML_FILE=\"${OUT_RELEASE}/res/Main.xml\"
 
-DEPS_LDFLAGS     := -L${OUT_BUILD_LIB_DEPS} -Wl,-rpath,${OUT_BUILD_LIB_DEPS}
+DEPS_LDFLAGS := -L${OUT_BUILD_LIB_DEPS} -Wl,-rpath,${OUT_BUILD_LIB_DEPS}
 ifeq (${SDL_BUILD_VERSION},2)
     DEPS_LDFLAGS += -lSDL2 -lSDL2_image -lSDL2_ttf
 else
     DEPS_LDFLAGS += -lSDL -lSDL_image -lSDL_ttf
 endif
-DEPS_LDFLAGS     += -lfreetype -lpng -ljpeg -lz -lexpat
-LDFLAGS          += ${DEPS_LDFLAGS}
+DEPS_LDFLAGS += -lfreetype -lpng -ljpeg -lz -lexpat
+LDFLAGS      += ${DEPS_LDFLAGS}
 
 # Files
 MAIN := Main

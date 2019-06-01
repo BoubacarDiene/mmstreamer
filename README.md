@@ -2,11 +2,13 @@
 
 [![Build Status](https://travis-ci.org/BoubacarDiene/mmstreamer.svg?branch=master)](https://travis-ci.org/BoubacarDiene/mmstreamer)
 
-## 0. Getting started
+## 0. Some reading
 
-- [INSTALL](INSTALL.md) : Prepare your environment and build mmstreamer project
-- [HOWTO](HOWTO.md) : Run mmstreamer + update configuration files
-- [TROUBLESHOOT](TROUBLESHOOT.md) : Fix issues encountered when building and/or running mmstreamer
+- [INSTALL](doc/INSTALL.md) : Prepare your environment and build mmstreamer project
+- [HOWTO](doc/HOWTO.md) : Run mmstreamer + update configuration files
+- [TROUBLESHOOT](doc/TROUBLESHOOT.md) : Fix issues encountered when building and/or running mmstreamer
+- [AUTHORS](doc/AUTHORS.md) : List of authors
+- [CHANGELOG](doc/CHANGELOG.md) : Main changes in each release
 
 ## 1. Description
 

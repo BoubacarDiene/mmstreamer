@@ -18,6 +18,8 @@ PROJECT_NAME    := mmstreamer
 PROJECT_VERSION := 1.2
 
 # Build
+# - DEBUG := <no or yes>
+# - LOG_LEVEL := <1 to 4>
 DEBUG     := no
 LOG_LEVEL := 1
 OPTIONS   := -Wall -Wextra -Wno-missing-braces -Wno-unused-parameter -Wno-unused-variable
@@ -61,7 +63,7 @@ endif
 RES_VERSION := "drawer"${SDL_BUILD_VERSION}
 
 # Path
-LOCAL := ${shell pwd}
+LOCAL := .
 
 DEPS := ${LOCAL}/deps
 INC  := ${LOCAL}/inc

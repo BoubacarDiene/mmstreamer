@@ -42,15 +42,15 @@ http://<your_ip_address>:9090/webcam
 
 | File | Description |
 | --- | --- |
-| [Main.xml](res/drawer2/Main.xml) | Choose which modules to launch and how to keep app alive |
-| [Videos.xml](res/drawer2/configs/Videos.xml) | Configure video devices and outputs |
-| [Servers.xml](res/drawer2/configs/Servers.xml) | Configure servers |
-| [Clients.xml](res/drawer2/configs/Clients.xml) | Configure clients |
-| [Graphics.xml](res/drawer2/configs/Graphics.xml) | Customize UI and locally display captured video |
-| [Colors.xml](res/drawer2/common/Colors.xml) | Define colors |
-| [Fonts.xml](res/drawer2/common/Fonts.xml) | List fonts files |
-| [Images.xml](res/drawer2/common/Images.xml) | List images files |
-| [Strings.xml](res/drawer2/common/Strings.xml) | Define strings |
+| [Main.xml](../res/drawer2/Main.xml) | Choose which modules to launch and how to keep app alive |
+| [Videos.xml](../res/drawer2/configs/Videos.xml) | Configure video devices and outputs |
+| [Servers.xml](../res/drawer2/configs/Servers.xml) | Configure servers |
+| [Clients.xml](../res/drawer2/configs/Clients.xml) | Configure clients |
+| [Graphics.xml](../res/drawer2/configs/Graphics.xml) | Customize UI and locally display captured video |
+| [Colors.xml](../res/drawer2/common/Colors.xml) | Define colors |
+| [Fonts.xml](../res/drawer2/common/Fonts.xml) | List fonts files |
+| [Images.xml](../res/drawer2/common/Images.xml) | List images files |
+| [Strings.xml](../res/drawer2/common/Strings.xml) | Define strings |
 
 ## 3. How to enable debug mode
 
@@ -72,16 +72,16 @@ $ make all install
 ```
 
 ## 4. How to extend mmstreamer
-- Implement [Controller.h](inc/export/Controller.h) - See [mmcontroller project](https://github.com/BoubacarDiene/mmcontroller) for more details
-- Update [Main.xml --> Controllers](res/drawer2/Main.xml) to add your newly created controller
+- Implement [Controller.h](../inc/export/Controller.h) - See [mmcontroller project](https://github.com/BoubacarDiene/mmcontroller) for more details
+- Update [Main.xml --> Controllers](../res/drawer2/Main.xml) to add your newly created controller
 
 ## 5. How to build and run unit tests
 
 ### 5.1. Build and load docker image
 ```
 $ cd mmstreamer_sources/
-$ docker build -t  mmstreamer_docker_image .
-$ docker run -it -u $(id -u) --rm -w="/mmstreamer" -v $(pwd):/mmstreamer mmstreamer_docker_image:latest /bin/bash
+$ docker build -t  mmstreamer-image ci/
+$ docker run -it -u $(id -u) --rm -v $(pwd):/workdir mmstreamer-image:latest
 ```
 
 ### 5.2. Run tests
