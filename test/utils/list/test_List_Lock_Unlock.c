@@ -83,9 +83,10 @@ void test_List_Unlock_Valid_Input_Parameter(void)
 
 /**
  Requirement:
- - unlock() must return no error when "obj" has been obtained using List_Init()
+ - unlock() must return no error when called after a successful lock()
  */
 void test_List_Unlock_After_Lock(void)
 {
+    TEST_ASSERT_EQUAL(obj->lock(obj), LIST_ERROR_NONE);
     TEST_ASSERT_EQUAL(obj->unlock(obj), LIST_ERROR_NONE);
 }
