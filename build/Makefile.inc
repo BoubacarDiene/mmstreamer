@@ -63,7 +63,7 @@ endif
 RES_VERSION := "drawer"${SDL_BUILD_VERSION}
 
 # Path
-LOCAL := .
+LOCAL := ${shell pwd}
 
 DEPS := ${LOCAL}/deps
 INC  := ${LOCAL}/inc
