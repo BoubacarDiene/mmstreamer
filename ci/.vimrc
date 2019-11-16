@@ -93,6 +93,12 @@
 " - :ClangFormatAutoEnable  --> Enable autoformat in current buffer
 " - :ClangFormatAutoDisable --> Disable autoformat in current buffer
 "
+" - :grep                   --> Search in all files (standard grep command)
+" - :cw                     --> Show the "location list" to see result
+"
+" - v + select text + y     --> Visual mode, select text then "y" to yank into register 0
+" - /Ctrl+R then 0          --> Search selected text in current file
+"
 " =================================================================================================
 " pathogen.vim makes it super easy to install plugins and runtime files in their
 " own private directories (See https://github.com/tpope/vim-pathogen)

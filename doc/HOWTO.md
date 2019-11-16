@@ -5,12 +5,11 @@
 ### 1.1. Launch binary (as root)
 ```
 $ cd mmstreamer_sources/
-$ sudo -s
-# ./out/mmstreamer/bin/mmstreamer-<x.y>
+$ sudo ./out/mmstreamer/bin/mmstreamer-<x.y>
 ```
 or in debug mode :
 ```
-# ./out/mmstreamer/bin/mmstreamer-<x.y>.dbg
+$ sudo ./out/mmstreamer/bin/mmstreamer-<x.y>.dbg
 ```
 
 **Notes :**

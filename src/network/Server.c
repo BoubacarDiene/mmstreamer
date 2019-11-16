@@ -42,8 +42,8 @@
 #undef  TAG
 #define TAG "Server"
 
-#define WATCHER_TASK_NAME "WatcherTask"
-#define SENDER_TASK_NAME  "SenderTask"
+#define WATCHER_TASK_NAME "server-WatcherTask"
+#define SENDER_TASK_NAME  "server-SenderTask"
 
 /* -------------------------------------------------------------------------------------------- */
 /* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */

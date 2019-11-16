@@ -48,8 +48,8 @@
 #undef  TAG
 #define TAG "Video"
 
-#define FRAMES_HANLDER_TASK_NAME "framesHandlerTask"
-#define NOTIFICATION_TASK_NAME   "notificationTask"
+#define FRAMES_HANLDER_TASK_NAME "video-framesHandlerTask"
+#define NOTIFICATION_TASK_NAME   "video-notificationTask"
 
 /* -------------------------------------------------------------------------------------------- */
 /* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */

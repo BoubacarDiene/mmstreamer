@@ -40,8 +40,8 @@
 #undef  TAG
 #define TAG "Client"
 
-#define WATCHER_TASK_NAME  "WatcherTask"
-#define RECEIVER_TASK_NAME "ReceiverTask"
+#define WATCHER_TASK_NAME  "client-WatcherTask"
+#define RECEIVER_TASK_NAME "client-ReceiverTask"
 
 /* -------------------------------------------------------------------------------------------- */
 /* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */

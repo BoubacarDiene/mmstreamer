@@ -49,7 +49,7 @@
 #undef  TAG
 #define TAG "Graphics"
 
-#define SIMULATE_EVENT_TASK_NAME "simulateEvtTask"
+#define SIMULATE_EVENT_TASK_NAME "gfx-simulateEvtTask"
 
 /* -------------------------------------------------------------------------------------------- */
 /* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
