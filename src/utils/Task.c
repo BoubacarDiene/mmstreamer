@@ -150,16 +150,28 @@ static enum task_error_e create_f(struct task_s *obj, struct task_params_s *para
 
     params->reserved = (void*)reserved;
 
+    int pthreadError = -1;
+
     /* Create loop */
 #ifdef _POSIX_PRIORITY_SCHEDULING
     int policy = SCHED_FIFO;
+
     pthread_attr_t attr;
     struct sched_param schedParam;
 
     uint8_t updateParams = 1;
 
-    (void)pthread_attr_init(&attr);                        /* Init with default parameters */
-    (void)pthread_attr_getschedparam (&attr, &schedParam); /* Get current sched_param */
+    pthreadError = pthread_attr_init(&attr);
+    if (pthreadError != 0) {
+        Loge("pthread_attr_init() failed - %s", strerror(pthreadError));
+        goto pthreadExit;
+    }
+
+    pthreadError = pthread_attr_getschedparam(&attr, &schedParam);
+    if (pthreadError != 0) {
+        Loge("pthread_attr_getschedparam() failed - %s", strerror(pthreadError));
+        goto pthreadAttrExit;
+    }
 
     switch (params->priority) {
         case PRIORITY_LOWEST:
@@ -177,27 +189,40 @@ static enum task_error_e create_f(struct task_s *obj, struct task_params_s *para
         default:
             ;
     }
-    
+
     if (updateParams) {
-        if (pthread_attr_setschedparam(&attr, &schedParam) < 0) {
-            Loge("pthread_attr_setschedparam() failed - %s", strerror(errno));
+        pthreadError = pthread_attr_setschedpolicy(&attr, policy);
+        if (pthreadError != 0) {
+            Loge("pthread_attr_setschedpolicy() failed - %s", strerror(pthreadError));
+            goto pthreadAttrExit;
         }
-        if (pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED) < 0) {
-            Loge("pthread_attr_setinheritsched() failed - %s", strerror(errno));
+
+        pthreadError = pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+        if (pthreadError != 0) {
+            Loge("pthread_attr_setinheritsched() failed - %s", strerror(pthreadError));
+            goto pthreadAttrExit;
+        }
+
+        pthreadError = pthread_attr_setschedparam(&attr, &schedParam);
+        if (pthreadError != 0) {
+            Loge("pthread_attr_setschedparam() failed - %s", strerror(pthreadError));
+            goto pthreadAttrExit;
         }
     }
 
-    if (pthread_create(&reserved->taskId, &attr, loop, params) != 0) {
-        Loge("pthread_create() failed - %s", strerror(errno));
-        (void)pthread_attr_destroy(&attr);
-        goto pthreadExit;
+    pthreadError = pthread_create(&reserved->taskId, &attr, loop, params);
+    if (pthreadError != 0) {
+        Loge("pthread_create() failed - %s", strerror(pthreadError));
+        goto pthreadAttrExit;
     }
     
     (void)pthread_attr_destroy(&attr);
 #else
-    Loge("_POSIX_PRIORITY_SCHEDULING not defined on your system");
-    if (pthread_create(&reserved->taskId, NULL, loop, params) != 0) {
-        Loge("pthread_create() failed - %s", strerror(errno));
+    Logw("_POSIX_PRIORITY_SCHEDULING not defined on your system");
+
+    pthreadError = pthread_create(&reserved->taskId, NULL, loop, params);
+    if (pthreadError != 0) {
+        Loge("pthread_create() failed - %s", strerror(pthreadError));
         goto pthreadExit;
     }
 #endif
@@ -205,6 +230,11 @@ static enum task_error_e create_f(struct task_s *obj, struct task_params_s *para
     ((struct task_private_data_s*)(obj->pData))->nbTasks++;
     
     return TASK_ERROR_NONE;
+
+#ifdef _POSIX_PRIORITY_SCHEDULING
+pthreadAttrExit:
+    (void)pthread_attr_destroy(&attr);
+#endif
 
 pthreadExit:
     (void)sem_destroy(&reserved->semStart);

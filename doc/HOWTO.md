@@ -2,14 +2,15 @@
 
 ## 1. How to start mmstreamer
 
-### 1.1. Launch binary
+### 1.1. Launch binary (as root)
 ```
 $ cd mmstreamer_sources/
-$ ./out/mmstreamer/bin/mmstreamer-<x.y>
+$ sudo -s
+# ./out/mmstreamer/bin/mmstreamer-<x.y>
 ```
 or in debug mode :
 ```
-$ ./out/mmstreamer/bin/mmstreamer-<x.y>.dbg
+# ./out/mmstreamer/bin/mmstreamer-<x.y>.dbg
 ```
 
 **Notes :**
