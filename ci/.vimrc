@@ -14,6 +14,8 @@
 "    $ git clone https://github.com/BoubacarDiene/mmstreamer.git
 "    $ cd mmstreamer/
 "    $ ctags -R .
+"    $ ctags -R --exclude=@.ctagsignore .
+"      (echo dirToExclude >> .ctagsignore)
 "    $ vim src/video/Video.c
 "
 " 2- Install CtrlP
@@ -48,6 +50,7 @@
 " - :sp                     --> Split horizontally
 " - :vsp                    --> Split vertically
 " - :e <file>               --> Replace current content with <file>
+" - :e!                     --> Reload currently opened file (useful if modified elsewhere)
 " - :help <keyword>         --> Keyword can be a command (sp, vsp, tag, ...)
 "
 " - :tag <keyword>          --> Search for an existing tag
