@@ -544,7 +544,6 @@ enum control_error_e handleClick_f(struct control_s *obj, struct gfx_event_s *gf
     struct control_private_data_s *pData       = (struct control_private_data_s*)(obj->pData);
     struct controllers_s *controllersObj       = pData->controllersObj;
     struct control_element_data_s *elementData = (struct control_element_data_s*)gfxEvent->gfxElementPData;
-    struct context_s *ctx                      = pData->ctx;
 
     if (!elementData) {
         return CONTROL_ERROR_PARAMS;
@@ -622,7 +621,6 @@ static void onCommandCb(void *userData, struct controller_command_s *command)
 
     struct control_s *obj                  = (struct control_s*)userData;
     struct control_private_data_s *pData   = (struct control_private_data_s*)(obj->pData);
-    struct controllers_s *controllersObj   = pData->controllersObj;
     struct graphics_infos_s *graphicsInfos = &pData->ctx->params.graphicsInfos;
     uint32_t nbGfxElements                 = graphicsInfos->nbGfxElements;
     struct gfx_element_s **gfxElements     = graphicsInfos->gfxElements;

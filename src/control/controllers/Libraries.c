@@ -288,7 +288,6 @@ enum controllers_error_e loadLibs_f(struct controllers_s *obj)
 
     struct input_s *input      = &obj->params.ctx->input;
     struct library_s *ctrlLibs = input->ctrlLibs;
-    uint8_t priority           = input->ctrlLibsPrio;
 
     obj->nbLibs = input->nbCtrlLibs;
     if (obj->nbLibs == 0) {

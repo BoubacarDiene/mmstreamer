@@ -111,7 +111,9 @@ static void onClientStateChangedCb(struct server_params_s *params, struct link_s
                                    enum state_e state, void *userData)
 {
     ASSERT(params && client && userData);
-    
+
+    (void)state;
+
     Logd("Server-%s : Client with id %u %s",
         params->name,
         client->id,

@@ -3,223 +3,93 @@
 # \file Makefile
 #
 # \author Boubacar DIENE <boubacar.diene@gmail.com>
-# \date   2016 - 2018
+# \date   2016 - 2019
 #
-# \brief  Build libraries:
-#         - libvideo-x.y.so
-#         - libnet-client-x.y.so
-#         - libnet-server-x.y.so
-#
-#         - libexpat
-#         - libfreetype
-#         - libSDL
-#         - libSDL_image
-#         - libSDL_ttf
-#
-#         and binary:
-#         - mmstreamer
+# \brief  Root makefile to generate mmstreamer binary based on
+#         sub-makefiles
 #
 ##
 
-#################################################################
-#               Implicit rules / Particular targets             #
-#################################################################
-
-# Disable implicit rules
-.SUFFIXES:
-
-# Define particular targets
-.PHONY: prepare-sources, build-submodules, clean-all
+MODULE_NAME := app
 
 #################################################################
-#                             Include                           #
+#                            Include                            #
 #################################################################
 
-include build/Makefile.inc
+include build/common.mk
 
 #################################################################
 #                            Variables                          #
 #################################################################
 
-# Binary name
-ifeq (${DEBUG},no)
-    BIN_NAME := ${PROJECT_NAME}-${PROJECT_VERSION}
-else
-    BIN_NAME := ${PROJECT_NAME}-${PROJECT_VERSION}.dbg
-endif
+# Binary
+BIN_SUFFIX := $(if $(subst no,,$(DEBUG)),.dbg,)
+BIN_NAME   := $(PROJECT_NAME)-$(PROJECT_VERSION)$(BIN_SUFFIX)
+
+BIN_SDL     := SDL$(subst 1,,$(SDL_BUILD_VERSION))
+BIN_LDFLAGS := -L$(OUT_STAGING_LIB) -Wl,-rpath,$(OUT_STAGING_LIB) \
+               -l$(BIN_SDL) -l$(BIN_SDL)_image -l$(BIN_SDL)_ttf \
+               -lfreetype -lpng -ljpeg -lz -lexpat
 
 # Path
-OUT_BUILD_DIR  := ${OUT_BUILD}/main
-OUT_BUILD_INC  := ${OUT_BUILD_DIR}/include
-OUT_BUILD_SRC  := ${OUT_BUILD_DIR}/src
-OUT_BUILD_BIN  := ${OUT_BUILD_DIR}/bin
-OUT_BUILD_OBJS := ${OUT_BUILD_DIR}/objs
+OUT_RELEASE     := $(OUT)/$(PROJECT_NAME)
+OUT_RELEASE_BIN := $(OUT_RELEASE)/bin
+OUT_RELEASE_LIB := $(OUT_RELEASE)/lib
+OUT_RELEASE_RES := $(OUT_RELEASE)/res
 
-OUT_BUILD_UTILS_H := ${OUT_BUILD_INC}/utils
-OUT_BUILD_UTILS_C := ${OUT_BUILD_SRC}/utils
+#################################################################
+#                             Build                             #
+#################################################################
 
-OUT_BUILD_GRAPHICS      := ${OUT_BUILD}/graphics
-OUT_BUILD_INC_GRAPHICS  := ${OUT_BUILD_GRAPHICS}/include
-OUT_BUILD_OBJS_GRAPHICS := ${OUT_BUILD_GRAPHICS}/objs
+#
+# Function to run specified target on all makefiles
+# $1: target to run
+#
+MK_FILES := dependencies.mk main.mk core.mk control.mk \
+            video.mk network.mk graphics.mk
+define make-target
+	@- $(foreach makefile,$(MK_FILES), \
+		$(MAKE) -f build/$(makefile) $1 ; \
+	)
+endef
 
-OUT_BUILD_NETWORK      := ${OUT_BUILD}/net
-OUT_BUILD_INC_NETWORK  := ${OUT_BUILD_NETWORK}/include
-OUT_BUILD_OBJS_NETWORK := ${OUT_BUILD_NETWORK}/objs
+#
+# Rules
+#
+all: $(BIN_NAME)
 
-OUT_BUILD_CONTROL      := ${OUT_BUILD}/control
-OUT_BUILD_INC_CONTROL  := ${OUT_BUILD_CONTROL}/include
-OUT_BUILD_OBJS_CONTROL := ${OUT_BUILD_CONTROL}/objs
+prepare:
+	$(call make-target,all install)
+	$(MKDIR) $(OUT_BUILD_DIR)
 
-OUT_BUILD_CORE      := ${OUT_BUILD}/core
-OUT_BUILD_INC_CORE  := ${OUT_BUILD_CORE}/include
-OUT_BUILD_OBJS_CORE := ${OUT_BUILD_CORE}/objs
+$(BIN_NAME): LDFLAGS += $(BIN_LDFLAGS)
+$(BIN_NAME): prepare
+	$(CC) $(CFLAGS) \
+		-o $(OUT_BUILD_DIR)/$@ \
+		$(shell find $(OUT_STAGING_OBJS) -name *.o) \
+		$(LDFLAGS)
 
-OUT_BUILD_VIDEO      := ${OUT_BUILD}/video
-OUT_BUILD_INC_VIDEO  := ${OUT_BUILD_VIDEO}/include
-OUT_BUILD_OBJS_VIDEO := ${OUT_BUILD_VIDEO}/objs
-
-OUT_BUILD_DEPS     := ${OUT_BUILD}/deps
-OUT_BUILD_INC_DEPS := ${OUT_BUILD_DEPS}/include
-OUT_BUILD_LIB_DEPS := ${OUT_BUILD_DEPS}/lib
-
-# Build options
-HEADERS := -I${OUT_BUILD_INC}          \
-           -I${OUT_BUILD_INC_GRAPHICS} \
-           -I${OUT_BUILD_INC_NETWORK}  \
-           -I${OUT_BUILD_INC_CONTROL}  \
-           -I${OUT_BUILD_INC_CORE}     \
-           -I${OUT_BUILD_INC_VIDEO}    \
-           -I${OUT_BUILD_INC_DEPS}
-CFLAGS  += ${HEADERS} -DMAIN_XML_FILE=\"${OUT_RELEASE}/res/Main.xml\"
-
-DEPS_LDFLAGS := -L${OUT_BUILD_LIB_DEPS} -Wl,-rpath,${OUT_BUILD_LIB_DEPS}
-ifeq (${SDL_BUILD_VERSION},2)
-    DEPS_LDFLAGS += -lSDL2 -lSDL2_image -lSDL2_ttf
-else
-    DEPS_LDFLAGS += -lSDL -lSDL_image -lSDL_ttf
-endif
-DEPS_LDFLAGS += -lfreetype -lpng -ljpeg -lz -lexpat
-LDFLAGS      += ${DEPS_LDFLAGS}
-
-# Files
-MAIN := Main
-
-# Objects
-OBJS := ${OUT_BUILD_SRC}/${LIST}.o   \
-        ${OUT_BUILD_SRC}/${PARSER}.o \
-		${OUT_BUILD_SRC}/${TASK}.o   \
-		${OUT_BUILD_SRC}/${MAIN}.o
+install:
+	$(call copy-content,$(OUT_BUILD_DIR),$(OUT_RELEASE_BIN))
+	$(call copy-content,$(OUT_STAGING_LIB),$(OUT_RELEASE_LIB))
+	$(call copy-content,$(RES),$(OUT_RELEASE_RES))
 	
-#################################################################
-#                               Build                           #
-#################################################################
-
-# all
-all: prepare-sources build-submodules ${BIN_NAME}
-
-# Binary
-${BIN_NAME}: ${OBJS}
-	${CC} ${CFLAGS} -o ${OUT_BUILD_BIN}/$@ ${OUT_BUILD_OBJS}/*.o ${OUT_BUILD_OBJS_GRAPHICS}/*.o ${OUT_BUILD_OBJS_CONTROL}/*.o \
-            ${OUT_BUILD_OBJS_CORE}/*.o \
-            ${shell find ${OUT_BUILD_OBJS_VIDEO}/*.o ! -name $(notdir ${LIST}.o) ! -name $(notdir ${TASK}.o)} \
-            ${shell find ${OUT_BUILD_OBJS_NETWORK}/*.o ! -name $(notdir ${LIST}.o) ! -name $(notdir ${TASK}.o)} \
-            ${LDFLAGS}
-
-# objects
-%.o: %.c
-	${CC} ${CFLAGS} -c $< -o ${OUT_BUILD_OBJS}/$(notdir $@)
+	$(eval WORKDIR := $(dir $(OUT)))
+	$(eval BIN_RELATIVE := $(subst $(WORKDIR),./,$(OUT_RELEASE_BIN)/$(BIN_NAME)))
+	$(eval LIB_RELATIVE := $(subst $(WORKDIR),./,$(OUT_RELEASE_LIB)))
+	$(eval XML_RELATIVE := $(subst $(WORKDIR),./,$(OUT_RELEASE_RES)/Main.xml))
 	
-#################################################################
-#                              Install                          #
-#################################################################
+	$(PRINT) "\n---------------------------------------------"
+	$(PRINT) " SUCCESS! As root, run $(BIN_NAME) using: "
+	$(PRINT) "---------------------------------------------"
+	$(PRINT) " export LD_LIBRARY_PATH=$(LIB_RELATIVE)"
+	$(PRINT) " $(BIN_RELATIVE) -f $(XML_RELATIVE)\n"
 
-install: prepare-release
-	make -f build/Makefile.vid  install
-	make -f build/Makefile.net  install
-	make -f build/Makefile.deps install
-	make -f build/Makefile.gfx  install
-	make -f build/Makefile.ctrl install
-	make -f build/Makefile.core install
-	
-	${CP} ${INC}/*                     ${OUT_RELEASE_INC}/.
-	${CP} ${OUT_BUILD_BIN}/${BIN_NAME} ${OUT_RELEASE_BIN}/.
-	${CP} ${RES}/*                     ${OUT_RELEASE_RES}/.
-	
-	cd ${shell dirname ${OUT_RELEASE}} && \
-	tar czvf ${shell basename ${OUT_RELEASE}}.tar.gz ${shell basename ${OUT_RELEASE}} ||: && \
-	cd -
+clean:
+	$(call make-target,clean)
+	$(RM) $(OUT_BUILD_DIR) ||:
+	$(RM) $(OUT_RELEASE) ||:
 
-#################################################################
-#                             Prepare                           #
-#################################################################
-
-prepare-sources:
-	${PRINT} ***** Preparing build directories *****
-	if [ ! -d ${OUT_BUILD_INC} ]; then \
-	    ${MKDIR} ${OUT_BUILD_INC};     \
-	fi
-	if [ ! -d ${OUT_BUILD_SRC} ]; then \
-	    ${MKDIR} ${OUT_BUILD_SRC};     \
-	fi
-	if [ ! -d ${OUT_BUILD_BIN} ]; then \
-	    ${MKDIR} ${OUT_BUILD_BIN};     \
-	fi
-	if [ ! -d ${OUT_BUILD_OBJS} ]; then \
-	    ${MKDIR} ${OUT_BUILD_OBJS};     \
-	fi
-	if [ ! -d ${OUT_BUILD_UTILS_H} ]; then \
-	    ${MKDIR} ${OUT_BUILD_UTILS_H};     \
-	fi
-	if [ ! -d ${OUT_BUILD_UTILS_C} ]; then \
-	    ${MKDIR} ${OUT_BUILD_UTILS_C};     \
-	fi
-
-	${PRINT} ***** Copying network sources *****
-	${CP} ${INC}/${COMMON}.h ${OUT_BUILD_UTILS_H}/.
-	${CP} ${INC}/${LIST}.h   ${OUT_BUILD_UTILS_H}/.
-	${CP} ${INC}/${LOG}.h    ${OUT_BUILD_UTILS_H}/.
-	${CP} ${INC}/${PARSER}.h ${OUT_BUILD_UTILS_H}/.
-	${CP} ${INC}/${TASK}.h   ${OUT_BUILD_UTILS_H}/.
-	
-	${CP} ${SRC}/${LIST}.c   ${OUT_BUILD_UTILS_C}/.
-	${CP} ${SRC}/${PARSER}.c ${OUT_BUILD_UTILS_C}/.
-	${CP} ${SRC}/${TASK}.c   ${OUT_BUILD_UTILS_C}/.
-	
-	${CP} ${SRC}/${MAIN}.c   ${OUT_BUILD_SRC}/.
-
-#################################################################
-#                            Submodules                         #
-#################################################################
-
-build-submodules:
-	${PRINT} ***** Building all submodules *****
-	make -f build/Makefile.vid  all
-	make -f build/Makefile.net  all
-	make -f build/Makefile.deps all
-	make -f build/Makefile.gfx  all
-	make -f build/Makefile.ctrl all
-	make -f build/Makefile.core all
-
-#################################################################
-#                              Clean                            #
-#################################################################
-
-clean-all:
-	${PRINT} ***** Removing all generated files *****
-	make -f build/Makefile.vid  clean-video
-	make -f build/Makefile.net  clean-network
-	make -f build/Makefile.deps clean-dependencies
-	make -f build/Makefile.gfx  clean-graphics
-	make -f build/Makefile.ctrl clean-control
-	make -f build/Makefile.core clean-core
-	${RM} ${OUT}/${PROJECT_NAME}-${PROJECT_VERSION}* ||:
-
-mrproper-all: clean-all
-	${PRINT} ***** Cleaning all outputs *****
-	make -f build/Makefile.vid  mrproper-video
-	make -f build/Makefile.net  mrproper-network
-	make -f build/Makefile.deps mrproper-dependencies
-	make -f build/Makefile.gfx  mrproper-graphics
-	make -f build/Makefile.ctrl mrproper-control
-	make -f build/Makefile.core mrproper-core
-	${RM} ${OUT} ||:
+.PHONY: mrproper
+mrproper:
+	$(RM) $(OUT)

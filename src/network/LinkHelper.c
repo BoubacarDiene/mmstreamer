@@ -888,5 +888,5 @@ static int8_t writeData_f(struct link_helper_s *obj, struct link_s *src, struct 
  */
 static void signalHandler_f(int32_t signalNumber)
 {
-    Logd("Signal caught - signalNumber = %d", signalNumber);
+    (void)signalNumber;
 }

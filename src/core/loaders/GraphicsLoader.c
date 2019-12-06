@@ -1155,7 +1155,9 @@ static void onElementClickEndCb(void *userData)
     struct xml_graphics_s *xmlGraphics = (struct xml_graphics_s*)userData;
     struct xml_element_s *element      = &xmlGraphics->elements[xmlGraphics->nbElements];
 
-    Logd("%u click handlers added", element->nbClickHandlers);
+    if (element) {
+        Logd("%u click handlers added", element->nbClickHandlers);
+    }
 }
 
 /*!

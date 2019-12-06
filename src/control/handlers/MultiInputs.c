@@ -85,6 +85,8 @@ static enum handlers_error_e saveVideoElement(struct handlers_s *obj, char *targ
 {
     ASSERT(obj && obj->pData && targetName);
 
+    (void)pData;
+
     if (!handlerData) {
         Loge("Handler data is expected");
         return HANDLERS_ERROR_PARAMS;

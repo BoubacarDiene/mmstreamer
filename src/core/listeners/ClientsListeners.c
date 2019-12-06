@@ -142,7 +142,6 @@ static void onClientDataCb(struct client_params_s *params,
     
     struct clients_listeners_private_data_s *pData = (struct clients_listeners_private_data_s*)userData;
     struct context_s *ctx                          = pData->listenersParams->ctx;
-    struct input_s *input                          = &ctx->input;
     struct graphics_s *graphicsObj                 = ctx->modules.graphicsObj;
     struct server_s *serverObj                     = ctx->modules.serverObj;
     struct graphics_infos_s *graphicsInfos         = &ctx->params.graphicsInfos;

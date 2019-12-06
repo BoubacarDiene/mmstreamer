@@ -252,7 +252,6 @@ enum controllers_error_e notify_f(struct controllers_s *obj, struct controller_e
     struct controllers_task_s *evtsTask   = &obj->tasksMngt[CONTROLLERS_TASK_EVTS].task;
     struct list_s *evtsList               = evtsTask->list;
     struct events_list_element_s *element = NULL;
-    struct input_s *input                 = &obj->params.ctx->input;
 
     if (obj->nbLibs == 0) {
         Logw("No library loaded");

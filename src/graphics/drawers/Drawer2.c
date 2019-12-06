@@ -1095,6 +1095,8 @@ static int sdlEventFilter_f(void *userdata, SDL_Event* event)
 static enum drawer_error_e convertSdlEvent_f(struct drawer_s *obj, SDL_Event *event,
                                              struct gfx_event_s *out)
 {
+    (void)obj;
+
     enum drawer_error_e ret = DRAWER_ERROR_NONE;
     const uint8_t *keyState = NULL;
 
@@ -1429,6 +1431,8 @@ static enum drawer_error_e initVideoContext_f(struct drawer_s *obj, struct gfx_r
 {
     ASSERT(obj && obj->pData && rect);
 
+    (void)showWindow;
+
     struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
     enum drawer_error_e ret             = DRAWER_ERROR_NONE;
 
@@ -1583,8 +1587,6 @@ static enum drawer_error_e setWindowIcon_f(struct drawer_s *obj, SDL_Window *win
         Loge("Invalid parameters");
         return DRAWER_ERROR_PARAMS;
     }
-    
-    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
 
     if (access(icon->path, F_OK) == 0) {
         Logd("Loading icon : \"%s\"", icon->path);
@@ -1666,8 +1668,6 @@ static enum drawer_error_e setTextureTransparency_f(struct drawer_s *obj, SDL_Te
                                                     uint8_t alpha)
 {
     ASSERT(obj && obj->pData);
-    
-    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
 
     if (!texture) {
         Loge("A valid texture is expected");
@@ -1813,8 +1813,6 @@ static enum drawer_error_e writeSurfaceToFile_f(struct drawer_s *obj, SDL_Surfac
                                                 struct gfx_image_s *inOut)
 {
     ASSERT(obj && obj->pData);
-    
-    struct drawer_private_data_s *pData = (struct drawer_private_data_s*)(obj->pData);
 
     if (!surface || !inOut) {
         Loge("Invalid parameters");

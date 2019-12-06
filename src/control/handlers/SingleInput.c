@@ -1246,7 +1246,6 @@ static enum handlers_error_e multiInputs(struct handlers_s *obj, char *gfxElemen
     Logd("Handling multi inputs request - data : \"%s\"", handlerData);
 
     struct handlers_private_data_s *pData = (struct handlers_private_data_s*)(obj->pData);
-    struct context_s *ctx                 = pData->handlersParams.ctx;
 
     uint32_t offset                  = 0;
     char functionName[MAX_NAME_SIZE] = {0};

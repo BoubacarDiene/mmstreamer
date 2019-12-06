@@ -1,4 +1,5 @@
 # Folders
+build/gcov
 build/artifacts/
 build/logs/
 build/temp/

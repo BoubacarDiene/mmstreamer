@@ -592,7 +592,6 @@ static enum core_error_e unloadGraphicsParams_f(struct core_s *obj)
     
     struct core_private_data_s *pData      = (struct core_private_data_s*)(obj->pData);
     struct xml_common_s *xmlCommon         = &pData->xml.xmlCommon;
-    struct xml_graphics_s *xmlGraphics     = &pData->xml.xmlGraphics;
     struct graphics_s *graphicsObj         = pData->ctx->modules.graphicsObj;
     struct graphics_infos_s *graphicsInfos = &pData->ctx->params.graphicsInfos;
     struct gfx_screen_s *screenParams      = &graphicsInfos->graphicsParams.screenParams;
@@ -787,7 +786,6 @@ static enum core_error_e unloadVideosParams_f(struct core_s *obj)
     struct core_private_data_s *pData     = (struct core_private_data_s*)(obj->pData);
     struct videos_infos_s *videosInfos    = &pData->ctx->params.videosInfos;
     struct video_device_s ***videoDevices = &videosInfos->devices;
-    struct video_device_s *videoDevice    = NULL;
     uint8_t nbDevices                     = videosInfos->nbDevices;
     
     (void)pData->listenersObj->unsetVideosListeners(pData->listenersObj);

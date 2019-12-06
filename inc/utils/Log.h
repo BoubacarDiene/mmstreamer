@@ -56,32 +56,32 @@ extern "C" {
 
 #define END     "\033[0m"
 
-#define __file__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define __file__ \
+    (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define printColor(color) \
+   printf("%s%s : %s:%d (%s) %s", color, TAG, __file__, __LINE__, __func__, END)
 
 #if LOG_LEVEL >= DEBUG_LVL
-    #define Logd(...)(printf("%s%s : %s:%d (%s) %s", BLUE, TAG, __file__, __LINE__, __func__, END),\
-                        printf(__VA_ARGS__),printf("\n"))
+    #define Logd(...)(printColor(BLUE),printf(__VA_ARGS__),printf("\n"))
 #else
     #define Logd(...)
 #endif
 
 #if LOG_LEVEL >= INFO_LVL
-    #define Logi(...)(printf("%s%s : %s:%d (%s) %s", GREEN, TAG, __file__, __LINE__, __func__, END),\
-                        printf(__VA_ARGS__),printf("\n"))
+    #define Logi(...)(printColor(GREEN),printf(__VA_ARGS__),printf("\n"))
 #else
     #define Logi(...)
 #endif
 
 #if LOG_LEVEL >= WARNING_LVL
-    #define Logw(...)(printf("%s%s : %s:%d (%s) %s", YELLOW, TAG, __file__, __LINE__, __func__, END),\
-                        printf(__VA_ARGS__),printf("\n"))
+    #define Logw(...)(printColor(YELLOW),printf(__VA_ARGS__),printf("\n"))
 #else
     #define Logw(...)
 #endif
 
 #if LOG_LEVEL >= ERROR_LVL
-    #define Loge(...)(printf("%s%s : %s:%d (%s) %s", RED, TAG, __file__, __LINE__, __func__, END),\
-                        printf(__VA_ARGS__),printf("\n"))
+    #define Loge(...)(printColor(RED),printf(__VA_ARGS__),printf("\n"))
 #else
     #define Loge(...)
 #endif

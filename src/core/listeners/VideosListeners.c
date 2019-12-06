@@ -241,7 +241,6 @@ static void onVideo4ServerCb(struct video_buffer_s *videoBuffer, void *userData)
     
     struct videos_listeners_private_data_s *pData = (struct videos_listeners_private_data_s*)userData;
     struct context_s *ctx                         = pData->listenersParams->ctx;
-    struct graphics_s *graphicsObj                = ctx->modules.graphicsObj;
     struct server_s *serverObj                    = ctx->modules.serverObj;
     struct servers_infos_s *serversInfos          = &ctx->params.serversInfos;
     struct server_infos_s *serverInfos            = NULL;
