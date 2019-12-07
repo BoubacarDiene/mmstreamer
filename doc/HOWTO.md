@@ -5,16 +5,16 @@
 ### 1.1. Launch binary (as root)
 ```
 $ cd mmstreamer_sources/
-$ sudo ./out/mmstreamer/bin/mmstreamer-<x.y>
+$ sudo LD_LIBRARY_PATH=./out/mmstreamer/lib ./out/mmstreamer/bin/mmstreamer-<x.y>
 ```
 or in debug mode :
 ```
-$ sudo ./out/mmstreamer/bin/mmstreamer-<x.y>.dbg
+$ sudo LD_LIBRARY_PATH=./out/mmstreamer/lib ./out/mmstreamer/bin/mmstreamer-<x.y>.dbg
 ```
 
 **Notes :**
 - <x.y> has to be replaced with the current version of the binary.
-- Another path to Main.xml config file can be specified using -c option\
+- Another path to Main.xml config file can be specified using -f option\
 ```
   E.g.: $ ./out/mmstreamer/bin/mmstreamer-<x.y> -f /tmp/Main.xml
 ```

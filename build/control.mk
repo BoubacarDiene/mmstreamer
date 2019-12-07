@@ -11,8 +11,7 @@
 
 MODULE_NAME := control
 
-SOURCES := utils/Parser.c \
-           $(MODULE_NAME)/Control.c \
+SOURCES := $(MODULE_NAME)/Control.c \
            $(MODULE_NAME)/handlers/*.c \
            $(MODULE_NAME)/controllers/*.c
 

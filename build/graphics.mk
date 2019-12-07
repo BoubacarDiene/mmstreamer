@@ -12,8 +12,8 @@
 MODULE_NAME := graphics
 
 SOURCES = $(MODULE_NAME)/Graphics.c \
-           $(MODULE_NAME)/drawers/Drawer$(SDL_BUILD_VERSION).c \
-           $(MODULE_NAME)/fbdev/*.c
+          $(MODULE_NAME)/drawers/Drawer$(SDL_BUILD_VERSION).c \
+          $(MODULE_NAME)/fbdev/*.c
 
 #################################################################
 #                             Include                           #

@@ -36,7 +36,6 @@ CFLAGS   = $(OPTIONS) \
           -DLOG_LEVEL=$(LOG_LEVEL) \
           -DPROJECT_NAME=\"$(PROJECT_NAME)\" \
           -DPROJECT_VERSION=\"$(PROJECT_VERSION)\" \
-          -DMAIN_XML_FILE=\"$(RES)/Main.xml\" \
           -I$(OUT_STAGING_INC)
 
 # Shell commands
@@ -88,11 +87,7 @@ OUT_STAGING_OBJS := $(OUT_STAGING)/objs
 
 # Build
 # MODULE_NAME: To be specified before including common.mk
-OUT_BUILD     := $(OUT)/build
-OUT_BUILD_DIR  = $(OUT_BUILD)/$(MODULE_NAME)
-OUT_BUILD_INC  = $(OUT_BUILD_DIR)/inc
-OUT_BUILD_SRC  = $(OUT_BUILD_DIR)/src
-OUT_BUILD_LIB  = $(OUT_BUILD_DIR)/lib
+OUT_BUILD_DIR = $(OUT)/build/$(MODULE_NAME)
 
 #################################################################
 #                              Rules                            #
@@ -146,15 +141,15 @@ endef
 define declare-common-rules
 prepare:
 	$(call copy-content,$(INC),$(OUT_STAGING_INC))
-	$(call copy-files,$(SOURCES),$(SRC),$(OUT_BUILD_SRC))
+	$(call copy-files,$(SOURCES),$(SRC),$(OUT_BUILD_DIR))
 
-all: prepare $(addprefix $(OUT_BUILD_SRC)/,$(OBJECTS))
+all: prepare $(addprefix $(OUT_BUILD_DIR)/,$(OBJECTS))
 
 install:
-	$(call copy-files,$(OBJECTS),$(OUT_BUILD_SRC),$(OUT_STAGING_OBJS))
+	$(call copy-files,$(OBJECTS),$(OUT_BUILD_DIR),$(OUT_STAGING_OBJS))
 
 clean:
-	$(call remove-files,$(SOURCES),$(OUT_BUILD_SRC))
+	$(call remove-files,$(SOURCES),$(OUT_BUILD_DIR))
 	$(call remove-files,$(OBJECTS),$(OUT_STAGING_OBJS))
 endef
 

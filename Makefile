@@ -37,6 +37,11 @@ OUT_RELEASE_BIN := $(OUT_RELEASE)/bin
 OUT_RELEASE_LIB := $(OUT_RELEASE)/lib
 OUT_RELEASE_RES := $(OUT_RELEASE)/res
 
+WORKDIR := $(dir $(OUT))
+export BIN_RELATIVE_DIR := $(subst $(WORKDIR),./,$(OUT_RELEASE_BIN))
+export LIB_RELATIVE_DIR := $(subst $(WORKDIR),./,$(OUT_RELEASE_LIB))
+export RES_RELATIVE_DIR := $(subst $(WORKDIR),./,$(OUT_RELEASE_RES))
+
 #################################################################
 #                             Build                             #
 #################################################################
@@ -74,16 +79,11 @@ install:
 	$(call copy-content,$(OUT_STAGING_LIB),$(OUT_RELEASE_LIB))
 	$(call copy-content,$(RES),$(OUT_RELEASE_RES))
 	
-	$(eval WORKDIR := $(dir $(OUT)))
-	$(eval BIN_RELATIVE := $(subst $(WORKDIR),./,$(OUT_RELEASE_BIN)/$(BIN_NAME)))
-	$(eval LIB_RELATIVE := $(subst $(WORKDIR),./,$(OUT_RELEASE_LIB)))
-	$(eval XML_RELATIVE := $(subst $(WORKDIR),./,$(OUT_RELEASE_RES)/Main.xml))
-	
 	$(PRINT) "\n---------------------------------------------"
 	$(PRINT) " SUCCESS! As root, run $(BIN_NAME) using: "
 	$(PRINT) "---------------------------------------------"
-	$(PRINT) " export LD_LIBRARY_PATH=$(LIB_RELATIVE)"
-	$(PRINT) " $(BIN_RELATIVE) -f $(XML_RELATIVE)\n"
+	$(PRINT) " export LD_LIBRARY_PATH=$(LIB_RELATIVE_DIR)"
+	$(PRINT) " $(BIN_RELATIVE_DIR)/$(BIN_NAME) -f $(RES_RELATIVE_DIR)/Main.xml\n"
 
 clean:
 	$(call make-target,clean)

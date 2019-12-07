@@ -39,21 +39,24 @@ Please, see [TROUBLESHOOT](TROUBLESHOOT.md) if you encounter problems compiling 
 ### 2.2. Clean build directory
 ```
 $ cd mmstreamer_sources/
-$ make clean-all
+$ make clean
 ```
 or
 ```
-$ make mrproper-all
+$ make mrproper
 ```
 
-### 2.3. Clean a particular module
+## 3. Build mmstreamer inside docker
+
+### 3.1. Generate docker image
 ```
 $ cd mmstreamer_sources/
-$ make -f build/Makefile.<xxx> clean-<xxx>
+$ docker build -t  mmstreamer-image ci/
 ```
-or
-```
-$ make -f build/Makefile.<xxx> mrproper-<xxx>
 
-<xxx> : vid, deps, net, gfx, ... respectively for "Videos", "Dependencies", "Network", "Graphics", ...
+### 3.2. Use docker image
+```
+$ cd mmstreamer_sources/
+$ docker run -it -u $(id -u) --rm -v $(pwd):/workdir mmstreamer-image:latest
+$ make all install
 ```

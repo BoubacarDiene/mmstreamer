@@ -88,7 +88,6 @@ clean:
 	$(RM) $(SDL_PATH)/$(SDL_MAIN_SRC).built      ||:
 	$(RM) $(SDL_PATH)/$(SDL_IMAGE_SRC).built     ||:
 	$(RM) $(SDL_PATH)/$(SDL_TTF_SRC).built       ||:
-	$(RM) $(OUT_BUILD_LIB)/*                     ||:
 
 # expat
 $(EXPAT_TARGET):

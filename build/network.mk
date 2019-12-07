@@ -11,7 +11,7 @@
 
 MODULE_NAME := network
 
-SOURCES := utils/List.c utils/Task.c $(MODULE_NAME)/*.c
+SOURCES := $(MODULE_NAME)/*.c
 
 #################################################################
 #                             Include                           #
