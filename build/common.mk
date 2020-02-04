@@ -18,16 +18,18 @@ PROJECT_NAME    := mmstreamer
 PROJECT_VERSION := 1.3
 
 # Build options
-# - DEBUG := <no or yes>
+# - DEBUG := <asan or gdb or any value>
 # - LOG_LEVEL := <1 to 4>
-DEBUG     := no
-LOG_LEVEL := 1
+DEBUG     ?= no
+LOG_LEVEL ?= 1
 OPTIONS   := -Wall -Werror -Wextra
 
-ifeq ($(DEBUG),no)
-	OPTIONS += -O3 -s -DNDEBUG
+ifeq ($(DEBUG),gdb)
+	OPTIONS += -ggdb
+else ifeq ($(DEBUG),asan)
+	OPTIONS += -ggdb -fsanitize=address -fno-omit-frame-pointer
 else
-	OPTIONS += -g
+	OPTIONS += -O3 -s -DNDEBUG
 endif
 
 CC      := gcc

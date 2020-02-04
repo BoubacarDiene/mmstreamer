@@ -90,8 +90,8 @@ static enum handlers_error_e suspendServer(struct handlers_s *obj, char *gfxElem
 static enum handlers_error_e resumeServer(struct handlers_s *obj, char *gfxElementName,
                                           void *gfxElementData, char *handlerData);
 
-static enum handlers_error_e stopCient(struct handlers_s *obj, char *gfxElementName,
-                                       void *gfxElementData, char *handlerData);
+static enum handlers_error_e stopClient(struct handlers_s *obj, char *gfxElementName,
+                                        void *gfxElementData, char *handlerData);
 static enum handlers_error_e startClient(struct handlers_s *obj, char *gfxElementName,
                                          void *gfxElementData, char *handlerData);
 
@@ -121,7 +121,7 @@ struct handlers_commands_s gSingleInputHandlers[] = {
 	{ HANDLERS_COMMAND_START_SERVER,        NULL,  startServer      },
 	{ HANDLERS_COMMAND_SUSPEND_SERVER,      NULL,  suspendServer    },
 	{ HANDLERS_COMMAND_RESUME_SERVER,       NULL,  resumeServer     },
-	{ HANDLERS_COMMAND_STOP_CLIENT,         NULL,  stopCient        },
+	{ HANDLERS_COMMAND_STOP_CLIENT,         NULL,  stopClient       },
 	{ HANDLERS_COMMAND_START_CLIENT,        NULL,  startClient      },
 
 	{ HANDLERS_COMMAND_MULTI_INPUTS,        NULL,  multiInputs      },
@@ -1113,8 +1113,8 @@ static enum handlers_error_e resumeServer(struct handlers_s *obj, char *gfxEleme
 /*!
  *
  */
-static enum handlers_error_e stopCient(struct handlers_s *obj, char *gfxElementName,
-                                       void *gfxElementData, char *handlerData)
+static enum handlers_error_e stopClient(struct handlers_s *obj, char *gfxElementName,
+                                        void *gfxElementData, char *handlerData)
 {
     ASSERT(obj && obj->pData);
 

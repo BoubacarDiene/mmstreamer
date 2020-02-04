@@ -54,21 +54,21 @@ http://<your_ip_address>:9090/webcam
 
 ## 3. How to enable debug mode
 
-### 3.1. Open Makefile.in
+### 3.1. Produce debugging information for use by GDB
 ```
-$ cd mmstreamer_sources/
-$ vi build/Makefile.in
+export DEBUG=gdb
+export LOG_LEVEL=<1 - 4>
 ```
 
-### 3.2. Update macros
+### 3.2. Produce debugging information for use by GDB + enable address sanitizer
 ```
-DEBUG := yes
-LOG_LEVEL := <1 - 4>
+export DEBUG=asan
+export LOG_LEVEL=<1 - 4>
 ```
 
 ### 3.3. Relaunch build
 ```
-$ make all install
+$ make mrproper all install
 ```
 
 ## 4. How to extend mmstreamer

@@ -613,12 +613,24 @@ static enum client_error_e closeClientSocket_f(struct client_context_s *ctx)
     free(ctx->server);
     ctx->server = NULL;
     
-    // Release memory allocated to buffer's data
+    // Release allocated buffers
     if (ctx->bufferIn.data) {
         free(ctx->bufferIn.data);
         ctx->bufferIn.data = NULL;
     }
-    
+
+    if (ctx->bufferOut.data) {
+        free(ctx->bufferOut.data);
+        ctx->bufferOut.data = NULL;
+
+        // Inform others (graphics, ...) that video data is now NULL
+        // That's useful to set corresponding gfxElement's data to NULL
+        // otherwise ASAN might report a "Heap use after free"
+        ctx->params.onDataReceivedCb(&ctx->params,
+                                     &ctx->bufferOut,
+                                     ctx->params.userData);
+    }
+
     return CLIENT_ERROR_NONE;
 }
 
@@ -762,9 +774,10 @@ static void watcherTaskFct_f(struct task_params_s *params)
             goto exit;
         }
         
-        ASSERT((ctx->bufferIn.data = calloc(1, ctx->params.maxBufferSize)));
-        ctx->bufferIn.length = ctx->params.maxBufferSize;
-        
+        ctx->bufferIn.length = ctx->bufferOut.length = ctx->params.maxBufferSize;
+        ASSERT((ctx->bufferIn.data = calloc(1, ctx->bufferIn.length)));
+        ASSERT((ctx->bufferOut.data = calloc(1, ctx->bufferOut.length)));
+
         ctx->ackReceived = 1;
         Logd("ackReceived = %d / maxBufferSize = %lu",
                 ctx->ackReceived, ctx->params.maxBufferSize);
@@ -813,13 +826,18 @@ static void watcherTaskFct_f(struct task_params_s *params)
 
             // Adjust buffer size if necessary
             if (ctx->httpContent.length > ctx->params.maxBufferSize) {
-                Logw("Ajusting maxBufferSize from %lu bytes to %lu bytes",
+                Logw("Adjusting maxBufferSize from %lu bytes to %lu bytes",
                         ctx->params.maxBufferSize, ctx->httpContent.length);
-                free(ctx->bufferIn.data);
 
-                ctx->bufferIn.length       = ctx->httpContent.length;
-                ctx->params.maxBufferSize  = ctx->httpContent.length;
+                ctx->params.maxBufferSize = ctx->httpContent.length;
+
+                free(ctx->bufferIn.data);
+                ctx->bufferIn.length       = ctx->params.maxBufferSize;
                 ASSERT((ctx->bufferIn.data = calloc(1, ctx->bufferIn.length)));
+
+                free(ctx->bufferOut.data);
+                ctx->bufferOut.length       = ctx->bufferIn.length;
+                ASSERT((ctx->bufferOut.data = calloc(1, ctx->bufferOut.length)));
             }
 
             // Copy received data
@@ -874,18 +892,12 @@ static void receiverTaskFct_f(struct task_params_s *params)
     if (pthread_mutex_lock(&ctx->lock) != 0) {
         return;
     }
-    
-    ctx->bufferOut.length = ctx->bufferIn.length;
-    ASSERT((ctx->bufferOut.data = calloc(1, ctx->bufferIn.length)));
+
+    memset(ctx->bufferOut.data, 0, ctx->bufferOut.length);
     memcpy(ctx->bufferOut.data, ctx->bufferIn.data, ctx->bufferIn.length);
     
     (void)pthread_mutex_unlock(&ctx->lock);
     ctx->params.onDataReceivedCb(&ctx->params, &ctx->bufferOut, ctx->params.userData);
-    
-    (void)pthread_mutex_lock(&ctx->lock);
-    free(ctx->bufferOut.data);
-    ctx->bufferOut.data = NULL;
-    (void)pthread_mutex_unlock(&ctx->lock);
 }
 
 /* -------------------------------------------------------------------------------------------- */

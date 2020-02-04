@@ -1758,6 +1758,7 @@ static void releaseElementCb(struct list_s *obj, void *element)
     ASSERT(obj && element);
     
     struct gfx_element_s *gfxElement = (struct gfx_element_s*)element;
+    free(gfxElement->reserved);
     free(gfxElement);
 }
 

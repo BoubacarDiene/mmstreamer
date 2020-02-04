@@ -262,7 +262,7 @@ static enum server_error_e start_f(struct server_s *obj, struct server_params_s 
     
     if (List_Init(&ctx->clientsList, &listParams) != LIST_ERROR_NONE) {
         Loge("List_Init() failed");
-        goto exit;
+        goto list_exit;
     }
     
     if (sem_init(&ctx->sem, 0, 0) != 0) {
@@ -313,7 +313,7 @@ static enum server_error_e start_f(struct server_s *obj, struct server_params_s 
     if (!pData->serversList
         || (pData->serversList->lock(pData->serversList) != LIST_ERROR_NONE)) {
         Loge("Failed to lock serversList");
-        goto list_exit;
+        goto lock_exit;
     }
     pData->serversList->add(pData->serversList, (void*)ctx);
     (void)pData->serversList->unlock(pData->serversList);
@@ -324,7 +324,7 @@ static enum server_error_e start_f(struct server_s *obj, struct server_params_s 
     
     return SERVER_ERROR_NONE;
 
-list_exit:
+lock_exit:
     (void)ctx->serverTask->destroy(ctx->serverTask, &ctx->senderTaskParams);
 
 sender_create_exit:
@@ -342,7 +342,11 @@ mutex_exit:
 sem_exit:
     (void)List_UnInit(&ctx->clientsList);
 
+list_exit:
+    (void)closeServerSocket_f(ctx);
+
 exit:
+    free(ctx);
     return SERVER_ERROR_START;
 }
 

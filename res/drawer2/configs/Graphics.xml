@@ -203,7 +203,7 @@
 
                 18- resumeServer     : "data" contains the name of server to resume
 
-                19- stopCient        : "data" contains the name of client to stop
+                19- stopClient       : "data" contains the name of client to stop
 
                 20- startClient      : "data" contains the name of client to start
 
