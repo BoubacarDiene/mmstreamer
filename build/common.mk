@@ -18,23 +18,36 @@ PROJECT_NAME    := mmstreamer
 PROJECT_VERSION := 1.3
 
 # Build options
-# - DEBUG := <asan or gdb or any value>
-# - LOG_LEVEL := <1 to 4>
+#   - DEBUG = ", separated from gdb, asan, secu" (default: release)
+#   - LOG_LEVEL = <1 to 4>
+#
+#   Examples:
+#   - make all install
+#   - make all install DEBUG=gdb LOG_LEVEL=3
+#   - make all install DEBUG=gdb,asan,secu
 DEBUG     ?= no
 LOG_LEVEL ?= 1
-OPTIONS   := -Wall -Werror -Wextra
 
-ifeq ($(DEBUG),gdb)
-	OPTIONS += -ggdb
-else ifeq ($(DEBUG),asan)
-	OPTIONS += -ggdb -fsanitize=address -fno-omit-frame-pointer
-else
-	OPTIONS += -O3 -s -DNDEBUG
+# https://linux.die.net/man/1/gcc
+# https://security.stackexchange.com/questions/24444/what-is-the-most-hardened-set-of-options-for-gcc-compiling-c-c
+LDFLAGS_OPTIONS := -pthread -lm -ldl
+CFLAGS_OPTIONS := -Wall -Wextra -Werror -Wconversion -Wsign-conversion \
+                   -Wuninitialized -Wparentheses -Winit-self -Wcomment
+
+CFLAGS_OPTIONS += $(if $(findstring no,$(DEBUG)),-O3 -s -DNDEBUG,)
+CFLAGS_OPTIONS += $(if $(findstring gdb,$(DEBUG)),-ggdb,)
+CFLAGS_OPTIONS += $(if $(findstring asan,$(DEBUG)),-fsanitize=address -fno-omit-frame-pointer,)
+
+ifneq (,$(findstring secu,$(DEBUG)))
+LDFLAGS_OPTIONS += -Wl,-z,now -Wl,-z,relro -Wl,-z,noexecstack
+CFLAGS_OPTIONS  += -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security \
+                   -fstack-protector-all -Wstack-protector --param ssp-buffer-size=4 \
+                   -pie -fPIE -ftrapv
 endif
 
 CC      := gcc
-LDFLAGS := -pthread -lm -ldl
-CFLAGS   = $(OPTIONS) \
+LDFLAGS := $(LDFLAGS_OPTIONS)
+CFLAGS   = $(CFLAGS_OPTIONS) \
           -DLOG_LEVEL=$(LOG_LEVEL) \
           -DPROJECT_NAME=\"$(PROJECT_NAME)\" \
           -DPROJECT_VERSION=\"$(PROJECT_VERSION)\" \

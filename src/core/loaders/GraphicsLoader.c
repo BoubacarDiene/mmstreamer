@@ -1413,7 +1413,7 @@ static void onImageCb(void *userData, const char **attrs)
     
     if (image->file) {
         char *temp   = strdup(image->file);
-        uint32_t len = (strlen(temp) + strlen(input->resRootDir) + 2) * sizeof(char);
+        size_t len = (strlen(temp) + strlen(input->resRootDir) + 2) * sizeof(char);
         
         ASSERT((image->file = realloc(image->file, len)));
         memset(image->file, '\0', len);
@@ -1469,7 +1469,7 @@ static void onFontCb(void *userData, const char **attrs)
     
     if (font->file) {
         char *temp   = strdup(font->file);
-        uint32_t len = (strlen(temp) + strlen(input->resRootDir) + 2) * sizeof(char);
+        size_t len = (strlen(temp) + strlen(input->resRootDir) + 2) * sizeof(char);
         
         ASSERT((font->file = realloc(font->file, len)));
         memset(font->file, '\0', len);

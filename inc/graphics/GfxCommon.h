@@ -87,10 +87,10 @@ struct gfx_color_s {
 };
 
 struct gfx_rect_s {
-    int32_t x;
-    int32_t y;
-    int32_t w;
-    int32_t h;
+    int32_t  x;
+    int32_t  y;
+    uint32_t w;
+    uint32_t h;
 };
 
 struct gfx_nav_s {

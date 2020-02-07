@@ -92,8 +92,8 @@ enum priority_e {
 };
 
 struct buffer_s {
-    void    *data;
-    ssize_t length;
+    void   *data;
+    size_t length;
 };
 
 #ifdef __cplusplus

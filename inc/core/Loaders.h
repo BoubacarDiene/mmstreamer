@@ -116,10 +116,10 @@ struct xml_config_s {
 };
 
 struct xml_video_area_s {
-    int32_t left;
-    int32_t top;
-    int32_t width;
-    int32_t height;
+    int32_t  left;
+    int32_t  top;
+    uint32_t width;
+    uint32_t height;
 };
 
 struct xml_video_s {
@@ -226,14 +226,14 @@ struct xml_gfx_video_s {
 
     int32_t  x;
     int32_t  y;
-    int32_t  width;
-    int32_t  height;
+    uint32_t width;
+    uint32_t height;
 };
 
 struct xml_screen_s {
     char                   *name;
-    int32_t                width;
-    int32_t                height;
+    uint32_t               width;
+    uint32_t               height;
     char                   *fbDeviceName;
     uint8_t                bitsPerPixel;
     uint8_t                fullscreen;
@@ -286,8 +286,8 @@ struct xml_element_s {
     
     int32_t                    x;
     int32_t                    y;
-    int32_t                    width;
-    int32_t                    height;
+    uint32_t                   width;
+    uint32_t                   height;
     
     uint8_t                    visible;
     uint8_t                    clickable;

@@ -164,7 +164,7 @@ static void onServerStartCb(void *userData, const char **attrs)
     Logd("Adding server %u", (xmlServers->nbServers + 1));
     
     xmlServers->servers = realloc(xmlServers->servers,
-                                  (xmlServers->nbServers + 1) * sizeof(struct xml_server_s));
+                                  (size_t)(xmlServers->nbServers + 1) * sizeof(struct xml_server_s));
     ASSERT(xmlServers->servers);
     
     memset(&xmlServers->servers[xmlServers->nbServers], 0, sizeof(struct xml_server_s));

@@ -215,7 +215,7 @@ static enum parser_error_e parse_f(struct parser_s *obj, struct parser_params_s 
     
     Logd("Parsing file \"%s\" having size : %lu bytes", pData->params.path, pData->st.st_size);
     
-    pData->xmlBufferSize = (pData->st.st_size > MAX_XML_SIZE ? MAX_XML_SIZE : pData->st.st_size);
+    pData->xmlBufferSize = (size_t)(pData->st.st_size > MAX_XML_SIZE ? MAX_XML_SIZE : pData->st.st_size);
     
     if (!(pData->xml = calloc(1, pData->xmlBufferSize))) {
         Loge("Failed to allocate memory");
@@ -232,7 +232,7 @@ static enum parser_error_e parse_f(struct parser_s *obj, struct parser_params_s 
         
         pData->isFinal = (pData->nbRead < pData->xmlBufferSize);
         
-        if (!XML_Parse(pData->parser, pData->xml, pData->nbRead, pData->isFinal)) {
+        if (!XML_Parse(pData->parser, pData->xml, (int32_t)pData->nbRead, pData->isFinal)) {
             Loge("Failed to parse file");
             if (pData->params.onErrorCb) {
                 int errorCode        = XML_GetErrorCode(pData->parser);

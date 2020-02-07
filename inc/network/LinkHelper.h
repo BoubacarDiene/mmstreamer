@@ -144,10 +144,10 @@ typedef uint8_t (*link_helper_is_ready_for_reading_f)(struct link_helper_s *obj,
 
 typedef int8_t (*link_helper_read_data_f)(struct link_helper_s *obj, struct link_s *src,
                                           struct link_s *dst, struct buffer_s *buffer,
-                                          ssize_t *nbRead);
+                                          size_t *nbRead);
 typedef int8_t (*link_helper_write_data_f)(struct link_helper_s *obj, struct link_s *src,
                                            struct link_s *dst, struct buffer_s *buffer,
-                                           ssize_t *nbWritten);
+                                           size_t *nbWritten);
 
 /* -------------------------------------------------------------------------------------------- */
 /* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
@@ -232,12 +232,12 @@ struct http_404_not_found_s {
 };
 
 struct http_content_s {
-    char    mime[MAX_MIME_SIZE];
-    size_t  length;
+    char   mime[MAX_MIME_SIZE];
+    size_t length;
     
-    int32_t bodyStart;
+    size_t bodyStart;
     
-    char    str[MAX_HEADER_SIZE];
+    char   str[MAX_HEADER_SIZE];
 };
 
 struct link_s {

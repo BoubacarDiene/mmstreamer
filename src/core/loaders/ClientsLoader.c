@@ -167,7 +167,7 @@ static void onClientStartCb(void *userData, const char **attrs)
     Logd("Adding client %u", (xmlClients->nbClients + 1));
     
     xmlClients->clients = realloc(xmlClients->clients,
-                                  (xmlClients->nbClients + 1) * sizeof(struct xml_client_s));
+                                  (size_t)(xmlClients->nbClients + 1) * sizeof(struct xml_client_s));
     ASSERT(xmlClients->clients);
     
     memset(&xmlClients->clients[xmlClients->nbClients], 0, sizeof(struct xml_client_s));

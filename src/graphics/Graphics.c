@@ -1541,9 +1541,9 @@ static enum graphics_error_e getClickedElement_f(struct graphics_s *obj,
         
         if (gfxElement->isClickable
             && (gfxEvent->rect.x >= gfxElement->rect.x)
-            && (gfxEvent->rect.x <= gfxElement->rect.x + gfxElement->rect.w)
+            && (gfxEvent->rect.x <= gfxElement->rect.x + (int32_t)gfxElement->rect.w)
             && (gfxEvent->rect.y >= gfxElement->rect.y)
-            && (gfxEvent->rect.y <= gfxElement->rect.y + gfxElement->rect.h)) {
+            && (gfxEvent->rect.y <= gfxElement->rect.y + (int32_t)gfxElement->rect.h)) {
             gfxEvent->gfxElementName  = strdup(gfxElement->name);
             gfxEvent->gfxElementPData = gfxElement->pData;
             break;

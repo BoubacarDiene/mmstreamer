@@ -530,7 +530,7 @@ parserParseExit:
 
     uint8_t count;
     while (input->nbCtrlLibs > 0) {
-        count = input->nbCtrlLibs - 1;
+        count = (uint8_t)(input->nbCtrlLibs - 1);
         if (input->ctrlLibs[count].path) {
             free(input->ctrlLibs[count].path);
         }
@@ -705,7 +705,7 @@ static void onItemCb(void *userData, const char **attrs)
 
     Logd("Adding control library %u", (input->nbCtrlLibs + 1));
 
-    input->ctrlLibs = realloc(input->ctrlLibs, (input->nbCtrlLibs + 1) * sizeof(struct library_s));
+    input->ctrlLibs = realloc(input->ctrlLibs, (size_t)(input->nbCtrlLibs + 1) * sizeof(struct library_s));
     ASSERT(input->ctrlLibs);
 
     memset(&input->ctrlLibs[input->nbCtrlLibs], '\0', sizeof(struct library_s));
@@ -759,7 +759,7 @@ static void onItemCb(void *userData, const char **attrs)
 
     if (ctrlLib->path) {
         char *temp   = strdup(ctrlLib->path);
-        uint32_t len = (strlen(temp) + strlen(input->libRootDir) + 2) * sizeof(char);
+        size_t len = (strlen(temp) + strlen(input->libRootDir) + 2) * sizeof(char);
 
         ASSERT((ctrlLib->path = realloc(ctrlLib->path, len)));
         memset(ctrlLib->path, '\0', len);

@@ -52,24 +52,34 @@ http://<your_ip_address>:9090/webcam
 | [Images.xml](../res/drawer2/common/Images.xml) | List images files |
 | [Strings.xml](../res/drawer2/common/Strings.xml) | Define strings |
 
-## 3. How to enable debug mode
+## 3. How to enable more gcc options
 
-### 3.1. Produce debugging information for use by GDB
+### 3.1. Produce debugging information for use by gdb
 ```
 export DEBUG=gdb
-export LOG_LEVEL=<1 - 4>
 ```
 
-### 3.2. Produce debugging information for use by GDB + enable address sanitizer
+### 3.2. Enable address sanitizer
 ```
 export DEBUG=asan
-export LOG_LEVEL=<1 - 4>
 ```
 
-### 3.3. Relaunch build
+### 3.3. Add flags to improve security
 ```
-$ make mrproper all install
+export DEBUG=secu
 ```
+
+### 3.4. Relaunch build
+```
+$ make mrproper
+$ make all install
+```
+
+**Notes :**
+- LOG_LEVEL<1 - 4> is not dependent on the build type
+- Several "build types" can be set simultaneously
+  E.g: export DEBUG=gdb,asan,secu
+
 
 ## 4. How to extend mmstreamer
 - Implement [Controller.h](../inc/export/Controller.h) - See [mmcontroller project](https://github.com/BoubacarDiene/mmcontroller) for more details

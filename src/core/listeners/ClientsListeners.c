@@ -150,7 +150,7 @@ static void onClientDataCb(struct client_params_s *params,
     struct clients_infos_s *clientsInfos           = &ctx->params.clientsInfos;
     struct client_infos_s *clientInfos             = NULL;
     
-    uint8_t i, j;
+    uint8_t i;
     for (i = 0; i < clientsInfos->nbClients; i++) {
         clientInfos = clientsInfos->clientInfos[i];
 
@@ -168,6 +168,7 @@ static void onClientDataCb(struct client_params_s *params,
     pData->buffer.data   = buffer->data;
     pData->buffer.length = buffer->length;
 
+    uint32_t j;
     if (graphicsObj && clientInfos->graphicsDest) {
         if (clientInfos->graphicsIndex == -1) {
             for (j = 0; j < graphicsInfos->nbGfxElements; j++) {
@@ -177,7 +178,7 @@ static void onClientDataCb(struct client_params_s *params,
                 }
             }
             if (j < graphicsInfos->nbGfxElements) {
-                clientInfos->graphicsIndex = j;
+                clientInfos->graphicsIndex = (int32_t)j;
             }
             else {
                 Loge("Element \"%s\" does not exist", clientInfos->graphicsDest);
@@ -205,7 +206,7 @@ static void onClientDataCb(struct client_params_s *params,
                 return;
             }
 
-            clientInfos->serverIndex = j;
+            clientInfos->serverIndex = (int32_t)j;
         }
         else {
             serverInfos = serversInfos->serverInfos[clientInfos->serverIndex];

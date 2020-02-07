@@ -112,16 +112,16 @@ struct v4l2_configure_device_params_s {
     enum v4l2_buf_type   type;
     uint32_t             pixelformat;
     enum v4l2_colorspace colorspace;
-    int32_t              width;
-    int32_t              height;
+    uint32_t             width;
+    uint32_t             height;
     uint32_t             desiredFps;
 };
 
 struct v4l2_selection_params_s {
-    int32_t left;
-    int32_t top;
-    int32_t width;
-    int32_t height;
+    int32_t  left;
+    int32_t  top;
+    uint32_t width;
+    uint32_t height;
 };
 
 struct v4l2_request_buffers_params_s {

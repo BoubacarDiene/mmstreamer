@@ -374,7 +374,7 @@ static void taskFct_f(struct task_params_s *params)
     uint8_t i;
     for (i = 0; i < controllersObj->nbLibs; ++i) {
         lib = &controllersObj->libs[i];
-        if (element->event.id & lib->eventsMask) {
+        if ((int32_t)element->event.id & lib->eventsMask) {
             (void)pthread_mutex_unlock(&evtsTask->lock);
             lib->onEventCb(lib->obj, &element->event);
             (void)pthread_mutex_lock(&evtsTask->lock);

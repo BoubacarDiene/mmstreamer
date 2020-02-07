@@ -66,7 +66,7 @@ struct client_context_s {
     
     struct buffer_s         bufferIn;
     struct buffer_s         bufferOut;
-    ssize_t                 nbRead;
+    size_t                  nbRead;
     
     sem_t                   sem;
     pthread_mutex_t         lock;
@@ -800,7 +800,7 @@ static void watcherTaskFct_f(struct task_params_s *params)
             }
             
             pData->linkHelper->parseHttpContent(pData->linkHelper, &ctx->httpContent);
-            Logd("Http Content length : %ld / read = %ld / bodyStart = %d",
+            Logd("Http Content length : %ld / read = %ld / bodyStart = %lu",
                     ctx->httpContent.length, ctx->nbRead, ctx->httpContent.bodyStart);
             
             if (ctx->httpContent.length == 0) {

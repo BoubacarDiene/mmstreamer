@@ -679,7 +679,7 @@ static enum core_error_e loadVideosParams_f(struct core_s *obj)
 
     ASSERT((*videoDevices = calloc(*nbDevices, sizeof(struct video_device_s*))));
 
-    uint8_t index, configId;
+    uint32_t index, configId;
     struct video_config_choice_s *configChoice;
     for (index = 0; index < *nbDevices; index++) {
         ASSERT(((*videoDevices)[index] = calloc(1, sizeof(struct video_device_s))));

@@ -220,7 +220,7 @@ static void onVideo4GfxCb(struct video_buffer_s *videoBuffer, void *userData)
                 }
             }
             if (index < graphicsInfos->nbGfxElements) {
-                videoDevice->graphicsIndex = index;
+                videoDevice->graphicsIndex = (int32_t)index;
             }
             else {
                 Loge("Element \"%s\" does not exist", videoDevice->graphicsDest);

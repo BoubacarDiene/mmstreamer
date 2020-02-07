@@ -177,8 +177,9 @@ static enum handlers_error_e updateText(struct handlers_s *obj, char *targetName
         elementData = (struct control_element_data_s*)(graphicsInfos->gfxElements[index])->pData;
     }
 
-    uint32_t stringId, fontId, fontSize, colorId;
-    sscanf(handlerData, "%u;%u;%u;%u", &stringId, &fontId, &fontSize, &colorId);
+    uint32_t stringId, fontId, fontSize;
+    int32_t colorId;
+    sscanf(handlerData, "%u;%u;%u;%d", &stringId, &fontId, &fontSize, &colorId);
 
     Logd("Updating text of element \"%s\" / Params : %u | %u | %u | %u",
             targetName, stringId, fontId, fontSize, colorId);
@@ -190,7 +191,7 @@ static enum handlers_error_e updateText(struct handlers_s *obj, char *targetName
                                    text.str);
 
     elementData->getters.getFont(elementData->getters.userData, fontId, text.ttfFont);
-    text.ttfFontSize = fontSize;
+    text.ttfFontSize = (uint8_t)fontSize;
 
     elementData->getters.getColor(elementData->getters.userData, colorId, &text.color);
 

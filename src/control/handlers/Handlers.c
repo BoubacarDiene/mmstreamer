@@ -199,12 +199,12 @@ enum handlers_error_e getSubstring_f(struct handlers_s *obj, const char * const 
         return HANDLERS_ERROR_PARAMS;
     }
 
-    int32_t len = strlen(haystack + *offset) - strlen(result);
+    size_t len = strlen(haystack + *offset) - strlen(result);
     if (len > 0) {
         snprintf(out, len + 1, "%s", haystack + *offset);
     }
 
-    *offset += len + 1;
+    *offset += (uint32_t)(len + 1);
 
     return HANDLERS_ERROR_NONE;
 }

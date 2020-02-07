@@ -395,8 +395,8 @@ static enum video_error_e startDeviceCapture_f(struct video_s *obj, struct video
         goto configure_exit;
     }
 
-    ctx->finalVideoArea.width  = ctx->v4l2->format.fmt.pix.width;
-    ctx->finalVideoArea.height = ctx->v4l2->format.fmt.pix.height;
+    ctx->finalVideoArea.width  = (uint32_t)ctx->v4l2->format.fmt.pix.width;
+    ctx->finalVideoArea.height = (uint32_t)ctx->v4l2->format.fmt.pix.height;
 
     uint8_t selectionApiSupported              = 0;
     struct v4l2_selection_params_s cropRect    = {0};

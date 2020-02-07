@@ -78,10 +78,10 @@ struct video_device_s {
     struct video_params_s   videoParams;
 
     char                    *graphicsDest;
-    int8_t                  graphicsIndex;
+    int32_t                 graphicsIndex;
 
     char                    *serverDest;
-    int8_t                  serverIndex;
+    int32_t                 serverIndex;
 };
 
 struct videos_infos_s {
@@ -104,10 +104,10 @@ struct client_infos_s {
     struct client_params_s clientParams;
     
     char                   *graphicsDest;
-    int8_t                 graphicsIndex;
+    int32_t                graphicsIndex;
     
     char                   *serverDest;
-    int8_t                 serverIndex;
+    int32_t                serverIndex;
 };
 
 struct clients_infos_s {

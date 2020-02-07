@@ -149,7 +149,7 @@ static int sdlEventFilter_f(void *userdata, SDL_Event* event);
 static enum drawer_error_e convertSdlEvent_f(struct drawer_s *obj, SDL_Event *event,
                                              struct gfx_event_s *out);
 
-static enum drawer_error_e initSdlComponents_f(struct drawer_s *obj, uint32_t imgFlags);
+static enum drawer_error_e initSdlComponents_f(struct drawer_s *obj, int32_t imgFlags);
 static enum drawer_error_e uninitSdlComponents_f(struct drawer_s *obj);
 
 static enum drawer_error_e initWindowAndRenderer_f(struct drawer_s *obj, enum gfx_target_e target,
@@ -340,13 +340,13 @@ static enum drawer_error_e drawVideo_f(struct drawer_s *obj, struct gfx_rect_s *
         return DRAWER_ERROR_LOCK;
     }
 
-    SDL_Rect newRect = {rect->x, rect->y, rect->w, rect->h};
+    SDL_Rect newRect = {rect->x, rect->y, (int32_t)rect->w, (int32_t)rect->h};
 
     (void)adjustDrawingRect_f(obj, GFX_TARGET_VIDEO, &newRect);
 
     // MJPEG format
     if (pData->video.pixelFormat == SDL_PIXELFORMAT_ARGB8888) {
-        pData->video.rwops   = SDL_RWFromMem(buffer->data, buffer->length);
+        pData->video.rwops   = SDL_RWFromMem(buffer->data, (int32_t)buffer->length);
         pData->video.surface = IMG_Load_RW(pData->video.rwops, 0);
 
         pData->video.texture = SDL_CreateTextureFromSurface(pData->video.renderer,
@@ -473,8 +473,8 @@ static enum drawer_error_e drawImage_f(struct drawer_s *obj, struct gfx_rect_s *
     }
 
     // Create image texture
-    int width  = -1;
-    int height = -1;
+    int32_t width  = -1;
+    int32_t height = -1;
 
     if (image->hiddenColor) {
         pData->image.surface = IMG_Load(image->path);
@@ -515,18 +515,18 @@ static enum drawer_error_e drawImage_f(struct drawer_s *obj, struct gfx_rect_s *
 
     Logd("Real size of image \"%s\": %d x %d", image->path, width, height);
 
-    if ((width < rect->w) && (height < rect->h)) {
+    if ((width < (int32_t)rect->w) && (height < (int32_t)rect->h)) {
         Logd("Centering image \"%s\" inside element", image->path);
-        pData->rect.x = rect->x + ((rect->w - width) / 2);
-        pData->rect.y = rect->y + ((rect->h - height) / 2);
+        pData->rect.x = rect->x + (((int32_t)rect->w - width) / 2);
+        pData->rect.y = rect->y + (((int32_t)rect->h - height) / 2);
         pData->rect.w = width;
         pData->rect.h = height;
     }
     else {
         pData->rect.x = rect->x;
         pData->rect.y = rect->y;
-        pData->rect.w = rect->w;
-        pData->rect.h = rect->h;
+        pData->rect.w = (int32_t)rect->w;
+        pData->rect.h = (int32_t)rect->h;
     }
 
     (void)adjustDrawingRect_f(obj, target, &pData->rect);
@@ -595,8 +595,8 @@ static enum drawer_error_e drawText_f(struct drawer_s *obj, struct gfx_rect_s *r
         goto exit;
     }
 
-    int width  = pData->text.surface->w;
-    int height = pData->text.surface->h;
+    int32_t width  = pData->text.surface->w;
+    int32_t height = pData->text.surface->h;
 
     pData->text.texture = SDL_CreateTextureFromSurface(renderer, pData->text.surface);
     SDL_FreeSurface(pData->text.surface); // Surface not needed anymore
@@ -612,18 +612,18 @@ static enum drawer_error_e drawText_f(struct drawer_s *obj, struct gfx_rect_s *r
     (void)setTextureTransparency_f(obj, pData->text.texture, pData->text.color.a);
 
     // Set dstRect
-    if ((width < rect->w) && (height < rect->h)) {
+    if ((width < (int32_t)rect->w) && (height < (int32_t)rect->h)) {
         Logd("Centering text \"%s\" inside element", text->str);
-        pData->rect.x = rect->x + ((rect->w - width) / 2);
-        pData->rect.y = rect->y + ((rect->h - height) / 2);
+        pData->rect.x = rect->x + (((int32_t)rect->w - width) / 2);
+        pData->rect.y = rect->y + (((int32_t)rect->h - height) / 2);
         pData->rect.w = width;
         pData->rect.h = height;
     }
     else {
         pData->rect.x = rect->x;
         pData->rect.y = rect->y;
-        pData->rect.w = rect->w;
-        pData->rect.h = rect->h;
+        pData->rect.w = (int32_t)rect->w;
+        pData->rect.h = (int32_t)rect->h;
     }
 
     (void)adjustDrawingRect_f(obj, target, &pData->rect);
@@ -677,8 +677,8 @@ static enum drawer_error_e setBgColor_f(struct drawer_s *obj, struct gfx_rect_s 
     if (rect) {
         pData->rect.x = rect->x;
         pData->rect.y = rect->y;
-        pData->rect.w = rect->w;
-        pData->rect.h = rect->h;
+        pData->rect.w = (int32_t)rect->w;
+        pData->rect.h = (int32_t)rect->h;
     }
 
     (void)adjustDrawingRect_f(obj, target, &pData->rect);
@@ -732,8 +732,8 @@ static enum drawer_error_e restoreBgColor_f(struct drawer_s *obj, struct gfx_rec
     enum drawer_error_e ret       = DRAWER_ERROR_DRAW;
     SDL_Renderer *renderer        = NULL;
     SDL_Texture *initialBgTexture = NULL;
-    SDL_Rect srcRect              = {rect->x, rect->y, rect->w, rect->h};
-    SDL_Rect dstRect              = {rect->x, rect->y, rect->w, rect->h};
+    SDL_Rect srcRect              = {rect->x, rect->y, (int32_t)rect->w, (int32_t)rect->h};
+    SDL_Rect dstRect              = {rect->x, rect->y, (int32_t)rect->w, (int32_t)rect->h};
 
     // Prepare parameters
     switch (target) {
@@ -806,7 +806,8 @@ static enum drawer_error_e startDrawingInBg_f(struct drawer_s *obj)
     }
 
     // Create screen surface with the right pixel format
-    SDL_Rect screenRect = {0, 0, pData->screen.params.rect.w, pData->screen.params.rect.h};
+    SDL_Rect screenRect = {0, 0, (int32_t)pData->screen.params.rect.w,
+                                 (int32_t)pData->screen.params.rect.h};
 
     ret = createSurfaceFromTarget_f(obj, GFX_TARGET_SCREEN, &pData->screen.surface, &screenRect);
     if (ret != DRAWER_ERROR_NONE) {
@@ -911,7 +912,7 @@ static enum drawer_error_e saveBuffer_f(struct drawer_s *obj, struct buffer_s *b
     }
 
     if (pData->video.pixelFormat == SDL_PIXELFORMAT_ARGB8888) { // MJPEG format
-        pData->video.rwops   = SDL_RWFromMem(buffer->data, buffer->length);
+        pData->video.rwops   = SDL_RWFromMem(buffer->data, (int32_t)buffer->length);
         pData->video.surface = IMG_Load_RW(pData->video.rwops, 0);
 
         Logd("Save video buffer to \"%s\"", inOut->path);
@@ -948,13 +949,13 @@ static enum drawer_error_e saveTarget_f(struct drawer_s *obj, struct gfx_image_s
 
     Logd("Create surface from video content");
     // {0,0} to use the whole content when not in fullscreen
-    SDL_Rect videoRect = {0, 0, pData->video.params.rect.w,
-                                pData->video.params.rect.h};
+    SDL_Rect videoRect = {0, 0, (int32_t)pData->video.params.rect.w,
+                                (int32_t)pData->video.params.rect.h};
     if (srcRect) {
         videoRect.x = srcRect->x;
         videoRect.y = srcRect->y;
-        videoRect.w = srcRect->w;
-        videoRect.h = srcRect->h;
+        videoRect.w = (int32_t)srcRect->w;
+        videoRect.h = (int32_t)srcRect->h;
     }
 
     (void)adjustDrawingRect_f(obj, target, &videoRect);
@@ -967,8 +968,10 @@ static enum drawer_error_e saveTarget_f(struct drawer_s *obj, struct gfx_image_s
 
     if (target == GFX_TARGET_SCREEN) {
         Logd("Create surface from screen content");
-        SDL_Rect screenRect = {pData->screen.params.rect.x, pData->screen.params.rect.y,
-                               pData->screen.params.rect.w, pData->screen.params.rect.h};
+        SDL_Rect screenRect = {pData->screen.params.rect.x,
+                               pData->screen.params.rect.y,
+                               (int32_t)pData->screen.params.rect.w,
+                               (int32_t)pData->screen.params.rect.h};
         ret = createSurfaceFromTarget_f(obj, GFX_TARGET_SCREEN,
                                         &pData->screen.surface, &screenRect);
         if (ret != DRAWER_ERROR_NONE) {
@@ -1193,7 +1196,7 @@ static enum drawer_error_e convertSdlEvent_f(struct drawer_s *obj, SDL_Event *ev
 /*!
  *
  */
-static enum drawer_error_e initSdlComponents_f(struct drawer_s *obj, uint32_t imgFlags)
+static enum drawer_error_e initSdlComponents_f(struct drawer_s *obj, int32_t imgFlags)
 {
     ASSERT(obj && obj->pData);
     
@@ -1281,8 +1284,8 @@ static enum drawer_error_e initWindowAndRenderer_f(struct drawer_s *obj, enum gf
                 windowPos.x = pos->x;;
                 windowPos.y = pos->y;;
             }
-            windowPos.w = pos->w;
-            windowPos.h = pos->h;
+            windowPos.w = (int32_t)pos->w;
+            windowPos.h = (int32_t)pos->h;
 
             windowHasInputFocus = 1;
             windowID            = &pData->screen.windowID;
@@ -1310,8 +1313,8 @@ static enum drawer_error_e initWindowAndRenderer_f(struct drawer_s *obj, enum gf
 
             windowPos.x = pos->x;
             windowPos.y = pos->y;
-            windowPos.w = pos->w;
-            windowPos.h = pos->h;
+            windowPos.w = (int32_t)pos->w;
+            windowPos.h = (int32_t)pos->h;
             
             windowID   = &pData->video.windowID;
             windowRect = &pData->video.params.rect;
@@ -1361,12 +1364,12 @@ static enum drawer_error_e initWindowAndRenderer_f(struct drawer_s *obj, enum gf
         }
 
         // Set new window size
-        windowRect->w = event.window.data1;
-        windowRect->h = event.window.data2;
+        windowRect->w = (uint32_t)event.window.data1;
+        windowRect->h = (uint32_t)event.window.data2;
 
-        SDL_Rect viewport = {windowRect->x, windowRect->y, windowRect->w, windowRect->h};
+        SDL_Rect viewport = {windowRect->x, windowRect->y, (int32_t)windowRect->w, (int32_t)windowRect->h};
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-        SDL_RenderSetLogicalSize(*renderer, windowRect->w, windowRect->h);
+        SDL_RenderSetLogicalSize(*renderer, (int32_t)windowRect->w, (int32_t)windowRect->h);
         SDL_RenderSetViewport(*renderer, &viewport);
 
         Logd("Window's size reconfigured to %d x %d", windowRect->w, windowRect->h);
@@ -1454,7 +1457,8 @@ static enum drawer_error_e initVideoContext_f(struct drawer_s *obj, struct gfx_r
 
             // Init video texture
             pData->video.texture = SDL_CreateTexture(pData->video.renderer, pData->video.pixelFormat,
-                                                     SDL_TEXTUREACCESS_STREAMING, rect->w, rect->h);
+                                                     SDL_TEXTUREACCESS_STREAMING,
+                                                     (int32_t)rect->w, (int32_t)rect->h);
             if (!pData->video.texture) {
                 Loge("Failed to create video texture - %s", SDL_GetError());
                 return DRAWER_ERROR_INIT;
@@ -1555,7 +1559,7 @@ static enum drawer_error_e setInitialBackground_f(struct drawer_s *obj, enum gfx
     // Save initial background state - useful when restoring color/image of an area
     // If we fail creating texture, colorOnReset (See Graphics.xml) will be used
     SDL_Surface *surface = NULL;
-    SDL_Rect sdlRect     = {0, 0, rect->w, rect->h};
+    SDL_Rect sdlRect     = {0, 0, (int32_t)rect->w, (int32_t)rect->h};
 
     (void)adjustDrawingRect_f(obj, target, &sdlRect);
 
@@ -1864,8 +1868,8 @@ static enum drawer_error_e adjustDrawingRect_f(struct drawer_s *obj, enum gfx_ta
 
     uint8_t isGfxVideoArea = ((inOut->x == pData->video.params.rect.x)
                              && (inOut->y == pData->video.params.rect.y)
-                             && (inOut->w == pData->video.params.rect.w)
-                             && (inOut->h == pData->video.params.rect.h));
+                             && (inOut->w == (int32_t)pData->video.params.rect.w)
+                             && (inOut->h == (int32_t)pData->video.params.rect.h));
 
     if (pData->screen.params.isFullScreen) {
         if (isGfxVideoArea) {

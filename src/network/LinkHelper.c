@@ -155,8 +155,8 @@ struct link_helper_private_data_s {
     struct msghdr  wMsg;
     
     int32_t        sockFlags;
-    ssize_t        nbBytesReceived;
-    ssize_t        nbBytesSent;
+    size_t         nbBytesReceived;
+    size_t         nbBytesSent;
     
     struct timeval timeout;
 };
@@ -204,9 +204,9 @@ static uint8_t isReadyForReading_f(struct link_helper_s *obj, struct link_s *lin
                                    uint64_t timeout_ms);
 
 static int8_t readData_f(struct link_helper_s *obj, struct link_s *src, struct link_s *dst,
-                         struct buffer_s *buffer, ssize_t *nbRead);
+                         struct buffer_s *buffer, size_t *nbRead);
 static int8_t writeData_f(struct link_helper_s *obj, struct link_s *src, struct link_s *dst,
-                          struct buffer_s *buffer, ssize_t *nbWritten);
+                          struct buffer_s *buffer, size_t *nbWritten);
 
 /* -------------------------------------------------------------------------------------------- */
 /* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
@@ -675,7 +675,7 @@ static uint8_t isReadyForWriting_f(struct link_helper_s *obj, struct link_s *lin
     FD_SET(link->sock, &pData->wfds);
     
     pData->timeout.tv_sec  = 0;
-    pData->timeout.tv_usec = timeout_ms * 1000;
+    pData->timeout.tv_usec = (int64_t)(timeout_ms * 1000);
     
     if (select(link->sock + 1, NULL, &pData->wfds, NULL, &pData->timeout) <= 0) {
         return NO;
@@ -703,7 +703,7 @@ static uint8_t isReadyForReading_f(struct link_helper_s *obj, struct link_s *lin
     FD_SET(link->sock, &pData->rfds);
     
     pData->timeout.tv_sec  = 0;
-    pData->timeout.tv_usec = timeout_ms * 1000;
+    pData->timeout.tv_usec = (int64_t)(timeout_ms * 1000);
     
     if (select(link->sock + 1, &pData->rfds, NULL, NULL, &pData->timeout) <= 0) {
         return NO;
@@ -720,7 +720,7 @@ static uint8_t isReadyForReading_f(struct link_helper_s *obj, struct link_s *lin
  *
  */
 static int8_t readData_f(struct link_helper_s *obj, struct link_s *src, struct link_s *dst,
-                         struct buffer_s *buffer, ssize_t *nbRead)
+                         struct buffer_s *buffer, size_t *nbRead)
 {
     ASSERT(obj && src && buffer);
     
@@ -737,16 +737,17 @@ static int8_t readData_f(struct link_helper_s *obj, struct link_s *src, struct l
     pData->rMsg.msg_control    = NULL;
     pData->rMsg.msg_controllen = 0;
     
-    pData->nbBytesReceived = recvmsg(src->sock, &pData->rMsg, 0);
-    
-    if (pData->nbBytesReceived == SOCKET_ERROR) {
+    ssize_t nbBytesReceived = recvmsg(src->sock, &pData->rMsg, 0);
+    if (nbBytesReceived == SOCKET_ERROR) {
         if (errno != EINTR) {
             Loge("Failed to receive data - %s", strerror(errno));
             return ERROR;
         }
         pData->nbBytesReceived = 0;
     }
-    
+
+    pData->nbBytesReceived = (size_t)nbBytesReceived;
+
     if (pData->nbBytesReceived < buffer->length) {
         ssize_t nbBytes = 0;
         
@@ -787,7 +788,7 @@ static int8_t readData_f(struct link_helper_s *obj, struct link_s *src, struct l
                 break;
             }
 
-            pData->nbBytesReceived += nbBytes;
+            pData->nbBytesReceived += (size_t)nbBytes;
         }
         while ((pData->nbBytesReceived < buffer->length) || (errno == EINTR));
         
@@ -808,7 +809,7 @@ static int8_t readData_f(struct link_helper_s *obj, struct link_s *src, struct l
  *
  */
 static int8_t writeData_f(struct link_helper_s *obj, struct link_s *src, struct link_s *dst,
-                          struct buffer_s *buffer, ssize_t *nbWritten)
+                          struct buffer_s *buffer, size_t *nbWritten)
 {
     ASSERT(obj && src && buffer);
     
@@ -825,19 +826,20 @@ static int8_t writeData_f(struct link_helper_s *obj, struct link_s *src, struct 
     pData->wMsg.msg_control    = NULL;
     pData->wMsg.msg_controllen = 0;
     
-    pData->nbBytesSent = sendmsg(src->sock, &pData->wMsg, 0);
-    
-    if (pData->nbBytesSent == SOCKET_ERROR) {
+    ssize_t nbBytesSent = sendmsg(src->sock, &pData->wMsg, 0);
+    if (nbBytesSent == SOCKET_ERROR) {
         if ((errno != EINTR) && (errno != EMSGSIZE)) {
             Loge("Failed to send data - %s", strerror(errno));
             return ERROR;
         }
         pData->nbBytesSent = 0;
     }
-    
+
+    pData->nbBytesSent = (size_t)nbBytesSent;
+
     if (pData->nbBytesSent < buffer->length) {
         uint8_t sendByBlock = (errno == EMSGSIZE);
-        ssize_t nbBytes     = 0;
+        ssize_t nbBytes      = 0;
         
         do {
             if ((isReadyForWriting_f(obj, src, WAIT_TIME_10MS) == NO)) {
@@ -862,7 +864,7 @@ static int8_t writeData_f(struct link_helper_s *obj, struct link_s *src, struct 
                 break;
             }
             
-            pData->nbBytesSent += nbBytes;
+            pData->nbBytesSent += (size_t)nbBytes;
         }
         while ((pData->nbBytesSent < buffer->length) && (sendByBlock || (errno == EINTR)));
         

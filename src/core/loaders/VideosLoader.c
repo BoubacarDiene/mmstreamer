@@ -221,7 +221,7 @@ static void onVideoStartCb(void *userData, const char **attrs)
     Logd("Adding video %u", (xmlVideos->nbVideos + 1));
     
     xmlVideos->videos = realloc(xmlVideos->videos,
-                                (xmlVideos->nbVideos + 1) * sizeof(struct xml_video_s));
+                                (size_t)(xmlVideos->nbVideos + 1) * sizeof(struct xml_video_s));
     ASSERT(xmlVideos->videos);
     
     memset(&xmlVideos->videos[xmlVideos->nbVideos], 0, sizeof(struct xml_video_s));
@@ -503,7 +503,7 @@ static void onConfigStartCb(void *userData, const char **attrs)
     Logd("Adding config %u", (xmlVideos->nbConfigs + 1));
     
     xmlVideos->configs = realloc(xmlVideos->configs,
-                                 (xmlVideos->nbConfigs + 1) * sizeof(struct xml_config_s));
+                                 (size_t)(xmlVideos->nbConfigs + 1) * sizeof(struct xml_config_s));
     ASSERT(xmlVideos->configs);
     
     memset(&xmlVideos->configs[xmlVideos->nbConfigs], 0, sizeof(struct xml_config_s));
@@ -560,7 +560,7 @@ static void onItemCb(void *userData, const char **attrs)
     Logd("Adding item %u", (config->nbItems + 1));
     
     config->capabilities = realloc(config->capabilities,
-                                   (config->nbItems + 1) * sizeof(struct xml_capability_s));
+                                   (size_t)(config->nbItems + 1) * sizeof(struct xml_capability_s));
     ASSERT(config->capabilities);
     
     memset(&config->capabilities[config->nbItems], 0, sizeof(struct xml_capability_s));

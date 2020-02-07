@@ -803,7 +803,7 @@ static enum handlers_error_e startVideo(struct handlers_s *obj, char *gfxElement
     struct video_device_s *videoDevice    = NULL;
     enum handlers_error_e ret             = HANDLERS_ERROR_NONE;
 
-    size_t maxBufferSize          = -1;
+    size_t maxBufferSize          = 0lu;
     struct video_area_s videoArea = {0};
 
     uint8_t nbVideoListeners                  = 0;

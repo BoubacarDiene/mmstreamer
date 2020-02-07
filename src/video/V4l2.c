@@ -350,14 +350,14 @@ static enum v4l2_error_e setCroppingArea_f(struct v4l2_s *obj,
         r.width = cropRectInOut->width;
     }
     else {
-        r.width = (int32_t)sel.r.width + sel.r.left - r.left;
+        r.width = (uint32_t)((int32_t)sel.r.width + sel.r.left - r.left);
     }
 
     if (r.top + (int32_t)cropRectInOut->height <= sel.r.top + (int32_t)sel.r.height) {
         r.height = cropRectInOut->height;
     }
     else {
-        r.height = (int32_t)sel.r.height + sel.r.top - r.top;
+        r.height = (uint32_t)((int32_t)sel.r.height + sel.r.top - r.top);
     }
 
     Logd("Setting active cropping area to : left = %d /  top = %d / width = %u / height = %u",
@@ -437,14 +437,14 @@ static enum v4l2_error_e setComposingArea_f(struct v4l2_s *obj,
         r.width = composeRectInOut->width;
     }
     else {
-        r.width = (int32_t)sel.r.width + sel.r.left - r.left;
+        r.width = (uint32_t)((int32_t)sel.r.width + sel.r.left - r.left);
     }
 
     if (r.top + (int32_t)composeRectInOut->height <= sel.r.top + (int32_t)sel.r.height) {
         r.height = composeRectInOut->height;
     }
     else {
-        r.height = (int32_t)sel.r.height + sel.r.top - r.top;
+        r.height = (uint32_t)((int32_t)sel.r.height + sel.r.top - r.top);
     }
 
     Logd("Setting active composing area to : left = %d /  top = %d / width = %u / height = %u",
@@ -743,7 +743,7 @@ static enum v4l2_error_e queueBuffer_f(struct v4l2_s *obj, uint32_t index)
 
     if (buffer.memory == V4L2_MEMORY_USERPTR) {
         buffer.m.userptr = (uint64_t)obj->map[index].start;
-        buffer.length    = obj->map[index].length;
+        buffer.length    = (uint32_t)obj->map[index].length;
     }
 
     return v4l2Ioctl_f(obj->deviceFd, VIDIOC_QBUF, &buffer);

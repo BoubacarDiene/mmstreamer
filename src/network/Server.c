@@ -680,7 +680,7 @@ next_addr:
     if (ctx->server->type == SOCK_DGRAM) {
         ctx->server->useDestAddress = 1;
     }
-    else if (listen(ctx->server->sock, ctx->params.maxClients) == SOCKET_ERROR) {
+    else if (listen(ctx->server->sock, (int32_t)ctx->params.maxClients) == SOCKET_ERROR) {
         if (ctx->server->domain != AF_UNIX) {
             close(ctx->server->sock);
             goto next_addr;

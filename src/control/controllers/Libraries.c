@@ -359,7 +359,7 @@ enum controllers_error_e loadLibs_f(struct controllers_s *obj)
 
 libExit:
     while (index > 0) {
-        count = index - 1;
+        count = (uint8_t)(index - 1);
         lib = &obj->libs[count];
 
         lib->uninit(&lib->obj);

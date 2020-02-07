@@ -194,7 +194,7 @@ static enum drawer_error_e initScreen_f(struct drawer_s *obj, struct gfx_screen_
         SDL_ShowCursor(SDL_DISABLE);
     }
 
-    uint32_t imgFlags = IMG_INIT_JPG;
+    int32_t imgFlags = IMG_INIT_JPG;
     
     if ((IMG_Init(imgFlags) & imgFlags) != imgFlags) {
         Loge("IMG_Init() failed to load required modules : %s", IMG_GetError());
@@ -247,8 +247,8 @@ static enum drawer_error_e initScreen_f(struct drawer_s *obj, struct gfx_screen_
     }
 
     pData->screen = SDL_SetVideoMode(
-                    videoFlags & SDL_FULLSCREEN ? 0 : screenParams->rect.w,
-                    videoFlags & SDL_FULLSCREEN ? 0 : screenParams->rect.h,
+                    videoFlags & SDL_FULLSCREEN ? 0 : (int32_t)screenParams->rect.w,
+                    videoFlags & SDL_FULLSCREEN ? 0 : (int32_t)screenParams->rect.h,
                     screenParams->bitsPerPixel,
                     videoFlags
                 );
@@ -365,17 +365,17 @@ static enum drawer_error_e drawVideo_f(struct drawer_s *obj, struct gfx_rect_s *
         return DRAWER_ERROR_LOCK;
     }
 
-    pData->rect.x = rect->x;
-    pData->rect.y = rect->y;
-    pData->rect.w = rect->w;
-    pData->rect.h = rect->h;
+    pData->rect.x = (int16_t)rect->x;
+    pData->rect.y = (int16_t)rect->y;
+    pData->rect.w = (uint16_t)rect->w;
+    pData->rect.h = (uint16_t)rect->h;
 
     (void)adjustDrawingRect_f(obj, GFX_TARGET_VIDEO, &pData->rect);
 
     if ((pData->videoFmt != -1)
         && !pData->video.overlay
         && !(pData->video.overlay = SDL_CreateYUVOverlay(pData->rect.w, pData->rect.h,
-                                                         pData->videoFmt, pData->screen))) {
+                                                         (uint32_t)pData->videoFmt, pData->screen))) {
         Loge("Failed to create yuv overlay");
         SDL_UnlockMutex(pData->lock);
         return DRAWER_ERROR_DRAW;
@@ -386,7 +386,7 @@ static enum drawer_error_e drawVideo_f(struct drawer_s *obj, struct gfx_rect_s *
         SDL_DisplayYUVOverlay(pData->video.overlay, &pData->rect);
     }
     else {
-        pData->rwops       = SDL_RWFromMem(buffer->data, buffer->length);
+        pData->rwops       = SDL_RWFromMem(buffer->data, (int32_t)buffer->length);
         pData->video.mjpeg = IMG_Load_RW(pData->rwops, 0);
 
         SDL_BlitSurface(pData->video.mjpeg, NULL, pData->screen, &pData->rect);
@@ -458,16 +458,16 @@ static enum drawer_error_e drawImage_f(struct drawer_s *obj, struct gfx_rect_s *
     
     if ((pData->image->w < (int8_t)rect->w) && (pData->image->h < (int8_t)rect->h)) {
         Logd("Centering image \"%s\" inside element", image->path);
-        pData->rect.x = rect->x + ((rect->w - pData->image->w) / 2);
-        pData->rect.y = rect->y + ((rect->h - pData->image->h) / 2);
-        pData->rect.w = pData->image->w;
-        pData->rect.h = pData->image->h;
+        pData->rect.x = (int16_t)(rect->x + (((int32_t)rect->w - pData->image->w) / 2));
+        pData->rect.y = (int16_t)(rect->y + (((int32_t)rect->h - pData->image->h) / 2));
+        pData->rect.w = (uint16_t)pData->image->w;
+        pData->rect.h = (uint16_t)pData->image->h;
     }
     else {
-        pData->rect.x = rect->x;
-        pData->rect.y = rect->y;
-        pData->rect.w = rect->w;
-        pData->rect.h = rect->h;
+        pData->rect.x = (int16_t)rect->x;
+        pData->rect.y = (int16_t)rect->y;
+        pData->rect.w = (uint16_t)rect->w;
+        pData->rect.h = (uint16_t)rect->h;
     }
     
     (void)adjustDrawingRect_f(obj, target, &pData->rect);
@@ -531,16 +531,16 @@ static enum drawer_error_e drawText_f(struct drawer_s *obj, struct gfx_rect_s *r
 
     if ((pData->text->w < (int8_t)rect->w) && (pData->text->h < (int8_t)rect->h)) {
         Logd("Centering text \"%s\" inside element", text->str);
-        pData->rect.x = rect->x + ((rect->w - pData->text->w) / 2);
-        pData->rect.y = rect->y + ((rect->h - pData->text->h) / 2);
-        pData->rect.w = pData->text->w;
-        pData->rect.h = pData->text->h;
+        pData->rect.x = (int16_t)(rect->x + (((int32_t)rect->w - pData->text->w) / 2));
+        pData->rect.y = (int16_t)(rect->y + (((int32_t)rect->h - pData->text->h) / 2));
+        pData->rect.w = (uint16_t)pData->text->w;
+        pData->rect.h = (uint16_t)pData->text->h;
     }
     else {
-        pData->rect.x = rect->x;
-        pData->rect.y = rect->y;
-        pData->rect.w = rect->w;
-        pData->rect.h = rect->h;
+        pData->rect.x = (int16_t)rect->x;
+        pData->rect.y = (int16_t)rect->y;
+        pData->rect.w = (uint16_t)rect->w;
+        pData->rect.h = (uint16_t)rect->h;
     }
 
     (void)adjustDrawingRect_f(obj, target, &pData->rect);
@@ -583,10 +583,10 @@ static enum drawer_error_e setBgColor_f(struct drawer_s *obj, struct gfx_rect_s 
     }
 
     if (rect) {
-        pData->rect.x = rect->x;
-        pData->rect.y = rect->y;
-        pData->rect.w = rect->w;
-        pData->rect.h = rect->h;
+        pData->rect.x = (int16_t)rect->x;
+        pData->rect.y = (int16_t)rect->y;
+        pData->rect.w = (uint16_t)rect->w;
+        pData->rect.h = (uint16_t)rect->h;
     }
     
     (void)adjustDrawingRect_f(obj, target, &pData->rect);
@@ -625,7 +625,7 @@ static enum drawer_error_e saveBuffer_f(struct drawer_s *obj, struct buffer_s *b
     }
     
     if (inOut->format == GFX_IMAGE_FORMAT_BMP) {
-        if (!(pData->rwops = SDL_RWFromMem(buffer->data, buffer->length))) {
+        if (!(pData->rwops = SDL_RWFromMem(buffer->data, (int32_t)buffer->length))) {
             Loge("SDL_RWFromMem() failed - %s", IMG_GetError());
             goto exit;
         }
@@ -831,8 +831,8 @@ static enum drawer_error_e adjustDrawingRect_f(struct drawer_s *obj, enum gfx_ta
                              && (inOut->h == pData->screenParams.rect.h));
 
     if (!isGfxVideoArea) {
-        inOut->x += pData->screenParams.video.rect.x;
-        inOut->y += pData->screenParams.video.rect.y;
+        inOut->x = (int16_t)(inOut->x + pData->screenParams.video.rect.x);
+        inOut->y = (int16_t)(inOut->y + pData->screenParams.video.rect.y);
     }
 
     return DRAWER_ERROR_NONE;
