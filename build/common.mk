@@ -18,23 +18,23 @@ PROJECT_NAME    := mmstreamer
 PROJECT_VERSION := 1.3
 
 # Build options
-#   - DEBUG = ", separated from gdb, asan, secu" (default: release)
+#   - DEBUG = "',' separated between 'gdb', 'asan' and 'secu'" (Not set => release build)
 #   - LOG_LEVEL = <1 to 4>
 #
 #   Examples:
 #   - make all install
 #   - make all install DEBUG=gdb LOG_LEVEL=3
 #   - make all install DEBUG=gdb,asan,secu
-DEBUG     ?= no
+DEBUG     ?= release
 LOG_LEVEL ?= 1
 
 # https://linux.die.net/man/1/gcc
 # https://security.stackexchange.com/questions/24444/what-is-the-most-hardened-set-of-options-for-gcc-compiling-c-c
 LDFLAGS_OPTIONS := -pthread -lm -ldl
-CFLAGS_OPTIONS := -Wall -Wextra -Werror -Wconversion -Wsign-conversion \
+CFLAGS_OPTIONS  := -Wall -Wextra -Werror -Wconversion -Wsign-conversion \
                    -Wuninitialized -Wparentheses -Winit-self -Wcomment
 
-CFLAGS_OPTIONS += $(if $(findstring no,$(DEBUG)),-O3 -s -DNDEBUG,)
+CFLAGS_OPTIONS += $(if $(findstring release,$(DEBUG)),-O3 -s -DNDEBUG,)
 CFLAGS_OPTIONS += $(if $(findstring gdb,$(DEBUG)),-ggdb,)
 CFLAGS_OPTIONS += $(if $(findstring asan,$(DEBUG)),-fsanitize=address -fno-omit-frame-pointer,)
 
