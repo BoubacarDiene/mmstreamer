@@ -745,8 +745,9 @@ static int8_t readData_f(struct link_helper_s *obj, struct link_s *src, struct l
         }
         pData->nbBytesReceived = 0;
     }
-
-    pData->nbBytesReceived = (size_t)nbBytesReceived;
+    else {
+        pData->nbBytesReceived = (size_t)nbBytesReceived;
+    }
 
     if (pData->nbBytesReceived < buffer->length) {
         ssize_t nbBytes = 0;
@@ -834,8 +835,9 @@ static int8_t writeData_f(struct link_helper_s *obj, struct link_s *src, struct 
         }
         pData->nbBytesSent = 0;
     }
-
-    pData->nbBytesSent = (size_t)nbBytesSent;
+    else {
+        pData->nbBytesSent = (size_t)nbBytesSent;
+    }
 
     if (pData->nbBytesSent < buffer->length) {
         uint8_t sendByBlock = (errno == EMSGSIZE);
