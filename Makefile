@@ -23,7 +23,7 @@ include build/common.mk
 #################################################################
 
 # Binary
-BIN_SUFFIX := $(if $(subst no,,$(DEBUG)),.dbg,)
+BIN_SUFFIX := $(if $(subst release,,$(DEBUG)),.dbg,)
 BIN_NAME   := $(PROJECT_NAME)-$(PROJECT_VERSION)$(BIN_SUFFIX)
 
 BIN_SDL     := SDL$(subst 1,,$(SDL_BUILD_VERSION))
