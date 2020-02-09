@@ -23,4 +23,5 @@ before_script:
 
 script:
   - make all install
+  - make all install DEBUG=gdb,asan,secu LOG_LEVEL=4
 

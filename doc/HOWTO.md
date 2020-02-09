@@ -54,7 +54,7 @@ http://<your_ip_address>:9090/webcam
 
 ## 3. How to enable more gcc options
 
-### 3.1. Produce debugging information for use by gdb
+### 3.1. Produce debugging informations for use by gdb
 ```
 export DEBUG=gdb
 ```
