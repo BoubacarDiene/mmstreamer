@@ -15,7 +15,7 @@
 
 # Infos
 PROJECT_NAME    := mmstreamer
-PROJECT_VERSION := 1.3
+PROJECT_VERSION := 1.4
 
 # Build options
 #   - DEBUG = "',' separated between 'gdb', 'asan' and 'secu'" (Not set => release build)
