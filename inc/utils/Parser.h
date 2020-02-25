@@ -56,10 +56,10 @@ struct parser_s;
 /* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef void (*parser_on_start_cb)(void *userData, const char **attrs);
-typedef void (*parser_on_end_cb)(void *userData);
-typedef void (*parser_on_data_cb)(void *userData, const char *value, int32_t len);
-typedef void (*parser_on_error_cb)(void *userData, int32_t errorCode, const char *errorStr);
+typedef void (*parser_on_start_cb)(const void *userData, const char **attrs);
+typedef void (*parser_on_end_cb)(const void *userData);
+typedef void (*parser_on_data_cb)(const void *userData, const char *value, int32_t len);
+typedef void (*parser_on_error_cb)(const void *userData, int32_t errorCode, const char *errorStr);
 
 /* -------------------------------------------------------------------------------------------- */
 /* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
@@ -131,7 +131,7 @@ struct parser_params_s {
 
     parser_on_error_cb           onErrorCb;
     
-    void                         *userData;
+    const void                   *userData;
 };
 
 /* -------------------------------------------------------------------------------------------- */

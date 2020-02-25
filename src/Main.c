@@ -72,17 +72,17 @@ struct options_s {
 /* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static void onGeneralCb(void *userData, const char **attrs);
-static void onItemCb(void *userData, const char **attrs);
-static void onGraphicsCb(void *userData, const char **attrs);
-static void onVideosCb(void *userData, const char **attrs);
-static void onServersCb(void *userData, const char **attrs);
-static void onClientsCb(void *userData, const char **attrs);
+static void onGeneralCb(const void *userData, const char **attrs);
+static void onItemCb(const void *userData, const char **attrs);
+static void onGraphicsCb(const void *userData, const char **attrs);
+static void onVideosCb(const void *userData, const char **attrs);
+static void onServersCb(const void *userData, const char **attrs);
+static void onClientsCb(const void *userData, const char **attrs);
 
-static void onControllersStartCb(void *userData, const char **attrs);
-static void onControllersEndCb(void *userData);
+static void onControllersStartCb(const void *userData, const char **attrs);
+static void onControllersEndCb(const void *userData);
 
-static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
+static void onErrorCb(const void *userData, int32_t errorCode, const char *errorStr);
 
 /* -------------------------------------------------------------------------------------------- */
 /* /////////////////////////////// PRIVATE FUNCTIONS PROTOTYPES /////////////////////////////// */
@@ -587,7 +587,7 @@ parserInitExit:
 /*!
  * Called when <General> tag is found
  */
-static void onGeneralCb(void *userData, const char **attrs)
+static void onGeneralCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
 	
@@ -648,7 +648,7 @@ static void onGeneralCb(void *userData, const char **attrs)
 /*!
  * Called when <Controllers> tag is found
  */
-static void onControllersStartCb(void *userData, const char **attrs)
+static void onControllersStartCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
 
@@ -685,7 +685,7 @@ static void onControllersStartCb(void *userData, const char **attrs)
 /*!
  * Called when </Controllers> tag is found
  */
-static void onControllersEndCb(void *userData)
+static void onControllersEndCb(const void *userData)
 {
     ASSERT(userData);
 
@@ -695,7 +695,7 @@ static void onControllersEndCb(void *userData)
 /*!
  * Called when <Item> tag is found in <Controllers> parent tag
  */
-static void onItemCb(void *userData, const char **attrs)
+static void onItemCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
 
@@ -780,7 +780,7 @@ static void onItemCb(void *userData, const char **attrs)
 /*!
  * Called when <Graphics> tag is found
  */
-static void onGraphicsCb(void *userData, const char **attrs)
+static void onGraphicsCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
 
@@ -823,7 +823,7 @@ static void onGraphicsCb(void *userData, const char **attrs)
 /*!
  * Called when <Videos> tag is found
  */
-static void onVideosCb(void *userData, const char **attrs)
+static void onVideosCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
 
@@ -866,7 +866,7 @@ static void onVideosCb(void *userData, const char **attrs)
 /*!
  * Called when <Servers> tag is found
  */
-static void onServersCb(void *userData, const char **attrs)
+static void onServersCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
 
@@ -909,7 +909,7 @@ static void onServersCb(void *userData, const char **attrs)
 /*!
  * Called when <Clients> tag is found
  */
-static void onClientsCb(void *userData, const char **attrs)
+static void onClientsCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
 
@@ -952,7 +952,7 @@ static void onClientsCb(void *userData, const char **attrs)
 /**
  * Called when parsing failed
  */
-static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr)
+static void onErrorCb(const void *userData, int32_t errorCode, const char *errorStr)
 {
     (void)userData;
 

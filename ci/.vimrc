@@ -102,6 +102,8 @@
 " - v + select text + y     --> Visual mode, select text then "y" to yank into register 0
 " - /Ctrl+R then 0          --> Search selected text in current file
 "
+" - :%s/from/to/g           --> Find "from" and replace it with "to" in the whole file
+"
 " =================================================================================================
 " pathogen.vim makes it super easy to install plugins and runtime files in their
 " own private directories (See https://github.com/tpope/vim-pathogen)

@@ -2,8 +2,6 @@
 #include "exception_test_helpers.h"
 #include "utils/List.h"
 
-#define SIZEOF_ARRAY(x) (sizeof(x)/sizeof(x[0]))
-
 static struct list_s *obj          = NULL;
 static struct list_params_s params = {0};
 static uint32_t elements[]         = {1, 2, 3};
@@ -13,6 +11,8 @@ static uint32_t nbCallsToReleaseCb = 0;
 
 static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
+    (void)obj;
+
     uint32_t elementToRemove = *((uint32_t*)userData);
     nbCallsToCompareCb++;
     return *((uint32_t*)elementToCheck) == elementToRemove;
@@ -20,6 +20,9 @@ static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userDat
 
 static void releaseCb(struct list_s *obj, void *element)
 {
+    (void)obj;
+    (void)element;
+
     nbCallsToReleaseCb++;
 }
 
@@ -70,10 +73,9 @@ void test_List_Add_Bad_Memory_Access(void)
  */
 void test_List_Add_Valid_Input_Parameters(void)
 {
-    uint32_t nbElements   = 0;
     enum list_error_e ret = LIST_ERROR_NONE;
 
-    for (int i = 0; i < SIZEOF_ARRAY(elements); ++i) {
+    for (uint32_t i = 0; i < SIZEOF_ARRAY(elements); ++i) {
         ret = obj->add(obj, &elements[i]);
         TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
     }
@@ -242,7 +244,7 @@ void test_List_Remove_All_Existing_Elements(void)
 {
     enum list_error_e ret = LIST_ERROR_NONE;
 
-    for (int i = 0; i < SIZEOF_ARRAY(elements); ++i) {
+    for (uint32_t i = 0; i < SIZEOF_ARRAY(elements); ++i) {
         ret = obj->add(obj, &elements[i]);
         TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
     }

@@ -58,41 +58,41 @@ enum loaders_error_e unloadCommonXml_f(struct loaders_s *obj, struct xml_common_
 /* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static void onCommonCb(void *userData, const char **attrs);
-static void onColorsCb(void *userData, const char **attrs);
-static void onImagesCb(void *userData, const char **attrs);
-static void onFontsCb(void *userData, const char **attrs);
-static void onStringsCb(void *userData, const char **attrs);
+static void onCommonCb(const void *userData, const char **attrs);
+static void onColorsCb(const void *userData, const char **attrs);
+static void onImagesCb(const void *userData, const char **attrs);
+static void onFontsCb(const void *userData, const char **attrs);
+static void onStringsCb(const void *userData, const char **attrs);
 
-static void onScreenCb(void *userData, const char **attrs);
-static void onBackgroundCb(void *userData, const char **attrs);
-static void onIconCb(void *userData, const char **attrs);
-static void onGfxVideoCb(void *userData, const char **attrs);
+static void onScreenCb(const void *userData, const char **attrs);
+static void onBackgroundCb(const void *userData, const char **attrs);
+static void onIconCb(const void *userData, const char **attrs);
+static void onGfxVideoCb(const void *userData, const char **attrs);
 
-static void onElementStartCb(void *userData, const char **attrs);
-static void onElementEndCb(void *userData);
-static void onElementConfigCb(void *userData, const char **attrs);
-static void onElementTextCb(void *userData, const char **attrs);
-static void onElementNavCb(void *userData, const char **attrs);
-static void onElementImageCb(void *userData, const char **attrs);
+static void onElementStartCb(const void *userData, const char **attrs);
+static void onElementEndCb(const void *userData);
+static void onElementConfigCb(const void *userData, const char **attrs);
+static void onElementTextCb(const void *userData, const char **attrs);
+static void onElementNavCb(const void *userData, const char **attrs);
+static void onElementImageCb(const void *userData, const char **attrs);
 
-static void onElementClickStartCb(void *userData, const char **attrs);
-static void onElementClickEndCb(void *userData);
-static void onElementHandlerCb(void *userData, const char **attrs);
+static void onElementClickStartCb(const void *userData, const char **attrs);
+static void onElementClickEndCb(const void *userData);
+static void onElementHandlerCb(const void *userData, const char **attrs);
 
-static void onFocusCb(void *userData, const char **attrs);
-static void onBlurCb(void *userData, const char **attrs);
-static void onResetCb(void *userData, const char **attrs);
+static void onFocusCb(const void *userData, const char **attrs);
+static void onBlurCb(const void *userData, const char **attrs);
+static void onResetCb(const void *userData, const char **attrs);
 
-static void onColorCb(void *userData, const char **attrs);
-static void onImageCb(void *userData, const char **attrs);
-static void onFontCb(void *userData, const char **attrs);
+static void onColorCb(const void *userData, const char **attrs);
+static void onImageCb(const void *userData, const char **attrs);
+static void onFontCb(const void *userData, const char **attrs);
 
-static void onStrGroupStartCb(void *userData, const char **attrs);
-static void onStringCb(void *userData, const char **attrs);
-static void onStrGroupEndCb(void *userData);
+static void onStrGroupStartCb(const void *userData, const char **attrs);
+static void onStringCb(const void *userData, const char **attrs);
+static void onStrGroupEndCb(const void *userData);
 
-static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
+static void onErrorCb(const void *userData, int32_t errorCode, const char *errorStr);
 
 /* -------------------------------------------------------------------------------------------- */
 /* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
@@ -444,7 +444,7 @@ enum loaders_error_e unloadCommonXml_f(struct loaders_s *obj, struct xml_common_
 /*!
  *
  */
-static void onCommonCb(void *userData, const char **attrs)
+static void onCommonCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -475,7 +475,7 @@ static void onCommonCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onColorsCb(void *userData, const char **attrs)
+static void onColorsCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -506,7 +506,7 @@ static void onColorsCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onImagesCb(void *userData, const char **attrs)
+static void onImagesCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -537,7 +537,7 @@ static void onImagesCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onFontsCb(void *userData, const char **attrs)
+static void onFontsCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -568,7 +568,7 @@ static void onFontsCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onStringsCb(void *userData, const char **attrs)
+static void onStringsCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -599,7 +599,7 @@ static void onStringsCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onScreenCb(void *userData, const char **attrs)
+static void onScreenCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -673,7 +673,7 @@ static void onScreenCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onBackgroundCb(void *userData, const char **attrs)
+static void onBackgroundCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -723,7 +723,7 @@ static void onBackgroundCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onIconCb(void *userData, const char **attrs)
+static void onIconCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -761,7 +761,7 @@ static void onIconCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onGfxVideoCb(void *userData, const char **attrs)
+static void onGfxVideoCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -847,7 +847,7 @@ static void onGfxVideoCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onElementStartCb(void *userData, const char **attrs)
+static void onElementStartCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -930,7 +930,7 @@ static void onElementStartCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onElementEndCb(void *userData)
+static void onElementEndCb(const void *userData)
 {
     ASSERT(userData);
     
@@ -944,7 +944,7 @@ static void onElementEndCb(void *userData)
 /*!
  *
  */
-static void onElementConfigCb(void *userData, const char **attrs)
+static void onElementConfigCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -994,7 +994,7 @@ static void onElementConfigCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onElementTextCb(void *userData, const char **attrs)
+static void onElementTextCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -1046,7 +1046,7 @@ static void onElementTextCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onElementNavCb(void *userData, const char **attrs)
+static void onElementNavCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -1098,7 +1098,7 @@ static void onElementNavCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onElementImageCb(void *userData, const char **attrs)
+static void onElementImageCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -1138,7 +1138,7 @@ static void onElementImageCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onElementClickStartCb(void *userData, const char **attrs)
+static void onElementClickStartCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
 
@@ -1148,7 +1148,7 @@ static void onElementClickStartCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onElementClickEndCb(void *userData)
+static void onElementClickEndCb(const void *userData)
 {
     ASSERT(userData);
 
@@ -1163,7 +1163,7 @@ static void onElementClickEndCb(void *userData)
 /*!
  *
  */
-static void onElementHandlerCb(void *userData, const char **attrs)
+static void onElementHandlerCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
 
@@ -1213,7 +1213,7 @@ static void onElementHandlerCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onFocusCb(void *userData, const char **attrs)
+static void onFocusCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -1244,7 +1244,7 @@ static void onFocusCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onBlurCb(void *userData, const char **attrs)
+static void onBlurCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -1275,7 +1275,7 @@ static void onBlurCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onResetCb(void *userData, const char **attrs)
+static void onResetCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -1306,7 +1306,7 @@ static void onResetCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onColorCb(void *userData, const char **attrs)
+static void onColorCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -1367,7 +1367,7 @@ static void onColorCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onImageCb(void *userData, const char **attrs)
+static void onImageCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -1429,7 +1429,7 @@ static void onImageCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onFontCb(void *userData, const char **attrs)
+static void onFontCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -1485,7 +1485,7 @@ static void onFontCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onStrGroupStartCb(void *userData, const char **attrs)
+static void onStrGroupStartCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -1525,7 +1525,7 @@ static void onStrGroupStartCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onStringCb(void *userData, const char **attrs)
+static void onStringCb(const void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -1570,7 +1570,7 @@ static void onStringCb(void *userData, const char **attrs)
 /*!
  *
  */
-static void onStrGroupEndCb(void *userData)
+static void onStrGroupEndCb(const void *userData)
 {
     ASSERT(userData);
     
@@ -1584,7 +1584,7 @@ static void onStrGroupEndCb(void *userData)
 /*!
  *
  */
-static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr)
+static void onErrorCb(const void *userData, int32_t errorCode, const char *errorStr)
 {
     (void)userData;
     

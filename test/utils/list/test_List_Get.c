@@ -2,8 +2,6 @@
 #include "exception_test_helpers.h"
 #include "utils/List.h"
 
-#define SIZEOF_ARRAY(x) (sizeof(x)/sizeof(x[0]))
-
 static struct list_s *obj          = NULL;
 static struct list_params_s params = {0};
 static uint32_t elements[]         = {1, 2, 3, 1};
@@ -14,6 +12,8 @@ static char *receivedUserdata     = NULL;
 
 static void browseCb(struct list_s *obj, void *element, void *userData)
 {
+    (void)obj;
+
     receivedElement  = *((uint32_t*)element);
 	receivedUserdata = (char*)userData;
     nbCallsToBrowseCb++;
@@ -71,7 +71,7 @@ void test_List_Get_Nb_Elements_Valid_Input_Parameters(void)
     uint32_t nbElements   = 0;
     enum list_error_e ret = LIST_ERROR_NONE;
 
-    for (int i = 0; i < SIZEOF_ARRAY(elements); ++i) {
+    for (uint32_t i = 0; i < SIZEOF_ARRAY(elements); ++i) {
         ret = obj->add(obj, &elements[i]);
         TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
     }

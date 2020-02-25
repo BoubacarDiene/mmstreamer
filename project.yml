@@ -22,6 +22,7 @@
   :source:
     - src/**
     - inc/**
+    - out/staging/inc/**
   :support:
     - test/support
 
@@ -71,4 +72,23 @@
     - stdout_pretty_tests_report
     - module_generator
     - raw_output_report
+
+:tools_test_compiler:
+  :executable: gcc
+  :arguments:
+    - -std=gnu11
+    - -ggdb
+    - -Wall -Wextra -Werror -Wuninitialized
+    - -Wconversion -Wsign-conversion
+    - -Wparentheses -Winit-self -Wcomment
+
+:tools_test_linker:
+  :arguments:
+    - -Lout/staging/lib -Wl,-rpath,out/staging/lib
+    - -lexpat
+
+:tools_gcov_linker:
+  :arguments:
+    - -Lout/staging/lib -Wl,-rpath,out/staging/lib
+    - -lexpat
 ...

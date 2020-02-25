@@ -1,6 +1,6 @@
 ##
 # docker build -t  mmstreamer-image ci/
-# docker run -it -u $(id -u) --rm -v $(pwd):/workdir mmstreamer-image:latest
+# docker run --privileged -it -u $(id -u) --rm -v $(pwd):/workdir mmstreamer-image:latest
 ##
 
 # Download base image ubuntu 16.04
@@ -24,6 +24,7 @@ RUN apt-get update && apt-get -y upgrade && apt-get install -y \
         libxext-dev \
         openssh-server \
         ruby \
+        strace \
         tree \
         valgrind \
         vim \

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - \file   test-valid.xml
+  - \author Boubacar DIENE <boubacar.diene@gmail.com>
+  - \date   2020
+
+  - \brief  Simple XML file to unit test Parser.c when .xml
+            is well-formed
+-->
+
+<Test>
+
+    <Element/>
+    <Element/>
+
+</Test>
+
