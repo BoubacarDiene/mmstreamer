@@ -6,7 +6,7 @@
   :use_auxiliary_dependencies: TRUE
   :build_root: build
   :test_file_prefix: test_
-  :which_ceedling: vendor/ceedling
+  :which_ceedling: test/vendor/ceedling
   :default_tasks:
     - test:all
 
@@ -19,6 +19,7 @@
   :test:
     - +:test/**
     - -:test/support
+    - -:test/vendor/**
   :source:
     - src/**
     - inc/**
@@ -66,7 +67,7 @@
 
 :plugins:
   :load_paths:
-    - vendor/ceedling/plugins
+    - test/vendor/ceedling/plugins
   :enabled:
     - gcov
     - stdout_pretty_tests_report
@@ -76,7 +77,7 @@
 :tools_test_compiler:
   :executable: gcc
   :arguments:
-    - -std=gnu11
+    - -std=gnu99
     - -ggdb
     - -Wall -Wextra -Werror -Wuninitialized
     - -Wconversion -Wsign-conversion
@@ -91,4 +92,5 @@
   :arguments:
     - -Lout/staging/lib -Wl,-rpath,out/staging/lib
     - -lexpat
+
 ...
