@@ -64,12 +64,12 @@ struct list_private_data_s {
 /* -------------------------------------------------------------------------------------------- */
 
 static enum list_error_e add_f(struct list_s *obj, void *element);
-static enum list_error_e remove_f(struct list_s *obj, void *userData);
+static enum list_error_e remove_f(struct list_s *obj, const void *userData);
 static enum list_error_e removeAll_f(struct list_s *obj);
 
 static enum list_error_e getNbElements_f(struct list_s *obj, uint32_t *nbElements);
 static enum list_error_e getElement_f(struct list_s *obj, void **element);
-static enum list_error_e browseElements_f(struct list_s *obj, void *userData);
+static enum list_error_e browseElements_f(struct list_s *obj, const void *userData);
 
 static enum list_error_e lock_f(struct list_s *obj);
 static enum list_error_e unlock_f(struct list_s *obj);
@@ -180,7 +180,7 @@ static enum list_error_e add_f(struct list_s *obj, void *element)
 /*!
  *
  */
-static enum list_error_e remove_f(struct list_s *obj, void *userData)
+static enum list_error_e remove_f(struct list_s *obj, const void *userData)
 {
     ASSERT(obj && obj->pData && userData);
     
@@ -291,7 +291,7 @@ static enum list_error_e getElement_f(struct list_s *obj, void **element)
 /*!
  *
  */
-static enum list_error_e browseElements_f(struct list_s *obj, void *userData)
+static enum list_error_e browseElements_f(struct list_s *obj, const void *userData)
 {
     ASSERT(obj && obj->pData);
     

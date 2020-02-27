@@ -70,7 +70,7 @@ extern "C" {
  */
 #define TEST_BAD_MEMORY_ACCESS_EXPECTED(code_under_test)           \
 {                                                                  \
-    CEXCEPTION_T e=125;                                            \
+    CEXCEPTION_T e;                                                \
     Try {                                                          \
         code_under_test;                                           \
         TEST_FAIL_MESSAGE("A \"bad memory access\" was expected"); \

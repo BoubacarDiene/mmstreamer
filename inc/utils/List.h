@@ -52,21 +52,21 @@ struct list_s;
 /* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-typedef uint8_t (*list_compare_cb)(struct list_s *obj, void *elementToCheck, void *userData);
+typedef uint8_t (*list_compare_cb)(struct list_s *obj, void *elementToCheck, const void *userData);
 typedef void (*list_release_cb)(struct list_s *obj, void *element);
-typedef void (*list_browse_cb)(struct list_s *obj, void *element, void *userData);
+typedef void (*list_browse_cb)(struct list_s *obj, void *element, const void *userData);
 
 /* -------------------------------------------------------------------------------------------- */
 /* ///////////////////////////////////// PUBLIC FUNCTIONS ///////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
 typedef enum list_error_e (*list_add_f)(struct list_s *obj, void *element);
-typedef enum list_error_e (*list_remove_f)(struct list_s *obj, void *userData);
+typedef enum list_error_e (*list_remove_f)(struct list_s *obj, const void *userData);
 typedef enum list_error_e (*list_remove_all_f)(struct list_s *obj);
 
 typedef enum list_error_e (*list_get_nb_elements_f)(struct list_s *obj, uint32_t *nbElements);
 typedef enum list_error_e (*list_get_element_f)(struct list_s *obj, void **element);
-typedef enum list_error_e (*list_browse_elements_f)(struct list_s *obj, void *userData);
+typedef enum list_error_e (*list_browse_elements_f)(struct list_s *obj, const void *userData);
 
 typedef enum list_error_e (*list_lock_f)(struct list_s *obj);
 typedef enum list_error_e (*list_unlock_f)(struct list_s *obj);

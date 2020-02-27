@@ -10,7 +10,7 @@ static uint32_t nbCallsToBrowseCb = 0;
 static uint32_t receivedElement   = 0;
 static char *receivedUserdata     = NULL;
 
-static void browseCb(struct list_s *obj, void *element, void *userData)
+static void browseCb(struct list_s *obj, void *element, const void *userData)
 {
     (void)obj;
 
