@@ -164,12 +164,12 @@ enum server_error_e Server_Init(struct server_s **obj)
     LinkHelper_Init(&pData->linkHelper);
     ASSERT(pData->linkHelper);
     
-    struct list_params_s listParams = {0};
-    listParams.compareCb = compareServerCb;
-    listParams.releaseCb = releaseServerCb;
-    listParams.browseCb  = NULL;
+    struct list_callbacks_s listCallbacks = {0};
+    listCallbacks.compareCb = compareServerCb;
+    listCallbacks.releaseCb = releaseServerCb;
+    listCallbacks.browseCb  = NULL;
     
-    if (List_Init(&pData->serversList, &listParams) != LIST_ERROR_NONE) {
+    if (List_Init(&pData->serversList, &listCallbacks) != LIST_ERROR_NONE) {
         Loge("List_Init() failed");
         goto exit;
     }
@@ -255,12 +255,12 @@ static enum server_error_e start_f(struct server_s *obj, struct server_params_s 
     }
     
     /* Init clients list, sem and mutex */
-    struct list_params_s listParams = {0};
-    listParams.compareCb = compareClientCb;
-    listParams.releaseCb = releaseClientCb;
-    listParams.browseCb  = NULL;
+    struct list_callbacks_s listCallbacks = {0};
+    listCallbacks.compareCb = compareClientCb;
+    listCallbacks.releaseCb = releaseClientCb;
+    listCallbacks.browseCb  = NULL;
     
-    if (List_Init(&ctx->clientsList, &listParams) != LIST_ERROR_NONE) {
+    if (List_Init(&ctx->clientsList, &listCallbacks) != LIST_ERROR_NONE) {
         Loge("List_Init() failed");
         goto list_exit;
     }

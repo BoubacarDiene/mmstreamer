@@ -142,12 +142,12 @@ enum client_error_e Client_Init(struct client_s **obj)
     LinkHelper_Init(&pData->linkHelper);
     ASSERT(pData->linkHelper);
     
-    struct list_params_s listParams = {0};
-    listParams.compareCb = compareCb;
-    listParams.releaseCb = releaseCb;
-    listParams.browseCb  = NULL;
+    struct list_callbacks_s listCallbacks = {0};
+    listCallbacks.compareCb = compareCb;
+    listCallbacks.releaseCb = releaseCb;
+    listCallbacks.browseCb  = NULL;
     
-    if (List_Init(&pData->clientsList, &listParams) != LIST_ERROR_NONE) {
+    if (List_Init(&pData->clientsList, &listCallbacks) != LIST_ERROR_NONE) {
         Loge("List_Init() failed");
         goto exit;
     }

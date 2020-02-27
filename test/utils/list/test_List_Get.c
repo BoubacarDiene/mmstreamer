@@ -2,9 +2,9 @@
 #include "exception_test_helpers.h"
 #include "utils/List.h"
 
-static struct list_s *obj          = NULL;
-static struct list_params_s params = {0};
-static uint32_t elements[]         = {1, 2, 3, 1};
+static struct list_s *obj                = NULL;
+static struct list_callbacks_s callbacks = {NULL, NULL, NULL};
+static uint32_t elements[]               = {1, 2, 3, 1};
 
 static uint32_t nbCallsToBrowseCb = 0;
 static uint32_t receivedElement   = 0;
@@ -25,12 +25,13 @@ void setUp(void)
 	receivedElement   = 0;
 	receivedUserdata  = NULL;
 
-    params.browseCb = browseCb;
-    (void)List_Init(&obj, &params);
+    callbacks.browseCb = browseCb;
+    (void)List_Init(&obj, &callbacks);
 }
 
 void tearDown(void)
 {
+    (void)obj->removeAll(obj);
     (void)List_UnInit(&obj);
 }
 
@@ -188,21 +189,17 @@ void test_List_Browse_Elements_Bad_Memory_Access(void)
  */
 void test_List_Browse_Elements_No_Browse_Callback_Provided(void)
 {
-    struct list_s *objNoBrowseCallback = NULL;
-    enum list_error_e ret              = LIST_ERROR_NONE;
+    enum list_error_e ret = LIST_ERROR_NONE;
 
-	params.browseCb = NULL;
-    ret = List_Init(&objNoBrowseCallback, &params);
+	callbacks.browseCb = NULL;
+    ret = obj->updateCallbacks(obj, &callbacks);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = objNoBrowseCallback->add(objNoBrowseCallback, &elements[0]);
+    ret = obj->add(obj, &elements[0]);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-	ret = objNoBrowseCallback->browseElements(objNoBrowseCallback, NULL);
+	ret = obj->browseElements(obj, NULL);
     TEST_ASSERT_NOT_EQUAL(ret, LIST_ERROR_NONE);
-
-    ret = List_UnInit(&objNoBrowseCallback);
-    TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 }
 
 /**

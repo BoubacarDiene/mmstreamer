@@ -53,6 +53,8 @@ struct list_element_s {
 };
 
 struct list_private_data_s {
+    struct list_callbacks_s callbacks;
+
     uint32_t              nbElements;
     struct list_element_s *list;
     struct list_element_s *current;
@@ -74,6 +76,8 @@ static enum list_error_e browseElements_f(struct list_s *obj, const void *userDa
 static enum list_error_e lock_f(struct list_s *obj);
 static enum list_error_e unlock_f(struct list_s *obj);
 
+static enum list_error_e updateCallbacks_f(struct list_s *obj, struct list_callbacks_s *callbacks);
+
 /* -------------------------------------------------------------------------------------------- */
 /*                                         INITIALIZER                                          */
 /* -------------------------------------------------------------------------------------------- */
@@ -81,30 +85,31 @@ static enum list_error_e unlock_f(struct list_s *obj);
 /*!
  *
  */
-enum list_error_e List_Init(struct list_s **obj, struct list_params_s *params)
+enum list_error_e List_Init(struct list_s **obj, struct list_callbacks_s *callbacks)
 {
-    ASSERT(obj && params);
+    ASSERT(obj && callbacks);
     
     ASSERT((*obj = calloc(1, sizeof(struct list_s))));
     
-    (*obj)->params = *params;
-    
     struct list_private_data_s *pData;
     ASSERT((pData = calloc(1, sizeof(struct list_private_data_s))));
-    
+
+    pData->callbacks = *callbacks;
+
     if (pthread_mutex_init(&pData->lock, NULL) != 0) {
         Loge("pthread_mutex_init() failed");
         goto exit;
     }
     
-    (*obj)->add            = add_f;
-    (*obj)->remove         = remove_f;
-    (*obj)->removeAll      = removeAll_f;
-    (*obj)->getNbElements  = getNbElements_f;
-    (*obj)->getElement     = getElement_f;
-    (*obj)->browseElements = browseElements_f;
-    (*obj)->lock           = lock_f;
-    (*obj)->unlock         = unlock_f;
+    (*obj)->add             = add_f;
+    (*obj)->remove          = remove_f;
+    (*obj)->removeAll       = removeAll_f;
+    (*obj)->getNbElements   = getNbElements_f;
+    (*obj)->getElement      = getElement_f;
+    (*obj)->browseElements  = browseElements_f;
+    (*obj)->lock            = lock_f;
+    (*obj)->unlock          = unlock_f;
+    (*obj)->updateCallbacks = updateCallbacks_f;
     
     (*obj)->pData = (void*)pData;
     
@@ -195,18 +200,18 @@ static enum list_error_e remove_f(struct list_s *obj, const void *userData)
     uint32_t elementFound           = 0;
     
     while (current) {
-        if (obj->params.compareCb
-            && obj->params.compareCb(obj, current->element, userData)) {
+        if (pData->callbacks.compareCb
+            && pData->callbacks.compareCb(obj, current->element, userData)) {
             if (!previous) {
                 pData->list = current->next;
             }
             else {
                 previous->next = current->next;
             }
-            if (obj->params.releaseCb) {
+            if (pData->callbacks.releaseCb) {
                 // A release callback might be not needed in case there is no
                 // resource to release in "element" (E.g. a simple list of integers)
-                obj->params.releaseCb(obj, current->element);
+                pData->callbacks.releaseCb(obj, current->element);
             }
             free(current);
             pData->nbElements--;
@@ -237,8 +242,8 @@ static enum list_error_e removeAll_f(struct list_s *obj)
     struct list_element_s *next    = current->next;
     
     while (current) {
-        if (obj->params.releaseCb) {
-            obj->params.releaseCb(obj, current->element);
+        if (pData->callbacks.releaseCb) {
+            pData->callbacks.releaseCb(obj, current->element);
         }
         free(current);
         if ((current = next)) {
@@ -282,6 +287,7 @@ static enum list_error_e getElement_f(struct list_s *obj, void **element)
     if (!pData->current) {
         pData->current = pData->list;
     }
+
     *element = pData->current->element;
     pData->current = pData->current->next;
     
@@ -297,14 +303,14 @@ static enum list_error_e browseElements_f(struct list_s *obj, const void *userDa
     
     struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
 
-    if (!obj->params.browseCb || !pData->list) {
+    if (!pData->callbacks.browseCb || !pData->list) {
         return LIST_ERROR_PARAMS;
     }
 
     struct list_element_s *current = pData->list;
     
     while (current) {
-        obj->params.browseCb(obj, current->element, userData);
+        pData->callbacks.browseCb(obj, current->element, userData);
         current = current->next;
     }
     
@@ -344,5 +350,19 @@ static enum list_error_e unlock_f(struct list_s *obj)
         return LIST_ERROR_LOCK;
     }
     
+    return LIST_ERROR_NONE;
+}
+
+/*!
+ *
+ */
+static enum list_error_e updateCallbacks_f(struct list_s *obj, struct list_callbacks_s *callbacks)
+{
+    ASSERT(obj && obj->pData);
+
+    struct list_private_data_s *pData = (struct list_private_data_s*)obj->pData;
+
+    pData->callbacks = *callbacks;
+
     return LIST_ERROR_NONE;
 }

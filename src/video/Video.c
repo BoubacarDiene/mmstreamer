@@ -137,12 +137,12 @@ enum video_error_e Video_Init(struct video_s **obj)
     struct video_private_data_s *pData;
     ASSERT((pData = calloc(1, sizeof(struct video_private_data_s))));
 
-    struct list_params_s listParams = {0};
-    listParams.compareCb = compareVideoCb;
-    listParams.releaseCb = releaseVideoCb;
-    listParams.browseCb  = NULL;
+    struct list_callbacks_s listCallbacks = {0};
+    listCallbacks.compareCb = compareVideoCb;
+    listCallbacks.releaseCb = releaseVideoCb;
+    listCallbacks.browseCb  = NULL;
 
-    if (List_Init(&pData->videosList, &listParams) != LIST_ERROR_NONE) {
+    if (List_Init(&pData->videosList, &listCallbacks) != LIST_ERROR_NONE) {
         Loge("List_Init() failed");
         goto exit;
     }
@@ -620,12 +620,12 @@ static enum video_error_e initVideoContext_f(struct video_context_s **ctx,
 
     memcpy(&(*ctx)->params, params, sizeof(struct video_params_s));
 
-    struct list_params_s listParams = {0};
-    listParams.compareCb = compareListenerCb;
-    listParams.releaseCb = releaseListenerCb;
-    listParams.browseCb  = NULL;
+    struct list_callbacks_s listCallbacks = {0};
+    listCallbacks.compareCb = compareListenerCb;
+    listCallbacks.releaseCb = releaseListenerCb;
+    listCallbacks.browseCb  = NULL;
 
-    if (List_Init(&(*ctx)->listenersList, &listParams) != LIST_ERROR_NONE) {
+    if (List_Init(&(*ctx)->listenersList, &listCallbacks) != LIST_ERROR_NONE) {
         Loge("List_Init() failed");
         goto list_exit;
     }

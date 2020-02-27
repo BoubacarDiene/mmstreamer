@@ -2,12 +2,12 @@
 #include "exception_test_helpers.h"
 #include "utils/List.h"
 
-static struct list_s *obj          = NULL;
-static struct list_params_s params = {0};
+static struct list_s *obj                = NULL;
+static struct list_callbacks_s callbacks = {NULL, NULL, NULL};
 
 void setUp(void)
 {
-    (void)List_Init(&obj, &params);
+    (void)List_Init(&obj, &callbacks);
 }
 
 void tearDown(void)

@@ -2,9 +2,9 @@
 #include "exception_test_helpers.h"
 #include "utils/List.h"
 
-static struct list_s *obj          = NULL;
-static struct list_params_s params = {0};
-static uint32_t elements[]         = {1, 2, 3};
+static struct list_s *obj                = NULL;
+static struct list_callbacks_s callbacks = {NULL, NULL, NULL};
+static uint32_t elements[]               = {1, 2, 3};
 
 static uint32_t nbCallsToCompareCb = 0;
 static uint32_t nbCallsToReleaseCb = 0;
@@ -31,13 +31,14 @@ void setUp(void)
     nbCallsToCompareCb = 0;
     nbCallsToReleaseCb = 0;
 
-    params.compareCb = compareCb;
-    params.releaseCb = releaseCb;
-    (void)List_Init(&obj, &params);
+    callbacks.compareCb = compareCb;
+    callbacks.releaseCb = releaseCb;
+    (void)List_Init(&obj, &callbacks);
 }
 
 void tearDown(void)
 {
+    (void)obj->removeAll(obj);
     (void)List_UnInit(&obj);
 }
 
@@ -46,8 +47,8 @@ void tearDown(void)
 /* -------------------------------------------------------------------------------------------- */
 
 /**
- Requirement:
- - add() must "assert" when at least one of its input parameters is NULL
+ * Requirement:
+ * - add() must "assert" when at least one of its input parameters is NULL
  */
 void test_List_Add_Null_Parameter(void)
 {
@@ -56,8 +57,8 @@ void test_List_Add_Null_Parameter(void)
 }
 
 /**
- Requirement:
- - add() must "crash" when "obj" has not been obtained using List_Init()
+ * Requirement:
+ * - add() must "crash" when "obj" has not been obtained using List_Init()
  */
 void test_List_Add_Bad_Memory_Access(void)
 {
@@ -67,9 +68,9 @@ void test_List_Add_Bad_Memory_Access(void)
 }
 
 /**
- Requirement:
- - add() must add "element" without error when called as expected (valid "obj"
-   and element not NULL)
+ * Requirement:
+ * - add() must add "element" without error when called as expected (valid "obj"
+ *   and element not NULL)
  */
 void test_List_Add_Valid_Input_Parameters(void)
 {
@@ -86,8 +87,8 @@ void test_List_Add_Valid_Input_Parameters(void)
 /* -------------------------------------------------------------------------------------------- */
 
 /**
- Requirement:
- - remove() must "assert" when at least one of its input parameters is NULL
+ * Requirement:
+ * - remove() must "assert" when at least one of its input parameters is NULL
  */
 void test_List_Remove_Null_Parameter(void)
 {
@@ -96,8 +97,8 @@ void test_List_Remove_Null_Parameter(void)
 }
 
 /**
- Requirement:
- - remove() must "crash" when "obj" has not been obtained using List_Init()
+ * Requirement:
+ * - remove() must "crash" when "obj" has not been obtained using List_Init()
  */
 void test_List_Remove_Bad_Memory_Access(void)
 {
@@ -107,10 +108,10 @@ void test_List_Remove_Bad_Memory_Access(void)
 }
 
 /**
- Requirement:
- - remove() must remove "element" without error if it exists in list
- - compareCb() must be called at least once when one element has been removed
- - releaseCb() must be called only once when one element has been removed
+ * Requirement:
+ * - remove() must remove "element" without error if it exists in list
+ * - compareCb() must be called at least once when one element has been removed
+ * - releaseCb() must be called only once when one element has been removed
  */
 void test_List_Remove_Existing_Element(void)
 {
@@ -126,10 +127,10 @@ void test_List_Remove_Existing_Element(void)
 }
 
 /**
- Requirement:
- - remove() must return an error when removing a non existent element
- - compareCb() must be called at least once when the list is not empty
- - releaseCb() must not be called since the element does not exist
+ * Requirement:
+ * - remove() must return an error when removing a non existent element
+ * - compareCb() must be called at least once when the list is not empty
+ * - releaseCb() must not be called since the element does not exist
  */
 void test_List_Remove_NonExistent_Element_From_Non_Empty_List(void)
 {
@@ -145,10 +146,10 @@ void test_List_Remove_NonExistent_Element_From_Non_Empty_List(void)
 }
 
 /**
- Requirement:
- - remove() must return an error when removing element from an empty list
- - compareCb() must not be called since there is no element to compare
- - releaseCb() must not be called since there is no element to release
+ * Requirement:
+ * - remove() must return an error when removing element from an empty list
+ * - compareCb() must not be called since there is no element to compare
+ * - releaseCb() must not be called since there is no element to release
  */
 void test_List_Remove_Element_From_Empty_List(void)
 {
@@ -160,55 +161,49 @@ void test_List_Remove_Element_From_Empty_List(void)
 }
 
 /**
- Requirement:
- - remove() must return an error when removing an existing element and
-   no compare callback has been provided
- - releaseCb() must not be called since no compare callback exists
+ * Requirement:
+ * - remove() must return an error when removing an existing element and
+ *   no compare callback has been provided
+ * - It must be possible to set remove compareCb using updateCallbacks()
+ * - releaseCb() must not be called since no compare callback exists
  */
 void test_List_Remove_Element_No_Compare_Callback_Provided(void)
 {
-    struct list_s *objNoCallback = NULL;
-    enum list_error_e ret        = LIST_ERROR_NONE;
+    enum list_error_e ret = LIST_ERROR_NONE;
 
-    params.compareCb = NULL;
-    ret = List_Init(&objNoCallback, &params);
+    callbacks.compareCb = NULL;
+    ret = obj->updateCallbacks(obj, &callbacks);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = objNoCallback->add(objNoCallback, &elements[0]);
+    ret = obj->add(obj, &elements[0]);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = objNoCallback->remove(objNoCallback, &elements[0]);
+    ret = obj->remove(obj, &elements[0]);
     TEST_ASSERT_NOT_EQUAL(ret, LIST_ERROR_NONE);
     TEST_ASSERT_EQUAL_UINT32(0, nbCallsToReleaseCb);
-
-    ret = List_UnInit(&objNoCallback);
-    TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 }
 
 /**
- Requirement:
- - remove() must return no error when removing an existing element and
-   no release callback has been provided
- - CompareCb() must return TRUE since the element exists
+ * Requirement:
+ * - remove() must return no error when removing an existing element and
+ *   no release callback has been provided
+ * - It must be possible to set remove releaseCb using updateCallbacks()
+ * - CompareCb() must return TRUE since the element exists
  */
 void test_List_Remove_Element_No_Release_Callback_Provided(void)
 {
-    struct list_s *objNoReleaseCallback = NULL;
-    enum list_error_e ret               = LIST_ERROR_NONE;
+    enum list_error_e ret = LIST_ERROR_NONE;
 
-    params.releaseCb = NULL;
-    ret = List_Init(&objNoReleaseCallback, &params);
+    callbacks.releaseCb = NULL;
+    ret = obj->updateCallbacks(obj, &callbacks);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = objNoReleaseCallback->add(objNoReleaseCallback, &elements[0]);
+    ret = obj->add(obj, &elements[0]);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = objNoReleaseCallback->remove(objNoReleaseCallback, &elements[0]);
+    ret = obj->remove(obj, &elements[0]);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
     TEST_ASSERT_EQUAL_UINT32(1, nbCallsToCompareCb);
-
-    ret = List_UnInit(&objNoReleaseCallback);
-    TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 }
 
 /* -------------------------------------------------------------------------------------------- */
@@ -216,8 +211,8 @@ void test_List_Remove_Element_No_Release_Callback_Provided(void)
 /* -------------------------------------------------------------------------------------------- */
 
 /**
- Requirement:
- - removeAll() must "assert" when its input parameter is NULL
+ * Requirement:
+ * - removeAll() must "assert" when its input parameter is NULL
  */
 void test_List_Remove_All_Null_Parameter(void)
 {
@@ -225,8 +220,8 @@ void test_List_Remove_All_Null_Parameter(void)
 }
 
 /**
- Requirement:
- - removeAll() must "crash" when "obj" has not been obtained using List_Init()
+ * Requirement:
+ * - removeAll() must "crash" when "obj" has not been obtained using List_Init()
  */
 void test_List_Remove_All_Bad_Memory_Access(void)
 {
@@ -236,9 +231,9 @@ void test_List_Remove_All_Bad_Memory_Access(void)
 }
 
 /**
- Requirement:
- - removeAll() must remove all elements without error when the list is not empty
- - releaseCb() must be called "nbElements" times
+ * Requirement:
+ * - removeAll() must remove all elements without error when the list is not empty
+ * - releaseCb() must be called "nbElements" times
  */
 void test_List_Remove_All_Existing_Elements(void)
 {
@@ -255,9 +250,9 @@ void test_List_Remove_All_Existing_Elements(void)
 }
 
 /**
- Requirement:
- - removeAll() must return an error when called while the list is empty
- - releaseCb() must not be called since there is no element to remove
+ * Requirement:
+ * - removeAll() must return an error when called while the list is empty
+ * - releaseCb() must not be called since there is no element to remove
  */
 void test_List_Remove_All_Elements_From_Empty_List(void)
 {
@@ -268,24 +263,20 @@ void test_List_Remove_All_Elements_From_Empty_List(void)
 }
 
 /**
- Requirement:
- - removeAll() must return no error when the list is not empty
+ * Requirement:
+ * - removeAll() must return no error when the list is not empty
  */
 void test_List_Remove_All_Element_No_Release_Callback_Provided(void)
 {
-    struct list_s *objNoReleaseCallback = NULL;
-    enum list_error_e ret               = LIST_ERROR_NONE;
+    enum list_error_e ret = LIST_ERROR_NONE;
 
-    params.releaseCb = NULL;
-    ret = List_Init(&objNoReleaseCallback, &params);
+    callbacks.releaseCb = NULL;
+    ret = obj->updateCallbacks(obj, &callbacks);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = objNoReleaseCallback->add(objNoReleaseCallback, &elements[0]);
+    ret = obj->add(obj, &elements[0]);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = objNoReleaseCallback->removeAll(objNoReleaseCallback);
-    TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
-
-    ret = List_UnInit(&objNoReleaseCallback);
+    ret = obj->removeAll(obj);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 }

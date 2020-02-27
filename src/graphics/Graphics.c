@@ -192,21 +192,21 @@ enum graphics_error_e Graphics_Init(struct graphics_s **obj)
 
     struct graphics_task_s *simulateEvtTask = &pData->simulateEvtTask;
 
-    struct list_params_s elementsListParams = {0};
-    elementsListParams.compareCb = compareElementsCb;
-    elementsListParams.releaseCb = releaseElementCb;
-    elementsListParams.browseCb  = browseElementsCb;
+    struct list_callbacks_s elementsListCallbacks = {0};
+    elementsListCallbacks.compareCb = compareElementsCb;
+    elementsListCallbacks.releaseCb = releaseElementCb;
+    elementsListCallbacks.browseCb  = browseElementsCb;
     
-    if (List_Init(&pData->gfxElementsList, &elementsListParams) != LIST_ERROR_NONE) {
+    if (List_Init(&pData->gfxElementsList, &elementsListCallbacks) != LIST_ERROR_NONE) {
         goto listExit;
     }
 
-    struct list_params_s eventsListParams = {0};
-    eventsListParams.compareCb = compareEventsCb;
-    eventsListParams.releaseCb = releaseEventCb;
-    eventsListParams.browseCb  = NULL;
+    struct list_callbacks_s eventsListCallbacks = {0};
+    eventsListCallbacks.compareCb = compareEventsCb;
+    eventsListCallbacks.releaseCb = releaseEventCb;
+    eventsListCallbacks.browseCb  = NULL;
 
-    if (List_Init(&simulateEvtTask->list, &eventsListParams) != LIST_ERROR_NONE) {
+    if (List_Init(&simulateEvtTask->list, &eventsListCallbacks) != LIST_ERROR_NONE) {
         Loge("List_Init() failed");
         goto simulateEvtListExit;
     }

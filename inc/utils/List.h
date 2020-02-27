@@ -45,7 +45,7 @@ extern "C" {
 
 enum list_error_e;
 
-struct list_params_s;
+struct list_callbacks_s;
 struct list_s;
 
 /* -------------------------------------------------------------------------------------------- */
@@ -71,6 +71,9 @@ typedef enum list_error_e (*list_browse_elements_f)(struct list_s *obj, const vo
 typedef enum list_error_e (*list_lock_f)(struct list_s *obj);
 typedef enum list_error_e (*list_unlock_f)(struct list_s *obj);
 
+typedef enum list_error_e (*list_update_callbacks_f)(struct list_s *obj,
+                                                     struct list_callbacks_s *callbacks);
+
 /* -------------------------------------------------------------------------------------------- */
 /* ////////////////////////////////////////// TYPES /////////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
@@ -83,7 +86,7 @@ enum list_error_e {
     LIST_ERROR_PARAMS
 };
 
-struct list_params_s {
+struct list_callbacks_s {
     list_compare_cb compareCb;
     list_release_cb releaseCb;
     list_browse_cb  browseCb;
@@ -94,26 +97,27 @@ struct list_params_s {
 /* -------------------------------------------------------------------------------------------- */
 
 struct list_s {
-    list_add_f             add;
-    list_remove_f          remove;
-    list_remove_all_f      removeAll;
+    list_add_f              add;
+    list_remove_f           remove;
+    list_remove_all_f       removeAll;
 
-    list_get_nb_elements_f getNbElements;
-    list_get_element_f     getElement;
-    list_browse_elements_f browseElements;
+    list_get_nb_elements_f  getNbElements;
+    list_get_element_f      getElement;
+    list_browse_elements_f  browseElements;
 
-    list_lock_f            lock;
-    list_unlock_f          unlock;
-    
-    struct list_params_s params;
-    void                 *pData;
+    list_lock_f             lock;
+    list_unlock_f           unlock;
+
+    list_update_callbacks_f updateCallbacks;
+
+    void                    *pData;
 };
 
 /* -------------------------------------------------------------------------------------------- */
 /* /////////////////////////////////////// INITIALIZER //////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-enum list_error_e List_Init(struct list_s **obj, struct list_params_s *params);
+enum list_error_e List_Init(struct list_s **obj, struct list_callbacks_s *callbacks);
 enum list_error_e List_UnInit(struct list_s **obj);
 
 #ifdef __cplusplus

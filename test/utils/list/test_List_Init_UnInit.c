@@ -12,11 +12,11 @@ void tearDown(void) {}
  */
 void test_List_Init_Null_Parameter(void)
 {
-    struct list_s *obj          = NULL;
-    struct list_params_s params = {0};
+    struct list_s *obj                = NULL;
+    struct list_callbacks_s callbacks = {NULL, NULL, NULL};
 
     TEST_ASSERT_EXPECTED(List_Init(&obj, NULL));
-    TEST_ASSERT_EXPECTED(List_Init(NULL, &params));
+    TEST_ASSERT_EXPECTED(List_Init(NULL, &callbacks));
 }
 
 /**
@@ -49,11 +49,11 @@ void test_List_UnInit_Bad_Memory_Access(void)
  */
 void test_List_Init_UnInit_Valid_Input_Parameters(void)
 {
-    struct list_s *obj          = NULL;
-    struct list_params_s params = {0};
-    enum list_error_e ret       = LIST_ERROR_NONE;
+    struct list_s *obj                = NULL;
+    struct list_callbacks_s callbacks = {0};
+    enum list_error_e ret             = LIST_ERROR_NONE;
 
-    ret = List_Init(&obj, &params);
+    ret = List_Init(&obj, &callbacks);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
     TEST_ASSERT_NOT_NULL(obj);
 

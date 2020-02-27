@@ -102,12 +102,12 @@ enum controllers_error_e initEvtsTask_f(struct controllers_s *obj)
 
     Logd("Initialize evtsTask");
 
-    struct list_params_s listParams = {0};
-    listParams.compareCb = compareCb;
-    listParams.releaseCb = releaseCb;
-    listParams.browseCb  = NULL;
+    struct list_callbacks_s listCallbacks = {0};
+    listCallbacks.compareCb = compareCb;
+    listCallbacks.releaseCb = releaseCb;
+    listCallbacks.browseCb  = NULL;
 
-    if (List_Init(&evtsTask->list, &listParams) != LIST_ERROR_NONE) {
+    if (List_Init(&evtsTask->list, &listCallbacks) != LIST_ERROR_NONE) {
         Loge("List_Init() failed");
         goto listExit;
     }
