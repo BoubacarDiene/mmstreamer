@@ -14,6 +14,7 @@ LABEL description="Docker image to build mmstreamer project"
 RUN apt-get update && apt-get -y upgrade && apt-get install -y \
         build-essential \
         clang-format \
+        cppcheck \
         ctags \
         git \
         libgl1-mesa-glx \

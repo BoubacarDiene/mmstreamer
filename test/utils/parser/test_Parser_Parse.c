@@ -6,7 +6,7 @@
 #define VALID_XML_FILE    PATH_TO_RESOURCES"/test-valid.xml"
 #define INVALID_XML_FILE  PATH_TO_RESOURCES"/test-invalid.xml"
 
-static struct parser_s *obj = NULL;
+static struct parser_s *parserObj    = NULL;
 
 static uint32_t nbCallsToTestStartCb = 0;
 static uint32_t nbCallsToTestEndCb   = 0;
@@ -55,12 +55,12 @@ void setUp(void)
     nbCallsToErrorCb     = 0;
     receivedUserData     = NULL;
 
-    (void)Parser_Init(&obj);
+    (void)Parser_Init(&parserObj);
 }
 
 void tearDown(void)
 {
-    (void)Parser_UnInit(&obj);
+    (void)Parser_UnInit(&parserObj);
 }
 
 /**
@@ -71,8 +71,8 @@ void test_Parser_Parse_Invalid_Parameter(void)
 {
     struct parser_params_s params = {0};
 
-    TEST_ASSERT_EXPECTED(obj->parse(obj, NULL));
-    TEST_ASSERT_EXPECTED(obj->parse(NULL, &params));
+    TEST_ASSERT_EXPECTED(parserObj->parse(parserObj, NULL));
+    TEST_ASSERT_EXPECTED(parserObj->parse(NULL, &params));
 }
 
 /*
@@ -85,7 +85,7 @@ void test_Parser_Parse_Invalid_Path(void)
     struct parser_params_s params = {.path = "invalid"};
     enum parser_error_e ret       = PARSER_ERROR_NONE;
 
-    ret = obj->parse(obj, &params);
+    ret = parserObj->parse(parserObj, &params);
     TEST_ASSERT_NOT_EQUAL(ret, PARSER_ERROR_NONE);
 }
 
@@ -108,7 +108,7 @@ void test_Parser_Parse_No_Callback_Provided(void)
         .userData     = NULL
     };
 
-    enum parser_error_e ret = obj->parse(obj, &params);
+    enum parser_error_e ret = parserObj->parse(parserObj, &params);
     TEST_ASSERT_EQUAL(ret, PARSER_ERROR_NONE);
 }
 
@@ -134,7 +134,7 @@ void test_Parser_Parse_Only_Call_Callback_When_Tag_Is_Found(void)
         .userData     = NULL
     };
 
-    enum parser_error_e ret = obj->parse(obj, &params);
+    enum parser_error_e ret = parserObj->parse(parserObj, &params);
     TEST_ASSERT_EQUAL(ret, PARSER_ERROR_NONE);
 
     TEST_ASSERT_EQUAL_UINT32(1, nbCallsToTestStartCb);
@@ -162,7 +162,7 @@ void test_Parser_Parse_Xml_Not_Well_Formed(void)
         .userData     = NULL
     };
 
-    enum parser_error_e ret = obj->parse(obj, &params);
+    enum parser_error_e ret = parserObj->parse(parserObj, &params);
     TEST_ASSERT_NOT_EQUAL(ret, PARSER_ERROR_NONE);
 
     TEST_ASSERT_EQUAL_UINT32(1, nbCallsToErrorCb);
@@ -188,7 +188,7 @@ void test_Parser_Parse_UserData_Integrity(void)
         .userData     = str
     };
 
-    (void)obj->parse(obj, &params);
+    (void)parserObj->parse(parserObj, &params);
     TEST_ASSERT_EQUAL_MEMORY(str, receivedUserData, strlen(str));
     TEST_ASSERT_EQUAL_STRING(str, receivedUserData);
 }

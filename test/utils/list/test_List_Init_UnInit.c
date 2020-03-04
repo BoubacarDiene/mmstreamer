@@ -7,8 +7,8 @@ void setUp(void) {}
 void tearDown(void) {}
 
 /**
- Requirement:
- - List_Init() must "assert" when at least one of its input parameters is NULL
+ * Requirement:
+ * - List_Init() must "assert" when at least one of its input parameters is NULL
  */
 void test_List_Init_Null_Parameter(void)
 {
@@ -20,8 +20,8 @@ void test_List_Init_Null_Parameter(void)
 }
 
 /**
- Requirement:
- - List_UnInit() must "assert" when its input parameter is NULL
+ * Requirement:
+ * - List_UnInit() must "assert" when its input parameter is NULL
  */
 void test_List_UnInit_Null_Parameter(void)
 {
@@ -29,9 +29,9 @@ void test_List_UnInit_Null_Parameter(void)
 }
 
 /**
- Requirement:
- - List_UnInit() must "crash" when its input parameter has not been obtained
-   using List_Init()
+ * Requirement:
+ * - List_UnInit() must "crash" when its input parameter has not been obtained
+ *   using List_Init()
  */
 void test_List_UnInit_Bad_Memory_Access(void)
 {
@@ -42,10 +42,10 @@ void test_List_UnInit_Bad_Memory_Access(void)
 }
 
 /**
- Requirement:
- - List_Init() must initialize "obj" without error when called as expected (valid
-   address of unitialized "obj")
- - List_UnInit() must release resources allocated by List_Init() without error
+ * Requirement:
+ * - List_Init() must initialize "obj" without error when called as expected (valid
+ *   address of unitialized "obj")
+ * - List_UnInit() must release resources allocated by List_Init() without error
  */
 void test_List_Init_UnInit_Valid_Input_Parameters(void)
 {

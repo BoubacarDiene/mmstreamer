@@ -31,8 +31,10 @@ LOG_LEVEL ?= 1
 # https://linux.die.net/man/1/gcc
 # https://security.stackexchange.com/questions/24444/what-is-the-most-hardened-set-of-options-for-gcc-compiling-c-c
 LDFLAGS_OPTIONS := -pthread -lm -ldl
-CFLAGS_OPTIONS  := -Wall -Wextra -Werror -Wconversion -Wsign-conversion \
-                   -Wuninitialized -Wparentheses -Winit-self -Wcomment
+CFLAGS_OPTIONS  := -std=c99 -D_GNU_SOURCE \
+                   -Wall -Wextra -Werror -Wconversion -Wsign-conversion \
+                   -Wuninitialized -Wparentheses -Winit-self -Wcomment \
+                   -Wstrict-prototypes -Wmissing-prototypes -Wshadow
 
 CFLAGS_OPTIONS += $(if $(findstring release,$(DEBUG)),-O3 -s -DNDEBUG,)
 CFLAGS_OPTIONS += $(if $(findstring gdb,$(DEBUG)),-ggdb,)

@@ -78,11 +78,12 @@
 :tools_test_compiler:
   :executable: gcc
   :arguments:
-    - -std=gnu99
+    - -std=c99 -D_GNU_SOURCE
     - -ggdb
     - -Wall -Wextra -Werror -Wuninitialized
     - -Wconversion -Wsign-conversion
     - -Wparentheses -Winit-self -Wcomment
+    - -Wstrict-prototypes -Wshadow
 
 :tools_test_linker:
   :arguments:

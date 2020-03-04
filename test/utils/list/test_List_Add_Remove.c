@@ -2,7 +2,7 @@
 #include "exception_test_helpers.h"
 #include "utils/List.h"
 
-static struct list_s *obj                = NULL;
+static struct list_s *listObj            = NULL;
 static struct list_callbacks_s callbacks = {NULL, NULL, NULL};
 static uint32_t elements[]               = {1, 2, 3};
 
@@ -33,13 +33,13 @@ void setUp(void)
 
     callbacks.compareCb = compareCb;
     callbacks.releaseCb = releaseCb;
-    (void)List_Init(&obj, &callbacks);
+    (void)List_Init(&listObj, &callbacks);
 }
 
 void tearDown(void)
 {
-    (void)obj->removeAll(obj);
-    (void)List_UnInit(&obj);
+    (void)listObj->removeAll(listObj);
+    (void)List_UnInit(&listObj);
 }
 
 /* -------------------------------------------------------------------------------------------- */
@@ -52,8 +52,8 @@ void tearDown(void)
  */
 void test_List_Add_Null_Parameter(void)
 {
-    TEST_ASSERT_EXPECTED(obj->add(obj, NULL));
-    TEST_ASSERT_EXPECTED(obj->add(NULL, &elements[0]));
+    TEST_ASSERT_EXPECTED(listObj->add(listObj, NULL));
+    TEST_ASSERT_EXPECTED(listObj->add(NULL, &elements[0]));
 }
 
 /**
@@ -64,7 +64,7 @@ void test_List_Add_Bad_Memory_Access(void)
 {
     struct list_s fakeObj = {0};
 
-    TEST_BAD_MEMORY_ACCESS_EXPECTED(obj->add(&fakeObj, &elements[0]));
+    TEST_BAD_MEMORY_ACCESS_EXPECTED(listObj->add(&fakeObj, &elements[0]));
 }
 
 /**
@@ -77,7 +77,7 @@ void test_List_Add_Valid_Input_Parameters(void)
     enum list_error_e ret = LIST_ERROR_NONE;
 
     for (uint32_t i = 0; i < SIZEOF_ARRAY(elements); ++i) {
-        ret = obj->add(obj, &elements[i]);
+        ret = listObj->add(listObj, &elements[i]);
         TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
     }
 }
@@ -92,8 +92,8 @@ void test_List_Add_Valid_Input_Parameters(void)
  */
 void test_List_Remove_Null_Parameter(void)
 {
-    TEST_ASSERT_EXPECTED(obj->remove(obj, NULL));
-    TEST_ASSERT_EXPECTED(obj->remove(NULL, &elements[0]));
+    TEST_ASSERT_EXPECTED(listObj->remove(listObj, NULL));
+    TEST_ASSERT_EXPECTED(listObj->remove(NULL, &elements[0]));
 }
 
 /**
@@ -104,7 +104,7 @@ void test_List_Remove_Bad_Memory_Access(void)
 {
     struct list_s fakeObj = {0};
 
-    TEST_BAD_MEMORY_ACCESS_EXPECTED(obj->remove(&fakeObj, &elements[0]));
+    TEST_BAD_MEMORY_ACCESS_EXPECTED(listObj->remove(&fakeObj, &elements[0]));
 }
 
 /**
@@ -117,10 +117,10 @@ void test_List_Remove_Existing_Element(void)
 {
     enum list_error_e ret = LIST_ERROR_NONE;
 
-    ret = obj->add(obj, &elements[0]);
+    ret = listObj->add(listObj, &elements[0]);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = obj->remove(obj, &elements[0]);
+    ret = listObj->remove(listObj, &elements[0]);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
     TEST_ASSERT_EQUAL_UINT32(1, nbCallsToCompareCb);
     TEST_ASSERT_EQUAL_UINT32(1, nbCallsToReleaseCb);
@@ -136,10 +136,10 @@ void test_List_Remove_NonExistent_Element_From_Non_Empty_List(void)
 {
     enum list_error_e ret = LIST_ERROR_NONE;
 
-    ret = obj->add(obj, &elements[0]);
+    ret = listObj->add(listObj, &elements[0]);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = obj->remove(obj, &elements[1]);
+    ret = listObj->remove(listObj, &elements[1]);
     TEST_ASSERT_NOT_EQUAL(ret, LIST_ERROR_NONE);
     TEST_ASSERT_EQUAL_UINT32(1, nbCallsToCompareCb);
     TEST_ASSERT_EQUAL_UINT32(0, nbCallsToReleaseCb);
@@ -153,7 +153,7 @@ void test_List_Remove_NonExistent_Element_From_Non_Empty_List(void)
  */
 void test_List_Remove_Element_From_Empty_List(void)
 {
-    enum list_error_e ret = obj->remove(obj, &elements[0]);
+    enum list_error_e ret = listObj->remove(listObj, &elements[0]);
     TEST_ASSERT_NOT_EQUAL(ret, LIST_ERROR_NONE);
 
     TEST_ASSERT_EQUAL_UINT32(0, nbCallsToCompareCb);
@@ -172,13 +172,13 @@ void test_List_Remove_Element_No_Compare_Callback_Provided(void)
     enum list_error_e ret = LIST_ERROR_NONE;
 
     callbacks.compareCb = NULL;
-    ret = obj->updateCallbacks(obj, &callbacks);
+    ret = listObj->updateCallbacks(listObj, &callbacks);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = obj->add(obj, &elements[0]);
+    ret = listObj->add(listObj, &elements[0]);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = obj->remove(obj, &elements[0]);
+    ret = listObj->remove(listObj, &elements[0]);
     TEST_ASSERT_NOT_EQUAL(ret, LIST_ERROR_NONE);
     TEST_ASSERT_EQUAL_UINT32(0, nbCallsToReleaseCb);
 }
@@ -195,13 +195,13 @@ void test_List_Remove_Element_No_Release_Callback_Provided(void)
     enum list_error_e ret = LIST_ERROR_NONE;
 
     callbacks.releaseCb = NULL;
-    ret = obj->updateCallbacks(obj, &callbacks);
+    ret = listObj->updateCallbacks(listObj, &callbacks);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = obj->add(obj, &elements[0]);
+    ret = listObj->add(listObj, &elements[0]);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = obj->remove(obj, &elements[0]);
+    ret = listObj->remove(listObj, &elements[0]);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
     TEST_ASSERT_EQUAL_UINT32(1, nbCallsToCompareCb);
 }
@@ -216,7 +216,7 @@ void test_List_Remove_Element_No_Release_Callback_Provided(void)
  */
 void test_List_Remove_All_Null_Parameter(void)
 {
-    TEST_ASSERT_EXPECTED(obj->removeAll(NULL));
+    TEST_ASSERT_EXPECTED(listObj->removeAll(NULL));
 }
 
 /**
@@ -227,7 +227,7 @@ void test_List_Remove_All_Bad_Memory_Access(void)
 {
     struct list_s fakeObj = {0};
 
-    TEST_BAD_MEMORY_ACCESS_EXPECTED(obj->removeAll(&fakeObj));
+    TEST_BAD_MEMORY_ACCESS_EXPECTED(listObj->removeAll(&fakeObj));
 }
 
 /**
@@ -240,11 +240,11 @@ void test_List_Remove_All_Existing_Elements(void)
     enum list_error_e ret = LIST_ERROR_NONE;
 
     for (uint32_t i = 0; i < SIZEOF_ARRAY(elements); ++i) {
-        ret = obj->add(obj, &elements[i]);
+        ret = listObj->add(listObj, &elements[i]);
         TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
     }
 
-    ret = obj->removeAll(obj);
+    ret = listObj->removeAll(listObj);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
     TEST_ASSERT_EQUAL_UINT32(SIZEOF_ARRAY(elements), nbCallsToReleaseCb);
 }
@@ -256,7 +256,7 @@ void test_List_Remove_All_Existing_Elements(void)
  */
 void test_List_Remove_All_Elements_From_Empty_List(void)
 {
-    enum list_error_e ret = obj->removeAll(obj);
+    enum list_error_e ret = listObj->removeAll(listObj);
     TEST_ASSERT_NOT_EQUAL(ret, LIST_ERROR_NONE);
 
     TEST_ASSERT_EQUAL_UINT32(0, nbCallsToReleaseCb);
@@ -271,12 +271,12 @@ void test_List_Remove_All_Element_No_Release_Callback_Provided(void)
     enum list_error_e ret = LIST_ERROR_NONE;
 
     callbacks.releaseCb = NULL;
-    ret = obj->updateCallbacks(obj, &callbacks);
+    ret = listObj->updateCallbacks(listObj, &callbacks);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = obj->add(obj, &elements[0]);
+    ret = listObj->add(listObj, &elements[0]);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 
-    ret = obj->removeAll(obj);
+    ret = listObj->removeAll(listObj);
     TEST_ASSERT_EQUAL(ret, LIST_ERROR_NONE);
 }

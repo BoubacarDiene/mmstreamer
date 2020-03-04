@@ -104,6 +104,8 @@
 "
 " - :%s/from/to/g           --> Find "from" and replace it with "to" in the whole file
 "
+" - :set syntax=whitespace  --> Show tabs in green and spaces in red
+"
 " =================================================================================================
 " pathogen.vim makes it super easy to install plugins and runtime files in their
 " own private directories (See https://github.com/tpope/vim-pathogen)
