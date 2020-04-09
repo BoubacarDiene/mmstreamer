@@ -117,10 +117,10 @@ static void framesHandlerFct_f(struct task_params_s *params);
 static void notificationFct_f(struct task_params_s *params);
 static void framesHandlerAtExit_f(struct task_params_s *params);
 
-static uint8_t compareVideoCb(struct list_s *obj, void *elementToCheck, const void *userData);
+static uint8_t compareVideoCb(struct list_s *obj, void *elementToCheck, void *userData);
 static void releaseVideoCb(struct list_s *obj, void *element);
 
-static uint8_t compareListenerCb(struct list_s *obj, void *elementToCheck, const void *userData);
+static uint8_t compareListenerCb(struct list_s *obj, void *elementToCheck, void *userData);
 static void releaseListenerCb(struct list_s *obj, void *element);
 
 /* -------------------------------------------------------------------------------------------- */
@@ -935,7 +935,7 @@ static void framesHandlerAtExit_f(struct task_params_s *params)
 /*!
  *
  */
-static uint8_t compareVideoCb(struct list_s *obj, void *elementToCheck, const void *userData)
+static uint8_t compareVideoCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     ASSERT(obj && elementToCheck && userData);
 
@@ -960,7 +960,7 @@ static void releaseVideoCb(struct list_s *obj, void *element)
 /*!
  *
  */
-static uint8_t compareListenerCb(struct list_s *obj, void *elementToCheck, const void *userData)
+static uint8_t compareListenerCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     ASSERT(obj && elementToCheck && userData);
     

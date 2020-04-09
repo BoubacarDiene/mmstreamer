@@ -141,10 +141,10 @@ static void senderTaskFct_f(struct task_params_s *params);
 /* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static uint8_t compareServerCb(struct list_s *obj, void *elementToCheck, const void *userData);
+static uint8_t compareServerCb(struct list_s *obj, void *elementToCheck, void *userData);
 static void releaseServerCb(struct list_s *obj, void *element);
 
-static uint8_t compareClientCb(struct list_s *obj, void *elementToCheck, const void *userData);
+static uint8_t compareClientCb(struct list_s *obj, void *elementToCheck, void *userData);
 static void releaseClientCb(struct list_s *obj, void *element);
 
 /* -------------------------------------------------------------------------------------------- */
@@ -1192,7 +1192,7 @@ exit:
 /*!
  *
  */
-static uint8_t compareServerCb(struct list_s *obj, void *elementToCheck, const void *userData)
+static uint8_t compareServerCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     ASSERT(obj && elementToCheck && userData);
     
@@ -1243,7 +1243,7 @@ static void releaseServerCb(struct list_s *obj, void *element)
 /*!
  *
  */
-static uint8_t compareClientCb(struct list_s *obj, void *elementToCheck, const void *userData)
+static uint8_t compareClientCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     ASSERT(obj && elementToCheck && userData);
     

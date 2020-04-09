@@ -80,10 +80,11 @@
   :arguments:
     - -std=c99 -D_GNU_SOURCE
     - -ggdb
-    - -Wall -Wextra -Werror -Wuninitialized
+    - -Wall -Wextra -Werror
     - -Wconversion -Wsign-conversion
-    - -Wparentheses -Winit-self -Wcomment
-    - -Wstrict-prototypes -Wshadow
+    - -Wparentheses -Winit-self -Wredundant-decls
+    - -Wbad-function-cast -Wcast-qual -Wcast-align
+    - -Wstrict-prototypes -Wmissing-prototypes -Wshadow
 
 :tools_test_linker:
   :arguments:

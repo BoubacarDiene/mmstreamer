@@ -53,29 +53,29 @@ enum loaders_error_e unloadVideosXml_f(struct loaders_s *obj, struct xml_videos_
 /* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static void onVideoStartCb(const void *userData, const char **attrs);
-static void onVideoEndCb(const void *userData);
+static void onVideoStartCb(void *userData, const char **attrs);
+static void onVideoEndCb(void *userData);
 
-static void onGeneralCb(const void *userData, const char **attrs);
-static void onDeviceCb(const void *userData, const char **attrs);
-static void onCroppingAreaCb(const void *userData, const char **attrs);
-static void onComposingAreaCb(const void *userData, const char **attrs);
-static void onBufferCb(const void *userData, const char **attrs);
+static void onGeneralCb(void *userData, const char **attrs);
+static void onDeviceCb(void *userData, const char **attrs);
+static void onCroppingAreaCb(void *userData, const char **attrs);
+static void onComposingAreaCb(void *userData, const char **attrs);
+static void onBufferCb(void *userData, const char **attrs);
 
-static void onConfigStartCb(const void *userData, const char **attrs);
-static void onConfigEndCb(const void *userData);
+static void onConfigStartCb(void *userData, const char **attrs);
+static void onConfigEndCb(void *userData);
 
-static void onCapabilitiesStartCb(const void *userData, const char **attrs);
-static void onCapabilitiesEndCb(const void *userData);
+static void onCapabilitiesStartCb(void *userData, const char **attrs);
+static void onCapabilitiesEndCb(void *userData);
 
-static void onItemCb(const void *userData, const char **attrs);
-static void onBufferTypeCb(const void *userData, const char **attrs);
-static void onPixelFormatCb(const void *userData, const char **attrs);
-static void onColorspaceCb(const void *userData, const char **attrs);
-static void onMemoryCb(const void *userData, const char **attrs);
-static void onAwaitModeCb(const void *userData, const char **attrs);
+static void onItemCb(void *userData, const char **attrs);
+static void onBufferTypeCb(void *userData, const char **attrs);
+static void onPixelFormatCb(void *userData, const char **attrs);
+static void onColorspaceCb(void *userData, const char **attrs);
+static void onMemoryCb(void *userData, const char **attrs);
+static void onAwaitModeCb(void *userData, const char **attrs);
 
-static void onErrorCb(const void *userData, int32_t errorCode, const char *errorStr);
+static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 
 /* -------------------------------------------------------------------------------------------- */
 /* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
@@ -210,7 +210,7 @@ enum loaders_error_e unloadVideosXml_f(struct loaders_s *obj, struct xml_videos_
 /*!
  *
  */
-static void onVideoStartCb(const void *userData, const char **attrs)
+static void onVideoStartCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -230,7 +230,7 @@ static void onVideoStartCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onVideoEndCb(const void *userData)
+static void onVideoEndCb(void *userData)
 {
     ASSERT(userData);
     
@@ -244,7 +244,7 @@ static void onVideoEndCb(const void *userData)
 /*!
  *
  */
-static void onGeneralCb(const void *userData, const char **attrs)
+static void onGeneralCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -304,7 +304,7 @@ static void onGeneralCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onDeviceCb(const void *userData, const char **attrs)
+static void onDeviceCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -354,7 +354,7 @@ static void onDeviceCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onCroppingAreaCb(const void *userData, const char **attrs)
+static void onCroppingAreaCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
 
@@ -404,7 +404,7 @@ static void onCroppingAreaCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onComposingAreaCb(const void *userData, const char **attrs)
+static void onComposingAreaCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
 
@@ -454,7 +454,7 @@ static void onComposingAreaCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onBufferCb(const void *userData, const char **attrs)
+static void onBufferCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -492,7 +492,7 @@ static void onBufferCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onConfigStartCb(const void *userData, const char **attrs)
+static void onConfigStartCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -512,7 +512,7 @@ static void onConfigStartCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onConfigEndCb(const void *userData)
+static void onConfigEndCb(void *userData)
 {
     ASSERT(userData);
     
@@ -526,7 +526,7 @@ static void onConfigEndCb(const void *userData)
 /*!
  *
  */
-static void onCapabilitiesStartCb(const void *userData, const char **attrs)
+static void onCapabilitiesStartCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -538,7 +538,7 @@ static void onCapabilitiesStartCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onCapabilitiesEndCb(const void *userData)
+static void onCapabilitiesEndCb(void *userData)
 {
     ASSERT(userData);
 
@@ -548,7 +548,7 @@ static void onCapabilitiesEndCb(const void *userData)
 /*!
  *
  */
-static void onItemCb(const void *userData, const char **attrs)
+static void onItemCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -595,7 +595,7 @@ static void onItemCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onBufferTypeCb(const void *userData, const char **attrs)
+static void onBufferTypeCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -630,7 +630,7 @@ static void onBufferTypeCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onPixelFormatCb(const void *userData, const char **attrs)
+static void onPixelFormatCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -665,7 +665,7 @@ static void onPixelFormatCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onColorspaceCb(const void *userData, const char **attrs)
+static void onColorspaceCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -700,7 +700,7 @@ static void onColorspaceCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onMemoryCb(const void *userData, const char **attrs)
+static void onMemoryCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -735,7 +735,7 @@ static void onMemoryCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onAwaitModeCb(const void *userData, const char **attrs)
+static void onAwaitModeCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -770,7 +770,7 @@ static void onAwaitModeCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onErrorCb(const void *userData, int32_t errorCode, const char *errorStr)
+static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr)
 {
     (void)userData;
     

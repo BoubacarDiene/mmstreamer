@@ -500,19 +500,19 @@ typedef enum controller_error_e (*controller_init_f)(struct controller_s **obj,
 typedef enum controller_error_e (*controller_uninit_f)(struct controller_s **obj);
 
 /*!
- * \fn void (*controller_on_command_cb)(struct controller_s *obj, const void * const data)
+ * \fn void (*controller_on_command_cb)(struct controller_s *obj, void *data)
  * \brief It's used by mmstreamer engine to send you commands from other controllers
  */
-typedef void (*controller_on_command_cb)(struct controller_s *obj, const void * const data);
+typedef void (*controller_on_command_cb)(struct controller_s *obj, void *data);
 
 /*!
  * \fn void (*controller_on_event_cb)(struct controller_s *obj,
-                                       const struct controller_event_s * const event)
+                                       struct controller_event_s *event)
  * \brief It's used by mmstreamer engine to send you notifications about modules' state
 *         (video stopped, server suspended, ...) and clicks on a graphics element in UI
  */
 typedef void (*controller_on_event_cb)(struct controller_s *obj,
-                                       const struct controller_event_s * const event);
+                                       struct controller_event_s *event);
 
 #ifdef __cplusplus
 }

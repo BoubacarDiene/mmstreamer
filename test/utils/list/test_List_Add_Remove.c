@@ -9,7 +9,7 @@ static uint32_t elements[]               = {1, 2, 3};
 static uint32_t nbCallsToCompareCb = 0;
 static uint32_t nbCallsToReleaseCb = 0;
 
-static uint8_t compareCb(struct list_s *obj, void *elementToCheck, const void *userData)
+static uint8_t compareCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     (void)obj;
 

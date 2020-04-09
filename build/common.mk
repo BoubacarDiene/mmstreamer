@@ -33,7 +33,8 @@ LOG_LEVEL ?= 1
 LDFLAGS_OPTIONS := -pthread -lm -ldl
 CFLAGS_OPTIONS  := -std=c99 -D_GNU_SOURCE \
                    -Wall -Wextra -Werror -Wconversion -Wsign-conversion \
-                   -Wuninitialized -Wparentheses -Winit-self -Wcomment \
+                   -Wparentheses -Winit-self -Wredundant-decls \
+                   -Wbad-function-cast -Wcast-qual -Wcast-align \
                    -Wstrict-prototypes -Wmissing-prototypes -Wshadow
 
 CFLAGS_OPTIONS += $(if $(findstring release,$(DEBUG)),-O3 -s -DNDEBUG,)

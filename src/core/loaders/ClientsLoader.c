@@ -53,14 +53,14 @@ enum loaders_error_e unloadClientsXml_f(struct loaders_s *obj, struct xml_client
 /* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static void onClientStartCb(const void *userData, const char **attrs);
-static void onClientEndCb(const void *userData);
+static void onClientStartCb(void *userData, const char **attrs);
+static void onClientEndCb(void *userData);
 
-static void onGeneralCb(const void *userData, const char **attrs);
-static void onInetCb(const void *userData, const char **attrs);
-static void onUnixCb(const void *userData, const char **attrs);
+static void onGeneralCb(void *userData, const char **attrs);
+static void onInetCb(void *userData, const char **attrs);
+static void onUnixCb(void *userData, const char **attrs);
 
-static void onErrorCb(const void *userData, int32_t errorCode, const char *errorStr);
+static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr);
 
 /* -------------------------------------------------------------------------------------------- */
 /* ////////////////////////////// PUBLIC FUNCTIONS IMPLEMENTATION ///////////////////////////// */
@@ -156,7 +156,7 @@ enum loaders_error_e unloadClientsXml_f(struct loaders_s *obj, struct xml_client
 /*!
  *
  */
-static void onClientStartCb(const void *userData, const char **attrs)
+static void onClientStartCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -176,7 +176,7 @@ static void onClientStartCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onClientEndCb(const void *userData)
+static void onClientEndCb(void *userData)
 {
     ASSERT(userData);
     
@@ -190,7 +190,7 @@ static void onClientEndCb(const void *userData)
 /*!
  *
  */
-static void onGeneralCb(const void *userData, const char **attrs)
+static void onGeneralCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -268,7 +268,7 @@ static void onGeneralCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onInetCb(const void *userData, const char **attrs)
+static void onInetCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -312,7 +312,7 @@ static void onInetCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onUnixCb(const void *userData, const char **attrs)
+static void onUnixCb(void *userData, const char **attrs)
 {
     ASSERT(userData);
     
@@ -344,7 +344,7 @@ static void onUnixCb(const void *userData, const char **attrs)
 /*!
  *
  */
-static void onErrorCb(const void *userData, int32_t errorCode, const char *errorStr)
+static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr)
 {
     (void)userData;
     

@@ -16,7 +16,7 @@ static uint32_t nbCallsToErrorCb     = 0;
 static const void *receivedUserData  = NULL;
 
 // Called when <Test> tag is found
-static void onTestStartCb(const void *userData, const char **attrs)
+static void onTestStartCb(void *userData, const char **attrs)
 {
     (void)userData;
     (void)attrs;
@@ -24,21 +24,21 @@ static void onTestStartCb(const void *userData, const char **attrs)
 }
 
 // Called when </Tag> tag is found
-static void onTestEndCb(const void *userData)
+static void onTestEndCb(void *userData)
 {
     (void)userData;
     ++nbCallsToTestEndCb;
 }
 
 // Called when <Element> tag is found
-static void onElementCb(const void *userData, const char **attrs)
+static void onElementCb(void *userData, const char **attrs)
 {
     (void)userData;
     (void)attrs;
     ++nbCallsToElementCb;
 }
 
-static void onErrorCb(const void *userData, int32_t errorCode, const char *errorStr)
+static void onErrorCb(void *userData, int32_t errorCode, const char *errorStr)
 {
     (void)errorCode;
     (void)errorStr;
@@ -179,7 +179,7 @@ void test_Parser_Parse_UserData_Integrity(void)
         { NULL,  NULL,  NULL,  NULL }
     };
 
-    const char *str = "userData";
+    char *str = "userData";
     struct parser_params_s params = {
         .path         = INVALID_XML_FILE,
         .encoding     = PARSER_ENCODING_UTF_8,

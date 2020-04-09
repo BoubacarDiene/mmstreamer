@@ -159,11 +159,11 @@ static void taskFct_f(struct task_params_s *params);
 /* //////////////////////////////////////// CALLBACKS ///////////////////////////////////////// */
 /* -------------------------------------------------------------------------------------------- */
 
-static uint8_t compareElementsCb(struct list_s *obj, void *elementToCheck, const void *userData);
+static uint8_t compareElementsCb(struct list_s *obj, void *elementToCheck, void *userData);
 static void releaseElementCb(struct list_s *obj, void *element);
-static void browseElementsCb(struct list_s *obj, void *element, const void *userData);
+static void browseElementsCb(struct list_s *obj, void *element, void *userData);
 
-static uint8_t compareEventsCb(struct list_s *obj, void *elementToCheck, const void *userData);
+static uint8_t compareEventsCb(struct list_s *obj, void *elementToCheck, void *userData);
 static void releaseEventCb(struct list_s *obj, void *element);
 
 /* -------------------------------------------------------------------------------------------- */
@@ -1740,7 +1740,7 @@ lockExit:
 /*!
  *
  */
-static uint8_t compareElementsCb(struct list_s *obj, void *elementToCheck, const void *userData)
+static uint8_t compareElementsCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     ASSERT(obj && elementToCheck && userData);
     
@@ -1765,7 +1765,7 @@ static void releaseElementCb(struct list_s *obj, void *element)
 /*!
  *
  */
-static void browseElementsCb(struct list_s *obj, void *element, const void *userData)
+static void browseElementsCb(struct list_s *obj, void *element, void *userData)
 {
     ASSERT(obj && element);
     
@@ -1789,7 +1789,7 @@ static void browseElementsCb(struct list_s *obj, void *element, const void *user
     }
 }
 
-static uint8_t compareEventsCb(struct list_s *obj, void *elementToCheck, const void *userData)
+static uint8_t compareEventsCb(struct list_s *obj, void *elementToCheck, void *userData)
 {
     ASSERT(obj && elementToCheck && userData);
 
