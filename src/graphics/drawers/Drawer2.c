@@ -1257,7 +1257,6 @@ static enum drawer_error_e initWindowAndRenderer_f(struct drawer_s *obj, enum gf
     SDL_Window **window                 = NULL;
     SDL_Renderer **renderer             = NULL;
     uint32_t windowFlags                = showWindow ? SDL_WINDOW_SHOWN : SDL_WINDOW_HIDDEN;
-    uint32_t rendererFlags              = SDL_RENDERER_TARGETTEXTURE|SDL_RENDERER_SOFTWARE;
     const char *windowCaption           = "";
     SDL_Rect windowPos                  = {0};
     uint8_t windowHasInputFocus         = 0;
@@ -1340,7 +1339,35 @@ static enum drawer_error_e initWindowAndRenderer_f(struct drawer_s *obj, enum gf
 
     // Create renderer
     // FIXME : Make renderer work with HW acceleration (SDL_RENDERER_ACCELERATED)
-    *renderer = SDL_CreateRenderer(*window, -1, rendererFlags);
+    //         The issue is that the UI becomes weird once one starts playing with
+    //         some buttons.
+    //
+    //         Once fixed, replace
+    //             uint32_t rendererFlags  = SDL_RENDERER_TARGETTEXTURE|SDL_RENDERER_SOFTWARE;
+    //         with
+    //             uint32_t rendererFlags  = SDL_RENDERER_TARGETTEXTURE;
+    SDL_RendererInfo renderDriverInfo;
+    uint32_t rendererFlags  = SDL_RENDERER_TARGETTEXTURE|SDL_RENDERER_SOFTWARE;
+    int32_t nbRenderDrivers = SDL_GetNumRenderDrivers(), index = 0;
+    while (index < nbRenderDrivers) {
+        if (SDL_GetRenderDriverInfo(index, &renderDriverInfo) == 0) {
+            if (((renderDriverInfo.flags & rendererFlags) == rendererFlags)
+                && ((renderDriverInfo.flags & SDL_RENDERER_ACCELERATED) == SDL_RENDERER_ACCELERATED)) {
+                Logd("Using render driver with HW acceleration: %s", renderDriverInfo.name);
+                rendererFlags |= SDL_RENDERER_ACCELERATED;
+                break;
+            }
+        }
+        ++index;
+    }
+
+    if (index == nbRenderDrivers) {
+        Logd("Asking SDL to use the first render driver supporting software fallback");
+        rendererFlags |= SDL_RENDERER_SOFTWARE;
+        index = -1;
+    }
+
+    *renderer = SDL_CreateRenderer(*window, index, rendererFlags);
     if (!(*renderer)) {
         Loge("SDL_CreateRenderer() failed : %s", SDL_GetError());
         return DRAWER_ERROR_INIT;
