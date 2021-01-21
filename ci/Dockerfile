@@ -17,12 +17,15 @@ RUN apt-get update && apt-get -y upgrade && apt-get install -y \
         cppcheck \
         ctags \
         git \
+        glmark2 \
+        libgl1-mesa-dev \
         libgl1-mesa-glx \
         libjpeg8-dev \
         libpng16-dev \
         libv4l-dev \
         libx11-dev \
         libxext-dev \
+        lshw \
         openssh-server \
         python3-pip \
         ruby \
@@ -30,6 +33,7 @@ RUN apt-get update && apt-get -y upgrade && apt-get install -y \
         tree \
         valgrind \
         vim \
+        x11-apps \
         zlib1g-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

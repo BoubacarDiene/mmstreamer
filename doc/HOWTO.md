@@ -1,44 +1,80 @@
-# Howto
+# Table of contents
+- [Start mmstreamer](#start-mmstreamer)
+  - [Inside docker container](#inside-docker-container)
+  - [Outside docker container](#outside-docker-container)
+- [Connect to inet server](#connect-to-inet-server)
+  - [From your local computer](#from-your-local-computer)
+  - [From a remote device](#from-a-remote-device)
+- [Update configuration files](#update-configuration-files)
+- [Export more build options](#export-more-build-options)
+- [Extend mmstreamer](#extend-mmstreamer)
+- [Build and run unit tests](#build-and-run-unit-tests)
 
-## 1. How to start mmstreamer
+## Start mmstreamer
 
-### 1.1. Launch binary (as root)
-```
-$ cd mmstreamer_sources/
-$ sudo LD_LIBRARY_PATH=./out/mmstreamer/lib ./out/mmstreamer/bin/mmstreamer-<x.y>
-```
-or in debug mode :
-```
-$ sudo LD_LIBRARY_PATH=./out/mmstreamer/lib ./out/mmstreamer/bin/mmstreamer-<x.y>.dbg
-```
-
-**Notes :**
-- <x.y> has to be replaced with the current version of the binary.
+**Notes:**
+- In below sections, <x.y> has to be replaced with the current version of the binary.
 - Another path to Main.xml config file can be specified using -f option\
 ```
   E.g.: $ ./out/mmstreamer/bin/mmstreamer-<x.y> -f /tmp/Main.xml
 ```
-- In case a "bitsPerPixel" different from the active framebuffer's depth is specified in
-  Graphics.xml, mmstreamer will try to change depth. To make it work, "root" permission
-  is required (E.g. Run mmstreamer as root))
+- In case a "bitsPerPixel" different from the active framebuffer's depth is specified in Graphics.xml, mmstreamer will try to change depth. To make it work, "root" permission is required (E.g. Run mmstreamer as root)
 - If mmstreamer failed to start, please, see [TROUBLESHOOT](TROUBLESHOOT.md)
 
-### 1.2. Connect to inet server
+### Inside docker container
+```
+cd mmstreamer_sources/
+docker run --privileged -it -u root --rm \
+           -v $(pwd):/workdir \
+           --volume="$HOME/.Xauthority:/root/.Xauthority:rw" \
+           -v="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+           -v /dev:/dev \
+           --net=host --env="DISPLAY" \
+           mmstreamer-image:latest
 
-From your local computer :
+RELEASE MODE:
+
+LD_LIBRARY_PATH=./out/mmstreamer/lib ./out/mmstreamer/bin/mmstreamer-<x.y>
+
+DEBUG MODE:
+
+LD_LIBRARY_PATH=./out/mmstreamer/lib ./out/mmstreamer/bin/mmstreamer-<x.y>.dbg
+```
+
+### Outside docker container
+```
+cd mmstreamer_sources/
+
+RELEASE MODE:
+
+sudo LD_LIBRARY_PATH=./out/mmstreamer/lib ./out/mmstreamer/bin/mmstreamer-<x.y>
+
+DEBUG MODE:
+
+sudo LD_LIBRARY_PATH=./out/mmstreamer/lib ./out/mmstreamer/bin/mmstreamer-<x.y>.dbg
+```
+
+## Connect to inet server
+
+### From your local computer
+
+Once the mmstreamer executable started, you can open your favorite web browser then type one of the following url:
 ```
 http://127.0.0.1:9090/webcam or http://localhost:9090/webcam
 ```
-From a remote device (phone, computer, ...) connected to same network as the server :
+
+### From a remote device
+
+The remote device can be a phone, a different computer, ... connected to the same network as the server. The main change here is the IP address (or domain name) to reach the host machine where the server is running (<server_ip_address> below).
 ```
-http://<your_ip_address>:9090/webcam
+http://<server_ip_address>:9090/webcam
 ```
 
 **Notes :**
-- Without the "/webcam" part, you get an error page containing a redirection link
-- To get <your_ip_address>, open a terminal and type "ifconfig" command
+- Without the "/webcam" part, you should get an error page containing a redirection link
+- To get <server_ip_address>, open a terminal and type "ip addr show" command
 
-## 2. How to update mmstreamer's configuration
+## Update configuration files
 
 | File | Description |
 | --- | --- |
@@ -52,53 +88,31 @@ http://<your_ip_address>:9090/webcam
 | [Images.xml](../res/drawer2/common/Images.xml) | List images files |
 | [Strings.xml](../res/drawer2/common/Strings.xml) | Define strings |
 
-## 3. How to enable more gcc options
+## Export more build options
 
-### 3.1. Produce debugging informations for use by gdb
-```
-export DEBUG=gdb
-```
-
-### 3.2. Enable address sanitizer
-```
-export DEBUG=asan
-```
-
-### 3.3. Add flags to improve security
-```
-export DEBUG=secu
-```
-
-### 3.4. Relaunch build
-```
-$ make mrproper
-$ make all install
-```
+| Option | Value(s) | Description |
+| --- | --- | --- |
+| DEBUG | gdb | Produce debugging informations for use by gdb |
+| DEBUG | asan | Enable address sanitizer |
+| DEBUG | secu | Add flags to show security issues |
+| LOG_LEVEL | 1, 2, 3 or 4 | Respectively: Error, warning, Info or Debug |
 
 **Notes :**
-- LOG_LEVEL<1 - 4> is not dependent on the build type
-- Several "build types" can be set simultaneously
+- For DEBUG option, it is possible to set multiple options simultaneously
   E.g: export DEBUG=gdb,asan,secu
+- It is recommended to rebuild the project (make mrproper && make all install)
 
 
-## 4. How to extend mmstreamer
+## Extend mmstreamer
 - Implement [Controller.h](../inc/export/Controller.h) - See [mmcontroller project](https://github.com/BoubacarDiene/mmcontroller) for more details
 - Update [Main.xml --> Controllers](../res/drawer2/Main.xml) to add your newly created controller
 
-## 5. How to build and run unit tests
+## Build and run unit tests
 
-### 5.1. Build and load docker image
 ```
-$ cd mmstreamer_sources/
-$ docker build -t  mmstreamer-image ci/
-$ docker run -it -u $(id -u) --rm -v $(pwd):/workdir mmstreamer-image:latest
-```
+cd mmstreamer_sources/
+docker run --privileged -it -u $(id -u) --rm -v $(pwd):/workdir mmstreamer-image:latest
 
-### 5.2. Run tests
-```
-$ ceedling
-
-To also display code coverage summary, use:
-$ ceedling gcov:all
+ceedling gcov:all
 ```
 

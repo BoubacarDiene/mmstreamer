@@ -1,5 +1,20 @@
 # Changelog : Main changes
 
+## v1.4
+```
+- Bug fixes
+- Additional unit tests
+- Now possible to test the application inside the docker container
+```
+
+## v1.3
+```
+- Ceedling added + some unit tests
+- Several bug fixes
+- Makefiles reworked
+- gcc flags to enable address sanitizer, security
+```
+
 ## v1.2
 ```
 - Http server: Always use the correct IP address in redirect link

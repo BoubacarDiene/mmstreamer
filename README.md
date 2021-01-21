@@ -1,16 +1,25 @@
-# mmstreamer
-
+[![GitHub license](https://img.shields.io/github/license/BoubacarDiene/mmstreamer)](https://github.com/BoubacarDiene/mmstreamer/blob/master/LICENSE.md)
 [![Build Status](https://travis-ci.org/BoubacarDiene/mmstreamer.svg?branch=master)](https://travis-ci.org/BoubacarDiene/mmstreamer)
 
-## 0. Some reading
+# Table of contents
+- [Install and run](#install-and-run)
+- [Description](#description)
+  - [Modules](#modules)
+  - [Configuration](#configuration)
+  - [Control](#control)
+  - [Usage](#usage)
+- [Goal](#goal)
+- [License](#license)
+- [Maintenance and support](#maintenance-and-support)
+- [UI example based on provided config file](#ui-example-based-on-provided-config-file)
 
-- [INSTALL](doc/INSTALL.md) : Prepare your environment and build mmstreamer project
-- [HOWTO](doc/HOWTO.md) : Run mmstreamer + update configuration files
+## Install and run
+
+- [INSTALL](doc/INSTALL.md) : Prepare your environment and build mmstreamer project (with or without docker)
 - [TROUBLESHOOT](doc/TROUBLESHOOT.md) : Fix issues encountered when building and/or running mmstreamer
-- [AUTHORS](doc/AUTHORS.md) : List of authors
-- [CHANGELOG](doc/CHANGELOG.md) : Main changes in each release
+- [HOWTO](doc/HOWTO.md) : Run mmstreamer, update configuration files, etc.
 
-## 1. Description
+## Description
 
 mmstreamer is a v4l2-based media streamer written in C that currently allows to stream captured
 video frames through inet and/or unix sockets.
@@ -23,7 +32,7 @@ from a remote streamer and display it locally using "Graphics" module.
 
 The application aims to be an easy-to-use application that can be customized to suit your own needs.
 
-### 1.1. Modules
+### Modules
 
 mmstreamer currently includes 4 independent modules :
 
@@ -32,7 +41,7 @@ mmstreamer currently includes 4 independent modules :
   - **Clients**  : To get video stream from local or remote streamer
   - **Graphics** : To locally display video
 
-### 1.2. Configuration
+### Configuration
 
 It has been designed to make configuring above modules as simple as possible. Unless you have very
 specific needs, the following xml resources should be sufficient to use it :
@@ -49,7 +58,7 @@ specific needs, the following xml resources should be sufficient to use it :
 | [Images.xml](res/drawer2/common/Images.xml) | List images files |
 | [Strings.xml](res/drawer2/common/Strings.xml) | Define strings |
 
-### 1.3. Control
+### Control
 
 mmstreamer engine can currently be controlled in two different ways :
 - By user using graphics elements on the UI (See [Graphics.xml](res/drawer2/configs/Graphics.xml))
@@ -60,9 +69,11 @@ Such libraries are listed in [Main.xml --> Controllers](res/drawer2/Main.xml) an
 ideas about creating a controller.
 
 
-### 1.4. Usage
+### Usage
 
-A simple usage of mmstreamer is to make it behave like a HTTP streamer by streaming
+[HOWTO](doc/HOWTO.md) gives details on how to use mmstreamer.
+
+Another simple usage is to make it behave like a HTTP streamer by streaming
 video signal from your personal computer's webcam toward browsers.
 
 To reach this goal, "Videos" module continuously captures frames from camera which it
@@ -77,11 +88,10 @@ limit. For example, by enabling "Clients" and "Graphics" / "Servers" modules ("V
 disabled), it is possible to get video from a remote streamer (E.g. vlc - See below)
 and display it locally and/or stream it over another network interface.
 ```
- cvlc v4l2:///dev/video0:chroma=mjpg:width=640:height=480 --sout '#std{access=http{mime
- =multipart/x-mixed-replace;boundary=--7b3cc56e5f51db803f790dad720ed50a},mux=mpjpeg,dst
- =127.0.0.1:9090/webcam}'
+ cvlc v4l2:///dev/video0:chroma=mjpg:width=640:height=480 --sout '#std{access=http{mime=multipart/x-mixed-replace;boundary=--7b3cc56e5f51db803f790dad720ed50a},mux=mpjpeg,dst=127.0.0.1:9090/webcam}'
 ```
-## 2. Goal
+
+## Goal
 
 The initial purpose of mmstreamer project was to help me have a better understanding
 of v4l2 API. It was only composed of one .c file which captured video signal from my
@@ -104,12 +114,12 @@ gradually adding new features taking advantage of possibilities offered by v4l2 
 - [ ] Encryption to secure the data before transmission
 - [ ] Code cleaning
 
-## 3. License
+## License
 
 mmstreamer is distributed under the GNU GENERAL PUBLIC LICENSE (GPL) version 2.
 Please, see [<http://www.gnu.org/licenses/>](<http://www.gnu.org/licenses/>) for more details.
 
-## 4. Maintenance and support
+## Maintenance and support
 
 I do all this on my free time without being paid or asking for any donations. Thus, bug
 fixing and updates mainly depend on my availibility.
@@ -117,7 +127,9 @@ fixing and updates mainly depend on my availibility.
 However, I will soon try to write and provide all necessary documentation so as to make
 mmstreamer easier to understand.
 
-## 5. Example : A simple UI designed using [Graphics.xml](res/drawer2/configs/Graphics.xml)
+## UI example based on provided config file
+
+This simple UI has been designed using [Graphics.xml](res/drawer2/configs/Graphics.xml).
 
 In this example,
 - Video capture is performed from my personal computer's webcam using "Videos" module
@@ -127,6 +139,6 @@ In this example,
 - "Stop" / "Start" buttons can be used to stop/start client
 - It's also possible to take screenshot (Everything diplayed saved to /tmp/mmstreamer/screenshot_xxxx.png)
   and selfy (Last frame displayed in top-left video area is saved to /tmp/mmstreamer/picture_xxxx.png)
-- ...
+- etc
 
 ![alt text](https://raw.githubusercontent.com/BoubacarDiene/mmstreamer/master/ScreenshotByDrawer2.png "This is a very simple example of what you could get using mmstreamer")
