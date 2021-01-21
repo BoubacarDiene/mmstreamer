@@ -5,6 +5,7 @@
 - Bug fixes
 - Additional unit tests
 - Now possible to test the application inside the docker container
+- Allow to use render drivers with hardware acceleration
 ```
 
 ## v1.3

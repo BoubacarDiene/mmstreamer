@@ -1323,7 +1323,8 @@ static enum drawer_error_e initWindowAndRenderer_f(struct drawer_s *obj, enum gf
             ;
     }
 
-    // Create window
+    // Create a window usable with OpenGL context
+    windowFlags |= SDL_WINDOW_OPENGL;
     *window = SDL_CreateWindow(windowCaption, windowPos.x, windowPos.y,
                                windowPos.w, windowPos.h, windowFlags);
     if (!(*window)) {
@@ -1338,16 +1339,16 @@ static enum drawer_error_e initWindowAndRenderer_f(struct drawer_s *obj, enum gf
     }
 
     // Create renderer
-    // FIXME : Make renderer work with HW acceleration (SDL_RENDERER_ACCELERATED)
-    //         The issue is that the UI becomes weird once one starts playing with
-    //         some buttons.
+    // - A render driver that supports HW acceleration is used when available
+    // - Otherwise a render driver supporting software fallback is selected
     //
-    //         Once fixed, replace
-    //             uint32_t rendererFlags  = SDL_RENDERER_TARGETTEXTURE|SDL_RENDERER_SOFTWARE;
-    //         with
-    //             uint32_t rendererFlags  = SDL_RENDERER_TARGETTEXTURE;
+    // IMPORTANT: Note that the created window must be usable with OpenGL context
+    //            i.e SDL_WINDOW_OPENGL is set. If not, you might experiment an
+    //            issue (artifacts, weird UI) which seems to be reproducible when
+    //            "opengles2" has been selected as the render driver (rather than
+    //            "opengl" or "software" for example).
     SDL_RendererInfo renderDriverInfo;
-    uint32_t rendererFlags  = SDL_RENDERER_TARGETTEXTURE|SDL_RENDERER_SOFTWARE;
+    uint32_t rendererFlags  = SDL_RENDERER_TARGETTEXTURE;
     int32_t nbRenderDrivers = SDL_GetNumRenderDrivers(), index = 0;
     while (index < nbRenderDrivers) {
         if (SDL_GetRenderDriverInfo(index, &renderDriverInfo) == 0) {
@@ -1355,6 +1356,7 @@ static enum drawer_error_e initWindowAndRenderer_f(struct drawer_s *obj, enum gf
                 && ((renderDriverInfo.flags & SDL_RENDERER_ACCELERATED) == SDL_RENDERER_ACCELERATED)) {
                 Logd("Using render driver with HW acceleration: %s", renderDriverInfo.name);
                 rendererFlags |= SDL_RENDERER_ACCELERATED;
+                SDL_SetHint(SDL_HINT_RENDER_DRIVER, renderDriverInfo.name);
                 break;
             }
         }

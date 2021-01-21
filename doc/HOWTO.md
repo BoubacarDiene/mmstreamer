@@ -16,7 +16,7 @@
 - In below sections, <x.y> has to be replaced with the current version of the binary.
 - Another path to Main.xml config file can be specified using -f option\
 ```
-  E.g.: $ ./out/mmstreamer/bin/mmstreamer-<x.y> -f /tmp/Main.xml
+  E.g.: ./out/mmstreamer/bin/mmstreamer-<x.y> -f /tmp/Main.xml
 ```
 - In case a "bitsPerPixel" different from the active framebuffer's depth is specified in Graphics.xml, mmstreamer will try to change depth. To make it work, "root" permission is required (E.g. Run mmstreamer as root)
 - If mmstreamer failed to start, please, see [TROUBLESHOOT](TROUBLESHOOT.md)
